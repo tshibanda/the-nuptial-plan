@@ -1,12 +1,12 @@
 import { Badge } from '@/components/ui/badge';
 
-type StatusType = 
-  | 'Confirmé' 
-  | 'Contrat en attente' 
-  | 'Acompte versé' 
-  | 'Résilié'
+type StatusValue =
+  | 'Confirmé'
   | 'En attente'
   | 'Décliné'
+  | 'Contrat en attente'
+  | 'Acompte versé'
+  | 'Résilié'
   | 'Urgent'
   | 'À régler'
   | 'Programmé'
@@ -15,31 +15,32 @@ type StatusType =
   | 'Partiel';
 
 interface StatusBadgeProps {
-  status: StatusType;
-  className?: string;
+  status: StatusValue;
 }
 
-const statusConfig: Record<StatusType, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
-  'Confirmé': { variant: 'default', label: 'Confirmé' },
-  'Contrat en attente': { variant: 'secondary', label: 'Contrat en attente' },
-  'Acompte versé': { variant: 'outline', label: 'Acompte versé' },
-  'Résilié': { variant: 'destructive', label: 'Résilié' },
-  'En attente': { variant: 'secondary', label: 'En attente' },
-  'Décliné': { variant: 'destructive', label: 'Décliné' },
-  'Urgent': { variant: 'destructive', label: 'Urgent' },
-  'À régler': { variant: 'secondary', label: 'À régler' },
-  'Programmé': { variant: 'outline', label: 'Programmé' },
-  'Payé': { variant: 'default', label: 'Payé' },
-  'Signé': { variant: 'default', label: 'Signé' },
-  'Partiel': { variant: 'outline', label: 'Partiel' },
-};
+export function StatusBadge({ status }: StatusBadgeProps) {
+  const getVariant = (): 'default' | 'secondary' | 'destructive' | 'outline' => {
+    switch (status) {
+      case 'Confirmé':
+      case 'Signé':
+      case 'Payé':
+        return 'secondary';
+      case 'Urgent':
+      case 'Résilié':
+      case 'Décliné':
+        return 'destructive';
+      case 'Acompte versé':
+      case 'Programmé':
+      case 'Partiel':
+        return 'outline';
+      default:
+        return 'default';
+    }
+  };
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusConfig[status] || { variant: 'outline' as const, label: status };
-  
   return (
-    <Badge variant={config.variant} className={className} data-testid={`badge-status-${status.toLowerCase().replace(/\s+/g, '-')}`}>
-      {config.label}
+    <Badge variant={getVariant()} className="font-mono text-xs uppercase tracking-wide">
+      {status}
     </Badge>
   );
 }

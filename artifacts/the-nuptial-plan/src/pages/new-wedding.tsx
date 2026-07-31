@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCreateWedding, getListWeddingsQueryKey, getGetDashboardOverviewQueryKey } from '@workspace/api-client-react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -51,7 +51,7 @@ export default function NewWedding() {
         onSuccess: (newWedding) => {
           queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetDashboardOverviewQueryKey() });
-          toast({ title: 'Mariage créé avec succès' });
+          toast({ title: 'Dossier créé avec succès' });
           setLocation(`/mariages/${newWedding.id}`);
         },
         onError: () => {
@@ -62,62 +62,73 @@ export default function NewWedding() {
   };
 
   return (
-    <div className="min-h-[100dvh] p-8 max-w-4xl mx-auto">
+    <div className="min-h-[100dvh] p-12 max-w-5xl mx-auto">
       <Link href="/" data-testid="link-back-dashboard">
-        <Button variant="ghost" size="sm" className="mb-6">
+        <Button variant="ghost" size="sm" className="mb-8 font-mono uppercase tracking-wider text-xs">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Retour
+          Retour au registre
         </Button>
       </Link>
 
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-4xl font-display font-semibold mb-2">Créer un nouveau mariage</h1>
-          <p className="text-muted-foreground">
-            Commencez par saisir les informations essentielles du mariage
+      <div className="space-y-8">
+        <div className="border-b-2 border-border pb-6">
+          <h1 className="text-5xl font-display font-semibold mb-3 tracking-tight">Nouveau dossier</h1>
+          <p className="text-muted-foreground font-mono text-sm uppercase tracking-wider">
+            Création d'un dossier de mariage
           </p>
         </div>
 
-        <Card className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="coupleName">Nom du couple *</Label>
+        <Card className="p-10 border-2">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-3">
+              <Label htmlFor="coupleName" className="text-sm font-mono uppercase tracking-wider">
+                Nom du couple *
+              </Label>
               <Input
                 id="coupleName"
                 value={formData.coupleName}
                 onChange={(e) => setFormData({ ...formData, coupleName: e.target.value })}
-                placeholder="Marie & Thomas Dupont"
+                placeholder="Marie & Thomas Lefèvre"
                 required
                 data-testid="input-wedding-couplename"
+                className="border-2 font-display text-lg"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="partner1">Partenaire 1</Label>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="partner1" className="text-sm font-mono uppercase tracking-wider">
+                  Partenaire 1
+                </Label>
                 <Input
                   id="partner1"
                   value={formData.partner1}
                   onChange={(e) => setFormData({ ...formData, partner1: e.target.value })}
-                  placeholder="Marie Leblanc"
+                  placeholder="Marie Beaumont"
                   data-testid="input-wedding-partner1"
+                  className="border-2"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="partner2">Partenaire 2</Label>
+              <div className="space-y-3">
+                <Label htmlFor="partner2" className="text-sm font-mono uppercase tracking-wider">
+                  Partenaire 2
+                </Label>
                 <Input
                   id="partner2"
                   value={formData.partner2}
                   onChange={(e) => setFormData({ ...formData, partner2: e.target.value })}
-                  placeholder="Thomas Dupont"
+                  placeholder="Thomas Lefèvre"
                   data-testid="input-wedding-partner2"
+                  className="border-2"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="weddingDate">Date du mariage *</Label>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="weddingDate" className="text-sm font-mono uppercase tracking-wider">
+                  Date du mariage *
+                </Label>
                 <Input
                   id="weddingDate"
                   type="date"
@@ -125,24 +136,30 @@ export default function NewWedding() {
                   onChange={(e) => setFormData({ ...formData, weddingDate: e.target.value })}
                   required
                   data-testid="input-wedding-date"
+                  className="border-2 font-mono"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="venue">Lieu *</Label>
+              <div className="space-y-3">
+                <Label htmlFor="venue" className="text-sm font-mono uppercase tracking-wider">
+                  Lieu *
+                </Label>
                 <Input
                   id="venue"
                   value={formData.venue}
                   onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                  placeholder="Château de Versailles"
+                  placeholder="Château de Chantilly"
                   required
                   data-testid="input-wedding-venue"
+                  className="border-2"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="budgetTotal">Budget total (€) *</Label>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="budgetTotal" className="text-sm font-mono uppercase tracking-wider">
+                  Budget total (€) *
+                </Label>
                 <Input
                   id="budgetTotal"
                   type="number"
@@ -152,10 +169,13 @@ export default function NewWedding() {
                   placeholder="50000"
                   required
                   data-testid="input-wedding-budget"
+                  className="border-2 font-mono"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="guestCountTarget">Nombre d'invités cible</Label>
+              <div className="space-y-3">
+                <Label htmlFor="guestCountTarget" className="text-sm font-mono uppercase tracking-wider">
+                  Nombre d'invités cible
+                </Label>
                 <Input
                   id="guestCountTarget"
                   type="number"
@@ -163,12 +183,15 @@ export default function NewWedding() {
                   onChange={(e) => setFormData({ ...formData, guestCountTarget: e.target.value })}
                   placeholder="120"
                   data-testid="input-wedding-guestcount"
+                  className="border-2 font-mono"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="venueImageUrl">URL de l'image du lieu</Label>
+            <div className="space-y-3">
+              <Label htmlFor="venueImageUrl" className="text-sm font-mono uppercase tracking-wider">
+                URL de l'image du lieu
+              </Label>
               <Input
                 id="venueImageUrl"
                 type="url"
@@ -176,29 +199,34 @@ export default function NewWedding() {
                 onChange={(e) => setFormData({ ...formData, venueImageUrl: e.target.value })}
                 placeholder="https://..."
                 data-testid="input-wedding-image"
+                className="border-2 font-mono"
               />
-              <p className="text-xs text-muted-foreground">
-                Optionnel - Ajoutez une photo du lieu pour personnaliser la vue
+              <p className="text-xs text-muted-foreground font-mono">
+                Optionnel — URL d'une photographie du lieu
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <div className="space-y-3">
+              <Label htmlFor="notes" className="text-sm font-mono uppercase tracking-wider">
+                Notes administratives
+              </Label>
               <Textarea
                 id="notes"
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={4}
-                placeholder="Informations complémentaires, thème, remarques..."
+                rows={5}
+                placeholder="Informations complémentaires, thème, remarques internes..."
                 data-testid="input-wedding-notes"
+                className="border-2"
               />
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-4 pt-6 border-t-2 border-border">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setLocation('/')}
+                className="font-mono uppercase tracking-wider text-xs"
               >
                 Annuler
               </Button>
@@ -206,8 +234,11 @@ export default function NewWedding() {
                 type="submit"
                 disabled={createWedding.isPending}
                 data-testid="button-submit-wedding"
+                className="font-mono uppercase tracking-wider text-xs"
+                size="lg"
               >
-                Créer le mariage
+                <Save className="w-4 h-4 mr-2" />
+                Créer le dossier
               </Button>
             </div>
           </form>

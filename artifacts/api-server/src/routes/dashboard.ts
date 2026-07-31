@@ -1,7 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, weddingsTable, paymentsTable, contractsTable, milestonesTable } from "@workspace/db";
+import { db, weddingsTable, paymentsTable, contractsTable, milestonesTable, vendorsTable } from "@workspace/db";
 import { GetDashboardOverviewResponse } from "@workspace/api-zod";
-import { gt, ne } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -10,14 +9,15 @@ router.get("/dashboard/overview", async (req, res): Promise<void> => {
   const payments = await db.select().from(paymentsTable);
   const contracts = await db.select().from(contractsTable);
   const milestones = await db.select().from(milestonesTable);
+  const vendors = await db.select().from(vendorsTable);
 
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
 
   const upcomingCount = weddings.filter(w => w.weddingDate >= todayStr).length;
 
-  const totalBudgetCommitted = 0; // Aggregated from vendors would be more accurate, skip for overview
-  const totalBudgetRemaining = weddings.reduce((sum, w) => sum + parseFloat(w.budgetTotal ?? "0"), 0);
+  const totalBudgetCommitted = vendors.reduce((sum, v) => sum + parseFloat(v.totalAmount ?? "0"), 0);
+  const totalBudgetRemaining = weddings.reduce((sum, w) => sum + parseFloat(w.budgetTotal ?? "0"), 0) - totalBudgetCommitted;
 
   const pendingPaymentsCount = payments.filter(p => p.status !== "Payé").length;
   const pendingContractsCount = contracts.filter(c => c.status !== "Signé").length;

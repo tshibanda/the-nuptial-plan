@@ -1,36 +1,28 @@
-import { LucideIcon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { LucideIcon } from 'lucide-react';
 
 interface StatCardProps {
   label: string;
   value: string | number;
-  icon?: LucideIcon;
-  trend?: string;
+  icon: LucideIcon;
   variant?: 'default' | 'primary' | 'accent' | 'destructive';
 }
 
-export function StatCard({ label, value, icon: Icon, trend, variant = 'default' }: StatCardProps) {
-  const variantStyles = {
-    default: 'border-card-border',
-    primary: 'border-primary/20 bg-primary/5',
-    accent: 'border-accent/20 bg-accent/5',
-    destructive: 'border-destructive/20 bg-destructive/5',
-  };
+export function StatCard({ label, value, icon: Icon, variant = 'default' }: StatCardProps) {
+  const colorClass = {
+    default: 'text-foreground',
+    primary: 'text-primary',
+    accent: 'text-accent',
+    destructive: 'text-destructive',
+  }[variant];
 
   return (
-    <Card className={`p-6 ${variantStyles[variant]}`} data-testid={`stat-${label.toLowerCase().replace(/\s+/g, '-')}`}>
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          <p className="text-3xl font-display font-semibold mt-2">{value}</p>
-          {trend && <p className="text-xs text-muted-foreground mt-1">{trend}</p>}
-        </div>
-        {Icon && (
-          <div className={`p-3 rounded-lg ${variant === 'default' ? 'bg-muted' : ''}`}>
-            <Icon className="w-5 h-5 text-muted-foreground" />
-          </div>
-        )}
+    <Card className="p-6 border-2">
+      <div className="flex items-start justify-between mb-3">
+        <p className="text-sm uppercase tracking-wider font-mono text-muted-foreground">{label}</p>
+        <Icon className={`w-5 h-5 ${colorClass}`} />
       </div>
+      <p className={`text-3xl font-display font-semibold ${colorClass}`}>{value}</p>
     </Card>
   );
 }

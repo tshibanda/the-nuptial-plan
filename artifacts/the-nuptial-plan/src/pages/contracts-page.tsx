@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'wouter';
 import { useListContracts, useGetWedding, getGetWeddingQueryKey } from '@workspace/api-client-react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -24,8 +24,8 @@ export default function ContractsPage() {
 
   if (weddingLoading || contractsLoading) {
     return (
-      <div className="p-8 space-y-8">
-        <Skeleton className="h-10 w-64" />
+      <div className="p-12 space-y-8">
+        <Skeleton className="h-12 w-96" />
         <Skeleton className="h-96" />
       </div>
     );
@@ -33,8 +33,8 @@ export default function ContractsPage() {
 
   if (!wedding) {
     return (
-      <div className="p-8">
-        <p className="text-muted-foreground">Erreur de chargement.</p>
+      <div className="p-12">
+        <p className="text-muted-foreground font-mono">Erreur de chargement.</p>
       </div>
     );
   }
@@ -47,83 +47,86 @@ export default function ContractsPage() {
   const totalAmount = contracts.reduce((sum, c) => sum + c.totalAmount, 0);
 
   return (
-    <div className="min-h-[100dvh] p-8 max-w-7xl mx-auto space-y-6">
+    <div className="min-h-[100dvh] p-12 max-w-7xl mx-auto space-y-8">
       <Link href={`/mariages/${weddingId}`} data-testid="link-back-wedding">
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" className="font-mono uppercase tracking-wider text-xs">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Retour
+          Retour au dossier
         </Button>
       </Link>
 
-      <div className="space-y-2">
-        <h1 className="text-4xl font-display font-semibold">{wedding.coupleName}</h1>
-        <h2 className="text-2xl font-display text-muted-foreground">Contrats</h2>
+      <div className="space-y-3 border-b-2 border-border pb-6">
+        <h1 className="text-5xl font-display font-semibold tracking-tight">{wedding.coupleName}</h1>
+        <h2 className="text-2xl font-display text-muted-foreground uppercase tracking-wide">Registre des contrats</h2>
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Total des contrats</p>
-          <p className="text-3xl font-display font-semibold mt-1">{contracts.length}</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="p-6 border-2">
+          <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">Contrats</p>
+          <p className="text-4xl font-display font-semibold">{contracts.length}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Contrats signés</p>
-          <p className="text-3xl font-display font-semibold mt-1 text-primary">{signedCount}</p>
+        <Card className="p-6 border-2 bg-secondary/5">
+          <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">Signés</p>
+          <p className="text-4xl font-display font-semibold text-secondary">{signedCount}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Valeur totale</p>
-          <p className="text-3xl font-display font-semibold mt-1">{formatCurrency(totalAmount)}</p>
+        <Card className="p-6 border-2">
+          <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">Valeur totale</p>
+          <p className="text-4xl font-display font-semibold">{formatCurrency(totalAmount)}</p>
         </Card>
       </div>
 
       {/* Filters & Actions */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 border-y-2 border-border py-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Rechercher un contrat..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-11 border-2 font-mono"
             data-testid="input-search-contract"
           />
         </div>
         <ContractDialog weddingId={weddingId}>
-          <Button data-testid="button-add-contract">Ajouter un contrat</Button>
+          <Button data-testid="button-add-contract" className="uppercase tracking-wider font-mono text-xs">
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter
+          </Button>
         </ContractDialog>
       </div>
 
       {/* Contract Table */}
-      <Card>
+      <Card className="border-2">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Prestataire</TableHead>
-              <TableHead className="text-right">Montant total</TableHead>
-              <TableHead className="text-right">Acompte</TableHead>
-              <TableHead>Date de signature</TableHead>
-              <TableHead>Statut</TableHead>
+            <TableRow className="border-b-2 border-border hover:bg-transparent">
+              <TableHead className="font-mono uppercase tracking-wider text-xs">Prestataire</TableHead>
+              <TableHead className="text-right font-mono uppercase tracking-wider text-xs">Montant total</TableHead>
+              <TableHead className="text-right font-mono uppercase tracking-wider text-xs">Acompte</TableHead>
+              <TableHead className="font-mono uppercase tracking-wider text-xs">Date signature</TableHead>
+              <TableHead className="font-mono uppercase tracking-wider text-xs">Statut</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredContracts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-16 text-muted-foreground font-mono">
                   Aucun contrat trouvé
                 </TableCell>
               </TableRow>
             ) : (
               filteredContracts.map((contract) => (
-                <TableRow key={contract.id} data-testid={`contract-row-${contract.id}`}>
-                  <TableCell className="font-medium">{contract.vendorName}</TableCell>
-                  <TableCell className="text-right font-mono font-semibold">
+                <TableRow key={contract.id} data-testid={`contract-row-${contract.id}`} className="border-b border-border hover:bg-muted/30">
+                  <TableCell className="font-semibold">{contract.vendorName}</TableCell>
+                  <TableCell className="text-right font-mono font-bold text-lg">
                     {formatCurrency(contract.totalAmount)}
                   </TableCell>
                   <TableCell className="text-right font-mono">
                     {contract.depositAmount ? formatCurrency(contract.depositAmount) : '—'}
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
+                  <TableCell className="font-mono font-semibold">
                     {contract.signedAt ? formatShortDate(contract.signedAt) : '—'}
                   </TableCell>
                   <TableCell>
@@ -131,7 +134,7 @@ export default function ContractsPage() {
                   </TableCell>
                   <TableCell>
                     <ContractDialog weddingId={weddingId} contract={contract}>
-                      <Button variant="ghost" size="sm" data-testid={`button-edit-contract-${contract.id}`}>
+                      <Button variant="ghost" size="sm" data-testid={`button-edit-contract-${contract.id}`} className="font-mono uppercase tracking-wider text-xs">
                         Modifier
                       </Button>
                     </ContractDialog>
