@@ -25,6 +25,7 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setBaseUrl } from '@workspace/api-client-react';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { NotificationManager } from '@/components/NotificationManager';
 
 // Set API base URL at module level so all React Query hooks reach the correct host.
 if (process.env.EXPO_PUBLIC_DOMAIN) {
@@ -96,6 +97,8 @@ export default function RootLayout() {
                     <RootLayoutNav />
                     {/* Floats above all screens — slides in when offline */}
                     <OfflineBanner />
+                    {/* Invisible — manages push-notification permissions and scheduling */}
+                    <NotificationManager />
                   </KeyboardProvider>
                 </GestureHandlerRootView>
               </WeddingProvider>
