@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "The Nuptial Plan"
+version = "1.0.0"
+id = "artifacts/the-nuptial-plan"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18909
+
+[services.development]
+run = "pnpm --filter @workspace/the-nuptial-plan run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/the-nuptial-plan", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/the-nuptial-plan/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18909"
+BASE_PATH = "/"

@@ -3,20 +3,34 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: The Nuptial Plan — wedding planner API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: weddings
+    description: Wedding management
+  - name: vendors
+    description: Vendor management
+  - name: guests
+    description: Guest management
+  - name: milestones
+    description: Milestone/calendar management
+  - name: payments
+    description: Payment tracking
+  - name: contracts
+    description: Contract management
+  - name: dashboard
+    description: Dashboard summaries
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +38,847 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── DASHBOARD ─────────────────────────────────────────────────────────────
+  /dashboard/overview:
+    get:
+      operationId: getDashboardOverview
+      tags: [dashboard]
+      summary: Planner-level overview across all weddings
+      responses:
+        "200":
+          description: Overview stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardOverview"
+
+  /weddings/{weddingId}/dashboard:
+    get:
+      operationId: getWeddingDashboard
+      tags: [dashboard]
+      summary: Per-wedding summary stats
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: Wedding dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeddingDashboard"
+        "404":
+          description: Not found
+
+  # ── WEDDINGS ──────────────────────────────────────────────────────────────
+  /weddings:
+    get:
+      operationId: listWeddings
+      tags: [weddings]
+      summary: List all weddings
+      responses:
+        "200":
+          description: List of weddings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Wedding"
+    post:
+      operationId: createWedding
+      tags: [weddings]
+      summary: Create a wedding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeddingInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wedding"
+
+  /weddings/{weddingId}:
+    get:
+      operationId: getWedding
+      tags: [weddings]
+      summary: Get a single wedding
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: Wedding
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wedding"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateWedding
+      tags: [weddings]
+      summary: Update a wedding
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeddingUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wedding"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteWedding
+      tags: [weddings]
+      summary: Delete a wedding
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ── VENDORS ───────────────────────────────────────────────────────────────
+  /weddings/{weddingId}/vendors:
+    get:
+      operationId: listVendors
+      tags: [vendors]
+      summary: List vendors for a wedding
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: Vendors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vendor"
+    post:
+      operationId: createVendor
+      tags: [vendors]
+      summary: Add a vendor to a wedding
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VendorInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vendor"
+
+  /vendors/{vendorId}:
+    patch:
+      operationId: updateVendor
+      tags: [vendors]
+      summary: Update a vendor
+      parameters:
+        - name: vendorId
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VendorUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vendor"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteVendor
+      tags: [vendors]
+      summary: Delete a vendor
+      parameters:
+        - name: vendorId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "204":
+          description: Deleted
+
+  # ── GUESTS ────────────────────────────────────────────────────────────────
+  /weddings/{weddingId}/guests:
+    get:
+      operationId: listGuests
+      tags: [guests]
+      summary: List guests for a wedding
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: Guests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestList"
+    post:
+      operationId: createGuest
+      tags: [guests]
+      summary: Add a guest
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+
+  /guests/{guestId}:
+    patch:
+      operationId: updateGuest
+      tags: [guests]
+      summary: Update a guest
+      parameters:
+        - name: guestId
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteGuest
+      tags: [guests]
+      summary: Delete a guest
+      parameters:
+        - name: guestId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "204":
+          description: Deleted
+
+  # ── MILESTONES ────────────────────────────────────────────────────────────
+  /weddings/{weddingId}/milestones:
+    get:
+      operationId: listMilestones
+      tags: [milestones]
+      summary: List milestones for a wedding
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: Milestones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Milestone"
+    post:
+      operationId: createMilestone
+      tags: [milestones]
+      summary: Add a milestone
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Milestone"
+
+  /milestones/{milestoneId}:
+    patch:
+      operationId: updateMilestone
+      tags: [milestones]
+      summary: Update a milestone
+      parameters:
+        - name: milestoneId
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Milestone"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteMilestone
+      tags: [milestones]
+      summary: Delete a milestone
+      parameters:
+        - name: milestoneId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "204":
+          description: Deleted
+
+  # ── PAYMENTS ──────────────────────────────────────────────────────────────
+  /weddings/{weddingId}/payments:
+    get:
+      operationId: listPayments
+      tags: [payments]
+      summary: List payments for a wedding
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: Payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+    post:
+      operationId: createPayment
+      tags: [payments]
+      summary: Add a payment
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /payments/{paymentId}:
+    patch:
+      operationId: updatePayment
+      tags: [payments]
+      summary: Update a payment
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "404":
+          description: Not found
+    delete:
+      operationId: deletePayment
+      tags: [payments]
+      summary: Delete a payment
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "204":
+          description: Deleted
+
+  # ── CONTRACTS ─────────────────────────────────────────────────────────────
+  /weddings/{weddingId}/contracts:
+    get:
+      operationId: listContracts
+      tags: [contracts]
+      summary: List contracts for a wedding
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: Contracts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contract"
+    post:
+      operationId: createContract
+      tags: [contracts]
+      summary: Add a contract
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+
+  /contracts/{contractId}:
+    patch:
+      operationId: updateContract
+      tags: [contracts]
+      summary: Update a contract
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteContract
+      tags: [contracts]
+      summary: Delete a contract
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
+        status: { type: string }
+
+    # ── DASHBOARD SUMMARIES ────────────────────────────────────────────────
+    DashboardOverview:
+      type: object
+      required: [totalWeddings, upcomingCount, totalBudgetCommitted, totalBudgetRemaining, pendingPaymentsCount, pendingContractsCount, upcomingMilestones]
+      properties:
+        totalWeddings: { type: number }
+        upcomingCount: { type: number }
+        totalBudgetCommitted: { type: number }
+        totalBudgetRemaining: { type: number }
+        pendingPaymentsCount: { type: number }
+        pendingContractsCount: { type: number }
+        upcomingMilestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/Milestone"
+
+    WeddingDashboard:
+      type: object
+      required: [wedding, daysUntil, guestCount, confirmedGuests, pendingGuests, budgetTotal, budgetCommitted, budgetRemaining, tasksTotal, tasksDone, pendingPaymentsTotal, urgentPaymentsCount, unsignedContractsCount]
+      properties:
+        wedding:
+          $ref: "#/components/schemas/Wedding"
+        daysUntil: { type: number }
+        guestCount: { type: number }
+        confirmedGuests: { type: number }
+        pendingGuests: { type: number }
+        budgetTotal: { type: number }
+        budgetCommitted: { type: number }
+        budgetRemaining: { type: number }
+        tasksTotal: { type: number }
+        tasksDone: { type: number }
+        pendingPaymentsTotal: { type: number }
+        urgentPaymentsCount: { type: number }
+        unsignedContractsCount: { type: number }
+
+    # ── WEDDING ──────────────────────────────────────────────────────────────
+    Wedding:
+      type: object
+      required: [id, coupleName, weddingDate, venue, budgetTotal, createdAt]
+      properties:
+        id: { type: number }
+        coupleName: { type: string }
+        partner1: { type: string }
+        partner2: { type: string }
+        weddingDate: { type: string, format: date }
+        venue: { type: string }
+        budgetTotal: { type: number }
+        guestCountTarget: { type: ["number", "null"] }
+        notes: { type: ["string", "null"] }
+        venueImageUrl: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+
+    WeddingInput:
+      type: object
+      required: [coupleName, weddingDate, venue, budgetTotal]
+      properties:
+        coupleName: { type: string, minLength: 1 }
+        partner1: { type: string }
+        partner2: { type: string }
+        weddingDate: { type: string, format: date }
+        venue: { type: string, minLength: 1 }
+        budgetTotal: { type: number, minimum: 0 }
+        guestCountTarget: { type: number }
+        notes: { type: string }
+        venueImageUrl: { type: string }
+
+    WeddingUpdate:
+      type: object
+      properties:
+        coupleName: { type: string, minLength: 1 }
+        partner1: { type: string }
+        partner2: { type: string }
+        weddingDate: { type: string, format: date }
+        venue: { type: string }
+        budgetTotal: { type: number }
+        guestCountTarget: { type: number }
+        notes: { type: string }
+        venueImageUrl: { type: string }
+
+    # ── VENDOR ───────────────────────────────────────────────────────────────
+    Vendor:
+      type: object
+      required: [id, weddingId, name, category, status, createdAt]
+      properties:
+        id: { type: number }
+        weddingId: { type: number }
+        name: { type: string }
+        category: { type: string }
         status:
           type: string
-      required:
-        - status
+          enum: [Confirmé, "Contrat en attente", "Acompte versé", Résilié]
+        totalAmount: { type: ["number", "null"] }
+        depositAmount: { type: ["number", "null"] }
+        contactName: { type: ["string", "null"] }
+        contactEmail: { type: ["string", "null"] }
+        contactPhone: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
 
+    VendorInput:
+      type: object
+      required: [name, category, status]
+      properties:
+        name: { type: string, minLength: 1 }
+        category: { type: string, minLength: 1 }
+        status:
+          type: string
+          enum: [Confirmé, "Contrat en attente", "Acompte versé", Résilié]
+        totalAmount: { type: number }
+        depositAmount: { type: number }
+        contactName: { type: string }
+        contactEmail: { type: string }
+        contactPhone: { type: string }
+        notes: { type: string }
+
+    VendorUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        category: { type: string }
+        status:
+          type: string
+          enum: [Confirmé, "Contrat en attente", "Acompte versé", Résilié]
+        totalAmount: { type: number }
+        depositAmount: { type: number }
+        contactName: { type: string }
+        contactEmail: { type: string }
+        contactPhone: { type: string }
+        notes: { type: string }
+
+    # ── GUEST ────────────────────────────────────────────────────────────────
+    Guest:
+      type: object
+      required: [id, weddingId, name, rsvpStatus, createdAt]
+      properties:
+        id: { type: number }
+        weddingId: { type: number }
+        name: { type: string }
+        email: { type: ["string", "null"] }
+        tableNumber: { type: ["string", "null"] }
+        dietary:
+          type: ["string", "null"]
+          enum: [Végétarien, Vegan, Viande, Poisson, Sans gluten, null]
+        rsvpStatus:
+          type: string
+          enum: [Confirmé, "En attente", Décliné]
+        plusOne: { type: boolean }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+
+    GuestList:
+      type: object
+      required: [guests, total, confirmed, pending, declined]
+      properties:
+        guests:
+          type: array
+          items:
+            $ref: "#/components/schemas/Guest"
+        total: { type: number }
+        confirmed: { type: number }
+        pending: { type: number }
+        declined: { type: number }
+
+    GuestInput:
+      type: object
+      required: [name, rsvpStatus]
+      properties:
+        name: { type: string, minLength: 1 }
+        email: { type: string }
+        tableNumber: { type: string }
+        dietary:
+          type: string
+          enum: [Végétarien, Vegan, Viande, Poisson, Sans gluten]
+        rsvpStatus:
+          type: string
+          enum: [Confirmé, "En attente", Décliné]
+        plusOne: { type: boolean }
+        notes: { type: string }
+
+    GuestUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        email: { type: string }
+        tableNumber: { type: string }
+        dietary:
+          type: string
+          enum: [Végétarien, Vegan, Viande, Poisson, Sans gluten]
+        rsvpStatus:
+          type: string
+          enum: [Confirmé, "En attente", Décliné]
+        plusOne: { type: boolean }
+        notes: { type: string }
+
+    # ── MILESTONE ────────────────────────────────────────────────────────────
+    Milestone:
+      type: object
+      required: [id, weddingId, title, dueDate, createdAt]
+      properties:
+        id: { type: number }
+        weddingId: { type: number }
+        title: { type: string }
+        detail: { type: ["string", "null"] }
+        dueDate: { type: string, format: date }
+        completed: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    MilestoneInput:
+      type: object
+      required: [title, dueDate]
+      properties:
+        title: { type: string, minLength: 1 }
+        detail: { type: string }
+        dueDate: { type: string, format: date }
+        completed: { type: boolean }
+
+    MilestoneUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        detail: { type: string }
+        dueDate: { type: string, format: date }
+        completed: { type: boolean }
+
+    # ── PAYMENT ──────────────────────────────────────────────────────────────
+    Payment:
+      type: object
+      required: [id, weddingId, vendorName, description, amount, dueDate, status, createdAt]
+      properties:
+        id: { type: number }
+        weddingId: { type: number }
+        vendorName: { type: string }
+        description: { type: string }
+        amount: { type: number }
+        dueDate: { type: string, format: date }
+        status:
+          type: string
+          enum: [Urgent, "À régler", Programmé, Payé]
+        paidAt: { type: ["string", "null"], format: date }
+        createdAt: { type: string, format: date-time }
+
+    PaymentInput:
+      type: object
+      required: [vendorName, description, amount, dueDate, status]
+      properties:
+        vendorName: { type: string, minLength: 1 }
+        description: { type: string, minLength: 1 }
+        amount: { type: number, minimum: 0 }
+        dueDate: { type: string, format: date }
+        status:
+          type: string
+          enum: [Urgent, "À régler", Programmé, Payé]
+        paidAt: { type: string, format: date }
+
+    PaymentUpdate:
+      type: object
+      properties:
+        vendorName: { type: string }
+        description: { type: string }
+        amount: { type: number }
+        dueDate: { type: string, format: date }
+        status:
+          type: string
+          enum: [Urgent, "À régler", Programmé, Payé]
+        paidAt: { type: string, format: date }
+
+    # ── CONTRACT ─────────────────────────────────────────────────────────────
+    Contract:
+      type: object
+      required: [id, weddingId, vendorName, status, totalAmount, createdAt]
+      properties:
+        id: { type: number }
+        weddingId: { type: number }
+        vendorName: { type: string }
+        status:
+          type: string
+          enum: [Signé, "En attente", Partiel, Résilié]
+        totalAmount: { type: number }
+        depositAmount: { type: ["number", "null"] }
+        signedAt: { type: ["string", "null"], format: date }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+
+    ContractInput:
+      type: object
+      required: [vendorName, status, totalAmount]
+      properties:
+        vendorName: { type: string, minLength: 1 }
+        status:
+          type: string
+          enum: [Signé, "En attente", Partiel, Résilié]
+        totalAmount: { type: number, minimum: 0 }
+        depositAmount: { type: number }
+        signedAt: { type: string, format: date }
+        notes: { type: string }
+
+    ContractUpdate:
+      type: object
+      properties:
+        vendorName: { type: string }
+        status:
+          type: string
+          enum: [Signé, "En attente", Partiel, Résilié]
+        totalAmount: { type: number }
+        depositAmount: { type: number }
+        signedAt: { type: string, format: date }
+        notes: { type: string }

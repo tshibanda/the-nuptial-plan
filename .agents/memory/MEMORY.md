@@ -1,0 +1,3 @@
+- [Drizzle numeric coercion](drizzle-numeric-coercion.md) — Drizzle `numeric()` columns return strings from Postgres; coerce to number before Zod parsing.
+- [Zod v3 integer spec](zod-v3-integer-spec.md) — OpenAPI `type: integer` makes Orval generate `zod.int()` which doesn't exist in Zod v3; use `type: number` instead.
+- [Hooks in map](hooks-in-map.md) — Never call `useRoute` (or any hook) inside `.map()` — extract to a named component to fix "rendered more hooks" errors.
