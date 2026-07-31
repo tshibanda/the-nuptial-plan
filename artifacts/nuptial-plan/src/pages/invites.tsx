@@ -147,9 +147,9 @@ export default function Invites() {
   };
 
   const rsvpColorMap: Record<string, string> = {
-    confirmed: 'bg-[#dce8df] text-[#5d7968]',
-    pending: 'bg-[#f0e2cb] text-[#967346]',
-    declined: 'bg-[#f0ddd9] text-[#9d5449]',
+    confirmed: 'badge-confirmed',
+    pending: 'badge-pending',
+    declined: 'badge-cancelled',
   };
 
   if (!activeWeddingId || isLoading) {
@@ -160,13 +160,14 @@ export default function Invites() {
 
   return (
     <div>
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
-            La liste
-          </p>
-          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Invités</h1>
-        </div>
+      <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient px-8 py-7 ring-1 ring-white/60"
+        style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="eyebrow mb-2 text-[#a8893e]">La liste</p>
+            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Invités</h1>
+          </div>
         <Sheet
           open={open}
           onOpenChange={(o) => {
@@ -178,7 +179,7 @@ export default function Invites() {
           }}
         >
           <SheetTrigger asChild>
-            <Button className="flex items-center gap-2 bg-primary px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90" data-testid="button-add-guest">
+            <Button size="default" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" data-testid="button-add-guest">
               <Plus size={14} /> Ajouter un invité
             </Button>
           </SheetTrigger>
@@ -299,35 +300,40 @@ export default function Invites() {
             </Form>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
 
       {/* RSVP Stats */}
       {stats && (
         <div className="mb-8 grid gap-4 sm:grid-cols-4">
-          <div className="rounded border border-border bg-card p-5">
-            <p className="text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">Total invités</p>
-            <p className="mt-2 font-serif text-[32px] text-foreground">{stats.total}</p>
+          <div className="relative overflow-hidden rounded-2xl metric-plum p-5">
+            <div className="absolute inset-x-0 top-0 h-px bg-white/80" />
+            <p className="eyebrow mb-1 text-foreground/35">Total invités</p>
+            <p className="font-serif text-[32px] leading-none text-foreground">{stats.total}</p>
           </div>
-          <div className="rounded border border-border bg-card p-5">
-            <p className="text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">Confirmés</p>
-            <p className="mt-2 font-serif text-[32px] text-[#5d7968]">{stats.confirmed}</p>
-            <div className="mt-3 h-1 bg-[#e6dfd5]">
-              <div className="h-full bg-[#5d7968]" style={{ width: `${confirmedPct}%` }} />
+          <div className="relative overflow-hidden rounded-2xl metric-sage p-5">
+            <div className="absolute inset-x-0 top-0 h-px bg-white/80" />
+            <p className="eyebrow mb-1 text-foreground/35">Confirmés</p>
+            <p className="font-serif text-[32px] leading-none text-foreground">{stats.confirmed}</p>
+            <div className="mt-3 h-1 overflow-hidden rounded-full bg-secondary/20">
+              <div className="h-full rounded-full bg-secondary transition-all" style={{ width: `${confirmedPct}%` }} />
             </div>
           </div>
-          <div className="rounded border border-border bg-card p-5">
-            <p className="text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">En attente</p>
-            <p className="mt-2 font-serif text-[32px] text-[#967346]">{stats.pending}</p>
+          <div className="relative overflow-hidden rounded-2xl metric-gold p-5">
+            <div className="absolute inset-x-0 top-0 h-px bg-white/80" />
+            <p className="eyebrow mb-1 text-foreground/35">En attente</p>
+            <p className="font-serif text-[32px] leading-none text-foreground">{stats.pending}</p>
           </div>
-          <div className="rounded border border-border bg-card p-5">
-            <p className="text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">Déclinés</p>
-            <p className="mt-2 font-serif text-[32px] text-[#9d5449]">{stats.declined}</p>
+          <div className="relative overflow-hidden rounded-2xl metric-rose p-5">
+            <div className="absolute inset-x-0 top-0 h-px bg-white/80" />
+            <p className="eyebrow mb-1 text-foreground/35">Déclinés</p>
+            <p className="font-serif text-[32px] leading-none text-foreground">{stats.declined}</p>
           </div>
         </div>
       )}
 
       {/* Guests List */}
-      <div className="overflow-hidden border-y border-border bg-card">
+      <div className="card-depth overflow-hidden">
         {guests.length === 0 ? (
           <div className="px-6 py-12 text-center text-[11px] text-[#858b89]">
             Aucun invité. Cliquez sur "Ajouter un invité" pour commencer.
@@ -346,7 +352,7 @@ export default function Invites() {
                 key={guest.id}
                 className="flex items-center gap-3 border-b border-[#e3dbd0] px-4 py-4 last:border-0 sm:px-5"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8ddd0] font-serif text-[14px] text-muted-foreground">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[rgba(200,169,110,0.25)] to-[rgba(200,169,110,0.08)] font-serif text-[14px] text-muted-foreground">
                   {initials}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -356,7 +362,7 @@ export default function Invites() {
                   </p>
                 </div>
                 <span
-                  className={`hidden rounded-full px-2.5 py-1 text-[9px] font-semibold sm:block ${rsvpColorMap[guest.rsvpStatus] || 'bg-[#f0e2cb] text-[#967346]'}`}
+                  className={`hidden rounded-full px-2.5 py-1 text-[9px] font-semibold sm:block ${rsvpColorMap[guest.rsvpStatus] || 'badge-pending'}`}
                 >
                   {rsvpStatusMap[guest.rsvpStatus] || guest.rsvpStatus}
                 </span>

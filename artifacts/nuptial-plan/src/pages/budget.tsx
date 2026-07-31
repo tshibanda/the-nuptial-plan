@@ -133,13 +133,14 @@ export default function Budget() {
 
   return (
     <div>
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
-            Où en est-on
-          </p>
-          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Budget</h1>
-        </div>
+      <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient px-8 py-7 ring-1 ring-white/60"
+        style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="eyebrow mb-2 text-[#a8893e]">Où en est-on</p>
+            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Budget</h1>
+          </div>
         <Sheet
           open={open}
           onOpenChange={(o) => {
@@ -151,7 +152,7 @@ export default function Budget() {
           }}
         >
           <SheetTrigger asChild>
-            <Button className="flex items-center gap-2 bg-primary px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90" data-testid="button-add-category">
+            <Button size="default" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" data-testid="button-add-category">
               <Plus size={14} /> Ajouter une catégorie
             </Button>
           </SheetTrigger>
@@ -236,11 +237,12 @@ export default function Budget() {
             </Form>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
 
       {/* Summary */}
       {summary && (
-        <div className="mb-8 border-y border-border bg-card px-5 py-5">
+        <div className="mb-8 card-depth px-5 py-5">
           <div className="mb-6 flex items-end justify-between">
             <div>
               <p className="text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">Engagé</p>

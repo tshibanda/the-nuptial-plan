@@ -301,26 +301,45 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-h-[100dvh]">
         {/* Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 z-30 w-[285px] -translate-x-full bg-sidebar text-sidebar-foreground transition-transform duration-300 md:relative md:translate-x-0 ${mobileOpen ? 'translate-x-0' : ''}`}
+          className={`fixed inset-y-0 left-0 z-30 w-[285px] -translate-x-full sidebar-gradient text-sidebar-foreground transition-transform duration-300 md:relative md:translate-x-0 ${mobileOpen ? 'translate-x-0' : ''}`}
         >
+          {/* Botanical watermark */}
+          <div className="pointer-events-none absolute -bottom-6 -left-4 w-40 rotate-[15deg] text-sidebar-foreground opacity-[0.04]">
+            <svg viewBox="0 0 120 220" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M60 215 Q56 175 52 135 Q48 90 58 48" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.7"/>
+              <path d="M58 48 Q32 28 18 50 Q12 72 58 68 Z" opacity="0.65"/>
+              <path d="M54 85 Q26 68 14 92 Q10 114 54 104 Z" opacity="0.55"/>
+              <path d="M52 122 Q78 104 90 128 Q94 150 52 138 Z" opacity="0.60"/>
+              <path d="M50 158 Q24 140 14 165 Q10 188 50 174 Z" opacity="0.50"/>
+              <circle cx="62" cy="23" r="7" opacity="0.55"/>
+            </svg>
+          </div>
+
           <div className="flex h-full flex-col px-7 py-8">
             {/* Logo */}
-            <div className="mb-14 flex items-center justify-between">
+            <div className="mb-12 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center border border-sidebar-primary font-serif text-[23px] text-sidebar-primary">
-                  N
-                </span>
+                {/* Double-border monogram */}
+                <div className="relative flex h-10 w-10 items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border border-sidebar-primary/20" />
+                  <span className="flex h-8 w-8 items-center justify-center border border-sidebar-primary/70 font-serif text-[22px] text-sidebar-primary"
+                    style={{ boxShadow: '0 0 12px rgba(200,169,110,0.25), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
+                    N
+                  </span>
+                </div>
                 <div>
-                  <p className="font-serif text-[21px] leading-none">The Nuptial Plan</p>
-                  <p className="mt-1 text-[9px] uppercase tracking-[0.17em] text-sidebar-foreground/50">
+                  <p className="font-serif text-[20px] leading-none">The Nuptial Plan</p>
+                  <p className="mt-1 text-[8.5px] uppercase tracking-[0.2em] text-sidebar-foreground/40">
                     Atelier de planification nuptiale
                   </p>
                 </div>
               </div>
-              <button className="md:hidden" onClick={() => setMobileOpen(false)} data-testid="button-close-sidebar">
-                <X size={18} />
+              <button className="md:hidden text-sidebar-foreground/50 hover:text-sidebar-foreground" onClick={() => setMobileOpen(false)} data-testid="button-close-sidebar">
+                <X size={17} />
               </button>
             </div>
+            {/* Decorative separator */}
+            <div className="mb-6 h-px w-full bg-gradient-to-r from-transparent via-sidebar-primary/30 to-transparent" />
 
             {/* Weddings list */}
             <p className="mb-4 text-[9px] font-semibold uppercase tracking-[0.22em] text-sidebar-foreground/50">

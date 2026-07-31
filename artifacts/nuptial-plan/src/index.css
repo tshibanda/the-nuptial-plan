@@ -379,3 +379,209 @@
     inset: -1px;
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   JARDIN PARISIEN — iOS 17 Design Language Utilities
+   Glass · Gradients · Depth · Relief · Glow
+   ══════════════════════════════════════════════════════════ */
+
+@layer components {
+
+  /* ── Glassmorphism ── */
+  .glass {
+    background: linear-gradient(145deg, rgba(255,255,255,0.88) 0%, rgba(253,249,253,0.72) 100%);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.62);
+    box-shadow:
+      0 8px 32px rgba(93,45,93,0.10),
+      inset 0 1px 0 rgba(255,255,255,0.88),
+      inset 0 -1px 0 rgba(93,45,93,0.04);
+  }
+
+  .glass-subtle {
+    background: linear-gradient(145deg, rgba(255,255,255,0.78) 0%, rgba(253,249,253,0.60) 100%);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.55);
+    box-shadow:
+      0 4px 16px rgba(93,45,93,0.07),
+      inset 0 1px 0 rgba(255,255,255,0.80);
+  }
+
+  .glass-dark {
+    background: linear-gradient(145deg, rgba(60,26,60,0.82) 0%, rgba(45,16,45,0.90) 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.22),
+      inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+
+  /* ── Gradient Hero Background ── */
+  .hero-gradient {
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 80%, rgba(204,140,148,0.14) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 85% 20%, rgba(200,169,110,0.12) 0%, transparent 65%),
+      radial-gradient(ellipse 70% 60% at 50% 50%, rgba(180,120,180,0.08) 0%, transparent 70%),
+      linear-gradient(160deg, rgba(253,249,253,0.96) 0%, rgba(248,243,238,0.98) 100%);
+  }
+
+  /* ── Vivid Glow Button (primary) ── */
+  .btn-glow {
+    background: linear-gradient(135deg, #7A3A7A 0%, #5D2D5D 55%, #4A2060 100%);
+    box-shadow:
+      0 4px 16px rgba(93,45,93,0.38),
+      0 1px 3px rgba(93,45,93,0.18),
+      inset 0 1px 0 rgba(255,255,255,0.22),
+      inset 0 -1px 0 rgba(0,0,0,0.10);
+    border: 1px solid rgba(255,255,255,0.14) !important;
+    color: #FBF5FB;
+    transition: all 0.18s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .btn-glow:hover {
+    background: linear-gradient(135deg, #8A4A8A 0%, #6D3D6D 55%, #5A3070 100%);
+    box-shadow:
+      0 6px 22px rgba(93,45,93,0.48),
+      0 2px 6px rgba(93,45,93,0.22),
+      inset 0 1px 0 rgba(255,255,255,0.28);
+    transform: translateY(-1px);
+  }
+  .btn-glow:active {
+    transform: translateY(0px);
+    box-shadow:
+      0 2px 8px rgba(93,45,93,0.30),
+      inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+
+  /* ── Outline Glass Button ── */
+  .btn-glass {
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(215,205,215,0.65) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.75),
+      0 2px 8px rgba(93,45,93,0.07);
+    color: hsl(var(--foreground));
+    transition: all 0.16s ease;
+  }
+  .btn-glass:hover {
+    background: rgba(255,255,255,0.30);
+    border-color: rgba(215,205,215,0.85) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.85),
+      0 3px 12px rgba(93,45,93,0.10);
+  }
+
+  /* ── Gold Glow Button ── */
+  .btn-gold {
+    background: linear-gradient(135deg, #D4B47A 0%, #C8A96E 55%, #B0904A 100%);
+    box-shadow:
+      0 4px 14px rgba(200,169,110,0.40),
+      inset 0 1px 0 rgba(255,255,255,0.30),
+      inset 0 -1px 0 rgba(0,0,0,0.10);
+    border: 1px solid rgba(255,255,255,0.20) !important;
+    color: #3C1A3C;
+    font-weight: 600;
+  }
+  .btn-gold:hover {
+    background: linear-gradient(135deg, #DFBF8A 0%, #D4B47A 55%, #BC9C5A 100%);
+    box-shadow: 0 6px 18px rgba(200,169,110,0.50), inset 0 1px 0 rgba(255,255,255,0.38);
+    transform: translateY(-1px);
+  }
+
+  /* ── Metric Cards (colored gradient variants) ── */
+  .metric-plum {
+    background: linear-gradient(145deg, rgba(180,120,180,0.16) 0%, rgba(253,249,253,0.96) 100%);
+    border: 1px solid rgba(180,120,180,0.28);
+    box-shadow: 0 2px 12px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.82);
+  }
+  .metric-rose {
+    background: linear-gradient(145deg, rgba(204,140,148,0.18) 0%, rgba(253,249,253,0.96) 100%);
+    border: 1px solid rgba(204,140,148,0.30);
+    box-shadow: 0 2px 12px rgba(204,140,148,0.10), inset 0 1px 0 rgba(255,255,255,0.82);
+  }
+  .metric-gold {
+    background: linear-gradient(145deg, rgba(200,169,110,0.20) 0%, rgba(253,249,253,0.96) 100%);
+    border: 1px solid rgba(200,169,110,0.32);
+    box-shadow: 0 2px 12px rgba(200,169,110,0.10), inset 0 1px 0 rgba(255,255,255,0.82);
+  }
+  .metric-sage {
+    background: linear-gradient(145deg, rgba(100,144,100,0.15) 0%, rgba(253,249,253,0.96) 100%);
+    border: 1px solid rgba(100,144,100,0.26);
+    box-shadow: 0 2px 12px rgba(100,144,100,0.08), inset 0 1px 0 rgba(255,255,255,0.82);
+  }
+
+  /* ── Section Cards with depth ── */
+  .card-depth {
+    background: linear-gradient(160deg, rgba(255,255,255,0.95) 0%, rgba(253,249,253,0.88) 100%);
+    border: 1px solid rgba(215,205,215,0.55);
+    box-shadow:
+      0 1px 3px rgba(93,45,93,0.04),
+      0 4px 16px rgba(93,45,93,0.06),
+      inset 0 1px 0 rgba(255,255,255,0.90);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  /* ── Top rim highlight (apply to position:relative parents) ── */
+  .rim-light::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.85) 20%, rgba(255,255,255,0.90) 50%, rgba(255,255,255,0.85) 80%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ── Status badge palette ── */
+  .badge-confirmed {
+    background: linear-gradient(135deg, rgba(100,144,100,0.18) 0%, rgba(100,144,100,0.08) 100%);
+    border: 1px solid rgba(100,144,100,0.35);
+    color: #4A6A4A;
+  }
+  .badge-pending {
+    background: linear-gradient(135deg, rgba(200,169,110,0.20) 0%, rgba(200,169,110,0.10) 100%);
+    border: 1px solid rgba(200,169,110,0.40);
+    color: #896a2a;
+  }
+  .badge-deposit {
+    background: linear-gradient(135deg, rgba(180,120,180,0.18) 0%, rgba(180,120,180,0.08) 100%);
+    border: 1px solid rgba(180,120,180,0.35);
+    color: #5D2D5D;
+  }
+  .badge-cancelled {
+    background: linear-gradient(135deg, rgba(204,140,148,0.20) 0%, rgba(204,140,148,0.08) 100%);
+    border: 1px solid rgba(204,140,148,0.38);
+    color: #8a3040;
+  }
+
+  /* ── Sidebar enhancements ── */
+  .sidebar-gradient {
+    background: linear-gradient(
+      160deg,
+      #3C1A3C 0%,
+      #4A2050 20%,
+      #3C1A3C 50%,
+      #301430 80%,
+      #2A0E2A 100%
+    );
+  }
+
+  /* ── Gradient progress bar ── */
+  .progress-gradient {
+    background: linear-gradient(90deg, #7A3A7A 0%, #CC8C94 50%, #C8A96E 100%);
+  }
+
+  /* ── Section eyebrow ── */
+  .eyebrow {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+}

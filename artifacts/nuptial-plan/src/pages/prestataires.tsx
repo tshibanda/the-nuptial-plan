@@ -145,10 +145,17 @@ export default function Prestataires() {
   };
 
   const vendorColorMap: Record<string, string> = {
-    confirmed: 'bg-[#dce8df] text-[#5d7968]',
-    awaiting_contract: 'bg-[#f0e2cb] text-[#967346]',
-    deposit_paid: 'bg-[#e7e0ee] text-[#76677e]',
-    cancelled: 'bg-[#f0ddd9] text-[#9d5449]',
+    confirmed: 'badge-confirmed',
+    awaiting_contract: 'badge-pending',
+    deposit_paid: 'badge-deposit',
+    cancelled: 'badge-cancelled',
+  };
+
+  const vendorAvatarMap: Record<string, string> = {
+    confirmed: 'from-[rgba(100,144,100,0.25)] to-[rgba(100,144,100,0.10)]',
+    awaiting_contract: 'from-[rgba(200,169,110,0.28)] to-[rgba(200,169,110,0.10)]',
+    deposit_paid: 'from-[rgba(180,120,180,0.25)] to-[rgba(180,120,180,0.10)]',
+    cancelled: 'from-[rgba(204,140,148,0.25)] to-[rgba(204,140,148,0.10)]',
   };
 
   if (!activeWeddingId || isLoading) {
@@ -157,13 +164,14 @@ export default function Prestataires() {
 
   return (
     <div>
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
-            Votre équipe
-          </p>
-          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Prestataires</h1>
-        </div>
+      <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient px-8 py-7 ring-1 ring-white/60"
+        style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="eyebrow mb-2 text-[#a8893e]">Votre équipe</p>
+            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Prestataires</h1>
+          </div>
         <Sheet open={open} onOpenChange={(o) => {
           setOpen(o);
           if (!o) {
@@ -172,7 +180,7 @@ export default function Prestataires() {
           }
         }}>
           <SheetTrigger asChild>
-            <Button className="flex items-center gap-2 bg-primary px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90" data-testid="button-add-vendor">
+            <Button size="default" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" data-testid="button-add-vendor">
               <Plus size={14} /> Ajouter un prestataire
             </Button>
           </SheetTrigger>
@@ -340,9 +348,10 @@ export default function Prestataires() {
             )}
           </SheetContent>
         </Sheet>
+        </div>
       </div>
 
-      <div className="overflow-hidden border-y border-border bg-card">
+      <div className="card-depth overflow-hidden">
         {vendors.length === 0 ? (
           <div className="px-6 py-12 text-center text-[11px] text-[#858b89]">
             Aucun prestataire. Cliquez sur "Ajouter un prestataire" pour commencer.
@@ -361,7 +370,7 @@ export default function Prestataires() {
                 key={vendor.id}
                 className="flex items-center gap-3 border-b border-[#e3dbd0] px-4 py-4 last:border-0 sm:px-5"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8ddd0] font-serif text-[14px] text-muted-foreground">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[rgba(200,169,110,0.25)] to-[rgba(200,169,110,0.08)] font-serif text-[14px] text-muted-foreground">
                   {initials}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -369,7 +378,7 @@ export default function Prestataires() {
                   <p className="mt-1 text-[10px] text-[#858b89]">{vendor.category}</p>
                 </div>
                 <span
-                  className={`hidden rounded-full px-2.5 py-1 text-[9px] font-semibold sm:block ${vendorColorMap[vendor.status] || 'bg-[#f0e2cb] text-[#967346]'}`}
+                  className={`hidden rounded-full px-2.5 py-1 text-[9px] font-semibold sm:block ${vendorColorMap[vendor.status] || 'badge-pending'}`}
                 >
                   {vendorStatusMap[vendor.status] || vendor.status}
                 </span>

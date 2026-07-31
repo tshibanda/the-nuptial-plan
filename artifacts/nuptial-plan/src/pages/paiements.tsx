@@ -149,8 +149,8 @@ export default function Paiements() {
   };
 
   const statusColorMap: Record<string, string> = {
-    pending: 'bg-[#f0e2cb] text-[#967346]',
-    paid: 'bg-[#dce8df] text-[#5d7968]',
+    pending: 'badge-pending',
+    paid: 'badge-confirmed',
     overdue: 'bg-[#f1dfd0] text-[#9d6246]',
     scheduled: 'bg-[#e7e4df] text-[#6f7673]',
   };
@@ -169,13 +169,14 @@ export default function Paiements() {
 
   return (
     <div>
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
-            Le calendrier financier
-          </p>
-          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Paiements</h1>
-        </div>
+      <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient px-8 py-7 ring-1 ring-white/60"
+        style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="eyebrow mb-2 text-[#a8893e]">Le calendrier financier</p>
+            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Paiements</h1>
+          </div>
         <Sheet
           open={open}
           onOpenChange={(o) => {
@@ -187,7 +188,7 @@ export default function Paiements() {
           }}
         >
           <SheetTrigger asChild>
-            <Button className="flex items-center gap-2 bg-primary px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90" data-testid="button-add-payment">
+            <Button size="default" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" data-testid="button-add-payment">
               <Plus size={14} /> Ajouter un paiement
             </Button>
           </SheetTrigger>
@@ -328,12 +329,13 @@ export default function Paiements() {
             </Form>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
 
       {/* Payment Cards */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sortedPayments.length === 0 ? (
-          <div className="col-span-full rounded border border-border bg-card px-6 py-12 text-center text-[11px] text-[#858b89]">
+          <div className="col-span-full card-depth px-6 py-12 text-center text-[11px] text-muted-foreground">
             Aucun paiement. Cliquez sur "Ajouter un paiement" pour commencer.
           </div>
         ) : (
@@ -341,18 +343,19 @@ export default function Paiements() {
             <button
               key={payment.id}
               onClick={() => handleEdit(payment)}
-              className="rounded border border-border bg-card p-5 text-left shadow-[0_3px_12px_rgba(93,45,93,.05)] transition hover:border-ring"
+              className="card-depth relative overflow-hidden p-5 text-left transition hover:shadow-[0_6px_24px_rgba(93,45,93,0.12)]"
               data-testid={`button-edit-payment-${payment.id}`}
             >
+              <div className="absolute inset-x-0 top-0 h-px bg-white/80" />
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[12px] font-semibold text-[#3d4d55]">{payment.vendorName}</p>
-                  <p className="mt-1 text-[10px] text-[#858b89]">
+                  <p className="text-[12px] font-semibold text-foreground">{payment.vendorName}</p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">
                     {payment.description} · {formatDate(payment.dueDate, 'd MMM yyyy')}
                   </p>
                 </div>
                 <span
-                  className={`shrink-0 rounded-full px-2 py-1 text-[8px] font-semibold ${statusColorMap[payment.status] || 'bg-[#f0e2cb] text-[#967346]'}`}
+                  className={`shrink-0 rounded-full px-2 py-1 text-[8px] font-semibold ${statusColorMap[payment.status] || 'badge-pending'}`}
                 >
                   {statusMap[payment.status] || payment.status}
                 </span>

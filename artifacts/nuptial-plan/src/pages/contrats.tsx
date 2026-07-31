@@ -149,10 +149,10 @@ export default function Contrats() {
   };
 
   const statusColorMap: Record<string, string> = {
-    signed: 'bg-[#dce8df] text-[#5d7968]',
-    pending: 'bg-[#f0e2cb] text-[#967346]',
-    partial: 'bg-[#e7e0ee] text-[#76677e]',
-    cancelled: 'bg-[#f0ddd9] text-[#9d5449]',
+    signed: 'badge-confirmed',
+    pending: 'badge-pending',
+    partial: 'badge-deposit',
+    cancelled: 'badge-cancelled',
   };
 
   if (!activeWeddingId || isLoading) {
@@ -161,13 +161,14 @@ export default function Contrats() {
 
   return (
     <div>
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
-            Documents essentiels
-          </p>
-          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Contrats</h1>
-        </div>
+      <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient px-8 py-7 ring-1 ring-white/60"
+        style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="eyebrow mb-2 text-[#a8893e]">Documents essentiels</p>
+            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Contrats</h1>
+          </div>
         <Sheet
           open={open}
           onOpenChange={(o) => {
@@ -179,7 +180,7 @@ export default function Contrats() {
           }}
         >
           <SheetTrigger asChild>
-            <Button className="flex items-center gap-2 bg-primary px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90" data-testid="button-add-contract">
+            <Button size="default" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" data-testid="button-add-contract">
               <Plus size={14} /> Ajouter un contrat
             </Button>
           </SheetTrigger>
@@ -321,10 +322,11 @@ export default function Contrats() {
             )}
           </SheetContent>
         </Sheet>
+        </div>
       </div>
 
       {/* Contracts Table */}
-      <div className="overflow-x-auto border border-border bg-card">
+      <div className="overflow-x-auto card-depth">
         <table className="w-full">
           <thead className="border-b border-border">
             <tr className="text-left">
@@ -361,7 +363,7 @@ export default function Contrats() {
                   </td>
                   <td className="px-5 py-4">
                     <span
-                      className={`inline-block rounded-full px-2.5 py-1 text-[9px] font-semibold ${statusColorMap[contract.status] || 'bg-[#f0e2cb] text-[#967346]'}`}
+                      className={`inline-block rounded-full px-2.5 py-1 text-[9px] font-semibold ${statusColorMap[contract.status] || 'badge-pending'}`}
                     >
                       {statusMap[contract.status] || contract.status}
                     </span>
