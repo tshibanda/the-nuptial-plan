@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, FileText } from 'lucide-react';
+import { FileAttachments } from '@/components/file-attachments';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useListContracts,
@@ -310,6 +311,14 @@ export default function Contrats() {
                 </div>
               </form>
             </Form>
+            {editingContract && activeWeddingId && (
+              <FileAttachments
+                weddingId={activeWeddingId}
+                entityType="contract"
+                entityId={editingContract}
+                label="Pièces jointes"
+              />
+            )}
           </SheetContent>
         </Sheet>
       </div>

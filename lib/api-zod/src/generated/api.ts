@@ -785,3 +785,23 @@ export const DeletePaymentParams = zod.object({
 export const DeletePaymentResponse = zod.void()
 
 
+/**
+ * @summary Request a presigned upload URL
+ */
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string(),
+  "size": zod.number(),
+  "contentType": zod.string(),
+})
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string(),
+  "objectPath": zod.string(),
+  "metadata": zod.object({
+    "name": zod.string(),
+    "size": zod.number(),
+    "contentType": zod.string(),
+  }),
+})
+
+

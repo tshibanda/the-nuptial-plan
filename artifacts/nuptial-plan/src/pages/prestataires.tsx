@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, CircleEllipsis } from 'lucide-react';
+import { FileAttachments } from '@/components/file-attachments';
 import { useActiveWedding } from '@/lib/wedding-context';
 import { useListVendors, useCreateVendor, useUpdateVendor, useDeleteVendor, getListVendorsQueryKey } from '@workspace/api-client-react';
 import { formatCurrency } from '@/lib/format';
@@ -329,6 +330,14 @@ export default function Prestataires() {
                 </div>
               </form>
             </Form>
+            {editingVendor && activeWeddingId && (
+              <FileAttachments
+                weddingId={activeWeddingId}
+                entityType="vendor"
+                entityId={editingVendor}
+                label="Pièces jointes"
+              />
+            )}
           </SheetContent>
         </Sheet>
       </div>

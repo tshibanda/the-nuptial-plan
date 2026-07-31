@@ -7,6 +7,7 @@ import {
   FileText,
   Home,
   Menu,
+  Paperclip,
   Plus,
   Search,
   Settings,
@@ -51,6 +52,7 @@ const navItems = [
   { label: 'Budget', icon: WalletCards, path: '/budget' },
   { label: 'Contrats', icon: FileText, path: '/contrats' },
   { label: 'Paiements', icon: CreditCard, path: '/paiements' },
+  { label: 'Documents', icon: Paperclip, path: '/documents' },
 ];
 
 const CURRENCIES = [
