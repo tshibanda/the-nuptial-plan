@@ -4,3 +4,40 @@
 }
 
 .aurelia-countdown-pulse { animation: aurelia-pulse 2.8s ease-in-out infinite; }
+
+/* Jour J — live indicator pulse */
+@keyframes jourj-live-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+.jourj-live-dot { animation: jourj-live-dot 1.4s ease-in-out infinite; }
+
+/* Jour J — "En cours" row shimmer */
+@keyframes jourj-en-cours {
+  0%, 100% { background-color: rgba(194, 157, 88, 0.08); }
+  50% { background-color: rgba(194, 157, 88, 0.18); }
+}
+.jourj-en-cours-row { animation: jourj-en-cours 2.6s ease-in-out infinite; }
+
+/* Jour J — checklist check bounce */
+@keyframes jourj-check-bounce {
+  0%   { transform: scale(0.6); opacity: 0; }
+  55%  { transform: scale(1.22); opacity: 1; }
+  75%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.jourj-check-in { animation: jourj-check-bounce 0.32s cubic-bezier(.36,.07,.19,.97) both; }
+
+/* Jour J — item strikethrough fade */
+@keyframes jourj-strike-in {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+.jourj-strike::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  height: 1px;
+  background: #8c8b86;
+  animation: jourj-strike-in 0.28s ease-out forwards;
+}
