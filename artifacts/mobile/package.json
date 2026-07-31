@@ -61,6 +61,9 @@
   "dependencies": {
     "@expo-google-fonts/cormorant-garamond": "^0.4.1",
     "@expo-google-fonts/dm-sans": "^0.4.2",
+    "@react-native-community/netinfo": "^11.4.1",
+    "@tanstack/query-async-storage-persister": "^5.101.4",
+    "@tanstack/react-query-persist-client": "^5.101.4",
     "expo-auth-session": "~7.0.11"
   }
 }

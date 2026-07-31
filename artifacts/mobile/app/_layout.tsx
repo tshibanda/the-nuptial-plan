@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -20,7 +19,12 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { ClerkProvider, ClerkLoaded } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
+import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setBaseUrl } from '@workspace/api-client-react';
+import { OfflineBanner } from '@/components/OfflineBanner';
 
 // Set API base URL at module level so all React Query hooks reach the correct host.
 if (process.env.EXPO_PUBLIC_DOMAIN) {
@@ -33,10 +37,18 @@ SplashScreen.preventAutoHideAsync();
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const proxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
 
+// Persist the React Query cache to AsyncStorage so data survives app restarts
+// and remains available when the planner is offline.
+const asyncStoragePersister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  throttleTime: 1_000, // ms — debounce writes
+});
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
+      staleTime: 30_000,          // re-fetch after 30 s when online
+      gcTime: 1000 * 60 * 60 * 24, // keep in memory / storage for 24 h
       retry: 1,
     },
   },
@@ -74,15 +86,20 @@ export default function RootLayout() {
       <ClerkLoaded>
         <SafeAreaProvider>
           <ErrorBoundary>
-            <QueryClientProvider client={queryClient}>
+            <PersistQueryClientProvider
+              client={queryClient}
+              persistOptions={{ persister: asyncStoragePersister }}
+            >
               <WeddingProvider>
-                <GestureHandlerRootView>
+                <GestureHandlerRootView style={{ flex: 1 }}>
                   <KeyboardProvider>
                     <RootLayoutNav />
+                    {/* Floats above all screens — slides in when offline */}
+                    <OfflineBanner />
                   </KeyboardProvider>
                 </GestureHandlerRootView>
               </WeddingProvider>
-            </QueryClientProvider>
+            </PersistQueryClientProvider>
           </ErrorBoundary>
         </SafeAreaProvider>
       </ClerkLoaded>
