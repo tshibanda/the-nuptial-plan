@@ -53,8 +53,17 @@ const navItems = [
   { label: 'Paiements', icon: CreditCard, path: '/paiements' },
 ];
 
+const CURRENCIES = [
+  { code: 'EUR', label: 'Euro (€)' },
+  { code: 'GBP', label: 'Livre sterling (£)' },
+  { code: 'USD', label: 'Dollar américain ($)' },
+  { code: 'CHF', label: 'Franc suisse (CHF)' },
+];
+
 const newWeddingSchema = z.object({
-  names: z.string().min(2, 'Entrez les noms des mariés'),
+  partner1: z.string().min(1, 'Entrez le prénom du premier marié'),
+  partner2: z.string().min(1, 'Entrez le prénom du second marié'),
+  currency: z.string().min(1),
   weddingDate: z.string().min(1, 'La date est requise'),
   venue: z.string().min(1, 'Le lieu est requis'),
   totalBudget: z.number().min(0),
@@ -77,12 +86,13 @@ function CreateWeddingDialog({
   const createWedding = useCreateWedding();
   const form = useForm<NewWeddingData>({
     resolver: zodResolver(newWeddingSchema),
-    defaultValues: { names: '', weddingDate: '', venue: '', totalBudget: 0, guestCount: 0, notes: '' },
+    defaultValues: { partner1: '', partner2: '', currency: 'EUR', weddingDate: '', venue: '', totalBudget: 0, guestCount: 0, notes: '' },
   });
 
   const onSubmit = (data: NewWeddingData) => {
+    const names = `${data.partner1.trim()} & ${data.partner2.trim()}`;
     createWedding.mutate(
-      { data: { ...data, totalBudget: Math.round(data.totalBudget * 100) } },
+      { data: { names, partner1: data.partner1.trim(), partner2: data.partner2.trim(), currency: data.currency, weddingDate: data.weddingDate, venue: data.venue, totalBudget: Math.round(data.totalBudget * 100), guestCount: data.guestCount, notes: data.notes } },
       {
         onSuccess: (wedding) => {
           queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
@@ -109,14 +119,50 @@ function CreateWeddingDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="partner1"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prénom — marié·e 1</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Sophie" data-testid="input-wedding-partner1" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="partner2"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prénom — marié·e 2</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="James" data-testid="input-wedding-partner2" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
-              name="names"
+              name="currency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Noms des mariés</FormLabel>
+                  <FormLabel>Devise</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Sophie & James Hartwell" data-testid="input-wedding-names" />
+                    <select
+                      {...field}
+                      className="w-full border border-[#cfc2b2] bg-[#f8f5ef] px-3 py-2 text-[12px] text-[#263b48] focus:outline-none focus:border-[#a88a5d]"
+                      data-testid="select-wedding-currency"
+                    >
+                      {CURRENCIES.map((c) => (
+                        <option key={c.code} value={c.code}>{c.label}</option>
+                      ))}
+                    </select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

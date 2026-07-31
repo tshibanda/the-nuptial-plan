@@ -22,9 +22,12 @@ export const HealthCheckResponse = zod.object({
 export const ListWeddingsResponseItem = zod.object({
   "id": zod.number(),
   "names": zod.string().describe('e.g. Sophie & James Hartwell'),
+  "partner1": zod.string().nullish(),
+  "partner2": zod.string().nullish(),
+  "currency": zod.string(),
   "weddingDate": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "venue": zod.string(),
-  "totalBudget": zod.number().describe('Total budget in GBP pence'),
+  "totalBudget": zod.number().describe('Total budget in minor currency units'),
   "guestCount": zod.number(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
@@ -37,6 +40,9 @@ export const ListWeddingsResponse = zod.array(ListWeddingsResponseItem)
  */
 export const CreateWeddingBody = zod.object({
   "names": zod.string(),
+  "partner1": zod.string().optional(),
+  "partner2": zod.string().optional(),
+  "currency": zod.string(),
   "weddingDate": zod.string(),
   "venue": zod.string(),
   "totalBudget": zod.number(),
@@ -47,9 +53,12 @@ export const CreateWeddingBody = zod.object({
 export const CreateWeddingResponse = zod.object({
   "id": zod.number(),
   "names": zod.string().describe('e.g. Sophie & James Hartwell'),
+  "partner1": zod.string().nullish(),
+  "partner2": zod.string().nullish(),
+  "currency": zod.string(),
   "weddingDate": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "venue": zod.string(),
-  "totalBudget": zod.number().describe('Total budget in GBP pence'),
+  "totalBudget": zod.number().describe('Total budget in minor currency units'),
   "guestCount": zod.number(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
@@ -66,9 +75,12 @@ export const GetWeddingParams = zod.object({
 export const GetWeddingResponse = zod.object({
   "id": zod.number(),
   "names": zod.string().describe('e.g. Sophie & James Hartwell'),
+  "partner1": zod.string().nullish(),
+  "partner2": zod.string().nullish(),
+  "currency": zod.string(),
   "weddingDate": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "venue": zod.string(),
-  "totalBudget": zod.number().describe('Total budget in GBP pence'),
+  "totalBudget": zod.number().describe('Total budget in minor currency units'),
   "guestCount": zod.number(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
@@ -84,6 +96,9 @@ export const UpdateWeddingParams = zod.object({
 
 export const UpdateWeddingBody = zod.object({
   "names": zod.string().optional(),
+  "partner1": zod.string().optional(),
+  "partner2": zod.string().optional(),
+  "currency": zod.string().optional(),
   "weddingDate": zod.string().optional(),
   "venue": zod.string().optional(),
   "totalBudget": zod.number().optional(),
@@ -94,9 +109,12 @@ export const UpdateWeddingBody = zod.object({
 export const UpdateWeddingResponse = zod.object({
   "id": zod.number(),
   "names": zod.string().describe('e.g. Sophie & James Hartwell'),
+  "partner1": zod.string().nullish(),
+  "partner2": zod.string().nullish(),
+  "currency": zod.string(),
   "weddingDate": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "venue": zod.string(),
-  "totalBudget": zod.number().describe('Total budget in GBP pence'),
+  "totalBudget": zod.number().describe('Total budget in minor currency units'),
   "guestCount": zod.number(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string()

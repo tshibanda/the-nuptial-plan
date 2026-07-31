@@ -803,13 +803,22 @@ components:
     # ─── Wedding ──────────────────────────────────────────────
     Wedding:
       type: object
-      required: [id, names, weddingDate, venue, totalBudget, guestCount, createdAt]
+      required: [id, names, currency, weddingDate, venue, totalBudget, guestCount, createdAt]
       properties:
         id:
           type: number
         names:
           type: string
           description: "e.g. Sophie & James Hartwell"
+        partner1:
+          type: string
+          description: "Prénom du premier marié"
+        partner2:
+          type: string
+          description: "Prénom du second marié"
+        currency:
+          type: string
+          description: "ISO 4217 currency code, e.g. EUR, GBP, USD"
         weddingDate:
           type: string
           description: ISO date string (YYYY-MM-DD)
@@ -817,7 +826,7 @@ components:
           type: string
         totalBudget:
           type: number
-          description: Total budget in GBP pence
+          description: Total budget in minor currency units (cents/pence)
         guestCount:
           type: number
         notes:
@@ -827,9 +836,15 @@ components:
 
     WeddingInput:
       type: object
-      required: [names, weddingDate, venue, totalBudget, guestCount]
+      required: [names, currency, weddingDate, venue, totalBudget, guestCount]
       properties:
         names:
+          type: string
+        partner1:
+          type: string
+        partner2:
+          type: string
+        currency:
           type: string
         weddingDate:
           type: string
@@ -846,6 +861,12 @@ components:
       type: object
       properties:
         names:
+          type: string
+        partner1:
+          type: string
+        partner2:
+          type: string
+        currency:
           type: string
         weddingDate:
           type: string

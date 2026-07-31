@@ -1,9 +1,22 @@
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-export function formatCurrency(cents: number): string {
-  const pounds = cents / 100;
-  return `£${pounds.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, ' ')}`;
+const CURRENCY_CONFIG: Record<string, { locale: string; divisor: number }> = {
+  EUR: { locale: 'fr-FR', divisor: 100 },
+  GBP: { locale: 'fr-FR', divisor: 100 },
+  USD: { locale: 'fr-FR', divisor: 100 },
+  CHF: { locale: 'fr-CH', divisor: 100 },
+};
+
+export function formatCurrency(cents: number, currency = 'EUR'): string {
+  const config = CURRENCY_CONFIG[currency] ?? { locale: 'fr-FR', divisor: 100 };
+  const amount = cents / config.divisor;
+  return new Intl.NumberFormat(config.locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
 export function formatDate(dateString: string, formatString: string = 'd MMMM yyyy'): string {
