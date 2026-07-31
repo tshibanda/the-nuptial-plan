@@ -114,8 +114,8 @@ function CreateWeddingDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-serif text-2xl text-[#263b48]">
-            <span className="flex items-center gap-2"><Heart size={18} className="text-[#c8aa70]" /> Nouveau mariage</span>
+          <DialogTitle className="font-serif text-2xl text-primary">
+            <span className="flex items-center gap-2"><Heart size={18} className="text-accent" /> Nouveau mariage</span>
           </DialogTitle>
           <DialogDescription>Ajoutez un nouveau dossier de mariage à votre studio.</DialogDescription>
         </DialogHeader>
@@ -158,7 +158,7 @@ function CreateWeddingDialog({
                   <FormControl>
                     <select
                       {...field}
-                      className="w-full border border-[#cfc2b2] bg-[#f8f5ef] px-3 py-2 text-[12px] text-[#263b48] focus:outline-none focus:border-[#a88a5d]"
+                      className="w-full border border-border bg-card px-3 py-2 text-[12px] text-foreground focus:outline-none focus:border-ring rounded-md"
                       data-testid="select-wedding-currency"
                     >
                       {CURRENCIES.map((c) => (
@@ -259,7 +259,7 @@ function CreateWeddingDialog({
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-[#263b48] text-[#f8f3ea] hover:bg-[#344f5c]"
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={createWedding.isPending}
                 data-testid="button-create-wedding"
               >
@@ -307,12 +307,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             {/* Logo */}
             <div className="mb-14 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center border border-[#c3a269] font-serif text-[23px] text-[#d7bd88]">
+                <span className="flex h-9 w-9 items-center justify-center border border-sidebar-primary font-serif text-[23px] text-sidebar-primary">
                   N
                 </span>
                 <div>
                   <p className="font-serif text-[21px] leading-none">The Nuptial Plan</p>
-                  <p className="mt-1 text-[9px] uppercase tracking-[0.17em] text-[#aeb8b6]">
+                  <p className="mt-1 text-[9px] uppercase tracking-[0.17em] text-sidebar-foreground/50">
                     Atelier de planification nuptiale
                   </p>
                 </div>
@@ -323,17 +323,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             {/* Weddings list */}
-            <p className="mb-4 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#9eacaa]">
+            <p className="mb-4 text-[9px] font-semibold uppercase tracking-[0.22em] text-sidebar-foreground/50">
               Vos mariages
             </p>
 
             {isLoading ? (
-              <div className="text-[11px] text-[#9eacaa]">Chargement…</div>
+              <div className="text-[11px] text-sidebar-foreground/50">Chargement…</div>
             ) : weddings.length === 0 ? (
-              <div className="rounded border border-[#3e5a68] bg-[#2d4653] px-4 py-5 text-center">
-                <p className="text-[11px] text-[#9eacaa]">Aucun mariage pour l'instant.</p>
+              <div className="rounded border border-sidebar-border bg-sidebar-accent px-4 py-5 text-center">
+                <p className="text-[11px] text-sidebar-foreground/50">Aucun mariage pour l'instant.</p>
                 <button
-                  className="mt-3 flex w-full items-center justify-center gap-1.5 rounded bg-[#c8aa70] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#263b48] hover:bg-[#dbc080]"
+                  className="mt-3 flex w-full items-center justify-center gap-1.5 rounded bg-sidebar-primary px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-primary-foreground hover:bg-sidebar-primary/80"
                   onClick={() => setCreateOpen(true)}
                   data-testid="button-first-wedding"
                 >
@@ -360,26 +360,26 @@ export function AppShell({ children }: { children: ReactNode }) {
                         setActiveWeddingId(w.id);
                         setMobileOpen(false);
                       }}
-                      className={`group w-full rounded-sm px-3 py-3 text-left transition ${isActive ? 'bg-[#314c59]' : 'hover:bg-[#2d4653]'}`}
+                      className={`group w-full rounded-sm px-3 py-3 text-left transition ${isActive ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/60'}`}
                       data-testid={`button-wedding-${w.id}`}
                     >
                       <div className="flex items-start gap-3">
                         <span
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold ${isActive ? 'bg-[#c8aa70] text-[#263b48]' : 'bg-[#4b6169] text-[#d7ded8]'}`}
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold ${isActive ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'bg-sidebar-accent text-sidebar-foreground/60'}`}
                         >
                           {initials}
                         </span>
                         <span className="min-w-0">
-                          <span className="block truncate text-[12px] font-semibold text-[#f4eee5]">
+                          <span className="block truncate text-[12px] font-semibold text-sidebar-foreground">
                             {w.names}
                           </span>
-                          <span className="mt-1 block text-[10px] text-[#aeb8b6]">
+                          <span className="mt-1 block text-[10px] text-sidebar-foreground/50">
                             {formatDateShort(w.weddingDate)}
                           </span>
                         </span>
                       </div>
                       {isActive && (
-                        <span className="ml-11 mt-2 block truncate text-[10px] text-[#c3c9c2]">
+                        <span className="ml-11 mt-2 block truncate text-[10px] text-sidebar-foreground/40">
                           {w.venue}
                         </span>
                       )}
@@ -391,7 +391,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             {/* Add wedding button */}
             <button
-              className="mt-5 flex items-center gap-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#c8aa70] hover:text-[#e0c997]"
+              className="mt-5 flex items-center gap-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-sidebar-primary hover:text-sidebar-primary/70"
               onClick={() => setCreateOpen(true)}
               data-testid="button-add-wedding"
             >
@@ -399,19 +399,19 @@ export function AppShell({ children }: { children: ReactNode }) {
             </button>
 
             {/* User menu */}
-            <div className="mt-auto border-t border-[#415560] pt-5">
+            <div className="mt-auto border-t border-sidebar-border pt-5">
               <button
-                className="flex w-full items-center gap-3 rounded-sm px-3 py-3 text-left hover:bg-[#2d4653]"
+                className="flex w-full items-center gap-3 rounded-sm px-3 py-3 text-left hover:bg-sidebar-accent/60"
                 data-testid="button-user-menu"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#d6c6af] text-[10px] font-bold text-[#263b48]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-primary/20 text-[10px] font-bold text-sidebar-primary-foreground">
                   EC
                 </span>
                 <span className="flex-1">
                   <span className="block text-[12px] font-semibold">Élise Caron</span>
-                  <span className="block text-[10px] text-[#aeb8b6]">Directrice artistique</span>
+                  <span className="block text-[10px] text-sidebar-foreground/50">Directrice artistique</span>
                 </span>
-                <ChevronDown size={14} className="text-[#aeb8b6]" />
+                <ChevronDown size={14} className="text-sidebar-foreground/40" />
               </button>
             </div>
           </div>
@@ -421,7 +421,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {mobileOpen && (
           <button
             aria-label="Fermer le menu"
-            className="fixed inset-0 z-20 bg-[#172a34]/40 md:hidden"
+            className="fixed inset-0 z-20 bg-foreground/30 md:hidden"
             onClick={() => setMobileOpen(false)}
           />
         )}
@@ -429,13 +429,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Main content */}
         <main className="min-w-0 flex-1">
           {/* Header */}
-          <header className="flex h-[79px] items-center justify-between border-b border-[#ddd3c6] bg-[#f8f5ef] px-5 sm:px-9 lg:px-12">
+          <header className="flex h-[79px] items-center justify-between border-b border-border bg-card px-5 sm:px-9 lg:px-12">
             <div className="flex items-center gap-4">
               <button className="md:hidden" onClick={() => setMobileOpen(true)} data-testid="button-open-sidebar">
                 <Menu size={20} />
               </button>
               <div>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-[#8d8981]">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                   {new Date().toLocaleDateString('fr-FR', {
                     weekday: 'long',
                     day: 'numeric',
@@ -443,32 +443,32 @@ export function AppShell({ children }: { children: ReactNode }) {
                     year: 'numeric',
                   })}
                 </p>
-                <p className="mt-1 text-[12px] font-medium text-[#52616a]">Bonjour, Élise</p>
+                <p className="mt-1 text-[12px] font-medium text-foreground/70">Bonjour, Élise</p>
               </div>
             </div>
             <div className="flex items-center gap-5">
-              <button className="hidden text-[#718087] sm:block" data-testid="button-search">
+              <button className="hidden text-muted-foreground sm:block" data-testid="button-search">
                 <Search size={18} />
               </button>
-              <button className="relative text-[#718087]" data-testid="button-notifications">
+              <button className="relative text-muted-foreground" data-testid="button-notifications">
                 <Bell size={18} />
-                <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full bg-[#b48c4c]" />
+                <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full bg-[#C8A96E]" />
               </button>
-              <div className="hidden h-6 w-px bg-[#ddd3c6] sm:block" />
+              <div className="hidden h-6 w-px bg-border sm:block" />
               <button
-                className="flex items-center gap-2 text-[11px] font-semibold text-[#52616a]"
+                className="flex items-center gap-2 text-[11px] font-semibold text-foreground/70"
                 onClick={() => setMenuOpen(!menuOpen)}
                 data-testid="button-header-menu"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d6c6af] text-[9px] text-[#263b48]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-[9px] text-primary font-bold">
                   EC
                 </span>
                 <span className="hidden lg:block">Élise Caron</span>
                 <ChevronDown size={14} />
               </button>
               {menuOpen && (
-                <div className="absolute right-8 top-16 z-10 w-40 border border-[#ded4c8] bg-[#fffdf9] p-2 shadow-lg">
-                  <button className="flex w-full gap-2 p-2 text-left text-xs hover:bg-[#f5f1eb]" data-testid="button-settings">
+                <div className="absolute right-8 top-16 z-10 w-40 border border-border bg-popover p-2 shadow-lg rounded-md">
+                  <button className="flex w-full gap-2 p-2 text-left text-xs hover:bg-muted rounded-sm" data-testid="button-settings">
                     <Settings size={14} /> Paramètres
                   </button>
                 </div>
@@ -477,7 +477,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </header>
 
           {/* Navigation tabs */}
-          <div className="border-b border-[#ddd3c6] bg-[#f8f5ef] px-5 pt-8 sm:px-9 lg:px-12">
+          <div className="border-b border-border bg-card px-5 pt-8 sm:px-9 lg:px-12">
             <div className="flex gap-7 overflow-x-auto">
               {navItems.map(({ label, icon: Icon, path }) => {
                 const isActive = location === path;
@@ -485,7 +485,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <Link
                     key={path}
                     href={path}
-                    className={`flex shrink-0 items-center gap-2 border-b-2 pb-4 text-[11px] font-semibold ${isActive ? 'border-[#b28c55] text-[#263b48]' : 'border-transparent text-[#92918b] hover:text-[#52616a]'}`}
+                    className={`flex shrink-0 items-center gap-2 border-b-2 pb-4 text-[11px] font-semibold ${isActive ? 'border-ring text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground/70'}`}
                     data-testid={`nav-${label.toLowerCase()}`}
                   >
                     <Icon size={14} strokeWidth={1.6} />
@@ -501,17 +501,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             {/* Empty state when no weddings at all */}
             {!isLoading && weddings.length === 0 ? (
               <div className="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f0e8da]">
-                  <Heart size={28} className="text-[#c8aa70]" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent/15">
+                  <Heart size={28} className="text-accent" />
                 </div>
                 <div>
-                  <h2 className="font-serif text-[32px] text-[#263b48]">Bienvenue dans votre studio</h2>
-                  <p className="mt-2 text-[13px] text-[#758087]">
+                  <h2 className="font-serif text-[32px] text-foreground">Bienvenue dans votre studio</h2>
+                  <p className="mt-2 text-[13px] text-muted-foreground">
                     Commencez par créer votre premier dossier de mariage.
                   </p>
                 </div>
                 <button
-                  className="flex items-center gap-2 bg-[#263b48] px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f8f3ea] hover:bg-[#344f5c]"
+                  className="flex items-center gap-2 bg-primary px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90 rounded-md"
                   onClick={() => setCreateOpen(true)}
                   data-testid="button-create-first-wedding"
                 >

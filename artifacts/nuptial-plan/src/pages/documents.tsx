@@ -35,7 +35,7 @@ function DocRow({
         target="_blank"
         rel="noopener noreferrer"
         download={doc.name}
-        className="rounded p-1.5 text-[#52616a] hover:bg-[#e8ddd0] hover:text-[#263b48] transition-colors"
+        className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         title="Télécharger"
         data-testid={`button-download-doc-${doc.id}`}
       >
@@ -70,7 +70,7 @@ function UploadZone({ weddingId, entityType, entityId }: { weddingId: number; en
       <button
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
-        className="flex items-center gap-2 text-[11px] font-medium text-[#52616a] hover:text-[#263b48] disabled:opacity-50 transition-colors"
+        className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors"
         data-testid="button-upload-doc"
       >
         <Upload size={13} />
@@ -105,7 +105,7 @@ function Section({
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div className="mb-6 overflow-hidden border border-[#ddd3c6] bg-[#f8f5ef]">
+    <div className="mb-6 overflow-hidden border border-border bg-card">
       <button
         onClick={() => setExpanded((v) => !v)}
         className="flex w-full items-center justify-between px-5 py-3 text-left"
@@ -193,7 +193,7 @@ export default function Documents() {
           Dossier du mariage
         </p>
         <div className="flex items-end justify-between">
-          <h1 className="font-serif text-[43px] leading-[0.9] text-[#263b48]">Documents</h1>
+          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Documents</h1>
           <p className="text-[11px] text-[#858b89]">
             {allDocs.length} fichier{allDocs.length !== 1 ? 's' : ''} au total
           </p>
@@ -256,7 +256,7 @@ export default function Documents() {
       {allDocs.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
           <FolderOpen size={40} className="text-[#c9b99a]" />
-          <p className="font-serif text-xl text-[#52616a]">Dossier vide</p>
+          <p className="font-serif text-xl text-muted-foreground">Dossier vide</p>
           <p className="text-[12px] text-[#858b89]">
             Ajoutez vos premiers documents depuis le dossier général ci-dessus,<br />
             ou directement depuis la fiche d'un prestataire ou contrat.

@@ -138,7 +138,7 @@ export default function Budget() {
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
             Où en est-on
           </p>
-          <h1 className="font-serif text-[43px] leading-[0.9] text-[#263b48]">Budget</h1>
+          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Budget</h1>
         </div>
         <Sheet
           open={open}
@@ -151,7 +151,7 @@ export default function Budget() {
           }}
         >
           <SheetTrigger asChild>
-            <Button className="flex items-center gap-2 bg-[#263b48] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#f8f3ea] hover:bg-[#344f5c]" data-testid="button-add-category">
+            <Button className="flex items-center gap-2 bg-primary px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90" data-testid="button-add-category">
               <Plus size={14} /> Ajouter une catégorie
             </Button>
           </SheetTrigger>
@@ -240,11 +240,11 @@ export default function Budget() {
 
       {/* Summary */}
       {summary && (
-        <div className="mb-8 border-y border-[#ddd3c6] bg-[#f8f5ef] px-5 py-5">
+        <div className="mb-8 border-y border-border bg-card px-5 py-5">
           <div className="mb-6 flex items-end justify-between">
             <div>
               <p className="text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">Engagé</p>
-              <p className="mt-1 font-serif text-[30px] text-[#263b48]">
+              <p className="mt-1 font-serif text-[30px] text-foreground">
                 {formatCurrency(summary.totalSpent)}{' '}
                 <span className="font-sans text-[11px] text-[#8c8b86]">
                   / {formatCurrency(summary.totalAllocated)}
@@ -262,7 +262,7 @@ export default function Budget() {
       {/* Categories */}
       <div className="space-y-4">
         {categories.length === 0 ? (
-          <div className="rounded border border-[#ddd3c6] bg-[#f8f5ef] px-6 py-12 text-center text-[11px] text-[#858b89]">
+          <div className="rounded border border-border bg-card px-6 py-12 text-center text-[11px] text-[#858b89]">
             Aucune catégorie. Cliquez sur "Ajouter une catégorie" pour commencer.
           </div>
         ) : (
@@ -278,7 +278,7 @@ export default function Budget() {
                     : 'bg-[#879b93]';
 
             return (
-              <div key={category.id} className="rounded border border-[#ddd3c6] bg-[#f8f5ef] p-5">
+              <div key={category.id} className="rounded border border-border bg-card p-5">
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex-1">
                     <p className="text-[12px] font-semibold text-[#3d4d55]">{category.name}</p>

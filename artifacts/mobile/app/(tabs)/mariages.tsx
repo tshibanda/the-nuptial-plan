@@ -85,10 +85,10 @@ export default function MariagesScreen() {
                   <Text style={[ss.avatarText, { fontFamily: SERIF, color: isActive ? colors.gold : colors.foreground }]}>{av}</Text>
                 </View>
                 <View style={ss.wcardInfo}>
-                  <Text style={[ss.wcardNames, { fontFamily: SERIF, color: isActive ? '#f8f3ea' : colors.foreground }]}>
+                  <Text style={[ss.wcardNames, { fontFamily: SERIF, color: isActive ? '#FBF5FB' : colors.foreground }]}>
                     {item.names}
                   </Text>
-                  <Text style={[ss.wcardVenue, { fontFamily: SANS, color: isActive ? '#bdc8c4' : colors.mutedForeground }]} numberOfLines={1}>
+                  <Text style={[ss.wcardVenue, { fontFamily: SANS, color: isActive ? '#DEC0DE' : colors.mutedForeground }]} numberOfLines={1}>
                     {item.venue}
                   </Text>
                 </View>

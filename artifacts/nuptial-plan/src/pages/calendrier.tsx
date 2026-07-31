@@ -172,7 +172,7 @@ export default function Calendrier() {
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
             Les semaines à venir
           </p>
-          <h1 className="font-serif text-[43px] leading-[0.9] text-[#263b48]">Calendrier</h1>
+          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Calendrier</h1>
         </div>
         <Sheet
           open={open}
@@ -185,7 +185,7 @@ export default function Calendrier() {
           }}
         >
           <SheetTrigger asChild>
-            <Button className="flex items-center gap-2 bg-[#263b48] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#f8f3ea] hover:bg-[#344f5c]" data-testid="button-add-event">
+            <Button className="flex items-center gap-2 bg-primary px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90" data-testid="button-add-event">
               <Plus size={14} /> Ajouter un événement
             </Button>
           </SheetTrigger>
@@ -296,7 +296,7 @@ export default function Calendrier() {
       </div>
 
       {/* Events List */}
-      <div className="border-y border-[#ddd3c6] bg-[#f8f5ef]">
+      <div className="border-y border-border bg-card">
         {sortedEvents.length === 0 ? (
           <div className="px-6 py-12 text-center text-[11px] text-[#858b89]">
             Aucun événement. Cliquez sur "Ajouter un événement" pour commencer.
@@ -318,7 +318,7 @@ export default function Calendrier() {
                 <div
                   className={`flex h-12 w-12 shrink-0 flex-col items-center justify-center ${event.tone ? toneColorMap[event.tone] : 'bg-[#eadfc9]'}`}
                 >
-                  <span className="font-serif text-[22px] leading-5 text-[#263b48]">{day}</span>
+                  <span className="font-serif text-[22px] leading-5 text-foreground">{day}</span>
                   <span className="text-[8px] font-bold tracking-[0.13em] text-[#8c8177]">{month}</span>
                 </div>
                 <div className="min-w-0 flex-1">

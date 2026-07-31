@@ -166,7 +166,7 @@ export default function Contrats() {
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
             Documents essentiels
           </p>
-          <h1 className="font-serif text-[43px] leading-[0.9] text-[#263b48]">Contrats</h1>
+          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Contrats</h1>
         </div>
         <Sheet
           open={open}
@@ -179,7 +179,7 @@ export default function Contrats() {
           }}
         >
           <SheetTrigger asChild>
-            <Button className="flex items-center gap-2 bg-[#263b48] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#f8f3ea] hover:bg-[#344f5c]" data-testid="button-add-contract">
+            <Button className="flex items-center gap-2 bg-primary px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90" data-testid="button-add-contract">
               <Plus size={14} /> Ajouter un contrat
             </Button>
           </SheetTrigger>
@@ -324,9 +324,9 @@ export default function Contrats() {
       </div>
 
       {/* Contracts Table */}
-      <div className="overflow-x-auto border border-[#ddd3c6] bg-[#f8f5ef]">
+      <div className="overflow-x-auto border border-border bg-card">
         <table className="w-full">
-          <thead className="border-b border-[#ddd3c6]">
+          <thead className="border-b border-border">
             <tr className="text-left">
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8c8b86]">
                 Prestataire
@@ -367,7 +367,7 @@ export default function Contrats() {
                     </span>
                   </td>
                   <td className="px-5 py-4">
-                    <p className="font-serif text-[16px] text-[#263b48]">
+                    <p className="font-serif text-[16px] text-foreground">
                       {formatCurrency(contract.totalAmountCents)}
                     </p>
                   </td>

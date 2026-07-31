@@ -162,7 +162,7 @@ export default function Prestataires() {
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
             Votre équipe
           </p>
-          <h1 className="font-serif text-[43px] leading-[0.9] text-[#263b48]">Prestataires</h1>
+          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Prestataires</h1>
         </div>
         <Sheet open={open} onOpenChange={(o) => {
           setOpen(o);
@@ -172,7 +172,7 @@ export default function Prestataires() {
           }
         }}>
           <SheetTrigger asChild>
-            <Button className="flex items-center gap-2 bg-[#263b48] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#f8f3ea] hover:bg-[#344f5c]" data-testid="button-add-vendor">
+            <Button className="flex items-center gap-2 bg-primary px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90" data-testid="button-add-vendor">
               <Plus size={14} /> Ajouter un prestataire
             </Button>
           </SheetTrigger>
@@ -342,7 +342,7 @@ export default function Prestataires() {
         </Sheet>
       </div>
 
-      <div className="overflow-hidden border-y border-[#ddd3c6] bg-[#f8f5ef]">
+      <div className="overflow-hidden border-y border-border bg-card">
         {vendors.length === 0 ? (
           <div className="px-6 py-12 text-center text-[11px] text-[#858b89]">
             Aucun prestataire. Cliquez sur "Ajouter un prestataire" pour commencer.
@@ -361,7 +361,7 @@ export default function Prestataires() {
                 key={vendor.id}
                 className="flex items-center gap-3 border-b border-[#e3dbd0] px-4 py-4 last:border-0 sm:px-5"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8ddd0] font-serif text-[14px] text-[#52616a]">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8ddd0] font-serif text-[14px] text-muted-foreground">
                   {initials}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -373,7 +373,7 @@ export default function Prestataires() {
                 >
                   {vendorStatusMap[vendor.status] || vendor.status}
                 </span>
-                <span className="w-[72px] text-right font-serif text-[18px] text-[#52616a]">
+                <span className="w-[72px] text-right font-serif text-[18px] text-muted-foreground">
                   {formatCurrency(vendor.totalAmountCents)}
                 </span>
                 <button className="text-[#a5a19a]" onClick={() => handleEdit(vendor)} data-testid={`button-edit-vendor-${vendor.id}`}>
@@ -386,11 +386,11 @@ export default function Prestataires() {
       </div>
 
       {vendors.length > 0 && (
-        <div className="mt-6 flex justify-between border-t border-[#ddd3c6] pt-6">
+        <div className="mt-6 flex justify-between border-t border-border pt-6">
           <p className="text-[11px] font-semibold text-[#8c8b86]">
             {vendors.length} prestataire{vendors.length > 1 ? 's' : ''}
           </p>
-          <p className="font-serif text-[22px] text-[#263b48]">
+          <p className="font-serif text-[22px] text-foreground">
             Total: {formatCurrency(vendors.reduce((sum, v) => sum + v.totalAmountCents, 0))}
           </p>
         </div>

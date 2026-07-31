@@ -16,10 +16,10 @@ function SectionTitle({ eyebrow, title, action, onAction }: { eyebrow: string; t
     <div className="mb-5 flex items-end justify-between">
       <div>
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">{eyebrow}</p>
-        <h2 className="font-serif text-[25px] leading-none text-[#263b48]">{title}</h2>
+        <h2 className="font-serif text-[25px] leading-none text-foreground">{title}</h2>
       </div>
       {action && (
-        <button onClick={onAction} className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#8d7554] hover:text-[#263b48]" data-testid={`button-${action.toLowerCase().replace(/\s+/g, '-')}`}>
+        <button onClick={onAction} className="text-[11px] font-semibold uppercase tracking-[0.15em] text-ring/80 hover:text-foreground" data-testid={`button-${action.toLowerCase().replace(/\s+/g, '-')}`}>
           {action}
         </button>
       )}
@@ -31,7 +31,7 @@ function Metric({ label, value, note, accent }: { label: string; value: string; 
   return (
     <div className="border-l border-[#d8ccb9] pl-5">
       <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.17em] text-[#8b837b]">{label}</p>
-      <p className="font-serif text-[34px] leading-none text-[#263b48]">{value}</p>
+      <p className="font-serif text-[34px] leading-none text-foreground">{value}</p>
       <p className={`mt-2 text-[11px] ${accent}`}>{note}</p>
     </div>
   );
@@ -107,7 +107,7 @@ export default function Dashboard() {
           <p className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
             <Sparkles size={13} /> Mariage actif
           </p>
-          <h1 className="font-serif text-[43px] leading-[0.9] text-[#263b48] sm:text-[54px]">
+          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground sm:text-[54px]">
             {wedding.names.split('&').map((name, idx) => (
               <span key={idx}>
                 {idx > 0 && <span className="text-[#ad8a58]"> & </span>}
@@ -115,17 +115,17 @@ export default function Dashboard() {
               </span>
             ))}
           </h1>
-          <p className="mt-4 flex items-center gap-2 text-[12px] text-[#758087]">
+          <p className="mt-4 flex items-center gap-2 text-[12px] text-muted-foreground">
             <CalendarDays size={14} className="text-[#ad8a58]" />
             {formatDate(wedding.weddingDate, 'EEEE d MMMM yyyy')} <span className="text-[#c5b9aa]">·</span>{' '}
             {wedding.venue}
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="flex items-center gap-2 border border-[#cfc2b2] bg-[#f8f5ef] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#52616a] hover:border-[#a88a5d]" data-testid="button-add-task">
+          <button className="flex items-center gap-2 border border-border bg-card px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:border-[#a88a5d]" data-testid="button-add-task">
             <Plus size={14} /> Ajouter une tâche
           </button>
-          <button className="flex items-center gap-2 bg-[#263b48] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#f8f3ea] hover:bg-[#344f5c]" data-testid="button-open-workspace">
+          <button className="flex items-center gap-2 bg-primary px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90" data-testid="button-open-workspace">
             Ouvrir l'espace <ChevronRight size={14} />
           </button>
         </div>
@@ -164,7 +164,7 @@ export default function Dashboard() {
         <section>
           {/* Timeline */}
           <SectionTitle eyebrow="Les semaines à venir" title="Calendrier de planification" action="Voir le planning complet" />
-          <div className="border-y border-[#ddd3c6] bg-[#f8f5ef]">
+          <div className="border-y border-border bg-card">
             {upcomingEvents.length === 0 ? (
               <div className="px-6 py-8 text-center text-[11px] text-[#858b89]">
                 Aucun événement à venir
@@ -186,7 +186,7 @@ export default function Dashboard() {
                     <div
                       className={`flex h-12 w-12 shrink-0 flex-col items-center justify-center ${event.tone ? toneColorMap[event.tone] : 'bg-[#eadfc9]'}`}
                     >
-                      <span className="font-serif text-[22px] leading-5 text-[#263b48]">{day}</span>
+                      <span className="font-serif text-[22px] leading-5 text-foreground">{day}</span>
                       <span className="text-[8px] font-bold tracking-[0.13em] text-[#8c8177]">{month}</span>
                     </div>
                     <div className="min-w-0 flex-1">
@@ -208,7 +208,7 @@ export default function Dashboard() {
           {/* Vendors */}
           <div className="mt-9">
             <SectionTitle eyebrow="Choisis avec soin" title="Votre équipe prestataires" action="Gérer les prestataires" />
-            <div className="overflow-hidden border-y border-[#ddd3c6] bg-[#f8f5ef]">
+            <div className="overflow-hidden border-y border-border bg-card">
               {vendors.slice(0, 4).map((vendor) => {
                 const initials = vendor.name
                   .split(' ')
@@ -222,7 +222,7 @@ export default function Dashboard() {
                     key={vendor.id}
                     className="flex items-center gap-3 border-b border-[#e3dbd0] px-4 py-4 last:border-0 sm:px-5"
                   >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8ddd0] font-serif text-[14px] text-[#52616a]">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8ddd0] font-serif text-[14px] text-muted-foreground">
                       {initials}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -234,7 +234,7 @@ export default function Dashboard() {
                     >
                       {vendorStatusMap[vendor.status] || vendor.status}
                     </span>
-                    <span className="w-[72px] text-right font-serif text-[18px] text-[#52616a]">
+                    <span className="w-[72px] text-right font-serif text-[18px] text-muted-foreground">
                       {formatCurrency(vendor.totalAmountCents)}
                     </span>
                     <button className="text-[#a5a19a]" data-testid={`button-vendor-${vendor.id}`}>
@@ -251,11 +251,11 @@ export default function Dashboard() {
         <aside>
           {/* Budget overview */}
           <SectionTitle eyebrow="Où en est-on" title="Aperçu du budget" action="Ouvrir le budget" />
-          <div className="border-y border-[#ddd3c6] bg-[#f8f5ef] px-5 py-5">
+          <div className="border-y border-border bg-card px-5 py-5">
             <div className="mb-6 flex items-end justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">Engagé</p>
-                <p className="mt-1 font-serif text-[30px] text-[#263b48]">
+                <p className="mt-1 font-serif text-[30px] text-foreground">
                   {summary ? formatCurrency(summary.budgetSpent) : '—'}{' '}
                   <span className="font-sans text-[11px] text-[#8c8b86]">
                     / {summary ? formatCurrency(summary.budgetTotal) : '—'}
@@ -286,12 +286,12 @@ export default function Dashboard() {
                 return (
                   <div className="flex gap-3" key={item.id}>
                     <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-[#52616a] ${colorClasses[colorIndex]}`}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-muted-foreground ${colorClasses[colorIndex]}`}
                     >
                       {item.initials || '—'}
                     </span>
                     <div>
-                      <p className="text-[11px] leading-snug text-[#52616a]">{item.description}</p>
+                      <p className="text-[11px] leading-snug text-muted-foreground">{item.description}</p>
                       <p className="mt-1 text-[10px] text-[#a09e98]">
                         {formatDate(item.createdAt, 'd MMM, HH:mm')}
                       </p>
@@ -300,7 +300,7 @@ export default function Dashboard() {
                 );
               })}
             </div>
-            <button className="mt-6 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8d7554]" data-testid="button-see-all-activity">
+            <button className="mt-6 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-ring/80" data-testid="button-see-all-activity">
               Voir toute l'activité <ChevronRight size={13} />
             </button>
           </div>

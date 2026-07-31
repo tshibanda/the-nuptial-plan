@@ -14,14 +14,14 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const NAVY_DARK = '#1a2d38';
-const NAVY = '#263b48';
-const GOLD = '#c8aa70';
-const IVORY = '#f5f1eb';
-const MUTED = '#8eacaa';
-const BORDER = 'rgba(200,170,112,0.25)';
+const NAVY_DARK = '#2D102D';   // prune très foncé
+const NAVY = '#5D2D5D';        // prune Jardin Parisien
+const GOLD = '#C8A96E';        // or chaud
+const IVORY = '#FBF5FB';       // blanc rosé
+const MUTED = '#C0A0C0';       // prune doux
+const BORDER = 'rgba(200,169,110,0.28)';
 const INPUT_BG = 'rgba(255,255,255,0.07)';
-const INPUT_TEXT = '#f5f1eb';
+const INPUT_TEXT = '#FBF5FB';
 
 export default function SignUpScreen() {
   const router = useRouter();

@@ -174,7 +174,7 @@ export default function Paiements() {
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
             Le calendrier financier
           </p>
-          <h1 className="font-serif text-[43px] leading-[0.9] text-[#263b48]">Paiements</h1>
+          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Paiements</h1>
         </div>
         <Sheet
           open={open}
@@ -187,7 +187,7 @@ export default function Paiements() {
           }}
         >
           <SheetTrigger asChild>
-            <Button className="flex items-center gap-2 bg-[#263b48] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#f8f3ea] hover:bg-[#344f5c]" data-testid="button-add-payment">
+            <Button className="flex items-center gap-2 bg-primary px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground hover:bg-primary/90" data-testid="button-add-payment">
               <Plus size={14} /> Ajouter un paiement
             </Button>
           </SheetTrigger>
@@ -333,7 +333,7 @@ export default function Paiements() {
       {/* Payment Cards */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sortedPayments.length === 0 ? (
-          <div className="col-span-full rounded border border-[#ddd3c6] bg-[#f8f5ef] px-6 py-12 text-center text-[11px] text-[#858b89]">
+          <div className="col-span-full rounded border border-border bg-card px-6 py-12 text-center text-[11px] text-[#858b89]">
             Aucun paiement. Cliquez sur "Ajouter un paiement" pour commencer.
           </div>
         ) : (
@@ -341,7 +341,7 @@ export default function Paiements() {
             <button
               key={payment.id}
               onClick={() => handleEdit(payment)}
-              className="rounded border border-[#ddd3c6] bg-[#f8f5ef] p-5 text-left shadow-[0_3px_12px_rgba(65,56,45,.04)] transition hover:border-[#c8aa70]"
+              className="rounded border border-border bg-card p-5 text-left shadow-[0_3px_12px_rgba(93,45,93,.05)] transition hover:border-ring"
               data-testid={`button-edit-payment-${payment.id}`}
             >
               <div className="mb-4 flex items-start justify-between gap-3">
@@ -357,7 +357,7 @@ export default function Paiements() {
                   {statusMap[payment.status] || payment.status}
                 </span>
               </div>
-              <p className="font-serif text-[25px] text-[#263b48]">
+              <p className="font-serif text-[25px] text-foreground">
                 {formatCurrency(payment.amountCents)}
               </p>
             </button>
@@ -367,8 +367,8 @@ export default function Paiements() {
 
       {/* Total */}
       {payments.length > 0 && (
-        <div className="border-t border-[#ddd3c6] pt-6">
-          <p className="font-serif text-[22px] text-[#263b48]">
+        <div className="border-t border-border pt-6">
+          <p className="font-serif text-[22px] text-foreground">
             Total à régler : {formatCurrency(pendingTotal)}
           </p>
         </div>

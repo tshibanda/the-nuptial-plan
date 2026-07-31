@@ -43,7 +43,7 @@ export function FileAttachments({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="flex items-center gap-1.5 rounded px-2.5 py-1.5 text-[11px] font-medium text-[#52616a] hover:bg-[#e8ddd0] disabled:opacity-50 transition-colors"
+          className="flex items-center gap-1.5 rounded px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-muted disabled:opacity-50 transition-colors"
           data-testid="button-upload-file"
         >
           <Upload size={12} />
@@ -88,7 +88,7 @@ export function FileAttachments({
               target="_blank"
               rel="noopener noreferrer"
               download={doc.name}
-              className="shrink-0 rounded p-1 text-[#52616a] hover:bg-[#e8ddd0] hover:text-[#263b48] transition-colors"
+              className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               title="Télécharger"
               data-testid={`button-download-doc-${doc.id}`}
             >

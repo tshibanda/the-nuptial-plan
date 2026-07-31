@@ -1,4 +1,5 @@
 - [Nuptial Plan app](nuptial-plan.md) — Wedding planner app fully built; key conventions and known quirks to preserve.
+- [Jardin Parisien design system](jardin-parisien-design.md) — Full brand palette (plum/sage/rose/gold) applied to web tokens + mobile constants; legacy navy aliases kept.
 - [Clerk auth — mobile Expo setup](clerk-auth-mobile.md) — Route structure, OAuth patterns, bearer token wiring, and package quirks for Clerk on Expo.
 - [Drizzle numeric coercion](drizzle-numeric-coercion.md) — Drizzle `numeric()` columns return strings from Postgres; coerce to number before Zod parsing.
 - [Zod v3 integer spec](zod-v3-integer-spec.md) — OpenAPI `type: integer` makes Orval generate `zod.int()` which doesn't exist in Zod v3; use `type: number` instead.
