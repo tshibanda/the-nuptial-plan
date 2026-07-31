@@ -1,107 +1,59 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, guestsTable } from "@workspace/db";
-import {
-  ListGuestsParams,
-  ListGuestsResponse,
-  CreateGuestParams,
-  CreateGuestBody,
-  CreateGuestResponse,
-  UpdateGuestParams,
-  UpdateGuestBody,
-  UpdateGuestResponse,
-  DeleteGuestParams,
-} from "@workspace/api-zod";
+import { db } from "@workspace/db";
+import { guestsTable, activityTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
+import { CreateGuestBody, UpdateGuestBody } from "@workspace/api-zod";
 
-const router: IRouter = Router();
+const router: IRouter = Router({ mergeParams: true });
 
-// List guests for a wedding
-router.get("/weddings/:weddingId/guests", async (req, res): Promise<void> => {
-  const params = ListGuestsParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const guests = await db
-    .select()
-    .from(guestsTable)
-    .where(eq(guestsTable.weddingId, params.data.weddingId))
-    .orderBy(guestsTable.name);
+const p = (req: { params: Record<string, string> }, key: string) => Number(req.params[key]);
 
-  const confirmed = guests.filter(g => g.rsvpStatus === "Confirmé").length;
-  const pending = guests.filter(g => g.rsvpStatus === "En attente").length;
-  const declined = guests.filter(g => g.rsvpStatus === "Décliné").length;
-
-  res.json(
-    ListGuestsResponse.parse({
-      guests,
-      total: guests.length,
-      confirmed,
-      pending,
-      declined,
-    })
-  );
+router.get("/stats", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const guests = await db.select().from(guestsTable).where(eq(guestsTable.weddingId, weddingId));
+  res.json({
+    total: guests.length,
+    confirmed: guests.filter((g) => g.rsvpStatus === "confirmed").length,
+    pending: guests.filter((g) => g.rsvpStatus === "pending").length,
+    declined: guests.filter((g) => g.rsvpStatus === "declined").length,
+  });
 });
 
-// Create guest
-router.post("/weddings/:weddingId/guests", async (req, res): Promise<void> => {
-  const params = CreateGuestParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = CreateGuestBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const [guest] = await db
-    .insert(guestsTable)
-    .values({ ...parsed.data, weddingId: params.data.weddingId })
-    .returning();
-  res.status(201).json(CreateGuestResponse.parse(guest));
+router.get("/", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const guests = await db.select().from(guestsTable).where(eq(guestsTable.weddingId, weddingId));
+  res.json(guests);
 });
 
-// Update guest
-router.patch("/guests/:guestId", async (req, res): Promise<void> => {
-  const params = UpdateGuestParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = UpdateGuestBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const [guest] = await db
-    .update(guestsTable)
-    .set(parsed.data)
-    .where(eq(guestsTable.id, params.data.guestId))
-    .returning();
-  if (!guest) {
-    res.status(404).json({ error: "Invité introuvable" });
-    return;
-  }
-  res.json(UpdateGuestResponse.parse(guest));
+router.post("/", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const body = CreateGuestBody.safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
+  const [guest] = await db.insert(guestsTable).values({ ...body.data, weddingId }).returning();
+  await db.insert(activityTable).values({
+    weddingId,
+    description: `Invité ajouté : ${guest!.name}`,
+    entityType: "guest",
+    initials: guest!.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
+  });
+  res.status(201).json(guest);
 });
 
-// Delete guest
-router.delete("/guests/:guestId", async (req, res): Promise<void> => {
-  const params = DeleteGuestParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const [guest] = await db
-    .delete(guestsTable)
-    .where(eq(guestsTable.id, params.data.guestId))
-    .returning();
-  if (!guest) {
-    res.status(404).json({ error: "Invité introuvable" });
-    return;
-  }
-  res.sendStatus(204);
+router.patch("/:id", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const id = p(req, "id");
+  const body = UpdateGuestBody.safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
+  const [guest] = await db.update(guestsTable).set(body.data).where(and(eq(guestsTable.id, id), eq(guestsTable.weddingId, weddingId))).returning();
+  if (!guest) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(guest);
+});
+
+router.delete("/:id", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const id = p(req, "id");
+  await db.delete(guestsTable).where(and(eq(guestsTable.id, id), eq(guestsTable.weddingId, weddingId)));
+  res.status(204).send();
 });
 
 export default router;

@@ -1,95 +1,48 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, paymentsTable } from "@workspace/db";
-import { coerceNumeric } from "../lib/coerce";
-import {
-  ListPaymentsParams,
-  ListPaymentsResponse,
-  CreatePaymentParams,
-  CreatePaymentBody,
-  CreatePaymentResponse,
-  UpdatePaymentParams,
-  UpdatePaymentBody,
-  UpdatePaymentResponse,
-  DeletePaymentParams,
-} from "@workspace/api-zod";
+import { db } from "@workspace/db";
+import { paymentsTable, activityTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
+import { CreatePaymentBody, UpdatePaymentBody } from "@workspace/api-zod";
 
-const router: IRouter = Router();
+const router: IRouter = Router({ mergeParams: true });
 
-// List payments for a wedding
-router.get("/weddings/:weddingId/payments", async (req, res): Promise<void> => {
-  const params = ListPaymentsParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const payments = await db
-    .select()
-    .from(paymentsTable)
-    .where(eq(paymentsTable.weddingId, params.data.weddingId))
-    .orderBy(paymentsTable.dueDate);
-  res.json(ListPaymentsResponse.parse(payments.map(p => coerceNumeric(p, ["amount"]))));
+const p = (req: { params: Record<string, string> }, key: string) => Number(req.params[key]);
+
+router.get("/", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const payments = await db.select().from(paymentsTable).where(eq(paymentsTable.weddingId, weddingId)).orderBy(paymentsTable.dueDate);
+  res.json(payments);
 });
 
-// Create payment
-router.post("/weddings/:weddingId/payments", async (req, res): Promise<void> => {
-  const params = CreatePaymentParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = CreatePaymentBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const [payment] = await db
-    .insert(paymentsTable)
-    .values({ ...parsed.data, weddingId: params.data.weddingId })
-    .returning();
-  res.status(201).json(CreatePaymentResponse.parse(coerceNumeric(payment, ["amount"])));
+router.post("/", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const body = CreatePaymentBody.safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
+  const [payment] = await db.insert(paymentsTable).values({ ...body.data, weddingId }).returning();
+  await db.insert(activityTable).values({
+    weddingId,
+    description: `Paiement enregistré : ${payment!.vendorName} – ${payment!.description}`,
+    entityType: "payment",
+    initials: payment!.vendorName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
+  });
+  res.status(201).json(payment);
 });
 
-// Update payment
-router.patch("/payments/:paymentId", async (req, res): Promise<void> => {
-  const params = UpdatePaymentParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = UpdatePaymentBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const [payment] = await db
-    .update(paymentsTable)
-    .set(parsed.data)
-    .where(eq(paymentsTable.id, params.data.paymentId))
-    .returning();
-  if (!payment) {
-    res.status(404).json({ error: "Paiement introuvable" });
-    return;
-  }
-  res.json(UpdatePaymentResponse.parse(coerceNumeric(payment, ["amount"])));
+router.patch("/:id", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const id = p(req, "id");
+  const body = UpdatePaymentBody.safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
+  const [payment] = await db.update(paymentsTable).set(body.data).where(and(eq(paymentsTable.id, id), eq(paymentsTable.weddingId, weddingId))).returning();
+  if (!payment) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(payment);
 });
 
-// Delete payment
-router.delete("/payments/:paymentId", async (req, res): Promise<void> => {
-  const params = DeletePaymentParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const [payment] = await db
-    .delete(paymentsTable)
-    .where(eq(paymentsTable.id, params.data.paymentId))
-    .returning();
-  if (!payment) {
-    res.status(404).json({ error: "Paiement introuvable" });
-    return;
-  }
-  res.sendStatus(204);
+router.delete("/:id", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const id = p(req, "id");
+  await db.delete(paymentsTable).where(and(eq(paymentsTable.id, id), eq(paymentsTable.weddingId, weddingId)));
+  res.status(204).send();
 });
 
 export default router;

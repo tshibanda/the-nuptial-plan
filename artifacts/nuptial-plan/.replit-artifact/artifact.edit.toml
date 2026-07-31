@@ -2,26 +2,26 @@ kind = "web"
 previewPath = "/"
 title = "The Nuptial Plan"
 version = "1.0.0"
-id = "artifacts/the-nuptial-plan"
+id = "artifacts/nuptial-plan"
 router = "path"
 
 [[services]]
 name = "web"
 paths = [ "/" ]
-localPort = 18909
+localPort = 21776
 
 [services.development]
-run = "pnpm --filter @workspace/the-nuptial-plan run dev"
+run = "pnpm --filter @workspace/nuptial-plan run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/the-nuptial-plan", "run", "build" ]
+build = [ "pnpm", "--filter", "@workspace/nuptial-plan", "run", "build" ]
 serve = "static"
-publicDir = "artifacts/the-nuptial-plan/dist/public"
+publicDir = "artifacts/nuptial-plan/dist/public"
 
 [[services.production.rewrites]]
 from = "/*"
 to = "/index.html"
 
 [services.env]
-PORT = "18909"
+PORT = "21776"
 BASE_PATH = "/"

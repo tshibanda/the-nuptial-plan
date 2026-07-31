@@ -1,95 +1,65 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, vendorsTable } from "@workspace/db";
-import { coerceNumeric } from "../lib/coerce";
+import { db } from "@workspace/db";
+import { vendorsTable, activityTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
 import {
-  ListVendorsParams,
-  ListVendorsResponse,
-  CreateVendorParams,
   CreateVendorBody,
-  CreateVendorResponse,
-  UpdateVendorParams,
   UpdateVendorBody,
-  UpdateVendorResponse,
-  DeleteVendorParams,
 } from "@workspace/api-zod";
 
-const router: IRouter = Router();
+const router: IRouter = Router({ mergeParams: true });
 
-// List vendors for a wedding
-router.get("/weddings/:weddingId/vendors", async (req, res): Promise<void> => {
-  const params = ListVendorsParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const vendors = await db
-    .select()
-    .from(vendorsTable)
-    .where(eq(vendorsTable.weddingId, params.data.weddingId))
-    .orderBy(vendorsTable.createdAt);
-  res.json(ListVendorsResponse.parse(vendors.map(v => coerceNumeric(v, ["totalAmount", "depositAmount"]))));
+const p = (req: { params: Record<string, string> }, key: string) => Number(req.params[key]);
+
+router.get("/", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const vendors = await db.select().from(vendorsTable).where(eq(vendorsTable.weddingId, weddingId));
+  res.json(vendors);
 });
 
-// Create vendor
-router.post("/weddings/:weddingId/vendors", async (req, res): Promise<void> => {
-  const params = CreateVendorParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = CreateVendorBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const [vendor] = await db
-    .insert(vendorsTable)
-    .values({ ...parsed.data, weddingId: params.data.weddingId })
-    .returning();
-  res.status(201).json(CreateVendorResponse.parse(coerceNumeric(vendor, ["totalAmount", "depositAmount"])));
+router.post("/", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const body = CreateVendorBody.safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
+  const [vendor] = await db.insert(vendorsTable).values({ ...body.data, weddingId }).returning();
+  await db.insert(activityTable).values({
+    weddingId,
+    description: `Prestataire ajouté : ${vendor!.name}`,
+    entityType: "vendor",
+    initials: vendor!.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
+  });
+  res.status(201).json(vendor);
 });
 
-// Update vendor
-router.patch("/vendors/:vendorId", async (req, res): Promise<void> => {
-  const params = UpdateVendorParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = UpdateVendorBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const [vendor] = await db
-    .update(vendorsTable)
-    .set(parsed.data)
-    .where(eq(vendorsTable.id, params.data.vendorId))
-    .returning();
-  if (!vendor) {
-    res.status(404).json({ error: "Prestataire introuvable" });
-    return;
-  }
-  res.json(UpdateVendorResponse.parse(coerceNumeric(vendor, ["totalAmount", "depositAmount"])));
+router.get("/:id", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const id = p(req, "id");
+  const [vendor] = await db.select().from(vendorsTable).where(and(eq(vendorsTable.id, id), eq(vendorsTable.weddingId, weddingId)));
+  if (!vendor) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(vendor);
 });
 
-// Delete vendor
-router.delete("/vendors/:vendorId", async (req, res): Promise<void> => {
-  const params = DeleteVendorParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const [vendor] = await db
-    .delete(vendorsTable)
-    .where(eq(vendorsTable.id, params.data.vendorId))
-    .returning();
-  if (!vendor) {
-    res.status(404).json({ error: "Prestataire introuvable" });
-    return;
-  }
-  res.sendStatus(204);
+router.patch("/:id", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const id = p(req, "id");
+  const body = UpdateVendorBody.safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
+  const [vendor] = await db.update(vendorsTable).set(body.data).where(and(eq(vendorsTable.id, id), eq(vendorsTable.weddingId, weddingId))).returning();
+  if (!vendor) { res.status(404).json({ error: "Not found" }); return; }
+  await db.insert(activityTable).values({
+    weddingId,
+    description: `Prestataire mis à jour : ${vendor.name}`,
+    entityType: "vendor",
+    initials: vendor.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
+  });
+  res.json(vendor);
+});
+
+router.delete("/:id", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const id = p(req, "id");
+  await db.delete(vendorsTable).where(and(eq(vendorsTable.id, id), eq(vendorsTable.weddingId, weddingId)));
+  res.status(204).send();
 });
 
 export default router;

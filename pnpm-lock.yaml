@@ -403,7 +403,7 @@ importers:
         specifier: 'catalog:'
         version: 3.25.76
 
-  artifacts/the-nuptial-plan:
+  artifacts/nuptial-plan:
     devDependencies:
       '@hookform/resolvers':
         specifier: ^3.10.0

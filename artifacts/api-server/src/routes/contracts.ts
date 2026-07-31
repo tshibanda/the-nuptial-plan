@@ -1,95 +1,54 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, contractsTable } from "@workspace/db";
-import { coerceNumeric } from "../lib/coerce";
-import {
-  ListContractsParams,
-  ListContractsResponse,
-  CreateContractParams,
-  CreateContractBody,
-  CreateContractResponse,
-  UpdateContractParams,
-  UpdateContractBody,
-  UpdateContractResponse,
-  DeleteContractParams,
-} from "@workspace/api-zod";
+import { db } from "@workspace/db";
+import { contractsTable, activityTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
+import { CreateContractBody, UpdateContractBody } from "@workspace/api-zod";
 
-const router: IRouter = Router();
+const router: IRouter = Router({ mergeParams: true });
 
-// List contracts for a wedding
-router.get("/weddings/:weddingId/contracts", async (req, res): Promise<void> => {
-  const params = ListContractsParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const contracts = await db
-    .select()
-    .from(contractsTable)
-    .where(eq(contractsTable.weddingId, params.data.weddingId))
-    .orderBy(contractsTable.createdAt);
-  res.json(ListContractsResponse.parse(contracts.map(c => coerceNumeric(c, ["totalAmount", "depositAmount"]))));
+const p = (req: { params: Record<string, string> }, key: string) => Number(req.params[key]);
+
+router.get("/", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const contracts = await db.select().from(contractsTable).where(eq(contractsTable.weddingId, weddingId));
+  res.json(contracts);
 });
 
-// Create contract
-router.post("/weddings/:weddingId/contracts", async (req, res): Promise<void> => {
-  const params = CreateContractParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = CreateContractBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const [contract] = await db
-    .insert(contractsTable)
-    .values({ ...parsed.data, weddingId: params.data.weddingId })
-    .returning();
-  res.status(201).json(CreateContractResponse.parse(coerceNumeric(contract, ["totalAmount", "depositAmount"])));
+router.post("/", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const body = CreateContractBody.safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
+  const [contract] = await db.insert(contractsTable).values({ ...body.data, weddingId }).returning();
+  await db.insert(activityTable).values({
+    weddingId,
+    description: `Contrat créé : ${contract!.vendorName}`,
+    entityType: "contract",
+    initials: contract!.vendorName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
+  });
+  res.status(201).json(contract);
 });
 
-// Update contract
-router.patch("/contracts/:contractId", async (req, res): Promise<void> => {
-  const params = UpdateContractParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = UpdateContractBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const [contract] = await db
-    .update(contractsTable)
-    .set(parsed.data)
-    .where(eq(contractsTable.id, params.data.contractId))
-    .returning();
-  if (!contract) {
-    res.status(404).json({ error: "Contrat introuvable" });
-    return;
-  }
-  res.json(UpdateContractResponse.parse(coerceNumeric(contract, ["totalAmount", "depositAmount"])));
+router.patch("/:id", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const id = p(req, "id");
+  const body = UpdateContractBody.safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
+  const [contract] = await db.update(contractsTable).set(body.data).where(and(eq(contractsTable.id, id), eq(contractsTable.weddingId, weddingId))).returning();
+  if (!contract) { res.status(404).json({ error: "Not found" }); return; }
+  await db.insert(activityTable).values({
+    weddingId,
+    description: `Contrat mis à jour : ${contract.vendorName}`,
+    entityType: "contract",
+    initials: contract.vendorName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
+  });
+  res.json(contract);
 });
 
-// Delete contract
-router.delete("/contracts/:contractId", async (req, res): Promise<void> => {
-  const params = DeleteContractParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const [contract] = await db
-    .delete(contractsTable)
-    .where(eq(contractsTable.id, params.data.contractId))
-    .returning();
-  if (!contract) {
-    res.status(404).json({ error: "Contrat introuvable" });
-    return;
-  }
-  res.sendStatus(204);
+router.delete("/:id", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const id = p(req, "id");
+  await db.delete(contractsTable).where(and(eq(contractsTable.id, id), eq(contractsTable.weddingId, weddingId)));
+  res.status(204).send();
 });
 
 export default router;

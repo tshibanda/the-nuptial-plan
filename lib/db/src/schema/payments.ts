@@ -1,17 +1,18 @@
-import { pgTable, text, serial, timestamp, numeric, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
-import { weddingsTable } from "./weddings";
 
 export const paymentsTable = pgTable("payments", {
   id: serial("id").primaryKey(),
-  weddingId: integer("wedding_id").notNull().references(() => weddingsTable.id, { onDelete: "cascade" }),
+  weddingId: integer("wedding_id").notNull(),
+  vendorId: integer("vendor_id"),
   vendorName: text("vendor_name").notNull(),
   description: text("description").notNull(),
-  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
-  dueDate: text("due_date").notNull(), // YYYY-MM-DD
-  status: text("status").notNull().default("À régler"),
-  paidAt: text("paid_at"), // YYYY-MM-DD
+  amountCents: integer("amount_cents").notNull().default(0),
+  dueDate: text("due_date").notNull(),
+  status: text("status").notNull().default("pending"),
+  paidDate: text("paid_date"),
+  notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
