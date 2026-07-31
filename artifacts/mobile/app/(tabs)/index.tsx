@@ -13,6 +13,7 @@ import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents, formatDateParts, daysUntil, vendorStatusLabel } from '@/utils/format';
+import { shadow, accentShadow } from '@/utils/shadow';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
 
@@ -32,6 +33,7 @@ export default function DashboardScreen() {
 
   const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
   const wId = activeWedding?.id ?? 0;
+
   const { data: summary, refetch: r1, isRefetching: refreshing } = useGetWeddingSummary(wId);
   const { data: events, refetch: r2 } = useListEvents(wId);
   const { data: vendors, refetch: r3 } = useListVendors(wId);
@@ -62,7 +64,6 @@ export default function DashboardScreen() {
   const previewVendors = (vendors ?? []).slice(0, 3);
   const budgetPct = summary && summary.budgetTotal > 0
     ? Math.round((summary.budgetSpent / summary.budgetTotal) * 100) : 0;
-
   const days = Math.max(0, daysUntil(activeWedding.weddingDate));
 
   return (
@@ -74,10 +75,17 @@ export default function DashboardScreen() {
     >
       {/* ── Hero card ── */}
       <LinearGradient colors={[colors.navyDark, colors.navy]} style={[ss.hero, { paddingTop: topPad + 20 }]}>
+        {/* Sheen highlight at top */}
+        <LinearGradient
+          colors={['rgba(255,255,255,0.07)', 'transparent']}
+          style={ss.heroSheen}
+          pointerEvents="none"
+        />
         <Text style={[ss.heroEye, { fontFamily: SANS_MEDIUM }]}>LA CÉLÉBRATION</Text>
         <Text style={[ss.heroNames, { fontFamily: SERIF }]}>{activeWedding.names}</Text>
         <Text style={[ss.heroVenue, { fontFamily: SANS }]} numberOfLines={1}>{activeWedding.venue}</Text>
         <View style={ss.heroRow}>
+          {/* Date badge — glassy */}
           <View style={ss.heroBadge}>
             <Text style={[ss.heroBadgeText, { fontFamily: SANS_MEDIUM }]}>
               {new Date(activeWedding.weddingDate).toLocaleDateString('fr-FR', {
@@ -85,7 +93,8 @@ export default function DashboardScreen() {
               })}
             </Text>
           </View>
-          <View style={ss.heroCountdown}>
+          {/* Countdown */}
+          <View style={[ss.heroCountdown, accentShadow('sm')]}>
             <Text style={[ss.heroNum, { fontFamily: SERIF }]}>{days}</Text>
             <Text style={[ss.heroUnit, { fontFamily: SANS }]}>jours</Text>
           </View>
@@ -101,13 +110,11 @@ export default function DashboardScreen() {
             note={summary ? `sur ${summary.totalGuests} invités` : '—'}
             colors={colors} />
           <MetricCard icon="calendar" label="Jours restants"
-            value={String(days)}
-            note="avant la cérémonie"
-            colors={colors} />
+            value={String(days)} note="avant la cérémonie"
+            colors={colors} highlight />
           <MetricCard icon="briefcase" label="Prestataires"
             value={String(summary?.vendorCount ?? vendors?.length ?? '—')}
-            note="dans votre équipe"
-            colors={colors} />
+            note="dans votre équipe" colors={colors} />
           <MetricCard icon="trending-up" label="Budget engagé"
             value={`${budgetPct} %`}
             note={summary ? formatCents(summary.budgetSpent, activeWedding.currency) : '—'}
@@ -118,7 +125,9 @@ export default function DashboardScreen() {
         {upcoming.length > 0 && (
           <>
             <SectionTitle eyebrow="LES PROCHAINES SEMAINES" title="À venir" colors={colors} />
-            <View style={[ss.card, { borderColor: colors.border, backgroundColor: colors.card }]}>
+            <View style={[ss.card, shadow('sm'), { borderColor: colors.border, backgroundColor: colors.card }]}>
+              {/* Top rim light */}
+              <View style={[ss.rimLight, { borderTopColor: 'rgba(255,255,255,0.55)' }]} />
               {upcoming.map((evt, i) => {
                 const { day, month } = formatDateParts(evt.eventDate);
                 return (
@@ -126,7 +135,7 @@ export default function DashboardScreen() {
                     key={evt.id}
                     style={[ss.evtRow, i < upcoming.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}
                   >
-                    <View style={[ss.evtDate, { backgroundColor: i === 0 ? colors.goldLight : colors.background }]}>
+                    <View style={[ss.evtDate, { backgroundColor: i === 0 ? colors.goldLight : colors.background }, i === 0 && shadow('xs')]}>
                       <Text style={[ss.evtDay, { fontFamily: SERIF, color: colors.foreground }]}>{day}</Text>
                       <Text style={[ss.evtMonth, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{month}</Text>
                     </View>
@@ -151,8 +160,9 @@ export default function DashboardScreen() {
                 const { label, tone } = vendorStatusLabel(v.status);
                 const av = v.name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
                 return (
-                  <View key={v.id} style={[ss.vrow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                    <View style={[ss.vav, { backgroundColor: colors.goldLight }]}>
+                  <View key={v.id} style={[ss.vrow, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={[ss.rimLight, { borderTopColor: 'rgba(255,255,255,0.5)' }]} />
+                    <View style={[ss.vav, { backgroundColor: colors.goldLight }, shadow('xs')]}>
                       <Text style={[ss.vavText, { fontFamily: SERIF, color: colors.navy }]}>{av}</Text>
                     </View>
                     <View style={ss.vinfo}>
@@ -180,50 +190,66 @@ function SectionTitle({ eyebrow, title, colors }: { eyebrow: string; title: stri
   );
 }
 
-function MetricCard({ icon, label, value, note, colors }: {
+function MetricCard({ icon, label, value, note, colors, highlight }: {
   icon: string; label: string; value: string; note: string;
-  colors: ReturnType<typeof useColors>;
+  colors: ReturnType<typeof useColors>; highlight?: boolean;
 }) {
+  const cardShadow = highlight ? accentShadow('sm') : shadow('sm');
+  const borderTopColor = highlight ? 'rgba(200,170,112,0.45)' : 'rgba(255,255,255,0.55)';
+
   return (
-    <View style={[ss.metric, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Feather name={icon as any} size={15} color={colors.accent} />
-      <Text style={[ss.mvalue, { fontFamily: SERIF, color: colors.foreground }]}>{value}</Text>
-      <Text style={[ss.mlabel, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{label.toUpperCase()}</Text>
-      <Text style={[ss.mnote, { fontFamily: SANS, color: colors.tertiaryText }]} numberOfLines={1}>{note}</Text>
-    </View>
+    <LinearGradient
+      colors={highlight
+        ? ['rgba(200,170,112,0.06)', colors.card]
+        : ['rgba(255,255,255,0.40)', colors.card]}
+      style={[ms.card, cardShadow, { borderColor: highlight ? colors.goldDim + '55' : colors.border }]}
+    >
+      {/* Rim light */}
+      <View style={[ms.rim, { borderTopColor }]} />
+      <Feather name={icon as any} size={15} color={highlight ? colors.accent : colors.accent} />
+      <Text style={[ms.value, { fontFamily: SERIF, color: colors.foreground }]}>{value}</Text>
+      <Text style={[ms.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{label.toUpperCase()}</Text>
+      <Text style={[ms.note, { fontFamily: SANS, color: colors.tertiaryText }]} numberOfLines={1}>{note}</Text>
+    </LinearGradient>
   );
 }
 
+const ms = StyleSheet.create({
+  card: { width: '47.5%', borderRadius: 8, borderWidth: StyleSheet.hairlineWidth, padding: 14, gap: 3, overflow: 'hidden' },
+  rim: { ...StyleSheet.absoluteFillObject, bottom: undefined, height: 1, borderTopWidth: 1 },
+  value: { fontSize: 30, lineHeight: 32, marginTop: 4 },
+  label: { fontSize: 8, letterSpacing: 1 },
+  note: { fontSize: 10 },
+});
+
 const ss = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  hero: { paddingHorizontal: 20, paddingBottom: 28 },
+  hero: { paddingHorizontal: 20, paddingBottom: 28, overflow: 'hidden' },
+  heroSheen: { ...StyleSheet.absoluteFillObject, height: 120 },
   heroEye: { fontSize: 9, letterSpacing: 2, color: '#c8aa70', marginBottom: 8 },
   heroNames: { fontSize: 36, lineHeight: 36, color: '#f8f3ea', marginBottom: 4 },
   heroVenue: { fontSize: 12, color: '#bdc8c4', marginBottom: 18 },
   heroRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  heroBadge: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 6 },
+  heroBadge: { backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.18)', paddingHorizontal: 12, paddingVertical: 7 },
   heroBadgeText: { fontSize: 11, color: '#f8f3ea', letterSpacing: 0.3 },
-  heroCountdown: { alignItems: 'center' },
+  heroCountdown: { alignItems: 'center', backgroundColor: 'rgba(200,170,112,0.12)', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
   heroNum: { fontSize: 48, lineHeight: 44, color: '#c8aa70' },
   heroUnit: { fontSize: 10, color: '#bdc8c4', letterSpacing: 1 },
   body: { paddingHorizontal: 16 },
   eye: { fontSize: 9, letterSpacing: 1.6, marginBottom: 3 },
   stitle: { fontSize: 28, lineHeight: 28 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  metric: { width: '47.5%', borderRadius: 6, borderWidth: StyleSheet.hairlineWidth, padding: 14, gap: 3 },
-  mvalue: { fontSize: 30, lineHeight: 32, marginTop: 4 },
-  mlabel: { fontSize: 8, letterSpacing: 1 },
-  mnote: { fontSize: 10 },
-  card: { borderRadius: 6, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  card: { borderRadius: 8, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  rimLight: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },
   evtRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 11 },
-  evtDate: { width: 44, height: 44, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
+  evtDate: { width: 44, height: 44, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   evtDay: { fontSize: 20, lineHeight: 20 },
   evtMonth: { fontSize: 7, letterSpacing: 0.8, marginTop: 1 },
   evtInfo: { flex: 1 },
   evtTitle: { fontSize: 12, marginBottom: 2 },
   evtDetail: { fontSize: 10 },
   vlist: { gap: 8 },
-  vrow: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 6, borderWidth: StyleSheet.hairlineWidth, padding: 12 },
+  vrow: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 8, borderWidth: StyleSheet.hairlineWidth, padding: 12, overflow: 'hidden' },
   vav: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   vavText: { fontSize: 15 },
   vinfo: { flex: 1 },

@@ -56,10 +56,10 @@ const navItems = [
 ];
 
 const CURRENCIES = [
-  { code: 'EUR', label: 'Euro (€)' },
-  { code: 'GBP', label: 'Livre sterling (£)' },
-  { code: 'USD', label: 'Dollar américain ($)' },
-  { code: 'CHF', label: 'Franc suisse (CHF)' },
+  { code: 'EUR', label: 'Euro (€)', symbol: '€' },
+  { code: 'GBP', label: 'Livre sterling (£)', symbol: '£' },
+  { code: 'USD', label: 'Dollar américain ($)', symbol: '$' },
+  { code: 'CHF', label: 'Franc suisse (CHF)', symbol: 'CHF' },
 ];
 
 const newWeddingSchema = z.object({
@@ -200,9 +200,12 @@ function CreateWeddingDialog({
               <FormField
                 control={form.control}
                 name="totalBudget"
-                render={({ field }) => (
+                render={({ field }) => {
+                  const currencyCode = form.watch('currency');
+                  const symbol = CURRENCIES.find((c) => c.code === currencyCode)?.symbol ?? currencyCode;
+                  return (
                   <FormItem>
-                    <FormLabel>Budget total (£)</FormLabel>
+                    <FormLabel>Budget total ({symbol})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -214,7 +217,8 @@ function CreateWeddingDialog({
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
+                  );
+                }}
               />
               <FormField
                 control={form.control}
