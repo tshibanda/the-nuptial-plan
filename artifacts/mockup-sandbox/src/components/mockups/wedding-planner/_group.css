@@ -1,0 +1,6 @@
+@keyframes aurelia-pulse {
+  0%, 100% { opacity: .78; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+.aurelia-countdown-pulse { animation: aurelia-pulse 2.8s ease-in-out infinite; }
