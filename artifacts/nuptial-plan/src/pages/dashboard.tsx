@@ -176,7 +176,7 @@ export default function Dashboard() {
   return (
     <div>
       {/* ════════════════ HERO ════════════════ */}
-      <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient p-8 ring-1 ring-white/60"
+      <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid p-8 ring-1 ring-white/60"
         style={{ boxShadow: '0 8px 40px rgba(93,45,93,0.10), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
 
         {/* Botanical decoration */}
