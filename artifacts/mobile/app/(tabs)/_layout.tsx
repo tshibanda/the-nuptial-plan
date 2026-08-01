@@ -3,6 +3,7 @@ import { Platform, StyleSheet, useColorScheme, View, Text } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Redirect, Tabs } from 'expo-router';
 import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
@@ -10,9 +11,9 @@ import { SymbolView } from 'expo-symbols';
 import type { SFSymbol } from 'expo-symbols';
 import { useAuth } from '@clerk/expo';
 import { setAuthTokenGetter } from '@workspace/api-client-react';
-import { SANS_MEDIUM } from '@/constants/fonts';
+import { SANS_SEMIBOLD } from '@/constants/fonts';
 
-// NativeTabs: iOS 26+ with liquid glass.
+// NativeTabs: iOS 26+ with liquid glass — keeps native look.
 function NativeTabLayout() {
   return (
     <NativeTabs>
@@ -44,61 +45,103 @@ function NativeTabLayout() {
   );
 }
 
+// ── Per-tab icon/label data ───────────────────────────────────────────────────
 interface TabPillProps {
   sfName: string;
   featherName: string;
   label: string;
   focused: boolean;
-  color: string;
   colors: ReturnType<typeof useColors>;
 }
 
-function TabPill({ sfName, featherName, label, focused, color, colors }: TabPillProps) {
+/**
+ * Active tab  → plum LinearGradient pill with icon + label
+ * Inactive tab → icon only, muted colour, no pill
+ *
+ * Icon-only inactive tabs keep the bar narrow enough that all 6 tabs fit
+ * comfortably on 390 px without triggering the "More" overflow.
+ */
+function TabPill({ sfName, featherName, label, focused, colors }: TabPillProps) {
   const isIOS = Platform.OS === 'ios';
-  const iconColor = focused ? '#FBF5FB' : color;
 
+  if (!focused) {
+    return (
+      <View style={tp.iconOnly}>
+        {isIOS ? (
+          <SymbolView
+            name={sfName as SFSymbol}
+            tintColor={colors.mutedForeground}
+            size={20}
+          />
+        ) : (
+          <Feather name={featherName as any} size={20} color={colors.mutedForeground} />
+        )}
+      </View>
+    );
+  }
+
+  // Active pill — gradient + label
   return (
-    <View
-      style={[
-        tp.pill,
-        focused && { backgroundColor: colors.plum },
-      ]}
+    <LinearGradient
+      colors={[colors.plumDark, colors.plum]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={tp.pill}
     >
+      {/* Rim highlight */}
+      <View style={tp.rim} />
       {isIOS ? (
-        <SymbolView name={sfName as SFSymbol} tintColor={iconColor} size={19} />
+        <SymbolView name={sfName as SFSymbol} tintColor="#FBF5FB" size={16} />
       ) : (
-        <Feather name={featherName as any} size={18} color={iconColor} />
+        <Feather name={featherName as any} size={16} color="#FBF5FB" />
       )}
       <Text
-        style={[
-          tp.label,
-          { fontFamily: SANS_MEDIUM, color: focused ? '#FBF5FB' : color },
-        ]}
+        style={[tp.label, { fontFamily: SANS_SEMIBOLD }]}
         numberOfLines={1}
       >
         {label}
       </Text>
-    </View>
+    </LinearGradient>
   );
 }
 
 const tp = StyleSheet.create({
-  pill: {
+  iconOnly: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 18,
-    gap: 3,
-    minWidth: 58,
+    overflow: 'hidden',
+    // subtle pill shadow on Android/web
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 2px 10px rgba(93,45,93,0.30)' } as any
+      : Platform.OS === 'android'
+        ? { elevation: 3 }
+        : {}),
+  },
+  rim: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   label: {
     fontSize: 10,
-    letterSpacing: 0.1,
+    letterSpacing: 0.2,
+    color: '#FBF5FB',
   },
 });
 
-// ClassicTabLayout: older iOS, Android, web.
+// ── Classic tab layout (Android / web / older iOS) ────────────────────────────
 function ClassicTabLayout() {
   const colors = useColors();
   const colorScheme = useColorScheme();
@@ -107,13 +150,12 @@ function ClassicTabLayout() {
 
   const makeTabIcon =
     (sfName: string, featherName: string, label: string) =>
-    ({ color, focused }: { color: string; focused: boolean }) => (
+    ({ focused }: { color: string; focused: boolean }) => (
       <TabPill
         sfName={sfName}
         featherName={featherName}
         label={label}
         focused={focused}
-        color={color}
         colors={colors}
       />
     );
@@ -127,27 +169,32 @@ function ClassicTabLayout() {
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.background,
-          borderTopWidth: isWeb ? 1 : StyleSheet.hairlineWidth,
-          borderTopColor: colors.border,
+          backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.card,
+          // Gold-tinted top border matching the hero gold bar
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: 'rgba(200,170,112,0.40)',
           elevation: 0,
-          height: isWeb ? 78 : 72,
+          height: isWeb ? 74 : 70,
         },
         tabBarItemStyle: {
+          flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          paddingVertical: 8,
         },
         tabBarBackground: () =>
           Platform.OS === 'ios' ? (
+            // Frosted glass on iOS — consistent with frosted header
             <BlurView
-              intensity={100}
+              intensity={95}
               tint={isDark ? 'dark' : 'light'}
               style={StyleSheet.absoluteFill}
             />
-          ) : isWeb ? (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
-          ) : null,
+          ) : (
+            // Subtle card background on web/Android with a top gold rim
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? colors.card : '#FDFAF7' }]}>
+              <View style={cl.goldRim} />
+            </View>
+          ),
       }}
     >
       <Tabs.Screen
@@ -178,6 +225,18 @@ function ClassicTabLayout() {
   );
 }
 
+const cl = StyleSheet.create({
+  goldRim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1.5,
+    backgroundColor: 'rgba(200,170,112,0.35)',
+  },
+});
+
+// ── Root layout ───────────────────────────────────────────────────────────────
 export default function TabLayout() {
   const { isSignedIn, getToken } = useAuth();
 
