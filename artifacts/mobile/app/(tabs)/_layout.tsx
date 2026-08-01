@@ -12,6 +12,7 @@ import type { SFSymbol } from 'expo-symbols';
 import { useAuth } from '@clerk/expo';
 import { setAuthTokenGetter } from '@workspace/api-client-react';
 import { SANS_SEMIBOLD } from '@/constants/fonts';
+import { NuptiaSheet } from '@/components/NuptiaSheet';
 
 // NativeTabs: iOS 26+ with liquid glass — keeps native look.
 function NativeTabLayout() {
@@ -264,8 +265,10 @@ export default function TabLayout() {
     return <Redirect href="/(auth)/sign-in" />;
   }
 
-  if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout />;
-  }
-  return <ClassicTabLayout />;
+  return (
+    <View style={{ flex: 1 }}>
+      {isLiquidGlassAvailable() ? <NativeTabLayout /> : <ClassicTabLayout />}
+      <NuptiaSheet />
+    </View>
+  );
 }
