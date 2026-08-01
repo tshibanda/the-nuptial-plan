@@ -23,7 +23,9 @@ function DocRow({
 }) {
   return (
     <div className="flex items-center gap-3 border-b border-[#e3dbd0] px-5 py-3.5 last:border-0">
-      <Paperclip size={13} className="shrink-0 text-[#9b8258]" />
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full badge-deposit">
+        <Paperclip size={12} />
+      </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] font-semibold text-[#3d4d55]">{doc.name}</p>
         <p className="mt-0.5 text-[10px] text-[#a5a19a]">
@@ -70,10 +72,10 @@ function UploadZone({ weddingId, entityType, entityId }: { weddingId: number; en
       <button
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
-        className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors"
+        className="btn-gold flex items-center gap-2 rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] disabled:opacity-50 transition-all"
         data-testid="button-upload-doc"
       >
-        <Upload size={13} />
+        <Upload size={11} />
         {isUploading ? 'Envoi en cours…' : 'Ajouter un fichier'}
       </button>
       <input
@@ -105,20 +107,22 @@ function Section({
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div className="mb-6 overflow-hidden border border-border bg-card">
+    <div className="mb-5 card-depth">
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between px-5 py-3 text-left"
+        className="flex w-full items-center justify-between px-5 py-4 text-left"
       >
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9b8258]">
+          <p className="eyebrow text-[#a8893e]">
             {title}
           </p>
-          <p className="text-[11px] text-[#858b89]">
+          <p className="mt-1 text-[11px] text-[#858b89]">
             {docs.length} fichier{docs.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <span className="text-[10px] text-[#a5a19a]">{expanded ? '▲' : '▼'}</span>
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(200,169,110,0.15)] text-[9px] text-[#a8893e]">
+          {expanded ? '▲' : '▼'}
+        </span>
       </button>
 
       {expanded && (
@@ -187,16 +191,20 @@ export default function Documents() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-8">
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b8258]">
-          Dossier du mariage
-        </p>
+      {/* Hero header */}
+      <div
+        className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"
+        style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}
+      >
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
         <div className="flex items-end justify-between">
-          <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Documents</h1>
-          <p className="text-[11px] text-[#858b89]">
-            {allDocs.length} fichier{allDocs.length !== 1 ? 's' : ''} au total
-          </p>
+          <div>
+            <p className="eyebrow mb-2 text-[#a8893e]">Dossier du mariage</p>
+            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Documents</h1>
+          </div>
+          <span className="rounded-full badge-pending px-3 py-1.5 text-[10px] font-semibold">
+            {allDocs.length} fichier{allDocs.length !== 1 ? 's' : ''}
+          </span>
         </div>
       </div>
 
@@ -255,7 +263,9 @@ export default function Documents() {
 
       {allDocs.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-          <FolderOpen size={40} className="text-[#c9b99a]" />
+          <span className="flex h-14 w-14 items-center justify-center rounded-full badge-deposit">
+            <FolderOpen size={28} />
+          </span>
           <p className="font-serif text-xl text-muted-foreground">Dossier vide</p>
           <p className="text-[12px] text-[#858b89]">
             Ajoutez vos premiers documents depuis le dossier général ci-dessus,<br />
