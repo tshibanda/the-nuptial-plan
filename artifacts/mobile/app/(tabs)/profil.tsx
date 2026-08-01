@@ -1,11 +1,11 @@
 import {
-  ScrollView, View, Text, StyleSheet, Platform, TouchableOpacity, Alert,
+  ScrollView, View, Text, StyleSheet, Platform, TouchableOpacity, Alert, Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useClerk } from '@clerk/expo';
+import { useClerk, useUser } from '@clerk/expo';
 import { useListWeddings, useGetWeddingSummary } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
@@ -74,9 +74,31 @@ export default function ProfilScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signOut } = useClerk();
+  const { user } = useUser();
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const { tourVisible, openTour, closeTour } = useTour('tour:profil');
+
+  // Derive display values from Clerk user
+  const displayName = user?.fullName
+    || (user?.firstName ? user.firstName : null)
+    || user?.primaryEmailAddress?.emailAddress?.split('@')[0]
+    || 'Planificatrice';
+
+  const initials = (() => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    }
+    if (user?.firstName) {
+      return user.firstName.slice(0, 2).toUpperCase();
+    }
+    const email = user?.primaryEmailAddress?.emailAddress;
+    if (email) return email.slice(0, 2).toUpperCase();
+    return 'NP';
+  })();
+
+  const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+  const avatarUrl = user?.imageUrl ?? null;
 
   const handleSignOut = () => {
     Alert.alert(
@@ -135,13 +157,19 @@ export default function ProfilScreen() {
           end={{ x: 1, y: 1 }}
           style={[ss.avatarRing, accentShadow('lg')]}
         >
-          <View style={ss.avatarInner}>
-            <Text style={[ss.avatarText, { fontFamily: SERIF }]}>EC</Text>
-          </View>
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={ss.avatarImage} />
+          ) : (
+            <View style={ss.avatarInner}>
+              <Text style={[ss.avatarText, { fontFamily: SERIF }]}>{initials}</Text>
+            </View>
+          )}
         </LinearGradient>
 
-        <Text style={[ss.name, { fontFamily: SERIF }]}>Élise Caron</Text>
-        <Text style={[ss.role, { fontFamily: SANS_MEDIUM }]}>Directrice artistique</Text>
+        <Text style={[ss.name, { fontFamily: SERIF }]}>{displayName}</Text>
+        {userEmail ? (
+          <Text style={[ss.role, { fontFamily: SANS_MEDIUM }]}>{userEmail}</Text>
+        ) : null}
         <Text style={[ss.brand, { fontFamily: SANS }]}>The Nuptial Plan · Atelier nuptial</Text>
       </LinearGradient>
 
@@ -277,6 +305,7 @@ const ss = StyleSheet.create({
   goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
   avatarRing: { width: 84, height: 84, borderRadius: 42, alignItems: 'center', justifyContent: 'center', marginBottom: 14, padding: 2 },
   avatarInner: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(60,26,60,0.55)', alignItems: 'center', justifyContent: 'center' },
+  avatarImage: { width: 80, height: 80, borderRadius: 40 },
   avatarText: { fontSize: 34, color: '#C8A96E', lineHeight: 36 },
   name: { fontSize: 30, color: '#f8f3ea', marginBottom: 4 },
   role: { fontSize: 12, color: '#C8A96E', letterSpacing: 0.5, marginBottom: 2 },
