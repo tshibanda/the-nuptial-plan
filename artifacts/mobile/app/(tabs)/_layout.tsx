@@ -41,6 +41,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: 'chart.pie', selected: 'chart.pie.fill' }} />
         <Label>Budget</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="paiements">
+        <Icon sf={{ default: 'creditcard', selected: 'creditcard.fill' }} />
+        <Label>Paiements</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profil">
         <Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} />
         <Label>Profil</Label>
@@ -224,6 +228,10 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="budget"
         options={{ tabBarIcon: makeTabIcon('chart.pie', 'pie-chart', 'Budget') }}
+      />
+      <Tabs.Screen
+        name="paiements"
+        options={{ tabBarIcon: makeTabIcon('creditcard', 'credit-card', 'Paiements') }}
       />
       <Tabs.Screen
         name="profil"

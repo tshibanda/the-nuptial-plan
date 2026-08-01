@@ -194,10 +194,13 @@ function buildHTML(data: BudgetPDFData): string {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     background: #fff;
     color: #1a091a;
     -webkit-print-color-adjust: exact;
@@ -215,13 +218,13 @@ function buildHTML(data: BudgetPDFData): string {
   <!-- gold top line -->
   <div style="position:absolute;top:0;left:0;right:0;height:1.5px;background:${GOLD};opacity:0.4;"></div>
 
-  <div style="font-size:7.5px;letter-spacing:3px;text-transform:uppercase;color:${GOLD};margin-bottom:8px;font-family:Arial,sans-serif;">
+  <div style="font-size:7.5px;letter-spacing:3px;text-transform:uppercase;color:${GOLD};margin-bottom:8px;font-family:'DM Sans',Arial,sans-serif;">
     THE NUPTIAL PLAN · BUDGET
   </div>
   <div style="font-size:28px;color:${WHITE};font-weight:bold;line-height:1.1;margin-bottom:4px;">
     ${weddingNames}
   </div>
-  ${dateStr ? `<div style="font-size:10px;color:rgba(255,255,255,0.55);margin-top:4px;font-family:Arial,sans-serif;">${dateStr}</div>` : ''}
+  ${dateStr ? `<div style="font-size:10px;color:rgba(255,255,255,0.55);margin-top:4px;font-family:'DM Sans',Arial,sans-serif;">${dateStr}</div>` : ''}
   <div style="height:1.5px;background:${GOLD};opacity:0.35;margin-top:16px;"></div>
 </div>
 
@@ -230,13 +233,13 @@ function buildHTML(data: BudgetPDFData): string {
   <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;">
     <div style="text-align:center;">
       <div style="font-size:20px;font-weight:bold;color:#1a091a;">${fmtCents(totalSpent, currency)}</div>
-      <div style="font-size:9px;color:${GREY};font-family:Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">DÉPENSÉ</div>
+      <div style="font-size:9px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">DÉPENSÉ</div>
     </div>
     <div style="flex:1;padding:0 16px;">
       <div style="height:10px;border-radius:5px;background:#e8e0e8;overflow:hidden;">
         <div style="height:10px;border-radius:5px;background:${barColor};width:${pct}%;"></div>
       </div>
-      <div style="font-size:9px;color:${GREY};font-family:Arial,sans-serif;text-align:center;margin-top:5px;">
+      <div style="font-size:9px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;text-align:center;margin-top:5px;">
         ${isOver
           ? `Dépassement de ${fmtCents(Math.abs(remaining), currency)}`
           : `${fmtCents(remaining, currency)} restant — ${pct}% utilisé`}
@@ -244,7 +247,7 @@ function buildHTML(data: BudgetPDFData): string {
     </div>
     <div style="text-align:center;">
       <div style="font-size:20px;font-weight:bold;color:${PLUM};">${fmtCents(totalAllocated, currency)}</div>
-      <div style="font-size:9px;color:${GREY};font-family:Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">BUDGET TOTAL</div>
+      <div style="font-size:9px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">BUDGET TOTAL</div>
     </div>
   </div>
 </div>
@@ -256,7 +259,7 @@ ${categories.length > 0 ? `
     ${donutSvg}
   </div>
   <div style="flex:1;">
-    <div style="font-size:7.5px;letter-spacing:2.5px;text-transform:uppercase;color:${GOLD_DIM};font-family:Arial,sans-serif;margin-bottom:10px;">RÉPARTITION DU BUDGET</div>
+    <div style="font-size:7.5px;letter-spacing:2.5px;text-transform:uppercase;color:${GOLD_DIM};font-family:'DM Sans',Arial,sans-serif;margin-bottom:10px;">RÉPARTITION DU BUDGET</div>
     <div style="display:flex;flex-wrap:wrap;">
       ${legend}
     </div>
@@ -268,15 +271,15 @@ ${categories.length > 0 ? `
 <!-- ── CATEGORY TABLE ── -->
 ${categories.length > 0 ? `
 <div style="padding:20px 40px;">
-  <div style="font-size:7.5px;letter-spacing:2.5px;text-transform:uppercase;color:${GOLD_DIM};font-family:Arial,sans-serif;margin-bottom:12px;">PAR CATÉGORIE</div>
+  <div style="font-size:7.5px;letter-spacing:2.5px;text-transform:uppercase;color:${GOLD_DIM};font-family:'DM Sans',Arial,sans-serif;margin-bottom:12px;">PAR CATÉGORIE</div>
   <table style="width:100%;border-collapse:collapse;">
     <thead>
       <tr style="border-bottom:1px solid rgba(200,180,200,0.35);">
-        <th style="padding:6px 14px;text-align:left;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:Arial,sans-serif;font-weight:600;text-transform:uppercase;">Catégorie</th>
-        <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:Arial,sans-serif;font-weight:600;text-transform:uppercase;">Alloué</th>
-        <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:Arial,sans-serif;font-weight:600;text-transform:uppercase;">Dépensé</th>
-        <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:Arial,sans-serif;font-weight:600;text-transform:uppercase;">Restant</th>
-        <th style="padding:6px 14px;text-align:center;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:Arial,sans-serif;font-weight:600;text-transform:uppercase;">%</th>
+        <th style="padding:6px 14px;text-align:left;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Catégorie</th>
+        <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Alloué</th>
+        <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Dépensé</th>
+        <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Restant</th>
+        <th style="padding:6px 14px;text-align:center;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">%</th>
       </tr>
     </thead>
     <tbody>
@@ -288,9 +291,9 @@ ${categories.length > 0 ? `
 
 <!-- ── FOOTER ── -->
 <div style="padding:16px 40px;border-top:1px solid rgba(200,180,200,0.25);display:flex;justify-content:space-between;align-items:center;margin-top:auto;">
-  <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:Arial,sans-serif;">Exporté le ${today()}</span>
-  <span style="font-size:8px;color:${GOLD};font-family:Arial,sans-serif;font-weight:bold;letter-spacing:1.5px;">THE NUPTIAL PLAN</span>
-  <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:Arial,sans-serif;">${categories.length} catégorie${categories.length !== 1 ? 's' : ''}</span>
+  <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:'DM Sans',Arial,sans-serif;">Exporté le ${today()}</span>
+  <span style="font-size:8px;color:${GOLD};font-family:'DM Sans',Arial,sans-serif;font-weight:bold;letter-spacing:1.5px;">THE NUPTIAL PLAN</span>
+  <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:'DM Sans',Arial,sans-serif;">${categories.length} catégorie${categories.length !== 1 ? 's' : ''}</span>
 </div>
 
 </body>

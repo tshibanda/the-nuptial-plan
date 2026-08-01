@@ -1,6 +1,7 @@
 /**
  * RunsheetPDF — Jardin Parisien branded PDF export
  * Uses @react-pdf/renderer (browser-side)
+ * Fonts: Cormorant Garamond (headings/numbers) + DM Sans (body/labels)
  */
 import {
   Document,
@@ -9,7 +10,31 @@ import {
   View,
   StyleSheet,
   pdf,
+  Font,
 } from '@react-pdf/renderer';
+
+/* ── Brand fonts ── */
+const CDN = 'https://cdn.jsdelivr.net/npm';
+
+Font.register({
+  family: 'Cormorant Garamond',
+  fonts: [
+    { src: `${CDN}/@fontsource/cormorant-garamond/files/cormorant-garamond-latin-400-normal.woff2`, fontWeight: 400 },
+    { src: `${CDN}/@fontsource/cormorant-garamond/files/cormorant-garamond-latin-600-normal.woff2`, fontWeight: 600 },
+    { src: `${CDN}/@fontsource/cormorant-garamond/files/cormorant-garamond-latin-700-normal.woff2`, fontWeight: 700 },
+    { src: `${CDN}/@fontsource/cormorant-garamond/files/cormorant-garamond-latin-400-italic.woff2`, fontWeight: 400, fontStyle: 'italic' },
+  ],
+});
+
+Font.register({
+  family: 'DM Sans',
+  fonts: [
+    { src: `${CDN}/@fontsource/dm-sans/files/dm-sans-latin-400-normal.woff2`, fontWeight: 400 },
+    { src: `${CDN}/@fontsource/dm-sans/files/dm-sans-latin-500-normal.woff2`, fontWeight: 500 },
+    { src: `${CDN}/@fontsource/dm-sans/files/dm-sans-latin-600-normal.woff2`, fontWeight: 600 },
+    { src: `${CDN}/@fontsource/dm-sans/files/dm-sans-latin-700-normal.woff2`, fontWeight: 700 },
+  ],
+});
 
 /* ── Palette ── */
 const PLUM   = '#3C1A3C';
@@ -48,7 +73,7 @@ export interface PDFWedding {
 /* ── Styles ── */
 const s = StyleSheet.create({
   page: {
-    fontFamily: 'Helvetica',
+    fontFamily: 'DM Sans',
     backgroundColor: '#ffffff',
     paddingBottom: 48,
   },
@@ -64,14 +89,15 @@ const s = StyleSheet.create({
     color: GOLD,
     fontSize: 7.5,
     letterSpacing: 2.5,
-    textTransform: 'uppercase',
     marginBottom: 6,
-    fontFamily: 'Helvetica',
+    fontFamily: 'DM Sans',
+    fontWeight: 600,
   },
   headerTitle: {
     color: '#ffffff',
-    fontSize: 26,
-    fontFamily: 'Helvetica-Bold',
+    fontSize: 28,
+    fontFamily: 'Cormorant Garamond',
+    fontWeight: 700,
     marginBottom: 4,
     lineHeight: 1.1,
   },
@@ -80,6 +106,8 @@ const s = StyleSheet.create({
     fontSize: 9,
     letterSpacing: 0.5,
     marginTop: 2,
+    fontFamily: 'DM Sans',
+    fontWeight: 400,
   },
   goldBar: {
     height: 1.5,
@@ -100,8 +128,8 @@ const s = StyleSheet.create({
     fontSize: 8,
     color: GREY,
     letterSpacing: 1.8,
-    textTransform: 'uppercase',
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'DM Sans',
+    fontWeight: 700,
   },
 
   // Body
@@ -115,8 +143,8 @@ const s = StyleSheet.create({
     fontSize: 7.5,
     color: '#a8893e',
     letterSpacing: 2,
-    textTransform: 'uppercase',
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'DM Sans',
+    fontWeight: 700,
     marginBottom: 8,
     marginTop: 16,
   },
@@ -157,7 +185,8 @@ const s = StyleSheet.create({
   eventTime: {
     width: 34,
     fontSize: 13,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Cormorant Garamond',
+    fontWeight: 700,
     color: PLUM2,
     paddingTop: 1,
     textAlign: 'right',
@@ -168,13 +197,16 @@ const s = StyleSheet.create({
     fontSize: 10,
     color: 'rgba(0,0,0,0.20)',
     textAlign: 'right',
+    fontFamily: 'DM Sans',
+    fontWeight: 400,
   },
   eventMain: {
     flex: 1,
   },
   eventTitle: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'DM Sans',
+    fontWeight: 700,
     color: '#1a1020',
     marginBottom: 2,
     lineHeight: 1.3,
@@ -188,6 +220,8 @@ const s = StyleSheet.create({
     color: GREY,
     marginBottom: 1,
     lineHeight: 1.4,
+    fontFamily: 'DM Sans',
+    fontWeight: 400,
   },
   eventDetail: {
     fontSize: 8,
@@ -195,6 +229,8 @@ const s = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 3,
     lineHeight: 1.4,
+    fontFamily: 'DM Sans',
+    fontWeight: 400,
   },
 
   // Status badge
@@ -203,7 +239,8 @@ const s = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 20,
     fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'DM Sans',
+    fontWeight: 700,
   },
 
   // Empty
@@ -215,6 +252,8 @@ const s = StyleSheet.create({
     fontSize: 10,
     color: GREY,
     textAlign: 'center',
+    fontFamily: 'DM Sans',
+    fontWeight: 400,
   },
 
   // Footer
@@ -233,11 +272,14 @@ const s = StyleSheet.create({
   footerText: {
     fontSize: 7,
     color: 'rgba(0,0,0,0.30)',
+    fontFamily: 'DM Sans',
+    fontWeight: 400,
   },
   footerBrand: {
     fontSize: 7,
     color: GOLD,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'DM Sans',
+    fontWeight: 700,
     letterSpacing: 1,
   },
 
@@ -261,6 +303,8 @@ const s = StyleSheet.create({
   statText: {
     fontSize: 8,
     color: GREY,
+    fontFamily: 'DM Sans',
+    fontWeight: 400,
   },
 });
 
@@ -310,7 +354,7 @@ function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PD
 
         {/* ── Header ── */}
         <View style={s.header}>
-          <Text style={s.headerEyebrow}>The Nuptial Plan · Jour J</Text>
+          <Text style={s.headerEyebrow}>THE NUPTIAL PLAN · JOUR J</Text>
           <Text style={s.headerTitle}>{wedding.names}</Text>
           {wedding.weddingDate && (
             <Text style={s.headerSub}>
@@ -324,7 +368,7 @@ function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PD
         {/* ── Stats band ── */}
         <View style={s.dateBand}>
           <Text style={s.dateBandText}>
-            Déroulé du programme · {done}/{total} étapes terminées · {pct}%
+            DÉROULÉ DU PROGRAMME · {done}/{total} ÉTAPES TERMINÉES · {pct}%
           </Text>
         </View>
 
@@ -338,7 +382,7 @@ function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PD
 
           {dates.map((date) => (
             <View key={date} wrap={false}>
-              <Text style={s.dateHeading}>{fmtDate(date)}</Text>
+              <Text style={s.dateHeading}>{fmtDate(date).toUpperCase()}</Text>
 
               {(byDate[date] ?? []).map((ev) => {
                 const accent = ev.tone ? (TONE_HEX[ev.tone] ?? PLUM2) : PLUM2;
@@ -374,7 +418,9 @@ function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PD
 
                         {/* Status badge */}
                         <View style={[s.statusBadge, { backgroundColor: bg }]}>
-                          <Text style={{ color, fontSize: 7, fontFamily: 'Helvetica-Bold' }}>{label}</Text>
+                          <Text style={{ color, fontSize: 7, fontFamily: 'DM Sans', fontWeight: 700 }}>
+                            {label}
+                          </Text>
                         </View>
                       </View>
                     </View>
