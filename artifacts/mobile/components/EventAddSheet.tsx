@@ -18,6 +18,8 @@ interface Props {
   onCreated: () => void;
   /** When provided, the sheet enters edit mode and pre-fills fields */
   initialEvent?: CalendarEvent | null;
+  /** When provided (YYYY-MM-DD), pre-fills the date fields in create mode */
+  initialDate?: string | null;
 }
 
 const TONES = ['gold', 'rose', 'sage'] as const;
@@ -59,7 +61,7 @@ function splitIsoDate(isoDate: string): { day: string; month: string; year: stri
   };
 }
 
-export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialEvent }: Props) {
+export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialEvent, initialDate }: Props) {
   const colors = useColors();
   const isEditMode = !!initialEvent;
 
@@ -90,17 +92,24 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
       setTone((initialEvent.tone as Tone) ?? null);
       setErrors({});
     } else if (visible && !initialEvent) {
-      // Reset for create mode
+      // Reset for create mode, optionally pre-fill date from calendar tap
       setTitle('');
-      setDay('');
-      setMonth('');
-      setYear('');
+      if (initialDate) {
+        const parts = splitIsoDate(initialDate);
+        setDay(parts.day);
+        setMonth(parts.month);
+        setYear(parts.year);
+      } else {
+        setDay('');
+        setMonth('');
+        setYear('');
+      }
       setTime('');
       setDetail('');
       setTone(null);
       setErrors({});
     }
-  }, [visible, initialEvent]);
+  }, [visible, initialEvent, initialDate]);
 
   const { mutate: createEvent, isPending: isCreating } = useCreateEvent({
     mutation: {

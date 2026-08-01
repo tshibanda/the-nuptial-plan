@@ -392,6 +392,7 @@ export default function EvenementsScreen() {
   const [search, setSearch] = useState('');
   const [toneFilter, setToneFilter] = useState<ToneFilter | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [addSheetInitialDate, setAddSheetInitialDate] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   // Calendar navigation state: default to current month
@@ -648,6 +649,18 @@ export default function EvenementsScreen() {
                       <Text style={[hs.dayBannerText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>
                         {new Date(selectedDay + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                       </Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setAddSheetInitialDate(selectedDay);
+                          setShowAdd(true);
+                        }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        style={[hs.dayBannerAdd, { backgroundColor: colors.plum }]}
+                      >
+                        <Feather name="plus" size={12} color="#FBF5FB" />
+                        <Text style={[hs.dayBannerAddText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                      </TouchableOpacity>
                       <TouchableOpacity onPress={() => setSelectedDay(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                         <Feather name="x" size={14} color={colors.plum} />
                       </TouchableOpacity>
@@ -731,16 +744,29 @@ export default function EvenementsScreen() {
 
       {/* FAB */}
       <View style={[hs.fab, accentShadow('lg'), { backgroundColor: colors.plum, bottom: Platform.OS === 'web' ? 94 : insets.bottom + 84 }]} pointerEvents="box-none">
-        <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowAdd(true); }} activeOpacity={0.82} style={hs.fabInner}>
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setAddSheetInitialDate(null);
+            setShowAdd(true);
+          }}
+          activeOpacity={0.82}
+          style={hs.fabInner}
+        >
           <Feather name="plus" size={22} color="#FBF5FB" />
         </TouchableOpacity>
       </View>
 
       <EventAddSheet
         visible={showAdd}
-        onClose={() => setShowAdd(false)}
+        onClose={() => { setShowAdd(false); setAddSheetInitialDate(null); }}
         weddingId={wId}
-        onCreated={() => { queryClient.invalidateQueries({ queryKey: EVENTS_QUERY_KEY }); setShowAdd(false); }}
+        initialDate={addSheetInitialDate}
+        onCreated={() => {
+          queryClient.invalidateQueries({ queryKey: EVENTS_QUERY_KEY });
+          setShowAdd(false);
+          setAddSheetInitialDate(null);
+        }}
       />
 
       <EventDetailSheet
@@ -781,6 +807,8 @@ const hs = StyleSheet.create({
   calCard: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', marginBottom: 4 },
   dayBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth },
   dayBannerText: { flex: 1, fontSize: 12, textTransform: 'capitalize' },
+  dayBannerAdd: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
+  dayBannerAddText: { fontSize: 11, color: '#FBF5FB' },
   calSubtitle: { fontSize: 11, marginBottom: 10, marginTop: 2 },
   // Month section header
   monthSep: { fontSize: 8, letterSpacing: 1.4, marginTop: 16, marginBottom: 8 },
