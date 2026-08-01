@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useClerk } from '@clerk/expo';
 import { useListWeddings, useGetWeddingSummary } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
@@ -72,9 +73,25 @@ export default function ProfilScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { signOut } = useClerk();
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const { tourVisible, openTour, closeTour } = useTour('tour:profil');
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Se déconnecter',
+      'Êtes-vous sûre de vouloir vous déconnecter\u00a0?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Se déconnecter',
+          style: 'destructive',
+          onPress: () => signOut(),
+        },
+      ],
+    );
+  };
 
   const { data: weddings } = useListWeddings();
   const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
@@ -184,6 +201,10 @@ export default function ProfilScreen() {
             onPress={() => router.push('/(tabs)/prestataires')}
           />
           <RowItem
+            icon="credit-card" label="Paiements" colors={colors}
+            onPress={() => router.push('/(tabs)/paiements')}
+          />
+          <RowItem
             icon="file-text" label="Contrats" colors={colors}
             onPress={() => showWebOnly('Contrats')}
           />
@@ -207,6 +228,23 @@ export default function ProfilScreen() {
               Alert.alert('Aide & support', 'Pour toute assistance, contactez-nous à support@thenuptialplan.com', [{ text: 'OK' }])
             }
           />
+        </View>
+
+        {/* Compte */}
+        <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>COMPTE</Text>
+        <View style={[ss.group, shadow('sm'), { backgroundColor: Platform.OS !== 'web' ? 'rgba(248,245,239,0.90)' : colors.card, borderColor: colors.border }]}>
+          <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleSignOut}
+            style={[ss.row, { borderBottomColor: 'transparent' }]}
+          >
+            <View style={[ss.rowIcon, { backgroundColor: colors.roseBg }]}>
+              <Feather name="log-out" size={15} color={colors.roseDark} />
+            </View>
+            <Text style={[ss.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>Se déconnecter</Text>
+            <Feather name="chevron-right" size={14} color={colors.roseDark + '88'} />
+          </TouchableOpacity>
         </View>
 
         {/* App identity card */}
