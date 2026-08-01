@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, Platform, ScrollView,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useCreateEvent } from '@workspace/api-client-react';
+import type { CalendarEvent } from '@workspace/api-client-react';
+import { useCreateEvent, useUpdateEvent } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow } from '@/utils/shadow';
@@ -15,7 +16,18 @@ interface Props {
   onClose: () => void;
   weddingId: number;
   onCreated: () => void;
+  /** When provided, the sheet enters edit mode and pre-fills fields */
+  initialEvent?: CalendarEvent | null;
 }
+
+const TONES = ['gold', 'rose', 'sage'] as const;
+type Tone = typeof TONES[number];
+
+const TONE_LABELS: Record<Tone, string> = {
+  gold: 'Or',
+  rose: 'Rose',
+  sage: 'Sauge',
+};
 
 function parseLocalDate(day: string, month: string, year: string): string | null {
   const d = parseInt(day, 10);
@@ -37,14 +49,27 @@ function parseTime(raw: string): string | null {
   return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
 }
 
-export function EventAddSheet({ visible, onClose, weddingId, onCreated }: Props) {
+/** Split an ISO date string YYYY-MM-DD into day/month/year parts */
+function splitIsoDate(isoDate: string): { day: string; month: string; year: string } {
+  const [y, m, d] = isoDate.split('-');
+  return {
+    day: d ? String(parseInt(d, 10)) : '',
+    month: m ? String(parseInt(m, 10)) : '',
+    year: y ?? '',
+  };
+}
+
+export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialEvent }: Props) {
   const colors = useColors();
+  const isEditMode = !!initialEvent;
+
   const [title, setTitle] = useState('');
   const [day, setDay] = useState('');
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
   const [time, setTime] = useState('');
   const [detail, setDetail] = useState('');
+  const [tone, setTone] = useState<Tone | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const monthRef = useRef<TextInput>(null);
@@ -52,7 +77,32 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated }: Props)
   const timeRef = useRef<TextInput>(null);
   const detailRef = useRef<TextInput>(null);
 
-  const { mutate: createEvent, isPending } = useCreateEvent({
+  // Pre-fill fields when editing
+  useEffect(() => {
+    if (visible && initialEvent) {
+      setTitle(initialEvent.title);
+      const parts = splitIsoDate(initialEvent.eventDate);
+      setDay(parts.day);
+      setMonth(parts.month);
+      setYear(parts.year);
+      setTime(initialEvent.eventTime ?? '');
+      setDetail(initialEvent.detail ?? '');
+      setTone((initialEvent.tone as Tone) ?? null);
+      setErrors({});
+    } else if (visible && !initialEvent) {
+      // Reset for create mode
+      setTitle('');
+      setDay('');
+      setMonth('');
+      setYear('');
+      setTime('');
+      setDetail('');
+      setTone(null);
+      setErrors({});
+    }
+  }, [visible, initialEvent]);
+
+  const { mutate: createEvent, isPending: isCreating } = useCreateEvent({
     mutation: {
       onSuccess: () => {
         onCreated();
@@ -61,6 +111,17 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated }: Props)
     },
   });
 
+  const { mutate: updateEvent, isPending: isUpdating } = useUpdateEvent({
+    mutation: {
+      onSuccess: () => {
+        onCreated();
+        handleClose();
+      },
+    },
+  });
+
+  const isPending = isCreating || isUpdating;
+
   const handleClose = () => {
     setTitle('');
     setDay('');
@@ -68,6 +129,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated }: Props)
     setYear('');
     setTime('');
     setDetail('');
+    setTone(null);
     setErrors({});
     onClose();
   };
@@ -82,15 +144,19 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated }: Props)
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
 
-    createEvent({
-      weddingId,
-      data: {
-        title: title.trim(),
-        eventDate: isoDate!,
-        ...(parsedTime ? { eventTime: parsedTime } : {}),
-        ...(detail.trim() ? { detail: detail.trim() } : {}),
-      },
-    });
+    const payload = {
+      title: title.trim(),
+      eventDate: isoDate!,
+      ...(parsedTime ? { eventTime: parsedTime } : { eventTime: undefined }),
+      ...(detail.trim() ? { detail: detail.trim() } : { detail: undefined }),
+      ...(tone ? { tone } : {}),
+    };
+
+    if (isEditMode && initialEvent) {
+      updateEvent({ weddingId, id: initialEvent.id, data: payload });
+    } else {
+      createEvent({ weddingId, data: payload });
+    }
   };
 
   return (
@@ -98,7 +164,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated }: Props)
       visible={visible}
       onClose={handleClose}
       eyebrow="AGENDA"
-      title="Nouvel événement"
+      title={isEditMode ? "Modifier l'événement" : 'Nouvel événement'}
     >
       <ScrollView
         keyboardShouldPersistTaps="handled"
@@ -242,6 +308,38 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated }: Props)
           </View>
         </View>
 
+        {/* Tone */}
+        <View style={ss.field}>
+          <Text style={[ss.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
+            COULEUR <Text style={{ color: colors.mutedForeground, fontFamily: SANS }}>(facultatif)</Text>
+          </Text>
+          <View style={ss.toneRow}>
+            {TONES.map((t) => {
+              const isSelected = tone === t;
+              const dotColor = t === 'gold' ? colors.gold : t === 'rose' ? colors.rose : colors.sage;
+              return (
+                <TouchableOpacity
+                  key={t}
+                  onPress={() => setTone(isSelected ? null : t)}
+                  activeOpacity={0.75}
+                  style={[
+                    ss.toneChip,
+                    {
+                      borderColor: isSelected ? dotColor : colors.border,
+                      backgroundColor: isSelected ? dotColor + '18' : colors.background,
+                    },
+                  ]}
+                >
+                  <View style={[ss.toneDot, { backgroundColor: dotColor }]} />
+                  <Text style={[ss.toneLabel, { fontFamily: SANS_MEDIUM, color: isSelected ? dotColor : colors.mutedForeground }]}>
+                    {TONE_LABELS[t]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         {/* Submit */}
         <TouchableOpacity
           onPress={handleSubmit}
@@ -253,8 +351,10 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated }: Props)
             ? <ActivityIndicator color="#FBF5FB" size="small" />
             : (
               <>
-                <Feather name="plus" size={16} color="#FBF5FB" />
-                <Text style={[ss.submitText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter l'événement</Text>
+                <Feather name={isEditMode ? 'check' : 'plus'} size={16} color="#FBF5FB" />
+                <Text style={[ss.submitText, { fontFamily: SANS_SEMIBOLD }]}>
+                  {isEditMode ? 'Enregistrer les modifications' : "Ajouter l'événement"}
+                </Text>
               </>
             )}
         </TouchableOpacity>
@@ -299,6 +399,18 @@ const ss = StyleSheet.create({
     textAlignVertical: 'top',
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}),
   },
+  toneRow: { flexDirection: 'row', gap: 8 },
+  toneChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  toneDot: { width: 8, height: 8, borderRadius: 4 },
+  toneLabel: { fontSize: 12 },
   error: { fontSize: 11, marginTop: 2 },
   submitBtn: {
     flexDirection: 'row',

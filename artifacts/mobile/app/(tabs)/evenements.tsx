@@ -18,6 +18,7 @@ import { formatDateParts, formatDateShort } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { EventAddSheet } from '@/components/EventAddSheet';
+import { EventDetailSheet } from '@/components/EventDetailSheet';
 
 type Filter = 'all' | 'upcoming' | 'done';
 type ViewMode = 'list' | 'calendar';
@@ -58,34 +59,84 @@ const td = StyleSheet.create({ dot: { width: 6, height: 6, borderRadius: 3 } });
 
 // ── Event row ────────────────────────────────────────────────────────────────
 function EventRow({
-  item, isFirst, isLast, colors, onToggle,
+  item,
+  isFirst,
+  isLast,
+  colors,
+  onToggle,
+  onPress,
 }: {
-  item: CalendarEvent; isFirst: boolean; isLast: boolean;
-  colors: ReturnType<typeof useColors>; onToggle: (item: CalendarEvent) => void;
+  item: CalendarEvent;
+  isFirst: boolean;
+  isLast: boolean;
+  colors: ReturnType<typeof useColors>;
+  onToggle: (item: CalendarEvent) => void;
+  onPress: (item: CalendarEvent) => void;
 }) {
   const { day, month } = formatDateParts(item.eventDate);
   const isCompleted = item.completed ?? false;
+
   return (
-    <View style={[
-      er.row,
-      !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-      isFirst && er.firstRow, isLast && er.lastRow,
-    ]}>
-      <View style={[er.dateBadge, {
-        backgroundColor: isCompleted ? colors.background : isFirst ? colors.goldLight : colors.background,
-      }, !isCompleted && isFirst && shadow('xs')]}>
-        <Text style={[er.day, { fontFamily: SERIF, color: isCompleted ? colors.mutedForeground : colors.foreground }]}>{day}</Text>
-        <Text style={[er.monthTxt, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{month}</Text>
+    <TouchableOpacity
+      onPress={() => onPress(item)}
+      activeOpacity={0.72}
+      style={[
+        er.row,
+        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+        isFirst && er.firstRow,
+        isLast && er.lastRow,
+      ]}
+    >
+      {/* Date badge */}
+      <View
+        style={[
+          er.dateBadge,
+          {
+            backgroundColor: isCompleted
+              ? colors.background
+              : isFirst
+              ? colors.goldLight
+              : colors.background,
+          },
+          !isCompleted && isFirst && shadow('xs'),
+        ]}
+      >
+        <Text
+          style={[
+            er.day,
+            { fontFamily: SERIF, color: isCompleted ? colors.mutedForeground : colors.foreground },
+          ]}
+        >
+          {day}
+        </Text>
+        <Text style={[er.monthTxt, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
+          {month}
+        </Text>
       </View>
+
+      {/* Info */}
       <View style={er.info}>
         <View style={er.titleRow}>
           <ToneDot tone={item.tone} colors={colors} />
-          <Text style={[er.title, { fontFamily: SANS_SEMIBOLD, color: isCompleted ? colors.mutedForeground : colors.foreground }, isCompleted && er.strikethrough]} numberOfLines={1}>
+          <Text
+            style={[
+              er.title,
+              {
+                fontFamily: SANS_SEMIBOLD,
+                color: isCompleted ? colors.mutedForeground : colors.foreground,
+              },
+              isCompleted && er.strikethrough,
+            ]}
+            numberOfLines={1}
+          >
             {item.title}
           </Text>
         </View>
         {(item.eventTime || item.detail) ? (
-          <Text style={[er.meta, { fontFamily: SANS, color: colors.mutedForeground }]} numberOfLines={1}>
+          <Text
+            style={[er.meta, { fontFamily: SANS, color: colors.mutedForeground }]}
+            numberOfLines={1}
+          >
             {[item.eventTime, item.detail].filter(Boolean).join(' · ')}
           </Text>
         ) : null}
@@ -93,13 +144,27 @@ function EventRow({
           {formatDateShort(item.eventDate)}
         </Text>
       </View>
-      <TouchableOpacity onPress={() => onToggle(item)} activeOpacity={0.7}
+
+      {/* Complete toggle */}
+      <TouchableOpacity
+        onPress={(e) => { e.stopPropagation(); onToggle(item); }}
+        activeOpacity={0.7}
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        style={[er.checkBtn, { borderColor: isCompleted ? colors.sage : colors.border, backgroundColor: isCompleted ? colors.sage + '1A' : 'transparent' }]}
+        style={[
+          er.checkBtn,
+          {
+            borderColor: isCompleted ? colors.sage : colors.border,
+            backgroundColor: isCompleted ? colors.sage + '1A' : 'transparent',
+          },
+        ]}
       >
-        {isCompleted ? <Feather name="check" size={13} color={colors.sage} /> : <View style={er.checkEmpty} />}
+        {isCompleted ? (
+          <Feather name="check" size={13} color={colors.sage} />
+        ) : (
+          <View style={er.checkEmpty} />
+        )}
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -318,6 +383,7 @@ export default function EvenementsScreen() {
   const [filter, setFilter] = useState<Filter>('all');
   const [view, setView] = useState<ViewMode>('list');
   const [showAdd, setShowAdd] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   // Calendar navigation state: default to current month
   const now = new Date();
@@ -352,6 +418,11 @@ export default function EvenementsScreen() {
   const handleToggle = (item: CalendarEvent) => {
     Haptics.impactAsync(item.completed ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Medium);
     updateEvent({ weddingId: wId, id: item.id, data: { completed: !item.completed } });
+  };
+
+  const handleRowPress = (item: CalendarEvent) => {
+    Haptics.selectionAsync();
+    setSelectedEvent(item);
   };
 
   const handlePrevMonth = () => {
@@ -536,7 +607,14 @@ export default function EvenementsScreen() {
               )}
               <View style={[hs.itemInner, { backgroundColor: colors.card, borderLeftColor: colors.border, borderRightColor: colors.border, borderLeftWidth: StyleSheet.hairlineWidth, borderRightWidth: StyleSheet.hairlineWidth }]}>
                 {isFirst && <View style={[hs.rimLight, { borderTopColor: 'rgba(255,255,255,0.60)' }]} />}
-                <EventRow item={item} isFirst={isFirst} isLast={isLast} colors={colors} onToggle={handleToggle} />
+                <EventRow
+                  item={item}
+                  isFirst={isFirst}
+                  isLast={isLast}
+                  colors={colors}
+                  onToggle={handleToggle}
+                  onPress={handleRowPress}
+                />
                 {!isLast && <View style={[hs.separator, { backgroundColor: colors.border }]} />}
               </View>
               {isLast && (
@@ -559,6 +637,19 @@ export default function EvenementsScreen() {
         onClose={() => setShowAdd(false)}
         weddingId={wId}
         onCreated={() => { queryClient.invalidateQueries({ queryKey: EVENTS_QUERY_KEY }); setShowAdd(false); }}
+      />
+
+      <EventDetailSheet
+        visible={!!selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        event={selectedEvent}
+        weddingId={wId}
+        onUpdated={() => {
+          queryClient.invalidateQueries({ queryKey: EVENTS_QUERY_KEY });
+        }}
+        onDeleted={() => {
+          queryClient.invalidateQueries({ queryKey: EVENTS_QUERY_KEY });
+        }}
       />
     </>
   );
