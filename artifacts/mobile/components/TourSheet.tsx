@@ -417,7 +417,7 @@ const ts = StyleSheet.create({
 const fab = StyleSheet.create({
   btn: {
     position: 'absolute',
-    right: 20,
+    left: 20,
     width: 36,
     height: 36,
     borderRadius: 18,
