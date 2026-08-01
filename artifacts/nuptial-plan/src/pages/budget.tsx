@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus, Pencil, Wallet, Tag, AlertCircle } from 'lucide-react';
+import { PageTour } from '@/components/ui/page-tour';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useListBudgetCategories,
@@ -9,6 +10,7 @@ import {
   useDeleteBudgetCategory,
   getListBudgetCategoriesQueryKey,
   getGetBudgetSummaryQueryKey,
+  useListWeddings,
 } from '@workspace/api-client-react';
 import { formatCurrency } from '@/lib/format';
 import { useQueryClient } from '@tanstack/react-query';
@@ -45,6 +47,9 @@ type BudgetFormData = z.infer<typeof budgetSchema>;
 
 export default function Budget() {
   const { activeWeddingId } = useActiveWedding();
+  const { data: weddings = [] } = useListWeddings();
+  const activeWedding = weddings.find((w) => w.id === activeWeddingId);
+  const currencySymbol = ({ EUR: '€', GBP: '£', USD: '$', CHF: 'CHF' } as Record<string, string>)[activeWedding?.currency ?? 'EUR'] ?? activeWedding?.currency ?? '€';
   const { data: categories = [], isLoading } = useListBudgetCategories(activeWeddingId!);
   const { data: summary } = useGetBudgetSummary(activeWeddingId!);
   const [open, setOpen] = useState(false);
@@ -133,6 +138,17 @@ export default function Budget() {
 
   return (
     <div>
+      <PageTour
+        tourKey="budget"
+        pageTitle="Budget"
+        pageIcon={Wallet}
+        steps={[
+          { icon: Wallet, title: 'Vue d\'ensemble', body: 'La barre de progression compare le total engagé au budget global défini dans les paramètres du mariage.' },
+          { icon: Tag, title: 'Catégories', body: 'Organisez vos dépenses par poste — Fleurs, Traiteur, Musique… Chaque catégorie dispose de son propre budget alloué.' },
+          { icon: Plus, title: 'Ajouter une catégorie', body: 'Créez un nouveau poste budgétaire, définissez le montant alloué et renseignez les dépenses réelles au fil du temps.' },
+          { icon: AlertCircle, title: 'Alertes de dépassement', body: 'Les catégories dont les dépenses dépassent le budget alloué sont automatiquement signalées en rouge.' },
+        ]}
+      />
       <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"
         style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
@@ -185,7 +201,7 @@ export default function Budget() {
                   name="allocatedCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Budget alloué (£)</FormLabel>
+                      <FormLabel>Budget alloué ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -204,7 +220,7 @@ export default function Budget() {
                   name="spentCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Dépensé (£)</FormLabel>
+                      <FormLabel>Dépensé ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"

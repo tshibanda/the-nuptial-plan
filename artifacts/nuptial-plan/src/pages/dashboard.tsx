@@ -2,6 +2,7 @@ import {
   CalendarDays, Sparkles, ChevronRight, Plus, Clock3, MoreHorizontal,
   Users, Wallet, CheckSquare, TrendingUp,
 } from 'lucide-react';
+import { PageTour } from '@/components/ui/page-tour';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useGetWedding,
@@ -175,6 +176,17 @@ export default function Dashboard() {
 
   return (
     <div>
+      <PageTour
+        tourKey="dashboard"
+        pageTitle="Aperçu"
+        pageIcon={Sparkles}
+        steps={[
+          { icon: TrendingUp, title: 'Vue globale', body: 'Le bandeau du haut affiche les statistiques clés du mariage actif — budget consommé, invités confirmés, tâches complétées et compte à rebours jusqu\'au grand jour.' },
+          { icon: CalendarDays, title: 'Événements à venir', body: 'Visualisez vos prochains rendez-vous, dégustations et répétitions. Cliquez sur « Voir le planning » pour ouvrir le calendrier complet.' },
+          { icon: Users, title: 'Prestataires récents', body: 'Retrouvez vos derniers prestataires avec leur statut et leur devis. Cliquez sur une ligne pour accéder directement à la page Prestataires.' },
+          { icon: Wallet, title: 'Suivi budgétaire', body: 'La progression budgétaire est résumée ici. Cliquez sur « Ouvrir le budget » pour consulter le détail par catégorie de dépenses.' },
+        ]}
+      />
       {/* ════════════════ HERO ════════════════ */}
       <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid p-8 ring-1 ring-white/60"
         style={{ boxShadow: '0 8px 40px rgba(93,45,93,0.10), inset 0 1px 0 rgba(255,255,255,0.85)' }}>

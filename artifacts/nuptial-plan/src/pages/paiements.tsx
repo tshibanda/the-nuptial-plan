@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, CreditCard } from 'lucide-react';
+import { Plus, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
+import { PageTour } from '@/components/ui/page-tour';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useListPayments,
@@ -7,6 +8,7 @@ import {
   useUpdatePayment,
   useDeletePayment,
   getListPaymentsQueryKey,
+  useListWeddings,
 } from '@workspace/api-client-react';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { useQueryClient } from '@tanstack/react-query';
@@ -56,6 +58,9 @@ type PaymentFormData = z.infer<typeof paymentSchema>;
 
 export default function Paiements() {
   const { activeWeddingId } = useActiveWedding();
+  const { data: weddings = [] } = useListWeddings();
+  const activeWedding = weddings.find((w) => w.id === activeWeddingId);
+  const currencySymbol = ({ EUR: '€', GBP: '£', USD: '$', CHF: 'CHF' } as Record<string, string>)[activeWedding?.currency ?? 'EUR'] ?? activeWedding?.currency ?? '€';
   const { data: payments = [], isLoading } = useListPayments(activeWeddingId!);
   const [open, setOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<number | null>(null);
@@ -169,6 +174,17 @@ export default function Paiements() {
 
   return (
     <div>
+      <PageTour
+        tourKey="paiements"
+        pageTitle="Paiements"
+        pageIcon={CreditCard}
+        steps={[
+          { icon: CreditCard, title: 'Calendrier financier', body: 'Visualisez toutes vos échéances de paiement à venir — acomptes, soldes et règlements prestataires — sur une seule page.' },
+          { icon: AlertCircle, title: 'Alertes d\'échéance', body: 'Les paiements dus aujourd\'hui ou en retard sont mis en évidence pour ne rien manquer.' },
+          { icon: Plus, title: 'Ajouter un paiement', body: 'Reliez le paiement à un prestataire existant, définissez le montant et la date d\'échéance.' },
+          { icon: CheckCircle, title: 'Marquer comme payé', body: 'Validez un paiement effectué pour mettre à jour le solde restant et archiver la transaction.' },
+        ]}
+      />
       <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"
         style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
@@ -234,7 +250,7 @@ export default function Paiements() {
                   name="amountCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Montant (£)</FormLabel>
+                      <FormLabel>Montant ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"

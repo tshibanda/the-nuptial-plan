@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Plus, CircleEllipsis } from 'lucide-react';
+import { Plus, CircleEllipsis, Users, Tag } from 'lucide-react';
+import { PageTour } from '@/components/ui/page-tour';
 import { FileAttachments } from '@/components/file-attachments';
 import { useActiveWedding } from '@/lib/wedding-context';
-import { useListVendors, useCreateVendor, useUpdateVendor, useDeleteVendor, getListVendorsQueryKey } from '@workspace/api-client-react';
+import { useListVendors, useCreateVendor, useUpdateVendor, useDeleteVendor, getListVendorsQueryKey, useListWeddings } from '@workspace/api-client-react';
 import { formatCurrency } from '@/lib/format';
 import { useQueryClient } from '@tanstack/react-query';
 import { VendorInputStatus } from '@workspace/api-client-react';
@@ -52,6 +53,9 @@ type VendorFormData = z.infer<typeof vendorSchema>;
 
 export default function Prestataires() {
   const { activeWeddingId } = useActiveWedding();
+  const { data: weddings = [] } = useListWeddings();
+  const activeWedding = weddings.find((w) => w.id === activeWeddingId);
+  const currencySymbol = ({ EUR: '€', GBP: '£', USD: '$', CHF: 'CHF' } as Record<string, string>)[activeWedding?.currency ?? 'EUR'] ?? activeWedding?.currency ?? '€';
   const { data: vendors = [], isLoading } = useListVendors(activeWeddingId!);
   const [open, setOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<number | null>(null);
@@ -164,6 +168,17 @@ export default function Prestataires() {
 
   return (
     <div>
+      <PageTour
+        tourKey="prestataires"
+        pageTitle="Prestataires"
+        pageIcon={Users}
+        steps={[
+          { icon: Users, title: 'Votre équipe', body: 'Tous vos prestataires sont listés ici par catégorie — Traiteur, Fleuriste, Photographe… Filtrez la liste via la barre de catégories.' },
+          { icon: Plus, title: 'Ajouter un prestataire', body: 'Cliquez sur « Ajouter un prestataire » pour renseigner le nom, la catégorie, le contact et le montant du devis.' },
+          { icon: Tag, title: 'Statuts', body: 'Chaque prestataire a un statut : Contacté, En discussion, Confirmé ou Annulé. Mettez-le à jour au fil de vos échanges.' },
+          { icon: CircleEllipsis, title: 'Modifier ou supprimer', body: 'Cliquez sur l\'icône ⋯ à droite d\'un prestataire pour modifier sa fiche, changer son statut ou le retirer de la liste.' },
+        ]}
+      />
       <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"
         style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
@@ -249,7 +264,7 @@ export default function Prestataires() {
                   name="totalAmountCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Montant total (£)</FormLabel>
+                      <FormLabel>Montant total ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -268,7 +283,7 @@ export default function Prestataires() {
                   name="depositAmountCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Acompte (£)</FormLabel>
+                      <FormLabel>Acompte ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"

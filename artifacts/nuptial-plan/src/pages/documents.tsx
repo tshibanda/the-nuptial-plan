@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { Paperclip, Download, Trash2, Upload, FolderOpen } from 'lucide-react';
+import { PageTour } from '@/components/ui/page-tour';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useListDocuments,
@@ -191,6 +192,17 @@ export default function Documents() {
 
   return (
     <div>
+      <PageTour
+        tourKey="documents"
+        pageTitle="Documents"
+        pageIcon={FolderOpen}
+        steps={[
+          { icon: FolderOpen, title: 'Coffre-fort numérique', body: 'Centralisez tous vos fichiers importants — contrats signés, plans de salle, listes de musique, photos d\'inspiration.' },
+          { icon: Upload, title: 'Téléverser un fichier', body: 'Cliquez sur « Ajouter un fichier » pour sélectionner un document depuis votre ordinateur et l\'uploader dans le dossier.' },
+          { icon: Paperclip, title: 'Catégories', body: 'Les documents sont triés par type. Utilisez les filtres de catégorie pour retrouver un fichier spécifique rapidement.' },
+          { icon: Download, title: 'Télécharger', body: 'Cliquez sur l\'icône de téléchargement à droite de chaque fichier pour l\'enregistrer sur votre appareil à tout moment.' },
+        ]}
+      />
       {/* Hero header */}
       <div
         className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { PageTour } from '@/components/ui/page-tour';
 import {
   User,
   Building2,
@@ -221,6 +222,17 @@ export default function Parametres() {
 
   return (
     <>
+      <PageTour
+        tourKey="parametres"
+        pageTitle="Paramètres"
+        pageIcon={Building2}
+        steps={[
+          { icon: Building2, title: 'Dossier de mariage', body: 'Modifiez à tout moment les informations du mariage actif : noms des mariés, date du mariage, lieu de réception et notes.' },
+          { icon: Globe, title: 'Devise', body: 'Changez la devise (€, £, $, CHF) pour adapter l\'affichage budgétaire à votre destination ou aux préférences des mariés.' },
+          { icon: Wallet, title: 'Budget & invités', body: 'Mettez à jour le budget global et le nombre d\'invités au fil de l\'évolution du projet pour garder les métriques à jour.' },
+          { icon: Save, title: 'Sauvegarder', body: 'N\'oubliez pas de cliquer sur « Sauvegarder les modifications » après chaque changement pour ne rien perdre.' },
+        ]}
+      />
       {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={(o) => { if (!o) setDeleteOpen(false); }}>
         <DialogContent className="max-w-sm">

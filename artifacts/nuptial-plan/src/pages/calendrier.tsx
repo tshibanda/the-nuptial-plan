@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, Check, X } from 'lucide-react';
+import { Plus, Check, X, CalendarDays, Search, Palette } from 'lucide-react';
+import { PageTour } from '@/components/ui/page-tour';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useListEvents,
@@ -167,6 +168,17 @@ export default function Calendrier() {
 
   return (
     <div>
+      <PageTour
+        tourKey="calendrier"
+        pageTitle="Calendrier"
+        pageIcon={CalendarDays}
+        steps={[
+          { icon: CalendarDays, title: 'Vue mensuelle', body: 'Naviguez de mois en mois avec les flèches pour visualiser l\'ensemble de vos rendez-vous et jalons importants.' },
+          { icon: Plus, title: 'Ajouter un événement', body: 'Cliquez sur « Ajouter un événement » en haut à droite pour planifier un rendez-vous, une dégustation ou un essayage.' },
+          { icon: Search, title: 'Recherche & filtres', body: 'Utilisez la barre de recherche pour trouver un événement par mot-clé, ou filtrez par couleur pour trier vos activités.' },
+          { icon: Palette, title: 'Codes couleur', body: 'Associez une couleur à chaque événement : Or pour les prestataires, Rose pour les essayages, Sauge pour les visites de lieu.' },
+        ]}
+      />
       <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"
         style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />

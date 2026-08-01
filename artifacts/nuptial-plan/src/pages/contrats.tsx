@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, FileText } from 'lucide-react';
+import { Plus, FileText, CheckCircle, Upload } from 'lucide-react';
+import { PageTour } from '@/components/ui/page-tour';
 import { FileAttachments } from '@/components/file-attachments';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
@@ -9,6 +10,7 @@ import {
   useDeleteContract,
   useListVendors,
   getListContractsQueryKey,
+  useListWeddings,
 } from '@workspace/api-client-react';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { useQueryClient } from '@tanstack/react-query';
@@ -57,6 +59,9 @@ type ContractFormData = z.infer<typeof contractSchema>;
 
 export default function Contrats() {
   const { activeWeddingId } = useActiveWedding();
+  const { data: weddings = [] } = useListWeddings();
+  const activeWedding = weddings.find((w) => w.id === activeWeddingId);
+  const currencySymbol = ({ EUR: '€', GBP: '£', USD: '$', CHF: 'CHF' } as Record<string, string>)[activeWedding?.currency ?? 'EUR'] ?? activeWedding?.currency ?? '€';
   const { data: contracts = [], isLoading } = useListContracts(activeWeddingId!);
   const { data: vendors = [] } = useListVendors(activeWeddingId!);
   const [open, setOpen] = useState(false);
@@ -161,6 +166,17 @@ export default function Contrats() {
 
   return (
     <div>
+      <PageTour
+        tourKey="contrats"
+        pageTitle="Contrats"
+        pageIcon={FileText}
+        steps={[
+          { icon: FileText, title: 'Centralisation', body: 'Tous les contrats de vos prestataires au même endroit. Plus besoin de chercher dans vos e-mails ou vos dossiers locaux.' },
+          { icon: CheckCircle, title: 'Statuts de signature', body: 'Repérez d\'un coup d\'œil les contrats En attente, Signés ou Expirés grâce aux badges de statut colorés.' },
+          { icon: Plus, title: 'Ajouter un contrat', body: 'Associez le contrat à un prestataire, renseignez la valeur totale et la date de signature prévue ou effective.' },
+          { icon: Upload, title: 'Pièce jointe', body: 'Téléversez le PDF du contrat signé directement depuis le formulaire. Il sera accessible à tout moment depuis cette page.' },
+        ]}
+      />
       <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"
         style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
@@ -236,7 +252,7 @@ export default function Contrats() {
                   name="totalAmountCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Montant total (£)</FormLabel>
+                      <FormLabel>Montant total ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -255,7 +271,7 @@ export default function Contrats() {
                   name="depositPaidCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Acompte versé (£)</FormLabel>
+                      <FormLabel>Acompte versé ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"

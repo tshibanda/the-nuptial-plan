@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, UserCircle2 } from 'lucide-react';
+import { Plus, UserCircle2, Users, CheckSquare } from 'lucide-react';
+import { PageTour } from '@/components/ui/page-tour';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useListGuests,
@@ -160,6 +161,17 @@ export default function Invites() {
 
   return (
     <div>
+      <PageTour
+        tourKey="invites"
+        pageTitle="Invités"
+        pageIcon={UserCircle2}
+        steps={[
+          { icon: UserCircle2, title: 'La liste des invités', body: 'Visualisez tous vos invités avec leur statut RSVP, leur numéro de table et leurs préférences alimentaires.' },
+          { icon: Users, title: 'Statistiques RSVP', body: 'Le bandeau du haut affiche en temps réel le taux de confirmation, le nombre de confirmés et de déclinés.' },
+          { icon: Plus, title: 'Ajouter un invité', body: 'Cliquez sur « Ajouter un invité » pour renseigner le nom, le régime alimentaire, le numéro de table et le statut RSVP initial.' },
+          { icon: CheckSquare, title: 'Mettre à jour le RSVP', body: 'Cliquez sur l\'icône ⋯ à côté d\'un invité pour modifier son statut — En attente, Confirmé ou Décliné.' },
+        ]}
+      />
       <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"
         style={{ boxShadow: '0 4px 24px rgba(93,45,93,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
