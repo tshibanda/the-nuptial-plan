@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Jardin Parisien palette */
+  --color-plum-50:  #f8f3f8;
+  --color-plum-100: #eedeee;
+  --color-plum-200: #dec2de;
+  --color-plum-300: #c59bc5;
+  --color-plum-400: #a86ea8;
+  --color-plum-500: #8f4f8f;
+  --color-plum-600: #753b75;
+  --color-plum-700: #5D2D5D;
+  --color-plum-800: #4e274e;
+  --color-plum-900: #3C1A3C;
+  --color-plum-950: #230b23;
+
+  --color-sage-500:  #649064;
+  --color-rose-300:  #CC8C94;
+  --color-gold-400:  #C8A96E;
+  --color-cream-100: #F8F3EE;
+
+  --font-display: "Cormorant Garamond", serif;
+  --font-sans:    "DM Sans", sans-serif;
+  --font-body:    "DM Sans", sans-serif;
+  --font-mono:    monospace;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-plum-900);
+    color: var(--color-cream-100);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

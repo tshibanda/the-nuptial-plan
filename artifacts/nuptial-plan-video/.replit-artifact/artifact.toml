@@ -1,0 +1,28 @@
+kind = "video"
+previewPath = "/nuptial-plan-video/"
+title = "The Nuptial Plan — Vidéo"
+description = "A 30-second animated marketing video for The Nuptial Plan wedding planner app. Storytelling arc following a French wedding planner's journey, built with React + Framer Motion in the Jardin Parisien brand palette."
+version = "1.0.0"
+id = "artifacts/nuptial-plan-video"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/nuptial-plan-video/" ]
+localPort = 18112
+
+[services.development]
+run = "pnpm --filter @workspace/nuptial-plan-video run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nuptial-plan-video", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/nuptial-plan-video/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18112"
+BASE_PATH = "/nuptial-plan-video/"

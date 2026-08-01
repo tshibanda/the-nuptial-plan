@@ -1,0 +1,9 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "lOGNV1_FhTEu1Th5g8Tbt"
+uri = "file://artifacts/nuptial-plan-video/public/audio/bg_music.mp3"
+type = "audio"
+title = "background music"
+description = "Generated music: Cinematic minimal piano and soft strings, 72 BPM, elegant and intimate, wedding planner French luxury mood. Delicate piano arpeggios, subtle cello undertones, warm and refined. Patie…"
