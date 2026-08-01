@@ -36,6 +36,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 const budgetSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -45,6 +52,155 @@ const budgetSchema = z.object({
 
 type BudgetFormData = z.infer<typeof budgetSchema>;
 
+/** Vivid brand-aligned colours — matches mobile CHART_COLORS */
+const CHART_COLORS = [
+  '#5D2D5D', // plum
+  '#C8A96E', // gold
+  '#CC8C94', // rose
+  '#6B8C72', // sage
+  '#9B89C4', // lavender
+  '#6B8FC0', // blue
+  '#7A4A7A', // plum-light
+  '#A8893E', // gold-dim
+  '#A0606A', // rose-dark
+  '#4A6A4A', // sage-dark
+];
+
+// ── Custom tooltip ────────────────────────────────────────────────────────────
+function DonutTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div
+      className="rounded-lg border border-border bg-card px-3 py-2 shadow-md"
+      style={{ fontFamily: 'inherit' }}
+    >
+      <p className="text-[11px] font-semibold text-foreground">{d.name}</p>
+      <p className="mt-0.5 text-[10px] text-[#8c8b86]">
+        {formatCurrency(d.allocatedCents)}
+      </p>
+    </div>
+  );
+}
+
+// ── Donut chart component ─────────────────────────────────────────────────────
+interface DonutChartProps {
+  categories: Array<{ id: number; name: string; allocatedCents: number; spentCents: number }>;
+  selectedId: number | null;
+  onSelect: (id: number | null) => void;
+  totalSpent: number;
+  totalAllocated: number;
+}
+
+function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocated }: DonutChartProps) {
+  const total = categories.reduce((s, c) => s + c.allocatedCents, 0);
+  if (total === 0 || categories.length === 0) return null;
+
+  const data = categories.map((c, i) => ({
+    ...c,
+    value: c.allocatedCents,
+    color: CHART_COLORS[i % CHART_COLORS.length]!,
+  }));
+
+  const pct = totalAllocated > 0 ? Math.round((totalSpent / totalAllocated) * 100) : 0;
+  const selectedCat = selectedId !== null ? categories.find((c) => c.id === selectedId) : null;
+
+  const centreLine1 = selectedCat
+    ? selectedCat.name.length > 12 ? selectedCat.name.slice(0, 11) + '…' : selectedCat.name
+    : `${pct}%`;
+  const centreLine2 = selectedCat
+    ? formatCurrency(selectedCat.spentCents)
+    : 'dépensé';
+
+  const handleClick = (entry: any) => {
+    const id = entry?.id as number;
+    if (id == null) return;
+    onSelect(selectedId === id ? null : id);
+  };
+
+  return (
+    <div className="mb-8 card-depth px-5 py-5">
+      <p className="mb-4 text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">Répartition du budget</p>
+      <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+        {/* Chart */}
+        <div className="relative flex-shrink-0" style={{ width: 200, height: 200 }}>
+          <ResponsiveContainer width={200} height={200}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx={95}
+                cy={95}
+                innerRadius={52}
+                outerRadius={86}
+                paddingAngle={2}
+                dataKey="value"
+                onClick={handleClick}
+                style={{ cursor: 'pointer' }}
+              >
+                {data.map((entry) => (
+                  <Cell
+                    key={entry.id}
+                    fill={entry.color}
+                    opacity={selectedId !== null && selectedId !== entry.id ? 0.3 : 1}
+                    stroke={selectedId === entry.id ? entry.color : 'transparent'}
+                    strokeWidth={selectedId === entry.id ? 2 : 0}
+                  />
+                ))}
+              </Pie>
+              <Tooltip content={<DonutTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+
+          {/* Centre label — absolutely positioned over the hole */}
+          <div
+            className="pointer-events-none absolute flex flex-col items-center justify-center"
+            style={{ inset: 0 }}
+          >
+            <span
+              className="leading-tight text-[#3d2040]"
+              style={{ fontSize: selectedCat ? 12 : 20, fontWeight: 700 }}
+            >
+              {centreLine1}
+            </span>
+            <span className="mt-0.5 text-[9px] text-[#8c8b86]">{centreLine2}</span>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap content-start gap-1.5">
+          {data.map((entry) => {
+            const isSelected = selectedId === entry.id;
+            const dimmed = selectedId !== null && !isSelected;
+            return (
+              <button
+                key={entry.id}
+                onClick={() => onSelect(isSelected ? null : entry.id)}
+                className="flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-opacity"
+                style={{ opacity: dimmed ? 0.4 : 1 }}
+              >
+                <span
+                  className="inline-block h-2 w-2 flex-shrink-0 rounded-full"
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span
+                  className="text-[10px]"
+                  style={{
+                    color: isSelected ? '#3d2040' : '#8c8b86',
+                    fontWeight: isSelected ? 600 : 400,
+                  }}
+                >
+                  {entry.name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function Budget() {
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
@@ -54,6 +210,9 @@ export default function Budget() {
   const { data: summary } = useGetBudgetSummary(activeWeddingId!);
   const [open, setOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<number | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  // Enrich categories with their stable original index so colour mapping survives filtering
+  const categoriesWithIndex = categories.map((c, i) => ({ ...c, originalIndex: i }));
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -277,15 +436,44 @@ export default function Budget() {
         </div>
       )}
 
-      {/* Categories */}
+      {/* Donut chart — only shown when there are categories with allocated budgets */}
+      {categories.length > 0 && categories.some((c) => c.allocatedCents > 0) && (
+        <DonutChart
+          categories={categories}
+          selectedId={selectedCategoryId}
+          onSelect={setSelectedCategoryId}
+          totalSpent={summary?.totalSpent ?? 0}
+          totalAllocated={summary?.totalAllocated ?? 0}
+        />
+      )}
+
+      {/* Categories — filtered to selected when a slice is active */}
+      {selectedCategoryId !== null && (
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-[10px] text-[#8c8b86]">Filtré par catégorie</span>
+          <button
+            onClick={() => setSelectedCategoryId(null)}
+            className="text-[10px] font-semibold text-[#5D2D5D] underline underline-offset-2"
+          >
+            Tout afficher
+          </button>
+        </div>
+      )}
       <div className="space-y-4">
         {categories.length === 0 ? (
           <div className="rounded border border-border bg-card px-6 py-12 text-center text-[11px] text-[#858b89]">
             Aucune catégorie. Cliquez sur "Ajouter une catégorie" pour commencer.
           </div>
         ) : (
-          categories.map((category) => {
+          categoriesWithIndex
+            .filter((c) => selectedCategoryId === null || c.id === selectedCategoryId)
+            .map((category) => {
+            const i = category.originalIndex;
             const pct = safePct(category.spentCents, category.allocatedCents);
+            const isSelected = selectedCategoryId === category.id;
+            const isDimmed = false; // we filter instead of dimming
+            const chartColor = CHART_COLORS[i % CHART_COLORS.length]!;
+
             const colorClass =
               pct >= 90
                 ? 'bg-[#9d5449]'
@@ -296,10 +484,30 @@ export default function Budget() {
                     : 'bg-[#879b93]';
 
             return (
-              <div key={category.id} className="rounded border border-border bg-card p-5">
+              <div
+                key={category.id}
+                className="rounded border bg-card p-5 transition-opacity"
+                style={{
+                  borderColor: isSelected ? chartColor : undefined,
+                  borderWidth: isSelected ? 1.5 : undefined,
+                  opacity: isDimmed ? 0.4 : 1,
+                  cursor: 'pointer',
+                  // left accent bar effect via box-shadow when selected
+                  boxShadow: isSelected ? `inset 3px 0 0 ${chartColor}` : undefined,
+                }}
+                onClick={() => setSelectedCategoryId(isSelected ? null : category.id)}
+              >
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-[12px] font-semibold text-[#3d4d55]">{category.name}</p>
+                    <div className="flex items-center gap-2">
+                      {isSelected && (
+                        <span
+                          className="inline-block h-2 w-2 flex-shrink-0 rounded-full"
+                          style={{ backgroundColor: chartColor }}
+                        />
+                      )}
+                      <p className="text-[12px] font-semibold text-[#3d4d55]">{category.name}</p>
+                    </div>
                     <p className="mt-1 text-[10px] text-[#858b89]">
                       {formatCurrency(category.spentCents)} /{' '}
                       {formatCurrency(category.allocatedCents)}
@@ -307,13 +515,23 @@ export default function Budget() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-[11px] font-semibold text-[#7c8e83]">{pct}%</span>
-                    <button onClick={() => handleEdit(category)} className="text-[#a5a19a]" data-testid={`button-edit-category-${category.id}`}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleEdit(category); }}
+                      className="text-[#a5a19a]"
+                      data-testid={`button-edit-category-${category.id}`}
+                    >
                       <Pencil size={14} />
                     </button>
                   </div>
                 </div>
                 <div className="h-1 bg-[#e6dfd5]">
-                  <div className={`h-full ${colorClass}`} style={{ width: `${pct}%` }} />
+                  <div
+                    className={`h-full ${isSelected ? '' : colorClass}`}
+                    style={{
+                      width: `${pct}%`,
+                      ...(isSelected ? { backgroundColor: chartColor } : {}),
+                    }}
+                  />
                 </div>
               </div>
             );
