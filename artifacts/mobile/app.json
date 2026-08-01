@@ -28,7 +28,14 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The Nuptial Plan accède à vos photos pour mettre à jour votre photo de profil.",
+          "cameraPermission": "The Nuptial Plan accède à votre caméra pour prendre une photo de profil."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

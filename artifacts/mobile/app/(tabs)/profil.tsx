@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
   ScrollView, View, Text, StyleSheet, Platform, TouchableOpacity, Alert, Image,
 } from 'react-native';
@@ -14,6 +15,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+import { ProfileEditSheet } from '@/components/ProfileEditSheet';
 
 const TOUR_STEPS = [
   {
@@ -100,6 +102,8 @@ export default function ProfilScreen() {
   const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
   const avatarUrl = user?.imageUrl ?? null;
 
+  const [editVisible, setEditVisible] = useState(false);
+
   const handleSignOut = () => {
     Alert.alert(
       'Se déconnecter',
@@ -150,23 +154,36 @@ export default function ProfilScreen() {
         <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
         <View style={ss.goldBar} />
 
-        {/* Avatar with rose gradient ring */}
-        <LinearGradient
-          colors={[colors.gold + 'AA', colors.rose + '88', colors.plumLight + '66']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[ss.avatarRing, accentShadow('lg')]}
+        {/* Avatar — tappable to edit */}
+        <TouchableOpacity
+          onPress={() => setEditVisible(true)}
+          activeOpacity={0.82}
+          style={ss.avatarTouchable}
+          accessibilityLabel="Modifier le profil"
         >
-          {avatarUrl ? (
-            <Image source={{ uri: avatarUrl }} style={ss.avatarImage} />
-          ) : (
-            <View style={ss.avatarInner}>
-              <Text style={[ss.avatarText, { fontFamily: SERIF }]}>{initials}</Text>
-            </View>
-          )}
-        </LinearGradient>
+          <LinearGradient
+            colors={[colors.gold + 'AA', colors.rose + '88', colors.plumLight + '66']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[ss.avatarRing, accentShadow('lg')]}
+          >
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={ss.avatarImage} />
+            ) : (
+              <View style={ss.avatarInner}>
+                <Text style={[ss.avatarText, { fontFamily: SERIF }]}>{initials}</Text>
+              </View>
+            )}
+          </LinearGradient>
+          {/* Camera badge */}
+          <View style={ss.cameraBadge}>
+            <Feather name="camera" size={11} color="#FBF5FB" />
+          </View>
+        </TouchableOpacity>
 
-        <Text style={[ss.name, { fontFamily: SERIF }]}>{displayName}</Text>
+        <TouchableOpacity onPress={() => setEditVisible(true)} activeOpacity={0.75}>
+          <Text style={[ss.name, { fontFamily: SERIF }]}>{displayName}</Text>
+        </TouchableOpacity>
         {userEmail ? (
           <Text style={[ss.role, { fontFamily: SANS_MEDIUM }]}>{userEmail}</Text>
         ) : null}
@@ -295,6 +312,7 @@ export default function ProfilScreen() {
 
     <TourHelpFab onPress={openTour} bottom={fabBottom} />
     <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+    <ProfileEditSheet visible={editVisible} onClose={() => setEditVisible(false)} />
     </>
   );
 }
@@ -303,7 +321,14 @@ const ss = StyleSheet.create({
   hero: { paddingHorizontal: 20, paddingBottom: 28, alignItems: 'center', overflow: 'hidden' },
   heroSheen: { ...StyleSheet.absoluteFillObject, height: 100 },
   goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
-  avatarRing: { width: 84, height: 84, borderRadius: 42, alignItems: 'center', justifyContent: 'center', marginBottom: 14, padding: 2 },
+  avatarTouchable: { position: 'relative', marginBottom: 14 },
+  cameraBadge: {
+    position: 'absolute', bottom: 0, right: 0,
+    width: 24, height: 24, borderRadius: 12,
+    backgroundColor: '#5D2D5D', borderWidth: 2, borderColor: 'rgba(60,26,60,0.80)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarRing: { width: 84, height: 84, borderRadius: 42, alignItems: 'center', justifyContent: 'center', padding: 2 },
   avatarInner: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(60,26,60,0.55)', alignItems: 'center', justifyContent: 'center' },
   avatarImage: { width: 80, height: 80, borderRadius: 40 },
   avatarText: { fontSize: 34, color: '#C8A96E', lineHeight: 36 },
