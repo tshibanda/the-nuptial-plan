@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   SectionList, View, Text, StyleSheet,
   ActivityIndicator, Platform, TouchableOpacity,
@@ -20,6 +20,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { EventAddSheet } from '@/components/EventAddSheet';
 
 type Filter = 'all' | 'upcoming' | 'done';
+type ViewMode = 'list' | 'calendar';
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'Tous' },
@@ -27,10 +28,9 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'done', label: 'Terminés' },
 ];
 
-interface Section {
-  title: string;   // month label e.g. "AOÛT 2026"
-  data: CalendarEvent[];
-}
+const FR_DAYS_SHORT = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+interface Section { title: string; data: CalendarEvent[] }
 
 function buildSections(events: CalendarEvent[]): Section[] {
   const sorted = [...events].sort(
@@ -49,93 +49,43 @@ function buildSections(events: CalendarEvent[]): Section[] {
 
 // ── Tone dot ─────────────────────────────────────────────────────────────────
 function ToneDot({ tone, colors }: { tone?: string | null; colors: ReturnType<typeof useColors> }) {
-  const map: Record<string, string> = {
-    gold: colors.gold,
-    rose: colors.rose,
-    sage: colors.sage,
-  };
+  const map: Record<string, string> = { gold: colors.gold, rose: colors.rose, sage: colors.sage };
   const c = (tone && map[tone]) ?? 'transparent';
   if (c === 'transparent') return null;
   return <View style={[td.dot, { backgroundColor: c }]} />;
 }
 const td = StyleSheet.create({ dot: { width: 6, height: 6, borderRadius: 3 } });
 
-// ── Event row inside a card ────────────────────────────────────────────────────
+// ── Event row ────────────────────────────────────────────────────────────────
 function EventRow({
-  item,
-  isFirst,
-  isLast,
-  colors,
-  onToggle,
+  item, isFirst, isLast, colors, onToggle,
 }: {
-  item: CalendarEvent;
-  isFirst: boolean;
-  isLast: boolean;
-  colors: ReturnType<typeof useColors>;
-  onToggle: (item: CalendarEvent) => void;
+  item: CalendarEvent; isFirst: boolean; isLast: boolean;
+  colors: ReturnType<typeof useColors>; onToggle: (item: CalendarEvent) => void;
 }) {
   const { day, month } = formatDateParts(item.eventDate);
   const isCompleted = item.completed ?? false;
-
   return (
-    <View
-      style={[
-        er.row,
-        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-        isFirst && er.firstRow,
-        isLast && er.lastRow,
-      ]}
-    >
-      {/* Date badge */}
-      <View
-        style={[
-          er.dateBadge,
-          {
-            backgroundColor: isCompleted
-              ? colors.background
-              : isFirst
-              ? colors.goldLight
-              : colors.background,
-          },
-          !isCompleted && isFirst && shadow('xs'),
-        ]}
-      >
-        <Text
-          style={[
-            er.day,
-            { fontFamily: SERIF, color: isCompleted ? colors.mutedForeground : colors.foreground },
-          ]}
-        >
-          {day}
-        </Text>
-        <Text style={[er.monthTxt, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
-          {month}
-        </Text>
+    <View style={[
+      er.row,
+      !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+      isFirst && er.firstRow, isLast && er.lastRow,
+    ]}>
+      <View style={[er.dateBadge, {
+        backgroundColor: isCompleted ? colors.background : isFirst ? colors.goldLight : colors.background,
+      }, !isCompleted && isFirst && shadow('xs')]}>
+        <Text style={[er.day, { fontFamily: SERIF, color: isCompleted ? colors.mutedForeground : colors.foreground }]}>{day}</Text>
+        <Text style={[er.monthTxt, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{month}</Text>
       </View>
-
-      {/* Info */}
       <View style={er.info}>
         <View style={er.titleRow}>
           <ToneDot tone={item.tone} colors={colors} />
-          <Text
-            style={[
-              er.title,
-              {
-                fontFamily: SANS_SEMIBOLD,
-                color: isCompleted ? colors.mutedForeground : colors.foreground,
-              },
-              isCompleted && er.strikethrough,
-            ]}
-            numberOfLines={1}
-          >
+          <Text style={[er.title, { fontFamily: SANS_SEMIBOLD, color: isCompleted ? colors.mutedForeground : colors.foreground }, isCompleted && er.strikethrough]} numberOfLines={1}>
             {item.title}
           </Text>
         </View>
         {(item.eventTime || item.detail) ? (
-          <Text
-            style={[er.meta, { fontFamily: SANS, color: colors.mutedForeground }]}
-            numberOfLines={1}
-          >
+          <Text style={[er.meta, { fontFamily: SANS, color: colors.mutedForeground }]} numberOfLines={1}>
             {[item.eventTime, item.detail].filter(Boolean).join(' · ')}
           </Text>
         ) : null}
@@ -143,83 +93,220 @@ function EventRow({
           {formatDateShort(item.eventDate)}
         </Text>
       </View>
-
-      {/* Complete toggle */}
-      <TouchableOpacity
-        onPress={() => onToggle(item)}
-        activeOpacity={0.7}
+      <TouchableOpacity onPress={() => onToggle(item)} activeOpacity={0.7}
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        style={[
-          er.checkBtn,
-          {
-            borderColor: isCompleted ? colors.sage : colors.border,
-            backgroundColor: isCompleted ? colors.sage + '1A' : 'transparent',
-          },
-        ]}
+        style={[er.checkBtn, { borderColor: isCompleted ? colors.sage : colors.border, backgroundColor: isCompleted ? colors.sage + '1A' : 'transparent' }]}
       >
-        {isCompleted ? (
-          <Feather name="check" size={13} color={colors.sage} />
-        ) : (
-          <View style={er.checkEmpty} />
-        )}
+        {isCompleted ? <Feather name="check" size={13} color={colors.sage} /> : <View style={er.checkEmpty} />}
       </TouchableOpacity>
     </View>
   );
 }
 
 const er = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  firstRow: { paddingTop: 14 },
-  lastRow: { paddingBottom: 14 },
-  dateBadge: {
-    width: 46,
-    height: 46,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12 },
+  firstRow: { paddingTop: 14 }, lastRow: { paddingBottom: 14 },
+  dateBadge: { width: 46, height: 46, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   day: { fontSize: 20, lineHeight: 20 },
   monthTxt: { fontSize: 7, letterSpacing: 0.8, marginTop: 1 },
   info: { flex: 1, gap: 2 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   title: { fontSize: 13, flex: 1 },
   strikethrough: { textDecorationLine: 'line-through' },
-  meta: { fontSize: 10 },
-  dateStr: { fontSize: 9, letterSpacing: 0.3, marginTop: 1 },
-  checkBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
+  meta: { fontSize: 10 }, dateStr: { fontSize: 9, letterSpacing: 0.3, marginTop: 1 },
+  checkBtn: { width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   checkEmpty: { width: 8, height: 8, borderRadius: 4 },
 });
 
-// ── Stat block (for glassmorphic bar) ─────────────────────────────────────────
-function StatBlock({
-  value, label, color, colors,
-}: {
-  value: number; label: string; color: string; colors: ReturnType<typeof useColors>;
-}) {
+// ── Stat block ────────────────────────────────────────────────────────────────
+function StatBlock({ value, label, color, colors }: { value: number; label: string; color: string; colors: ReturnType<typeof useColors> }) {
   return (
     <View style={hs.statBlock}>
       <Text style={[hs.statValue, { fontFamily: SERIF, color }]}>{value}</Text>
-      <Text style={[hs.statLabel, { fontFamily: SANS_MEDIUM, color: colors.mutedForeground }]}>
-        {label}
-      </Text>
+      <Text style={[hs.statLabel, { fontFamily: SANS_MEDIUM, color: colors.mutedForeground }]}>{label}</Text>
     </View>
   );
 }
+
+// ── Month navigator ───────────────────────────────────────────────────────────
+function MonthNavigator({ year, month, onPrev, onNext, colors }: {
+  year: number; month: number; onPrev: () => void; onNext: () => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const label = new Date(year, month, 1)
+    .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+    .toUpperCase();
+  return (
+    <View style={mn.row}>
+      <TouchableOpacity onPress={onPrev} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        style={[mn.arrow, { backgroundColor: colors.plumBg, borderColor: colors.border }]}>
+        <Feather name="chevron-left" size={16} color={colors.plum} />
+      </TouchableOpacity>
+      <Text style={[mn.label, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{label}</Text>
+      <TouchableOpacity onPress={onNext} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        style={[mn.arrow, { backgroundColor: colors.plumBg, borderColor: colors.border }]}>
+        <Feather name="chevron-right" size={16} color={colors.plum} />
+      </TouchableOpacity>
+    </View>
+  );
+}
+const mn = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  label: { fontSize: 13, letterSpacing: 0.8 },
+  arrow: { width: 32, height: 32, borderRadius: 8, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center' },
+});
+
+// ── Calendar grid ─────────────────────────────────────────────────────────────
+function CalendarGrid({ year, month, events, selectedDay, onSelectDay, colors }: {
+  year: number; month: number; events: CalendarEvent[];
+  selectedDay: string | null; onSelectDay: (day: string | null) => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const eventsByDay = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const evt of events) {
+      const d = evt.eventDate.slice(0, 10);
+      if (!map.has(d)) map.set(d, []);
+      if (evt.tone) map.get(d)!.push(evt.tone);
+      else map.get(d)!.push('plum');
+    }
+    return map;
+  }, [events]);
+
+  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Mon=0
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const todayObj = new Date();
+  const isCurrentMonth = todayObj.getFullYear() === year && todayObj.getMonth() === month;
+
+  const toneColor = (tone: string) => {
+    if (tone === 'gold') return colors.gold;
+    if (tone === 'rose') return colors.rose;
+    if (tone === 'sage') return colors.sage;
+    return colors.plum;
+  };
+
+  return (
+    <View style={cg.container}>
+      {/* Day-of-week headers */}
+      <View style={cg.weekRow}>
+        {FR_DAYS_SHORT.map((d, i) => (
+          <View key={i} style={cg.cell}>
+            <Text style={[cg.weekLabel, { fontFamily: SANS_SEMIBOLD, color: i === 6 ? colors.rose : colors.mutedForeground }]}>{d}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Day cells in rows of 7 */}
+      {Array.from({ length: cells.length / 7 }, (_, rowIdx) => (
+        <View key={rowIdx} style={cg.weekRow}>
+          {cells.slice(rowIdx * 7, rowIdx * 7 + 7).map((day, colIdx) => {
+            if (!day) return <View key={`e-${rowIdx}-${colIdx}`} style={cg.cell} />;
+
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const isToday = isCurrentMonth && todayObj.getDate() === day;
+            const isSelected = selectedDay === dateStr;
+            const tones = eventsByDay.get(dateStr);
+
+            return (
+              <TouchableOpacity
+                key={dateStr}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onSelectDay(isSelected ? null : dateStr);
+                }}
+                activeOpacity={0.75}
+                style={cg.cell}
+              >
+                {/* Day number circle */}
+                <View style={[
+                  cg.dayCircle,
+                  isSelected && { backgroundColor: colors.plum },
+                  !isSelected && isToday && { borderWidth: 1.5, borderColor: colors.plum },
+                ]}>
+                  <Text style={[
+                    cg.dayNum,
+                    { fontFamily: isToday || isSelected ? SANS_SEMIBOLD : SANS },
+                    { color: isSelected ? '#FBF5FB' : isToday ? colors.plum : colors.foreground },
+                  ]}>
+                    {day}
+                  </Text>
+                </View>
+
+                {/* Event indicator dots */}
+                {tones && tones.length > 0 && (
+                  <View style={cg.dotRow}>
+                    {tones.slice(0, 3).map((tone, ti) => (
+                      <View
+                        key={ti}
+                        style={[cg.dot, {
+                          backgroundColor: isSelected
+                            ? 'rgba(251,245,251,0.75)'
+                            : toneColor(tone),
+                        }]}
+                      />
+                    ))}
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const cg = StyleSheet.create({
+  container: { paddingBottom: 4 },
+  weekRow: { flexDirection: 'row' },
+  cell: { flex: 1, alignItems: 'center', paddingVertical: 3 },
+  weekLabel: { fontSize: 10, letterSpacing: 0.5, paddingVertical: 6 },
+  dayCircle: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  dayNum: { fontSize: 14 },
+  dotRow: { flexDirection: 'row', gap: 2, marginTop: 2, height: 6, alignItems: 'center' },
+  dot: { width: 4, height: 4, borderRadius: 2 },
+});
+
+// ── View toggle ───────────────────────────────────────────────────────────────
+function ViewToggle({ view, onChange, colors }: {
+  view: ViewMode; onChange: (v: ViewMode) => void; colors: ReturnType<typeof useColors>;
+}) {
+  return (
+    <View style={[vt.wrap, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+      {(['list', 'calendar'] as ViewMode[]).map((v) => {
+        const isActive = view === v;
+        return (
+          <TouchableOpacity
+            key={v}
+            onPress={() => { Haptics.selectionAsync(); onChange(v); }}
+            activeOpacity={0.8}
+            style={[vt.btn, isActive && { backgroundColor: colors.plum }]}
+          >
+            <Feather
+              name={v === 'list' ? 'list' : 'grid'}
+              size={13}
+              color={isActive ? '#FBF5FB' : colors.mutedForeground}
+            />
+            <Text style={[vt.label, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>
+              {v === 'list' ? 'Liste' : 'Calendrier'}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+const vt = StyleSheet.create({
+  wrap: { flexDirection: 'row', borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, padding: 3, alignSelf: 'flex-start' },
+  btn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8 },
+  label: { fontSize: 12 },
+});
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function EvenementsScreen() {
@@ -227,17 +314,22 @@ export default function EvenementsScreen() {
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
-  const [filter, setFilter] = useState<Filter>('all');
-  const [showAdd, setShowAdd] = useState(false);
-  const queryClient = useQueryClient();
 
+  const [filter, setFilter] = useState<Filter>('all');
+  const [view, setView] = useState<ViewMode>('list');
+  const [showAdd, setShowAdd] = useState(false);
+
+  // Calendar navigation state: default to current month
+  const now = new Date();
+  const [calYear, setCalYear] = useState(now.getFullYear());
+  const [calMonth, setCalMonth] = useState(now.getMonth());
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
+  const queryClient = useQueryClient();
   const { data: weddings } = useListWeddings();
   const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
   const wId = activeWedding?.id ?? 0;
-
   const { data: events, isLoading, refetch, isRefetching } = useListEvents(wId);
-
-  // Use the generated key getter so cache reads/writes target the same entry as useListEvents
   const EVENTS_QUERY_KEY = getListEventsQueryKey(wId);
 
   const { mutate: updateEvent } = useUpdateEvent({
@@ -245,41 +337,59 @@ export default function EvenementsScreen() {
       onMutate: async ({ id, data: patch }) => {
         await queryClient.cancelQueries({ queryKey: EVENTS_QUERY_KEY });
         const prev = queryClient.getQueryData(EVENTS_QUERY_KEY);
-        queryClient.setQueryData(
-          EVENTS_QUERY_KEY,
-          (old: CalendarEvent[] | undefined) =>
-            old?.map((e) => (e.id === id ? { ...e, ...patch } : e)) ?? old
+        queryClient.setQueryData(EVENTS_QUERY_KEY, (old: CalendarEvent[] | undefined) =>
+          old?.map((e) => (e.id === id ? { ...e, ...patch } : e)) ?? old
         );
         return { prev };
       },
       onError: (_err, _vars, context: any) => {
-        if (context?.prev !== undefined) {
-          queryClient.setQueryData(EVENTS_QUERY_KEY, context.prev);
-        }
+        if (context?.prev !== undefined) queryClient.setQueryData(EVENTS_QUERY_KEY, context.prev);
       },
-      onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: EVENTS_QUERY_KEY });
-      },
+      onSettled: () => { queryClient.invalidateQueries({ queryKey: EVENTS_QUERY_KEY }); },
     },
   });
 
   const handleToggle = (item: CalendarEvent) => {
-    Haptics.impactAsync(
-      item.completed ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Medium
-    );
+    Haptics.impactAsync(item.completed ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Medium);
     updateEvent({ weddingId: wId, id: item.id, data: { completed: !item.completed } });
   };
 
+  const handlePrevMonth = () => {
+    setSelectedDay(null);
+    if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); }
+    else setCalMonth(m => m - 1);
+  };
+  const handleNextMonth = () => {
+    setSelectedDay(null);
+    if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); }
+    else setCalMonth(m => m + 1);
+  };
+
   const allEvents = events ?? [];
-  const filtered = allEvents.filter((e) => {
-    if (filter === 'upcoming') return !e.completed;
-    if (filter === 'done') return e.completed;
-    return true;
-  });
+
+  // Filtered event list — different logic for list vs calendar view
+  const filtered = useMemo(() => {
+    if (view === 'calendar') {
+      if (selectedDay) return allEvents.filter((e) => e.eventDate.startsWith(selectedDay));
+      // No day selected → show the entire displayed month
+      return allEvents.filter((e) => {
+        const d = new Date(e.eventDate);
+        return d.getFullYear() === calYear && d.getMonth() === calMonth;
+      });
+    }
+    if (filter === 'upcoming') return allEvents.filter((e) => !e.completed);
+    if (filter === 'done') return allEvents.filter((e) => !!e.completed);
+    return allEvents;
+  }, [allEvents, view, filter, selectedDay, calYear, calMonth]);
 
   const sections = buildSections(filtered);
   const upcomingCount = allEvents.filter((e) => !e.completed).length;
   const doneCount = allEvents.filter((e) => !!e.completed).length;
+
+  // Calendar empty-state subtitle
+  const calEmptySubtitle = selectedDay
+    ? `Aucun événement le ${new Date(selectedDay + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}.`
+    : undefined;
 
   return (
     <>
@@ -297,47 +407,23 @@ export default function EvenementsScreen() {
             {/* ── Hero gradient header ── */}
             <LinearGradient
               colors={[colors.plumDark, colors.plum, colors.plumLight]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={[hs.hero, { paddingTop: topPad + 20 }]}
             >
-              {/* Ambient blobs */}
-              <View
-                style={{ position: 'absolute', top: -20, right: -20, width: 110, height: 110, borderRadius: 55, backgroundColor: colors.gold + '20' }}
-                pointerEvents="none"
-              />
-              <View
-                style={{ position: 'absolute', bottom: 0, left: 10, width: 80, height: 80, borderRadius: 40, backgroundColor: colors.sage + '18' }}
-                pointerEvents="none"
-              />
-              <LinearGradient
-                colors={['rgba(255,255,255,0.08)', 'transparent']}
-                style={hs.heroSheen}
-                pointerEvents="none"
-              />
+              <View style={{ position: 'absolute', top: -20, right: -20, width: 110, height: 110, borderRadius: 55, backgroundColor: colors.gold + '20' }} pointerEvents="none" />
+              <View style={{ position: 'absolute', bottom: 0, left: 10, width: 80, height: 80, borderRadius: 40, backgroundColor: colors.sage + '18' }} pointerEvents="none" />
+              <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={hs.heroSheen} pointerEvents="none" />
               <View style={hs.goldBar} />
-
-              <Text style={[hs.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>
-                LA CÉLÉBRATION
-              </Text>
+              <Text style={[hs.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>LA CÉLÉBRATION</Text>
               <Text style={[hs.heroTitle, { fontFamily: SERIF, color: '#FBF5FB' }]}>Agenda</Text>
             </LinearGradient>
 
             <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
-              {/* Stats bar */}
-              {allEvents.length > 0 && (
+              {/* Stats bar (list view only) */}
+              {view === 'list' && allEvents.length > 0 && (
                 <View style={[hs.statsWrap, shadow('md')]}>
-                  <BlurView
-                    intensity={Platform.OS === 'web' ? 0 : 85}
-                    tint="light"
-                    style={[
-                      hs.statsBar,
-                      {
-                        backgroundColor:
-                          Platform.OS === 'web' ? colors.card + 'ee' : 'rgba(248,245,239,0.80)',
-                        borderColor: 'rgba(255,255,255,0.65)',
-                      },
-                    ]}
+                  <BlurView intensity={Platform.OS === 'web' ? 0 : 85} tint="light"
+                    style={[hs.statsBar, { backgroundColor: Platform.OS === 'web' ? colors.card + 'ee' : 'rgba(248,245,239,0.80)', borderColor: 'rgba(255,255,255,0.65)' }]}
                   >
                     <View style={[hs.rim, { borderTopColor: 'rgba(255,255,255,0.80)' }]} />
                     <StatBlock value={allEvents.length} label="Total" color={colors.foreground} colors={colors} />
@@ -349,53 +435,87 @@ export default function EvenementsScreen() {
                 </View>
               )}
 
-              {/* Filter pills */}
-              <View style={hs.filterRow}>
-                {FILTERS.map((f) => {
-                  const isActive = filter === f.key;
-                  return (
-                    <TouchableOpacity
-                      key={f.key}
-                      onPress={() => setFilter(f.key)}
-                      activeOpacity={0.75}
-                      style={[
-                        hs.pill,
-                        isActive ? accentShadow('sm') : shadow('xs'),
-                        {
-                          backgroundColor: isActive ? colors.plum : 'rgba(255,255,255,0.70)',
-                          borderColor: isActive ? colors.plum : colors.border,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          hs.pillText,
-                          { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground },
-                        ]}
-                      >
-                        {f.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+              {/* View toggle + filter pills row */}
+              <View style={hs.controlsRow}>
+                <ViewToggle view={view} onChange={(v) => { setView(v); setSelectedDay(null); }} colors={colors} />
+                {view === 'list' && (
+                  <View style={hs.filterRow}>
+                    {FILTERS.map((f) => {
+                      const isActive = filter === f.key;
+                      return (
+                        <TouchableOpacity key={f.key} onPress={() => setFilter(f.key)} activeOpacity={0.75}
+                          style={[hs.pill, isActive ? accentShadow('sm') : shadow('xs'),
+                            { backgroundColor: isActive ? colors.plum : 'rgba(255,255,255,0.70)', borderColor: isActive ? colors.plum : colors.border }]}
+                        >
+                          <Text style={[hs.pillText, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>{f.label}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
               </View>
+
+              {/* ── Calendar grid (calendar view only) ── */}
+              {view === 'calendar' && (
+                <View style={[hs.calCard, shadow('md'), { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={[hs.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
+                  <View style={{ padding: 14 }}>
+                    <MonthNavigator
+                      year={calYear} month={calMonth}
+                      onPrev={handlePrevMonth} onNext={handleNextMonth}
+                      colors={colors}
+                    />
+                    <CalendarGrid
+                      year={calYear} month={calMonth}
+                      events={allEvents}
+                      selectedDay={selectedDay}
+                      onSelectDay={setSelectedDay}
+                      colors={colors}
+                    />
+                  </View>
+
+                  {/* Selected day banner */}
+                  {selectedDay && (
+                    <View style={[hs.dayBanner, { borderTopColor: colors.border, backgroundColor: colors.plumBg }]}>
+                      <Feather name="calendar" size={13} color={colors.plum} />
+                      <Text style={[hs.dayBannerText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>
+                        {new Date(selectedDay + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      </Text>
+                      <TouchableOpacity onPress={() => setSelectedDay(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                        <Feather name="x" size={14} color={colors.plum} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Calendar month subtitle (no day selected) */}
+              {view === 'calendar' && !selectedDay && (
+                <Text style={[hs.calSubtitle, { fontFamily: SANS, color: colors.mutedForeground }]}>
+                  {filtered.length === 0
+                    ? 'Aucun événement ce mois-ci'
+                    : `${filtered.length} événement${filtered.length > 1 ? 's' : ''} ce mois`}
+                </Text>
+              )}
             </View>
           </View>
         }
         ListEmptyComponent={
           isLoading ? (
-            <View style={hs.loading}>
-              <ActivityIndicator color={colors.accent} />
-            </View>
+            <View style={hs.loading}><ActivityIndicator color={colors.accent} /></View>
           ) : (
             <View style={hs.emptyWrap}>
               <EmptyState
                 icon="calendar"
-                title={filter === 'done' ? 'Aucun événement terminé' : 'Aucun événement'}
+                title={
+                  view === 'calendar'
+                    ? selectedDay ? 'Journée libre' : 'Mois sans événements'
+                    : filter === 'done' ? 'Aucun événement terminé' : 'Aucun événement'
+                }
                 subtitle={
-                  filter === 'all'
-                    ? 'Ajoutez votre premier événement avec le bouton +.'
-                    : undefined
+                  view === 'calendar'
+                    ? calEmptySubtitle
+                    : filter === 'all' ? 'Ajoutez votre premier événement avec le bouton +.' : undefined
                 }
               />
             </View>
@@ -403,9 +523,7 @@ export default function EvenementsScreen() {
         }
         renderSectionHeader={({ section }) => (
           <View style={{ paddingHorizontal: 16 }}>
-            <Text style={[hs.monthSep, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>
-              {section.title}
-            </Text>
+            <Text style={[hs.monthSep, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>{section.title}</Text>
           </View>
         )}
         renderItem={({ item, index, section }) => {
@@ -414,55 +532,15 @@ export default function EvenementsScreen() {
           return (
             <View style={[{ paddingHorizontal: 16 }, isFirst && hs.cardStart, isLast && hs.cardEnd]}>
               {isFirst && (
-                <View
-                  style={[
-                    hs.cardTopBorder,
-                    {
-                      borderColor: colors.border,
-                      backgroundColor: colors.card,
-                      ...shadow('md'),
-                    },
-                  ]}
-                />
+                <View style={[hs.cardTopBorder, { borderColor: colors.border, backgroundColor: colors.card, ...shadow('md') }]} />
               )}
-              <View
-                style={[
-                  hs.itemInner,
-                  {
-                    backgroundColor: colors.card,
-                    borderLeftColor: colors.border,
-                    borderRightColor: colors.border,
-                    borderLeftWidth: StyleSheet.hairlineWidth,
-                    borderRightWidth: StyleSheet.hairlineWidth,
-                  },
-                ]}
-              >
-                {isFirst && (
-                  <View style={[hs.rimLight, { borderTopColor: 'rgba(255,255,255,0.60)' }]} />
-                )}
-                <EventRow
-                  item={item}
-                  isFirst={isFirst}
-                  isLast={isLast}
-                  colors={colors}
-                  onToggle={handleToggle}
-                />
-                {!isLast && (
-                  <View
-                    style={[hs.separator, { backgroundColor: colors.border }]}
-                  />
-                )}
+              <View style={[hs.itemInner, { backgroundColor: colors.card, borderLeftColor: colors.border, borderRightColor: colors.border, borderLeftWidth: StyleSheet.hairlineWidth, borderRightWidth: StyleSheet.hairlineWidth }]}>
+                {isFirst && <View style={[hs.rimLight, { borderTopColor: 'rgba(255,255,255,0.60)' }]} />}
+                <EventRow item={item} isFirst={isFirst} isLast={isLast} colors={colors} onToggle={handleToggle} />
+                {!isLast && <View style={[hs.separator, { backgroundColor: colors.border }]} />}
               </View>
               {isLast && (
-                <View
-                  style={[
-                    hs.cardBottomBorder,
-                    {
-                      borderColor: colors.border,
-                      backgroundColor: colors.card,
-                    },
-                  ]}
-                />
+                <View style={[hs.cardBottomBorder, { borderColor: colors.border, backgroundColor: colors.card }]} />
               )}
             </View>
           );
@@ -470,25 +548,8 @@ export default function EvenementsScreen() {
       />
 
       {/* FAB */}
-      <View
-        style={[
-          hs.fab,
-          accentShadow('lg'),
-          {
-            backgroundColor: colors.plum,
-            bottom: Platform.OS === 'web' ? 94 : insets.bottom + 84,
-          },
-        ]}
-        pointerEvents="box-none"
-      >
-        <TouchableOpacity
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setShowAdd(true);
-          }}
-          activeOpacity={0.82}
-          style={hs.fabInner}
-        >
+      <View style={[hs.fab, accentShadow('lg'), { backgroundColor: colors.plum, bottom: Platform.OS === 'web' ? 94 : insets.bottom + 84 }]} pointerEvents="box-none">
+        <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowAdd(true); }} activeOpacity={0.82} style={hs.fabInner}>
           <Feather name="plus" size={22} color="#FBF5FB" />
         </TouchableOpacity>
       </View>
@@ -497,10 +558,7 @@ export default function EvenementsScreen() {
         visible={showAdd}
         onClose={() => setShowAdd(false)}
         weddingId={wId}
-        onCreated={() => {
-          queryClient.invalidateQueries({ queryKey: EVENTS_QUERY_KEY });
-          setShowAdd(false);
-        }}
+        onCreated={() => { queryClient.invalidateQueries({ queryKey: EVENTS_QUERY_KEY }); setShowAdd(false); }}
       />
     </>
   );
@@ -509,80 +567,37 @@ export default function EvenementsScreen() {
 const hs = StyleSheet.create({
   hero: { paddingHorizontal: 20, paddingBottom: 22, overflow: 'hidden' },
   heroSheen: { ...StyleSheet.absoluteFillObject, height: 80 },
-  goldBar: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0,
-    height: 1.5,
-    backgroundColor: 'rgba(200,170,112,0.35)',
-  },
+  goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
   eye: { fontSize: 9, letterSpacing: 2, marginBottom: 4 },
   heroTitle: { fontSize: 34, lineHeight: 34 },
   statsWrap: { borderRadius: 12, marginBottom: 14, overflow: 'hidden' },
-  statsBar: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 14,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
+  statsBar: { flexDirection: 'row', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 14, alignItems: 'center', overflow: 'hidden' },
   rim: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },
   divider: { width: StyleSheet.hairlineWidth, height: 32 },
   statBlock: { flex: 1, alignItems: 'center', gap: 2 },
   statValue: { fontSize: 26, lineHeight: 26 },
   statLabel: { fontSize: 9, letterSpacing: 0.5 },
-  filterRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 12 },
-  pill: {
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
+  // Controls row: toggle left, pills right
+  controlsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8, flexWrap: 'wrap' },
+  filterRow: { flexDirection: 'row', gap: 6 },
+  pill: { borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, paddingVertical: 7 },
   pillText: { fontSize: 11 },
+  // Calendar card
+  calCard: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', marginBottom: 4 },
+  dayBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth },
+  dayBannerText: { flex: 1, fontSize: 12, textTransform: 'capitalize' },
+  calSubtitle: { fontSize: 11, marginBottom: 10, marginTop: 2 },
+  // Month section header
   monthSep: { fontSize: 8, letterSpacing: 1.4, marginTop: 16, marginBottom: 8 },
-  // Card rendering using separate top/bottom border views + side borders per item
-  cardStart: {},
-  cardEnd: { marginBottom: 4 },
-  cardTopBorder: {
-    height: 1,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderLeftWidth: StyleSheet.hairlineWidth,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: 0,
-  },
-  cardBottomBorder: {
-    height: 1,
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderLeftWidth: StyleSheet.hairlineWidth,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderTopWidth: 0,
-  },
+  // Card framing
+  cardStart: {}, cardEnd: { marginBottom: 4 },
+  cardTopBorder: { height: 1, borderTopLeftRadius: 10, borderTopRightRadius: 10, borderTopWidth: StyleSheet.hairlineWidth, borderLeftWidth: StyleSheet.hairlineWidth, borderRightWidth: StyleSheet.hairlineWidth, borderBottomWidth: 0 },
+  cardBottomBorder: { height: 1, borderBottomLeftRadius: 10, borderBottomRightRadius: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderLeftWidth: StyleSheet.hairlineWidth, borderRightWidth: StyleSheet.hairlineWidth, borderTopWidth: 0 },
   itemInner: {},
-  rimLight: {
-    position: 'absolute',
-    left: 0, right: 0, top: 0,
-    height: 1,
-    borderTopWidth: 1,
-  },
+  rimLight: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },
   separator: { height: StyleSheet.hairlineWidth, marginLeft: 72 },
   loading: { padding: 40, alignItems: 'center' },
   emptyWrap: { flex: 1, minHeight: 300 },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    overflow: 'hidden',
-  },
-  fabInner: {
-    width: 52,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  fab: { position: 'absolute', right: 20, width: 52, height: 52, borderRadius: 26, overflow: 'hidden' },
+  fabInner: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
 });
