@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, ReactNode } from 'react';
 import { NuptiaChat } from '@/components/nuptia/nuptia-chat';
 
-// No auth layer yet (Task #5). Token getter is a no-op until Clerk is wired in.
+// No auth layer yet (Task #5). Token getter and sign-out are no-ops until Clerk is wired in.
 const noOpGetToken = () => Promise.resolve<string | null>(null);
+const noOpSignOut = (_opts?: { redirectUrl?: string }) => Promise.resolve();
 import { Link, useLocation } from 'wouter';
 import {
   Bell,
@@ -10,6 +11,7 @@ import {
   ChevronDown,
   FileText,
   Home,
+  LogOut,
   Menu,
   Paperclip,
   Plus,
@@ -288,6 +290,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [location, navigate] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarUserMenuOpen, setSidebarUserMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const { activeWeddingId, setActiveWeddingId } = useActiveWedding();
@@ -514,6 +517,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <button
                 className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-white/[0.07]"
                 data-testid="button-user-menu"
+                onClick={() => setSidebarUserMenuOpen((o) => !o)}
               >
                 {/* User avatar with gradient */}
                 <span
@@ -530,8 +534,31 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <span className="block text-[12px] font-semibold text-sidebar-foreground">Élise Caron</span>
                   <span className="block text-[9.5px] text-sidebar-foreground/40">Directrice artistique</span>
                 </span>
-                <ChevronDown size={13} className="text-sidebar-foreground/30" />
+                <ChevronDown
+                  size={13}
+                  className={`text-sidebar-foreground/30 transition-transform duration-200 ${sidebarUserMenuOpen ? 'rotate-180' : ''}`}
+                />
               </button>
+
+              {sidebarUserMenuOpen && (
+                <div className="mt-1 overflow-hidden rounded-2xl border border-sidebar-border/30 bg-white/[0.06] p-1">
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    data-testid="button-sidebar-settings"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/parametres'); }}
+                  >
+                    <Settings size={13} className="text-sidebar-foreground/40" /> Paramètres
+                  </button>
+                  <div className="my-1 h-px bg-sidebar-foreground/10" />
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-rose-300/80 transition hover:bg-white/[0.08]"
+                    data-testid="button-sidebar-sign-out"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); noOpSignOut({ redirectUrl: '/connexion' }); }}
+                  >
+                    <LogOut size={13} className="text-rose-300/60" /> Se déconnecter
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </aside>
@@ -671,15 +698,26 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <ChevronDown size={13} className="text-muted-foreground/60" />
               </button>
               {menuOpen && (
-                <div className="absolute right-6 top-[68px] z-10 w-44 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 p-1.5 shadow-[0_8px_32px_rgba(93,45,93,0.18)] backdrop-blur-md">
-                  <button
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
-                    data-testid="button-settings"
-                    onClick={() => { setMenuOpen(false); navigate('/parametres'); }}
-                  >
-                    <Settings size={13} className="text-muted-foreground" /> Paramètres
-                  </button>
-                </div>
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                  <div className="absolute right-6 top-[68px] z-50 w-44 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 p-1.5 shadow-[0_8px_32px_rgba(93,45,93,0.18)] backdrop-blur-md">
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      data-testid="button-settings"
+                      onClick={() => { setMenuOpen(false); navigate('/parametres'); }}
+                    >
+                      <Settings size={13} className="text-muted-foreground" /> Paramètres
+                    </button>
+                    <div className="my-1 h-px bg-border/40" />
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-destructive/80 transition hover:bg-destructive/6"
+                      data-testid="button-sign-out"
+                      onClick={() => { setMenuOpen(false); noOpSignOut({ redirectUrl: '/connexion' }); }}
+                    >
+                      <LogOut size={13} className="text-destructive/70" /> Se déconnecter
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </header>
