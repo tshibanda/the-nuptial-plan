@@ -274,7 +274,7 @@ function CreateWeddingDialog({
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -554,7 +554,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
               {menuOpen && (
                 <div className="absolute right-6 top-[68px] z-10 w-44 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 p-1.5 shadow-[0_8px_32px_rgba(93,45,93,0.18)] backdrop-blur-md">
-                  <button className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6" data-testid="button-settings">
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                    data-testid="button-settings"
+                    onClick={() => { setMenuOpen(false); navigate('/parametres'); }}
+                  >
                     <Settings size={13} className="text-muted-foreground" /> Paramètres
                   </button>
                 </div>

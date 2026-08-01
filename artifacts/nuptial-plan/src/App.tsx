@@ -13,6 +13,7 @@ import Calendrier from '@/pages/calendrier';
 import Contrats from '@/pages/contrats';
 import Paiements from '@/pages/paiements';
 import Documents from '@/pages/documents';
+import Parametres from '@/pages/parametres';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +36,7 @@ function Router() {
         <Route path="/contrats" component={Contrats} />
         <Route path="/paiements" component={Paiements} />
         <Route path="/documents" component={Documents} />
+        <Route path="/parametres" component={Parametres} />
         <Route component={NotFound} />
       </Switch>
     </AppShell>
