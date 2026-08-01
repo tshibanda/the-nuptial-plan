@@ -1,7 +1,8 @@
 /**
  * Budget — mobile screen
- * Plum gradient hero · summary bar · donut chart · category list · TourSheet
+ * Plum gradient hero · summary bar · donut chart · category list · edit/create sheets · TourSheet
  */
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,12 +12,19 @@ import {
   Platform,
   TouchableOpacity,
   RefreshControl,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import Svg, { Path, G, Text as SvgText, Circle } from 'react-native-svg';
-import { useListWeddings, useGetBudgetSummary } from '@workspace/api-client-react';
+import Svg, { Path, G, Text as SvgText } from 'react-native-svg';
+import {
+  useListWeddings,
+  useGetBudgetSummary,
+  useUpdateBudgetCategory,
+  useCreateBudgetCategory,
+} from '@workspace/api-client-react';
 import type { BudgetCategory } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
@@ -26,7 +34,7 @@ import { formatCents } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { TourSheet, TourHelpFab } from '@/components/TourSheet';
-import { useState, useCallback } from 'react';
+import { BottomSheet } from '@/components/BottomSheet';
 
 // ── Tour steps ────────────────────────────────────────────────────────────────
 const TOUR_STEPS = [
@@ -38,20 +46,20 @@ const TOUR_STEPS = [
   },
   {
     icon: 'bar-chart-2',
-    title: 'R\u00e9sum\u00e9 global',
+    title: 'Résumé global',
     description:
       "La barre de progression vous indique visuellement le pourcentage du budget d\u00e9j\u00e0 d\u00e9pens\u00e9.",
   },
   {
     icon: 'tag',
-    title: 'Par cat\u00e9gorie',
+    title: 'Par catégorie',
     description:
-      "Chaque poste budg\u00e9taire est list\u00e9 avec son enveloppe et le montant r\u00e9ellement engag\u00e9.",
+      "Chaque poste budg\u00e9taire est list\u00e9 avec son enveloppe et le montant r\u00e9ellement engag\u00e9. Appuyez sur une ligne pour modifier le montant.",
   },
 ];
 
 // ── Colour palettes ───────────────────────────────────────────────────────────
-/** Avatar background pastels (existing) */
+/** Avatar background pastels */
 const CAT_COLORS = [
   '#eadfcf', '#dce7df', '#eadfdf', '#e1dceb', '#e0e7dc', '#dce0e7',
   '#f0e8e0', '#e0ece0', '#f0e0e4',
@@ -77,8 +85,8 @@ const CX = CHART_SIZE / 2;
 const CY = CHART_SIZE / 2;
 const OUTER_R = 86;
 const INNER_R = 52;
-const SEL_OUTER_R = 93; // expanded radius when selected
-const GAP_DEG = 2.5;    // gap between slices
+const SEL_OUTER_R = 93;
+const GAP_DEG = 2.5;
 
 function polarToCartesian(cx: number, cy: number, r: number, deg: number) {
   const rad = ((deg - 90) * Math.PI) / 180;
@@ -122,7 +130,6 @@ function DonutChart({
   const total = categories.reduce((s, c) => s + c.allocatedCents, 0);
   if (total === 0 || categories.length === 0) return null;
 
-  // Build slice descriptors
   let cursor = 0;
   const slices = categories.map((cat, i) => {
     const fraction = cat.allocatedCents / total;
@@ -140,7 +147,6 @@ function DonutChart({
     };
   });
 
-  // Centre label
   const selectedCat = selectedId !== null
     ? categories.find(c => c.id === selectedId)
     : null;
@@ -160,7 +166,6 @@ function DonutChart({
 
   return (
     <View style={chartSS.wrap}>
-      {/* SVG donut */}
       <Svg width={CHART_SIZE} height={CHART_SIZE} viewBox={`0 0 ${CHART_SIZE} ${CHART_SIZE}`}>
         <G>
           {slices.map(({ cat, path, color, isSelected }) =>
@@ -175,8 +180,6 @@ function DonutChart({
             ) : null,
           )}
         </G>
-
-        {/* Centre hole label */}
         <SvgText
           x={CX}
           y={CY - 5}
@@ -198,7 +201,7 @@ function DonutChart({
         </SvgText>
       </Svg>
 
-      {/* Legend — 2-column wrap */}
+      {/* Legend */}
       <View style={chartSS.legend}>
         {slices.map(({ cat, color, isSelected }) => (
           <TouchableOpacity
@@ -341,7 +344,7 @@ function CategoryRow({ category, index, currency, colors, isSelected, chartColor
 
             <View style={ss.catMeta}>
               <Text style={[ss.metaLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                {'D\u00e9pens\u00e9 '}
+                {'Dépensé '}
                 <Text style={{ fontFamily: SANS_MEDIUM, color: isOver ? colors.destructive : colors.foreground }}>
                   {formatCents(category.spentCents, currency)}
                 </Text>
@@ -352,18 +355,172 @@ function CategoryRow({ category, index, currency, colors, isSelected, chartColor
             </View>
           </View>
 
-          {/* Allocated amount */}
+          {/* Allocated amount + edit hint */}
           <View style={ss.cardRight}>
             <Text style={[ss.allocated, { fontFamily: SERIF, color: isSelected ? chartColor : colors.plumDark }]}>
               {formatCents(category.allocatedCents, currency)}
             </Text>
-            <Text style={[ss.allocLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>
-              allou\u00e9
-            </Text>
+            <View style={ss.editHint}>
+              <Feather name="edit-2" size={9} color={colors.mutedForeground} />
+              <Text style={[ss.allocLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>
+                alloué
+              </Text>
+            </View>
           </View>
         </View>
       </View>
     </TouchableOpacity>
+  );
+}
+
+// ── Edit / Create sheet ───────────────────────────────────────────────────────
+interface EditSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  category: BudgetCategory | null; // null = create mode
+  weddingId: number;
+  currency: string;
+  onSaved: () => void;
+  colors: ReturnType<typeof useColors>;
+}
+
+function EditCategorySheet({
+  visible,
+  onClose,
+  category,
+  weddingId,
+  currency,
+  onSaved,
+  colors,
+}: EditSheetProps) {
+  const isEdit = category !== null;
+
+  const [name, setName] = useState('');
+  const [amountStr, setAmountStr] = useState('');
+
+  useEffect(() => {
+    if (!visible) return;
+    if (isEdit && category) {
+      setName(category.name);
+      setAmountStr(String((category.allocatedCents / 100).toFixed(2)));
+    } else {
+      setName('');
+      setAmountStr('');
+    }
+  }, [visible, category?.id]);
+
+  const updateMut = useUpdateBudgetCategory({
+    mutation: {
+      onSuccess: () => { onSaved(); onClose(); },
+      onError: () => { Alert.alert('Erreur', 'Impossible de modifier la catégorie.'); },
+    },
+  });
+
+  const createMut = useCreateBudgetCategory({
+    mutation: {
+      onSuccess: () => { onSaved(); onClose(); },
+      onError: () => { Alert.alert('Erreur', 'Impossible de créer la catégorie.'); },
+    },
+  });
+
+  const isBusy = updateMut.isPending || createMut.isPending;
+
+  const handleSave = () => {
+    const parsed = parseFloat(amountStr.replace(',', '.'));
+    if (isNaN(parsed) || parsed < 0) {
+      Alert.alert('Montant invalide', 'Veuillez saisir un montant valide.');
+      return;
+    }
+    const allocatedCents = Math.round(parsed * 100);
+
+    if (isEdit && category) {
+      const update: { name?: string; allocatedCents?: number } = { allocatedCents };
+      if (name.trim() && name.trim() !== category.name) update.name = name.trim();
+      updateMut.mutate({ weddingId, id: category.id, data: update });
+    } else {
+      const trimmed = name.trim();
+      if (!trimmed) {
+        Alert.alert('Nom requis', 'Veuillez saisir un nom de catégorie.');
+        return;
+      }
+      createMut.mutate({ weddingId, data: { name: trimmed, allocatedCents } });
+    }
+  };
+
+  const currencySymbol = currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency;
+
+  return (
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      eyebrow={isEdit ? 'MODIFIER' : 'NOUVELLE CATÉGORIE'}
+      title={isEdit ? category!.name : 'Ajouter un poste'}
+    >
+      <View style={ss.formBody}>
+        <View style={ss.fieldGroup}>
+          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
+            Nom
+          </Text>
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            placeholder="ex. Traiteur"
+            placeholderTextColor={colors.mutedForeground}
+            style={[
+              ss.input,
+              {
+                fontFamily: SANS,
+                color: colors.foreground,
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+              },
+            ]}
+            returnKeyType="next"
+            autoCapitalize="sentences"
+          />
+        </View>
+
+        <View style={ss.fieldGroup}>
+          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
+            Montant alloué ({currencySymbol})
+          </Text>
+          <TextInput
+            value={amountStr}
+            onChangeText={setAmountStr}
+            placeholder="0.00"
+            placeholderTextColor={colors.mutedForeground}
+            keyboardType="decimal-pad"
+            style={[
+              ss.input,
+              ss.inputLarge,
+              {
+                fontFamily: SERIF,
+                color: colors.plumDark,
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+              },
+            ]}
+            returnKeyType="done"
+            onSubmitEditing={handleSave}
+          />
+        </View>
+
+        <TouchableOpacity
+          onPress={handleSave}
+          disabled={isBusy}
+          style={[ss.saveBtn, { backgroundColor: isBusy ? colors.muted : colors.plum }]}
+          activeOpacity={0.8}
+        >
+          {isBusy ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={[ss.saveBtnText, { fontFamily: SANS_SEMIBOLD }]}>
+              {isEdit ? 'Enregistrer' : 'Créer'}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </BottomSheet>
   );
 }
 
@@ -382,11 +539,7 @@ function SummaryBar({ totalAllocated, totalSpent, currency, colors }: SummaryBar
       : 0;
   const remaining = totalAllocated - totalSpent;
   const isOver = totalSpent > totalAllocated;
-  const barColor = isOver
-    ? colors.destructive
-    : pct >= 80
-    ? colors.warning
-    : colors.plum;
+  const barColor = isOver ? colors.destructive : pct >= 80 ? colors.warning : colors.plum;
 
   return (
     <View
@@ -398,14 +551,13 @@ function SummaryBar({ totalAllocated, totalSpent, currency, colors }: SummaryBar
     >
       <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
 
-      {/* Top row: dépensé vs alloué */}
       <View style={ss.summaryRow}>
         <View>
           <Text style={[ss.summaryValue, { fontFamily: SERIF, color: colors.foreground }]}>
             {formatCents(totalSpent, currency)}
           </Text>
           <Text style={[ss.summaryLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>
-            d\u00e9pens\u00e9
+            dépensé
           </Text>
         </View>
 
@@ -425,26 +577,13 @@ function SummaryBar({ totalAllocated, totalSpent, currency, colors }: SummaryBar
         </View>
       </View>
 
-      {/* Progress bar */}
       <View style={[ss.barTrackLg, { backgroundColor: colors.muted, marginTop: 12 }]}>
-        <View
-          style={[ss.barFillLg, { width: `${pct}%` as any, backgroundColor: barColor }]}
-        />
+        <View style={[ss.barFillLg, { width: `${pct}%` as any, backgroundColor: barColor }]} />
       </View>
 
-      {/* Remaining */}
-      <Text
-        style={[
-          ss.remaining,
-          {
-            fontFamily: SANS_MEDIUM,
-            color: isOver ? colors.destructive : colors.mutedForeground,
-            marginTop: 8,
-          },
-        ]}
-      >
+      <Text style={[ss.remaining, { fontFamily: SANS_MEDIUM, color: isOver ? colors.destructive : colors.mutedForeground, marginTop: 8 }]}>
         {isOver
-          ? `D\u00e9passement de ${formatCents(Math.abs(remaining), currency)}`
+          ? `Dépassement de ${formatCents(Math.abs(remaining), currency)}`
           : `${formatCents(remaining, currency)} restant`}
       </Text>
     </View>
@@ -460,6 +599,7 @@ export default function BudgetScreen() {
 
   const { tourVisible, openTour, closeTour } = useTour('tour:budget');
 
+  // Chart selection state (from task #47)
   const [selectedCatId, setSelectedCatId] = useState<number | null>(null);
 
   const { data: weddings } = useListWeddings();
@@ -479,6 +619,26 @@ export default function BudgetScreen() {
   const handleSelectCat = useCallback((id: number | null) => {
     setSelectedCatId(prev => prev === id ? null : id);
   }, []);
+
+  // Edit / create sheet state (from task #46)
+  const [editTarget, setEditTarget] = useState<BudgetCategory | null>(null);
+  const [sheetMode, setSheetMode] = useState<'edit' | 'create' | null>(null);
+
+  const openEdit = (cat: BudgetCategory) => {
+    setEditTarget(cat);
+    setSheetMode('edit');
+    // Also highlight this category in the donut chart
+    setSelectedCatId(cat.id);
+  };
+
+  const openCreate = () => {
+    setEditTarget(null);
+    setSheetMode('create');
+  };
+
+  const closeSheet = () => setSheetMode(null);
+
+  const fabBottom = Platform.OS === 'web' ? 94 : insets.bottom + 84;
 
   return (
     <>
@@ -501,7 +661,6 @@ export default function BudgetScreen() {
           end={{ x: 1, y: 1 }}
           style={[ss.hero, { paddingTop: topPad + 20 }]}
         >
-          {/* Decorative blobs */}
           <View
             style={{
               position: 'absolute', top: -24, right: -28,
@@ -548,7 +707,7 @@ export default function BudgetScreen() {
             <EmptyState
               icon="pie-chart"
               title="Aucun budget"
-              subtitle="Cr\u00e9ez votre budget depuis l\u2019application web."
+              subtitle="Créez votre budget depuis l'application web."
             />
           ) : (
             <>
@@ -560,7 +719,7 @@ export default function BudgetScreen() {
                 colors={colors}
               />
 
-              {/* ── Donut chart ── */}
+              {/* ── Donut chart (from task #47) ── */}
               {categories.length > 0 && (
                 <View
                   style={[
@@ -570,15 +729,11 @@ export default function BudgetScreen() {
                   ]}
                 >
                   <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
-                  <Text
-                    style={[ss.chartTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}
-                  >
-                    R\u00c9PARTITION DU BUDGET
+                  <Text style={[ss.chartTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>
+                    RÉPARTITION DU BUDGET
                   </Text>
-                  <Text
-                    style={[ss.chartHint, { fontFamily: SANS, color: colors.mutedForeground }]}
-                  >
-                    Appuyez sur une tranche pour d\u00e9tailler
+                  <Text style={[ss.chartHint, { fontFamily: SANS, color: colors.mutedForeground }]}>
+                    Appuyez sur une tranche pour détailler
                   </Text>
                   <DonutChart
                     categories={categories}
@@ -592,25 +747,36 @@ export default function BudgetScreen() {
                 </View>
               )}
 
-              {/* Section header */}
-              {categories.length > 0 && (
-                <Text
-                  style={[
-                    ss.sectionHeader,
-                    { fontFamily: SANS_SEMIBOLD, color: colors.goldDim },
-                  ]}
+              {/* Section header + Ajouter button (from task #46) */}
+              <View style={ss.sectionRow}>
+                {categories.length > 0 && (
+                  <Text
+                    style={[ss.sectionHeader, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}
+                  >
+                    PAR CATÉGORIE
+                  </Text>
+                )}
+                <TouchableOpacity
+                  onPress={openCreate}
+                  style={[ss.addBtn, { backgroundColor: colors.plumBg, borderColor: colors.plum + '40' }]}
+                  activeOpacity={0.7}
                 >
-                  PAR CAT\u00c9GORIE
-                </Text>
-              )}
+                  <Feather name="plus" size={13} color={colors.plum} />
+                  <Text style={[ss.addBtnText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>
+                    Ajouter
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
               {/* Category rows */}
               {categories.length === 0 ? (
-                <EmptyState
-                  icon="tag"
-                  title="Aucune cat\u00e9gorie"
-                  subtitle="Ajoutez des postes budg\u00e9taires depuis l\u2019application web."
-                />
+                <TouchableOpacity onPress={openCreate} activeOpacity={0.75}>
+                  <EmptyState
+                    icon="tag"
+                    title="Aucune catégorie"
+                    subtitle="Appuyez sur « Ajouter » pour créer un premier poste budgétaire."
+                  />
+                </TouchableOpacity>
               ) : (
                 categories.map((cat, i) => (
                   <CategoryRow
@@ -621,7 +787,7 @@ export default function BudgetScreen() {
                     colors={colors}
                     isSelected={selectedCatId === cat.id}
                     chartColor={CHART_COLORS[i % CHART_COLORS.length]!}
-                    onPress={() => handleSelectCat(cat.id)}
+                    onPress={() => openEdit(cat)}
                   />
                 ))
               )}
@@ -633,9 +799,20 @@ export default function BudgetScreen() {
       {/* Tour */}
       <TourHelpFab
         onPress={openTour}
-        bottom={Platform.OS === 'web' ? 94 : insets.bottom + 84}
+        bottom={fabBottom}
       />
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+
+      {/* Edit / Create sheet (from task #46) */}
+      <EditCategorySheet
+        visible={sheetMode !== null}
+        onClose={closeSheet}
+        category={sheetMode === 'edit' ? editTarget : null}
+        weddingId={wId}
+        currency={currency}
+        onSaved={refetch}
+        colors={colors}
+      />
     </>
   );
 }
@@ -665,10 +842,6 @@ const ss = StyleSheet.create({
   // Content
   content: { paddingHorizontal: 16, paddingTop: 16 },
   loading: { paddingTop: 60, alignItems: 'center' },
-  sectionHeader: {
-    fontSize: 9, letterSpacing: 2,
-    marginTop: 20, marginBottom: 10, marginLeft: 2,
-  },
 
   // Chart card
   chartCard: {
@@ -681,6 +854,30 @@ const ss = StyleSheet.create({
   },
   chartTitle: { fontSize: 9, letterSpacing: 2, textAlign: 'center' },
   chartHint: { fontSize: 10, textAlign: 'center', marginTop: 2, opacity: 0.6 },
+
+  // Section row (header + add button)
+  sectionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    marginBottom: 10,
+    marginLeft: 2,
+  },
+  sectionHeader: {
+    fontSize: 9,
+    letterSpacing: 2,
+  },
+  addBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  addBtnText: { fontSize: 11 },
 
   // Summary card
   summaryCard: {
@@ -732,5 +929,39 @@ const ss = StyleSheet.create({
   metaLabel: { fontSize: 10 },
   cardRight: { alignItems: 'flex-end', flexShrink: 0 },
   allocated: { fontSize: 18, lineHeight: 18 },
-  allocLabel: { fontSize: 9, marginTop: 2 },
+  editHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: 2,
+  },
+  allocLabel: { fontSize: 9 },
+
+  // Form (inside edit/create sheet)
+  formBody: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    gap: 18,
+  },
+  fieldGroup: { gap: 6 },
+  fieldLabel: {
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  input: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 15,
+  },
+  inputLarge: { fontSize: 22, paddingVertical: 12 },
+  saveBtn: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  saveBtnText: { color: '#fff', fontSize: 15 },
 });
