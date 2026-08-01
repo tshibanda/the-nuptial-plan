@@ -198,7 +198,7 @@ export function PageTour({ tourKey, pageTitle, pageIcon: PageIcon, steps, forceO
           onClick={reopen}
           title="Revoir le guide"
           aria-label="Revoir le guide d'utilisation"
-          className="fixed bottom-6 right-6 z-40 flex h-10 w-10 items-center justify-center rounded-full text-white transition hover:scale-105 hover:opacity-90"
+          className="fixed bottom-[88px] right-6 z-40 flex h-10 w-10 items-center justify-center rounded-full text-white transition hover:scale-105 hover:opacity-90"
           style={{
             background: 'linear-gradient(135deg, #5D2D5D, #7A4A7A)',
             boxShadow: '0 4px 16px rgba(93,45,93,0.38)',
