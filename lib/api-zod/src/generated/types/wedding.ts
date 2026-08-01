@@ -10,10 +10,16 @@ export interface Wedding {
   id: number;
   /** e.g. Sophie & James Hartwell */
   names: string;
+  /** Prénom du premier marié */
+  partner1?: string;
+  /** Prénom du second marié */
+  partner2?: string;
+  /** ISO 4217 currency code, e.g. EUR, GBP, USD */
+  currency: string;
   /** ISO date string (YYYY-MM-DD) */
   weddingDate: string;
   venue: string;
-  /** Total budget in GBP pence */
+  /** Total budget in minor currency units (cents/pence) */
   totalBudget: number;
   guestCount: number;
   /** @nullable */

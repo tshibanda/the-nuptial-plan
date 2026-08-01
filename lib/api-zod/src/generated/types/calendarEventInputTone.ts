@@ -13,4 +13,7 @@ export const CalendarEventInputTone = {
   gold: 'gold',
   rose: 'rose',
   sage: 'sage',
+  plum: 'plum',
+  lavender: 'lavender',
+  blue: 'blue',
 } as const;

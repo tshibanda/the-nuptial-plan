@@ -1,4 +1,8 @@
 import { useState, useEffect, useMemo, ReactNode } from 'react';
+import { NuptiaChat } from '@/components/nuptia/nuptia-chat';
+
+// No auth layer yet (Task #5). Token getter is a no-op until Clerk is wired in.
+const noOpGetToken = () => Promise.resolve<string | null>(null);
 import { Link, useLocation } from 'wouter';
 import {
   Bell,
@@ -739,6 +743,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </main>
       </div>
+
+      {/* Nuptia — floating AI assistant, available on every page */}
+      <NuptiaChat getToken={noOpGetToken} />
     </div>
   );
 }

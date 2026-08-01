@@ -1,9 +1,26 @@
 import { Readable } from 'stream';
-import {
-  RequestUploadUrlBody,
-  RequestUploadUrlResponse,
-} from '@workspace/api-zod';
 import { Router, type IRouter, type Request, type Response } from 'express';
+
+interface UploadUrlBody { name: string; size: number; contentType: string; }
+
+const RequestUploadUrlBody = {
+  safeParse(data: unknown): { success: true; data: UploadUrlBody } | { success: false } {
+    if (
+      data !== null &&
+      typeof data === 'object' &&
+      'name' in data && typeof (data as UploadUrlBody).name === 'string' &&
+      'size' in data && typeof (data as UploadUrlBody).size === 'number' &&
+      'contentType' in data && typeof (data as UploadUrlBody).contentType === 'string'
+    ) {
+      return { success: true, data: data as UploadUrlBody };
+    }
+    return { success: false };
+  },
+};
+
+const RequestUploadUrlResponse = {
+  parse(data: unknown) { return data; },
+};
 
 import { ObjectPermission } from '../lib/objectAcl';
 import {

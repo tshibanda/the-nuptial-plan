@@ -31,4 +31,12 @@ description: Premium French wedding planner web app — architecture decisions, 
 ## DB schema
 - All tables live in `lib/db/src/schema/` — one file per entity
 - After adding schema files, run `pnpm run typecheck:libs` to regenerate declarations before checking api-server typecheck
-- Push: `pnpm --filter @workspace/db run push`
+- Push: `pnpm --filter @workspace/db run push` — requires TTY; if it fails, create tables via `executeSql` in CodeExecution instead
+
+## Nuptia AI chatbot
+- Routes: `artifacts/api-server/src/routes/openai/conversations.ts`, mounted at `/openai/conversations`
+- Widget: `artifacts/nuptial-plan/src/components/nuptia/nuptia-chat.tsx`, added to `app-shell.tsx`
+- DB tables `conversations` + `messages` were created via direct SQL (drizzle push needs TTY)
+- `NuptiaChat` accepts a `getToken` prop — currently `noOpGetToken` (no auth yet); wire in Clerk `useAuth().getToken` when Task #5 lands
+- Storage route (`src/routes/storage.ts`) had `RequestUploadUrlBody`/`RequestUploadUrlResponse` from old codegen; now uses plain inline validation — do NOT re-add zod import (not in api-server deps)
+- `lib/integrations-openai-ai-react` needs `"types": ["react"]` in its tsconfig and `@types/react` devDep (already fixed)

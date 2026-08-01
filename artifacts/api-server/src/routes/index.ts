@@ -10,11 +10,13 @@ import contractsRouter from "./contracts";
 import paymentsRouter from "./payments";
 import documentsRouter from "./documents";
 import storageRouter from "./storage";
+import openaiConversationsRouter from "./openai/conversations";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(storageRouter);
+router.use("/openai/conversations", openaiConversationsRouter);
 router.use("/weddings", weddingsRouter);
 router.use("/weddings/:weddingId/vendors", vendorsRouter);
 router.use("/weddings/:weddingId/guests", guestsRouter);

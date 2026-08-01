@@ -14,9 +14,9 @@ export interface Wedding {
   /** e.g. Sophie & James Hartwell */
   names: string;
   /** Prénom du premier marié */
-  partner1?: string | null;
+  partner1?: string;
   /** Prénom du second marié */
-  partner2?: string | null;
+  partner2?: string;
   /** ISO 4217 currency code, e.g. EUR, GBP, USD */
   currency: string;
   /** ISO date string (YYYY-MM-DD) */
@@ -266,6 +266,9 @@ export const CalendarEventTone = {
   gold: 'gold',
   rose: 'rose',
   sage: 'sage',
+  plum: 'plum',
+  lavender: 'lavender',
+  blue: 'blue',
 } as const;
 
 export interface CalendarEvent {
@@ -281,6 +284,16 @@ export interface CalendarEvent {
      * @nullable
      */
   eventTime?: string | null;
+  /**
+     * Venue or room for this event
+     * @nullable
+     */
+  location?: string | null;
+  /**
+     * Comma-separated list of participants/actors
+     * @nullable
+     */
+  actors?: string | null;
   /** @nullable */
   tone?: CalendarEventTone;
   completed?: boolean;
@@ -294,6 +307,9 @@ export const CalendarEventInputTone = {
   gold: 'gold',
   rose: 'rose',
   sage: 'sage',
+  plum: 'plum',
+  lavender: 'lavender',
+  blue: 'blue',
 } as const;
 
 export interface CalendarEventInput {
@@ -301,6 +317,8 @@ export interface CalendarEventInput {
   detail?: string;
   eventDate: string;
   eventTime?: string;
+  location?: string;
+  actors?: string;
   tone?: CalendarEventInputTone;
   completed?: boolean;
 }
@@ -312,6 +330,9 @@ export const CalendarEventUpdateTone = {
   gold: 'gold',
   rose: 'rose',
   sage: 'sage',
+  plum: 'plum',
+  lavender: 'lavender',
+  blue: 'blue',
 } as const;
 
 export interface CalendarEventUpdate {
@@ -319,6 +340,8 @@ export interface CalendarEventUpdate {
   detail?: string;
   eventDate?: string;
   eventTime?: string;
+  location?: string;
+  actors?: string;
   tone?: CalendarEventUpdateTone;
   completed?: boolean;
 }
@@ -456,5 +479,38 @@ export interface PaymentUpdate {
   status?: PaymentUpdateStatus;
   paidDate?: string;
   notes?: string;
+}
+
+export interface OpenaiConversation {
+  id: number;
+  title: string;
+  createdAt: string;
+}
+
+export interface OpenaiMessage {
+  id: number;
+  conversationId: number;
+  role: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface OpenaiConversationInput {
+  title: string;
+}
+
+export interface OpenaiMessageInput {
+  content: string;
+}
+
+export interface OpenaiConversationWithMessages {
+  id: number;
+  title: string;
+  createdAt: string;
+  messages: OpenaiMessage[];
+}
+
+export interface OpenaiError {
+  error: string;
 }
 

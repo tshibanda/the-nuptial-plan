@@ -22,12 +22,12 @@ export const HealthCheckResponse = zod.object({
 export const ListWeddingsResponseItem = zod.object({
   "id": zod.number(),
   "names": zod.string().describe('e.g. Sophie & James Hartwell'),
-  "partner1": zod.string().nullish(),
-  "partner2": zod.string().nullish(),
-  "currency": zod.string(),
+  "partner1": zod.string().optional().describe('Prénom du premier marié'),
+  "partner2": zod.string().optional().describe('Prénom du second marié'),
+  "currency": zod.string().describe('ISO 4217 currency code, e.g. EUR, GBP, USD'),
   "weddingDate": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "venue": zod.string(),
-  "totalBudget": zod.number().describe('Total budget in minor currency units'),
+  "totalBudget": zod.number().describe('Total budget in minor currency units (cents\/pence)'),
   "guestCount": zod.number(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
@@ -53,12 +53,12 @@ export const CreateWeddingBody = zod.object({
 export const CreateWeddingResponse = zod.object({
   "id": zod.number(),
   "names": zod.string().describe('e.g. Sophie & James Hartwell'),
-  "partner1": zod.string().nullish(),
-  "partner2": zod.string().nullish(),
-  "currency": zod.string(),
+  "partner1": zod.string().optional().describe('Prénom du premier marié'),
+  "partner2": zod.string().optional().describe('Prénom du second marié'),
+  "currency": zod.string().describe('ISO 4217 currency code, e.g. EUR, GBP, USD'),
   "weddingDate": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "venue": zod.string(),
-  "totalBudget": zod.number().describe('Total budget in minor currency units'),
+  "totalBudget": zod.number().describe('Total budget in minor currency units (cents\/pence)'),
   "guestCount": zod.number(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
@@ -75,12 +75,12 @@ export const GetWeddingParams = zod.object({
 export const GetWeddingResponse = zod.object({
   "id": zod.number(),
   "names": zod.string().describe('e.g. Sophie & James Hartwell'),
-  "partner1": zod.string().nullish(),
-  "partner2": zod.string().nullish(),
-  "currency": zod.string(),
+  "partner1": zod.string().optional().describe('Prénom du premier marié'),
+  "partner2": zod.string().optional().describe('Prénom du second marié'),
+  "currency": zod.string().describe('ISO 4217 currency code, e.g. EUR, GBP, USD'),
   "weddingDate": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "venue": zod.string(),
-  "totalBudget": zod.number().describe('Total budget in minor currency units'),
+  "totalBudget": zod.number().describe('Total budget in minor currency units (cents\/pence)'),
   "guestCount": zod.number(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
@@ -109,12 +109,12 @@ export const UpdateWeddingBody = zod.object({
 export const UpdateWeddingResponse = zod.object({
   "id": zod.number(),
   "names": zod.string().describe('e.g. Sophie & James Hartwell'),
-  "partner1": zod.string().nullish(),
-  "partner2": zod.string().nullish(),
-  "currency": zod.string(),
+  "partner1": zod.string().optional().describe('Prénom du premier marié'),
+  "partner2": zod.string().optional().describe('Prénom du second marié'),
+  "currency": zod.string().describe('ISO 4217 currency code, e.g. EUR, GBP, USD'),
   "weddingDate": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "venue": zod.string(),
-  "totalBudget": zod.number().describe('Total budget in minor currency units'),
+  "totalBudget": zod.number().describe('Total budget in minor currency units (cents\/pence)'),
   "guestCount": zod.number(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
@@ -513,7 +513,9 @@ export const ListEventsResponseItem = zod.object({
   "detail": zod.string().nullish(),
   "eventDate": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "eventTime": zod.string().nullish().describe('HH:MM format'),
-  "tone": zod.union([zod.literal('gold'),zod.literal('rose'),zod.literal('sage'),zod.literal(null)]).nullish(),
+  "location": zod.string().nullish().describe('Venue or room for this event'),
+  "actors": zod.string().nullish().describe('Comma-separated list of participants\/actors'),
+  "tone": zod.union([zod.literal('gold'),zod.literal('rose'),zod.literal('sage'),zod.literal('plum'),zod.literal('lavender'),zod.literal('blue'),zod.literal(null)]).nullish(),
   "completed": zod.boolean().optional(),
   "createdAt": zod.string()
 })
@@ -532,7 +534,9 @@ export const CreateEventBody = zod.object({
   "detail": zod.string().optional(),
   "eventDate": zod.string(),
   "eventTime": zod.string().optional(),
-  "tone": zod.enum(['gold', 'rose', 'sage']).optional(),
+  "location": zod.string().optional(),
+  "actors": zod.string().optional(),
+  "tone": zod.enum(['gold', 'rose', 'sage', 'plum', 'lavender', 'blue']).optional(),
   "completed": zod.boolean().optional()
 })
 
@@ -543,7 +547,9 @@ export const CreateEventResponse = zod.object({
   "detail": zod.string().nullish(),
   "eventDate": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "eventTime": zod.string().nullish().describe('HH:MM format'),
-  "tone": zod.union([zod.literal('gold'),zod.literal('rose'),zod.literal('sage'),zod.literal(null)]).nullish(),
+  "location": zod.string().nullish().describe('Venue or room for this event'),
+  "actors": zod.string().nullish().describe('Comma-separated list of participants\/actors'),
+  "tone": zod.union([zod.literal('gold'),zod.literal('rose'),zod.literal('sage'),zod.literal('plum'),zod.literal('lavender'),zod.literal('blue'),zod.literal(null)]).nullish(),
   "completed": zod.boolean().optional(),
   "createdAt": zod.string()
 })
@@ -562,7 +568,9 @@ export const UpdateEventBody = zod.object({
   "detail": zod.string().optional(),
   "eventDate": zod.string().optional(),
   "eventTime": zod.string().optional(),
-  "tone": zod.enum(['gold', 'rose', 'sage']).optional(),
+  "location": zod.string().optional(),
+  "actors": zod.string().optional(),
+  "tone": zod.enum(['gold', 'rose', 'sage', 'plum', 'lavender', 'blue']).optional(),
   "completed": zod.boolean().optional()
 })
 
@@ -573,7 +581,9 @@ export const UpdateEventResponse = zod.object({
   "detail": zod.string().nullish(),
   "eventDate": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "eventTime": zod.string().nullish().describe('HH:MM format'),
-  "tone": zod.union([zod.literal('gold'),zod.literal('rose'),zod.literal('sage'),zod.literal(null)]).nullish(),
+  "location": zod.string().nullish().describe('Venue or room for this event'),
+  "actors": zod.string().nullish().describe('Comma-separated list of participants\/actors'),
+  "tone": zod.union([zod.literal('gold'),zod.literal('rose'),zod.literal('sage'),zod.literal('plum'),zod.literal('lavender'),zod.literal('blue'),zod.literal(null)]).nullish(),
   "completed": zod.boolean().optional(),
   "createdAt": zod.string()
 })
@@ -786,22 +796,89 @@ export const DeletePaymentResponse = zod.void()
 
 
 /**
- * @summary Request a presigned upload URL
+ * @summary List all conversations
  */
-export const RequestUploadUrlBody = zod.object({
-  "name": zod.string(),
-  "size": zod.number(),
-  "contentType": zod.string(),
+export const ListOpenaiConversationsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+export const ListOpenaiConversationsResponse = zod.array(ListOpenaiConversationsResponseItem)
+
+
+/**
+ * @summary Create a new conversation
+ */
+export const CreateOpenaiConversationBody = zod.object({
+  "title": zod.string()
 })
 
-export const RequestUploadUrlResponse = zod.object({
-  "uploadURL": zod.string(),
-  "objectPath": zod.string(),
-  "metadata": zod.object({
-    "name": zod.string(),
-    "size": zod.number(),
-    "contentType": zod.string(),
-  }),
+export const CreateOpenaiConversationResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "createdAt": zod.coerce.date()
 })
+
+
+/**
+ * @summary Get conversation with messages
+ */
+export const GetOpenaiConversationParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetOpenaiConversationResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "messages": zod.array(zod.object({
+  "id": zod.number(),
+  "conversationId": zod.number(),
+  "role": zod.string(),
+  "content": zod.string(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Delete a conversation
+ */
+export const DeleteOpenaiConversationParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteOpenaiConversationResponse = zod.void()
+
+
+/**
+ * @summary List messages in a conversation
+ */
+export const ListOpenaiMessagesParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListOpenaiMessagesResponseItem = zod.object({
+  "id": zod.number(),
+  "conversationId": zod.number(),
+  "role": zod.string(),
+  "content": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+export const ListOpenaiMessagesResponse = zod.array(ListOpenaiMessagesResponseItem)
+
+
+/**
+ * @summary Send a text message and receive a streaming text response
+ */
+export const SendOpenaiMessageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SendOpenaiMessageBody = zod.object({
+  "content": zod.string()
+})
+
+export const SendOpenaiMessageResponse = zod.unknown()
 
 

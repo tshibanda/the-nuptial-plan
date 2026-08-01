@@ -20,6 +20,16 @@ export interface CalendarEvent {
      * @nullable
      */
   eventTime?: string | null;
+  /**
+     * Venue or room for this event
+     * @nullable
+     */
+  location?: string | null;
+  /**
+     * Comma-separated list of participants/actors
+     * @nullable
+     */
+  actors?: string | null;
   /** @nullable */
   tone?: CalendarEventTone;
   completed?: boolean;

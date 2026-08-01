@@ -8,6 +8,9 @@
 
 export interface WeddingInput {
   names: string;
+  partner1?: string;
+  partner2?: string;
+  currency: string;
   weddingDate: string;
   venue: string;
   totalBudget: number;

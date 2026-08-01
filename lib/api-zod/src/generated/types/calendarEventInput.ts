@@ -12,6 +12,8 @@ export interface CalendarEventInput {
   detail?: string;
   eventDate: string;
   eventTime?: string;
+  location?: string;
+  actors?: string;
   tone?: CalendarEventInputTone;
   completed?: boolean;
 }

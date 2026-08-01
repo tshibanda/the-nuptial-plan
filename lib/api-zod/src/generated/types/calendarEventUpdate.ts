@@ -12,6 +12,8 @@ export interface CalendarEventUpdate {
   detail?: string;
   eventDate?: string;
   eventTime?: string;
+  location?: string;
+  actors?: string;
   tone?: CalendarEventUpdateTone;
   completed?: boolean;
 }
