@@ -8,9 +8,34 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useListWeddings, useGetWeddingSummary } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
+import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
+import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+
+const TOUR_STEPS = [
+  {
+    icon: 'user',
+    title: 'Votre profil',
+    description: 'Cet écran regroupe vos informations de planificatrice, le mariage actif et les raccourcis vers les principales sections de l\'application.',
+  },
+  {
+    icon: 'heart',
+    title: 'Mariage actif',
+    description: 'La carte en haut résume le mariage sélectionné : nombre d\'invités, prestataires et budget total. Appuyez dessus pour changer de mariage.',
+  },
+  {
+    icon: 'grid',
+    title: 'Accès rapide',
+    description: 'La section Gestion vous permet d\'accéder directement aux invités, prestataires et contrats sans passer par les onglets.',
+  },
+  {
+    icon: 'settings',
+    title: 'Paramètres & aide',
+    description: 'Gérez vos préférences de notifications et accédez au support depuis la section Application en bas de cet écran.',
+  },
+];
 
 function RowItem({ icon, label, value, variant = 'default', colors, onPress }: {
   icon: string; label: string; value?: string;
@@ -49,6 +74,7 @@ export default function ProfilScreen() {
   const router = useRouter();
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const { tourVisible, openTour, closeTour } = useTour('tour:profil');
 
   const { data: weddings } = useListWeddings();
   const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
@@ -62,7 +88,10 @@ export default function ProfilScreen() {
   const showWebOnly = (feature: string) =>
     Alert.alert(feature, 'Gérez vos ' + feature.toLowerCase() + ' depuis l\'application web.', [{ text: 'OK' }]);
 
+  const fabBottom = Platform.OS === 'web' ? 94 : insets.bottom + 84;
+
   return (
+    <>
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{ paddingBottom: 100 }}
@@ -197,6 +226,10 @@ export default function ProfilScreen() {
         </View>
       </View>
     </ScrollView>
+
+    <TourHelpFab onPress={openTour} bottom={fabBottom} />
+    <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+    </>
   );
 }
 

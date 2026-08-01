@@ -9,16 +9,42 @@ import * as Haptics from 'expo-haptics';
 import { useListWeddings } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
+import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { daysUntil } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
+import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+
+const TOUR_STEPS = [
+  {
+    icon: 'heart',
+    title: 'Vos mariages',
+    description: 'Retrouvez ici tous les mariages que vous gérez. Chaque carte affiche les noms des mariés, le lieu et le compte à rebours.',
+  },
+  {
+    icon: 'check-circle',
+    title: 'Mariage actif',
+    description: "Appuyez sur une carte pour sélectionner le mariage actif. La carte en surbrillance plum indique le mariage actuellement affiché dans toute l'application.",
+  },
+  {
+    icon: 'calendar',
+    title: 'Compte à rebours',
+    description: 'Le badge en bas à droite de chaque carte affiche le nombre de jours restants avant la cérémonie — un rappel visuel au quotidien.',
+  },
+  {
+    icon: 'refresh-cw',
+    title: 'Actualiser la liste',
+    description: 'Tirez vers le bas pour synchroniser la liste avec les dernières modifications effectuées depuis l\'application web.',
+  },
+];
 
 export default function MariagesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { selectedWeddingId, selectWedding } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const { tourVisible, openTour, closeTour } = useTour('tour:mariages');
 
   const { data: weddings, isLoading, refetch, isRefetching } = useListWeddings();
 
@@ -26,6 +52,8 @@ export default function MariagesScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     selectWedding(id);
   };
+
+  const fabBottom = Platform.OS === 'web' ? 94 : insets.bottom + 84;
 
   if (isLoading) {
     return (
@@ -36,6 +64,7 @@ export default function MariagesScreen() {
   }
 
   return (
+    <>
     <FlatList
       data={weddings ?? []}
       keyExtractor={(item) => String(item.id)}
@@ -143,6 +172,10 @@ export default function MariagesScreen() {
         );
       }}
     />
+
+    <TourHelpFab onPress={openTour} bottom={fabBottom} />
+    <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+    </>
   );
 }
 
