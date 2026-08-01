@@ -4,6 +4,7 @@
  */
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 import { Alert, Platform } from 'react-native';
 
 // ── Brand palette ─────────────────────────────────────────────────────────────
@@ -317,20 +318,32 @@ export async function exportBudgetPDF(data: BudgetPDFData): Promise<void> {
       return;
     }
 
-    // Native: generate PDF file then share it
-    const { uri } = await Print.printToFileAsync({ html, base64: false });
-    const canShare = await Sharing.isAvailableAsync();
+    // Native: generate PDF file, rename it, then share it
+    const { uri: tempUri } = await Print.printToFileAsync({ html, base64: false });
 
+    // Build a human-readable filename: budget-Sophie-James-2026-08-16.pdf
+    const namesSlug = data.weddingNames
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // strip accents
+      .replace(/[^a-zA-Z0-9\s-]/g, '')                   // keep alphanum + spaces + hyphens
+      .trim().replace(/\s+/g, '-');
+    const datePart = data.weddingDate
+      ? data.weddingDate.slice(0, 10)   // YYYY-MM-DD
+      : new Date().toISOString().slice(0, 10);
+    const filename = `budget-${namesSlug}-${datePart}.pdf`;
+    const destUri = `${FileSystem.cacheDirectory}${filename}`;
+
+    await FileSystem.copyAsync({ from: tempUri, to: destUri });
+
+    const canShare = await Sharing.isAvailableAsync();
     if (canShare) {
-      const safeName = data.weddingNames.replace(/\s+/g, '-').toLowerCase();
-      await Sharing.shareAsync(uri, {
+      await Sharing.shareAsync(destUri, {
         mimeType: 'application/pdf',
         dialogTitle: 'Partager le budget',
         UTI: 'com.adobe.pdf',
       });
     } else {
       // Fallback: print directly
-      await Print.printAsync({ uri });
+      await Print.printAsync({ uri: destUri });
     }
   } catch (err: any) {
     console.error('[budget-pdf] export failed', err);
