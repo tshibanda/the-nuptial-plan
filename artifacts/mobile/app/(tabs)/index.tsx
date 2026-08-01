@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
-  ActivityIndicator, Platform,
+  ActivityIndicator, Platform, TouchableOpacity,
 } from 'react-native';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -226,8 +227,10 @@ export default function DashboardScreen() {
               {upcoming.map((evt, i) => {
                 const { day, month } = formatDateParts(evt.eventDate);
                 return (
-                  <View
+                  <TouchableOpacity
                     key={evt.id}
+                    activeOpacity={0.75}
+                    onPress={() => router.push('/(tabs)/evenements')}
                     style={[ss.evtRow, i < upcoming.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}
                   >
                     <View style={[
@@ -243,9 +246,18 @@ export default function DashboardScreen() {
                       {evt.detail ? <Text style={[ss.evtDetail, { fontFamily: SANS, color: colors.mutedForeground }]} numberOfLines={1}>{evt.detail}</Text> : null}
                     </View>
                     <Feather name="chevron-right" size={14} color={colors.goldDim} />
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
+              {/* View all link */}
+              <TouchableOpacity
+                onPress={() => router.push('/(tabs)/evenements')}
+                activeOpacity={0.75}
+                style={[ss.viewAllRow, { borderTopColor: colors.border }]}
+              >
+                <Text style={[ss.viewAllText, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Voir tout l'agenda</Text>
+                <Feather name="arrow-right" size={12} color={colors.plum} />
+              </TouchableOpacity>
             </View>
           </>
         )}
@@ -301,6 +313,8 @@ const ss = StyleSheet.create({
   card: { borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   rimLight: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },
   evtRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 11 },
+  viewAllRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 11, borderTopWidth: StyleSheet.hairlineWidth },
+  viewAllText: { fontSize: 11 },
   evtDate: { width: 44, height: 44, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   evtDay: { fontSize: 20, lineHeight: 20 },
   evtMonth: { fontSize: 7, letterSpacing: 0.8, marginTop: 1 },

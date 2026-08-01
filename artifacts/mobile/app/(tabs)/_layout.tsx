@@ -24,6 +24,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: 'heart', selected: 'heart.fill' }} />
         <Label>Mariages</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="evenements">
+        <Icon sf={{ default: 'calendar', selected: 'calendar.badge.checkmark' }} />
+        <Label>Agenda</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="prestataires">
         <Icon sf={{ default: 'building.2', selected: 'building.2.fill' }} />
         <Label>Prestataires</Label>
@@ -153,6 +157,10 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="mariages"
         options={{ tabBarIcon: makeTabIcon('heart', 'heart', 'Mariages') }}
+      />
+      <Tabs.Screen
+        name="evenements"
+        options={{ tabBarIcon: makeTabIcon('calendar', 'calendar', 'Agenda') }}
       />
       <Tabs.Screen
         name="prestataires"
