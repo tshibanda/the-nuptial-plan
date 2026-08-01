@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Platform, StyleSheet, useColorScheme, View } from 'react-native';
+import { Platform, StyleSheet, useColorScheme, View, Text } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -10,6 +10,7 @@ import { SymbolView } from 'expo-symbols';
 import type { SFSymbol } from 'expo-symbols';
 import { useAuth } from '@clerk/expo';
 import { setAuthTokenGetter } from '@workspace/api-client-react';
+import { SANS_MEDIUM } from '@/constants/fonts';
 
 // NativeTabs: iOS 26+ with liquid glass.
 function NativeTabLayout() {
@@ -39,43 +40,102 @@ function NativeTabLayout() {
   );
 }
 
+interface TabPillProps {
+  sfName: string;
+  featherName: string;
+  label: string;
+  focused: boolean;
+  color: string;
+  colors: ReturnType<typeof useColors>;
+}
+
+function TabPill({ sfName, featherName, label, focused, color, colors }: TabPillProps) {
+  const isIOS = Platform.OS === 'ios';
+  const iconColor = focused ? '#FBF5FB' : color;
+
+  return (
+    <View
+      style={[
+        tp.pill,
+        focused && { backgroundColor: colors.plum },
+      ]}
+    >
+      {isIOS ? (
+        <SymbolView name={sfName as SFSymbol} tintColor={iconColor} size={19} />
+      ) : (
+        <Feather name={featherName as any} size={18} color={iconColor} />
+      )}
+      <Text
+        style={[
+          tp.label,
+          { fontFamily: SANS_MEDIUM, color: focused ? '#FBF5FB' : color },
+        ]}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+const tp = StyleSheet.create({
+  pill: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 18,
+    gap: 3,
+    minWidth: 58,
+  },
+  label: {
+    fontSize: 10,
+    letterSpacing: 0.1,
+  },
+});
+
 // ClassicTabLayout: older iOS, Android, web.
 function ClassicTabLayout() {
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const isIOS = Platform.OS === 'ios';
   const isWeb = Platform.OS === 'web';
 
-  const tabIcon =
-    (sfName: string, featherName: string) =>
-    ({ color }: { color: string }) =>
-      isIOS ? (
-        <SymbolView name={sfName as SFSymbol} tintColor={color} size={22} />
-      ) : (
-        <Feather name={featherName as any} size={20} color={color} />
-      );
+  const makeTabIcon =
+    (sfName: string, featherName: string, label: string) =>
+    ({ color, focused }: { color: string; focused: boolean }) => (
+      <TabPill
+        sfName={sfName}
+        featherName={featherName}
+        label={label}
+        focused={focused}
+        color={color}
+        colors={colors}
+      />
+    );
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.accent,
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: colors.plum,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: isIOS ? 'transparent' : colors.background,
+          backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.background,
           borderTopWidth: isWeb ? 1 : StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
           elevation: 0,
-          ...(isWeb ? { height: 84 } : {}),
+          height: isWeb ? 78 : 72,
         },
-        tabBarLabelStyle: {
-          fontSize: 10,
-          letterSpacing: 0.2,
+        tabBarItemStyle: {
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: 8,
         },
         tabBarBackground: () =>
-          isIOS ? (
+          Platform.OS === 'ios' ? (
             <BlurView
               intensity={100}
               tint={isDark ? 'dark' : 'light'}
@@ -88,38 +148,23 @@ function ClassicTabLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{
-          title: 'Aperçu',
-          tabBarIcon: tabIcon('house', 'home'),
-        }}
+        options={{ tabBarIcon: makeTabIcon('house', 'home', 'Aperçu') }}
       />
       <Tabs.Screen
         name="mariages"
-        options={{
-          title: 'Mariages',
-          tabBarIcon: tabIcon('heart', 'heart'),
-        }}
+        options={{ tabBarIcon: makeTabIcon('heart', 'heart', 'Mariages') }}
       />
       <Tabs.Screen
         name="prestataires"
-        options={{
-          title: 'Prestataires',
-          tabBarIcon: tabIcon('building.2', 'briefcase'),
-        }}
+        options={{ tabBarIcon: makeTabIcon('building.2', 'briefcase', 'Prestataires') }}
       />
       <Tabs.Screen
         name="invites"
-        options={{
-          title: 'Invités',
-          tabBarIcon: tabIcon('person.2', 'users'),
-        }}
+        options={{ tabBarIcon: makeTabIcon('person.2', 'users', 'Invités') }}
       />
       <Tabs.Screen
         name="profil"
-        options={{
-          title: 'Profil',
-          tabBarIcon: tabIcon('person.crop.circle', 'user'),
-        }}
+        options={{ tabBarIcon: makeTabIcon('person.crop.circle', 'user', 'Profil') }}
       />
     </Tabs>
   );
@@ -128,12 +173,10 @@ function ClassicTabLayout() {
 export default function TabLayout() {
   const { isSignedIn, getToken } = useAuth();
 
-  // Wire the bearer token into every API request made by the generated client.
   useEffect(() => {
     setAuthTokenGetter(() => getToken());
   }, [getToken]);
 
-  // Guard: send unauthenticated users to the sign-in screen.
   if (!isSignedIn) {
     return <Redirect href="/(auth)/sign-in" />;
   }

@@ -4,7 +4,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { useListWeddings, useGetWeddingSummary } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
@@ -12,19 +11,29 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 
-function RowItem({ icon, label, value, accent, colors }: {
-  icon: string; label: string; value?: string; accent?: boolean;
+function RowItem({ icon, label, value, variant = 'default', colors }: {
+  icon: string; label: string; value?: string;
+  variant?: 'default' | 'gold' | 'sage' | 'rose';
   colors: ReturnType<typeof useColors>;
 }) {
+  const iconBg = variant === 'gold' ? colors.goldLight
+    : variant === 'sage' ? colors.sageBg
+    : variant === 'rose' ? colors.roseBg
+    : colors.background;
+  const iconColor = variant === 'gold' ? colors.goldDim
+    : variant === 'sage' ? colors.sageDark
+    : variant === 'rose' ? colors.roseDark
+    : colors.mutedForeground;
+
   return (
-    <View style={[ss.row, { borderBottomColor: colors.border }]}>
-      <View style={[ss.rowIcon, { backgroundColor: accent ? colors.goldLight : colors.background }, accent && accentShadow('xs')]}>
-        <Feather name={icon as any} size={15} color={accent ? colors.goldDim : colors.mutedForeground} />
+    <TouchableOpacity activeOpacity={0.7} style={[ss.row, { borderBottomColor: colors.border }]}>
+      <View style={[ss.rowIcon, { backgroundColor: iconBg }]}>
+        <Feather name={icon as any} size={15} color={iconColor} />
       </View>
       <Text style={[ss.rowLabel, { fontFamily: SANS, color: colors.foreground }]}>{label}</Text>
       {value ? <Text style={[ss.rowValue, { fontFamily: SANS_MEDIUM, color: colors.mutedForeground }]}>{value}</Text> : null}
-      <Feather name="chevron-right" size={14} color={colors.border} />
-    </View>
+      <Feather name="chevron-right" size={14} color={colors.goldDim} />
+    </TouchableOpacity>
   );
 }
 
@@ -46,12 +55,31 @@ export default function ProfilScreen() {
       contentContainerStyle={{ paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Profile header */}
-      <LinearGradient colors={[colors.navyDark, colors.navy]} style={[ss.hero, { paddingTop: topPad + 24 }]}>
-        <LinearGradient colors={['rgba(255,255,255,0.06)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
-        <View style={[ss.avatarCircle, { borderColor: 'rgba(200,170,112,0.45)' }, accentShadow('md')]}>
-          <Text style={[ss.avatarText, { fontFamily: SERIF }]}>EC</Text>
-        </View>
+      {/* Profile hero */}
+      <LinearGradient
+        colors={[colors.plumDark, colors.plum, colors.plumLight]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[ss.hero, { paddingTop: topPad + 24 }]}
+      >
+        {/* Ambient botanical blobs */}
+        <View style={{ position: 'absolute', top: -20, right: -20, width: 120, height: 120, borderRadius: 60, backgroundColor: colors.rose + '20' }} pointerEvents="none" />
+        <View style={{ position: 'absolute', bottom: -10, left: -20, width: 90, height: 90, borderRadius: 45, backgroundColor: colors.gold + '18' }} pointerEvents="none" />
+        <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
+        <View style={ss.goldBar} />
+
+        {/* Avatar with rose gradient ring */}
+        <LinearGradient
+          colors={[colors.gold + 'AA', colors.rose + '88', colors.plumLight + '66']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[ss.avatarRing, accentShadow('lg')]}
+        >
+          <View style={ss.avatarInner}>
+            <Text style={[ss.avatarText, { fontFamily: SERIF }]}>EC</Text>
+          </View>
+        </LinearGradient>
+
         <Text style={[ss.name, { fontFamily: SERIF }]}>Élise Caron</Text>
         <Text style={[ss.role, { fontFamily: SANS_MEDIUM }]}>Directrice artistique</Text>
         <Text style={[ss.brand, { fontFamily: SANS }]}>The Nuptial Plan · Atelier nuptial</Text>
@@ -61,13 +89,13 @@ export default function ProfilScreen() {
         {/* Active wedding summary */}
         {activeWedding && (
           <View style={[ss.summaryCard, shadow('md'), { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.60)' }]} />
+            <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
             <View style={ss.summaryTop}>
               <View>
                 <Text style={[ss.summaryEye, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>MARIAGE ACTIF</Text>
                 <Text style={[ss.summaryNames, { fontFamily: SERIF, color: colors.foreground }]}>{activeWedding.names}</Text>
               </View>
-              <View style={[ss.summaryBadge, { backgroundColor: colors.successBg }]}>
+              <View style={[ss.summaryBadge, { backgroundColor: colors.successBg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.success + '44' }]}>
                 <Text style={[ss.summaryBadgeText, { fontFamily: SANS_SEMIBOLD, color: colors.success }]}>Actif</Text>
               </View>
             </View>
@@ -89,34 +117,37 @@ export default function ProfilScreen() {
           </View>
         )}
 
-        {/* Quick actions */}
+        {/* Quick actions — Gestion */}
         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>GESTION</Text>
-        <View style={[ss.group, shadow('sm'), { backgroundColor: Platform.OS !== 'web' ? 'rgba(248,245,239,0.85)' : colors.card, borderColor: colors.border }]}>
-          <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
-          <RowItem icon="heart" label="Mes mariages" value={String(weddings?.length ?? 0)} accent colors={colors} />
-          <RowItem icon="users" label="Invités" value={summary ? `${summary.totalGuests} invités` : undefined} colors={colors} />
-          <RowItem icon="briefcase" label="Prestataires" value={summary ? `${summary.vendorCount}` : undefined} colors={colors} />
+        <View style={[ss.group, shadow('sm'), { backgroundColor: Platform.OS !== 'web' ? 'rgba(248,245,239,0.90)' : colors.card, borderColor: colors.border }]}>
+          <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
+          <RowItem icon="heart" label="Mes mariages" value={String(weddings?.length ?? 0)} variant="rose" colors={colors} />
+          <RowItem icon="users" label="Invités" value={summary ? `${summary.totalGuests} invités` : undefined} variant="gold" colors={colors} />
+          <RowItem icon="briefcase" label="Prestataires" value={summary ? `${summary.vendorCount}` : undefined} variant="sage" colors={colors} />
           <RowItem icon="file-text" label="Contrats" colors={colors} />
         </View>
 
+        {/* Application */}
         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>APPLICATION</Text>
-        <View style={[ss.group, shadow('sm'), { backgroundColor: Platform.OS !== 'web' ? 'rgba(248,245,239,0.85)' : colors.card, borderColor: colors.border }]}>
-          <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
+        <View style={[ss.group, shadow('sm'), { backgroundColor: Platform.OS !== 'web' ? 'rgba(248,245,239,0.90)' : colors.card, borderColor: colors.border }]}>
+          <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
           <RowItem icon="settings" label="Paramètres" colors={colors} />
           <RowItem icon="bell" label="Notifications" colors={colors} />
           <RowItem icon="help-circle" label="Aide & support" colors={colors} />
         </View>
 
-        {/* App info */}
+        {/* App identity card */}
         <View style={ss.appInfo}>
-          <View style={[ss.logoWrap, shadow('xs'), { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
-            <View style={ss.logoRow}>
-              <View style={[ss.logoN, { borderColor: colors.goldDim }]}>
-                <Text style={[ss.logoNText, { fontFamily: SERIF, color: colors.goldDim }]}>N</Text>
-              </View>
-              <Text style={[ss.logoLabel, { fontFamily: SERIF, color: colors.foreground }]}>The Nuptial Plan</Text>
-            </View>
+          <View style={[ss.logoWrap, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.75)' }]} />
+            <LinearGradient
+              colors={[colors.plumDark, colors.plum]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={ss.logoNGrad}
+            >
+              <Text style={[ss.logoNText, { fontFamily: SERIF }]}>N</Text>
+            </LinearGradient>
+            <Text style={[ss.logoLabel, { fontFamily: SERIF, color: colors.foreground }]}>The Nuptial Plan</Text>
             <Text style={[ss.version, { fontFamily: SANS, color: colors.tertiaryText }]}>Version 1.0.0 · Atelier de planification nuptiale</Text>
           </View>
         </View>
@@ -128,17 +159,19 @@ export default function ProfilScreen() {
 const ss = StyleSheet.create({
   hero: { paddingHorizontal: 20, paddingBottom: 28, alignItems: 'center', overflow: 'hidden' },
   heroSheen: { ...StyleSheet.absoluteFillObject, height: 100 },
-  avatarCircle: { width: 76, height: 76, borderRadius: 38, backgroundColor: 'rgba(200,170,112,0.15)', borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  avatarText: { fontSize: 34, color: '#c8aa70', lineHeight: 36 },
+  goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
+  avatarRing: { width: 84, height: 84, borderRadius: 42, alignItems: 'center', justifyContent: 'center', marginBottom: 14, padding: 2 },
+  avatarInner: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(60,26,60,0.55)', alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 34, color: '#C8A96E', lineHeight: 36 },
   name: { fontSize: 30, color: '#f8f3ea', marginBottom: 4 },
-  role: { fontSize: 12, color: '#c8aa70', letterSpacing: 0.5, marginBottom: 2 },
+  role: { fontSize: 12, color: '#C8A96E', letterSpacing: 0.5, marginBottom: 2 },
   brand: { fontSize: 10, color: '#8eacaa', letterSpacing: 0.3 },
   rim: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },
-  summaryCard: { borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, marginTop: 16, overflow: 'hidden' },
+  summaryCard: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, marginTop: 16, overflow: 'hidden' },
   summaryTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', padding: 14 },
   summaryEye: { fontSize: 8, letterSpacing: 1.4, marginBottom: 3 },
   summaryNames: { fontSize: 20, lineHeight: 22 },
-  summaryBadge: { borderRadius: 4, paddingHorizontal: 8, paddingVertical: 3 },
+  summaryBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   summaryBadgeText: { fontSize: 10 },
   summaryStats: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 12 },
   summaryStat: { flex: 1, alignItems: 'center', gap: 2, flexDirection: 'row', justifyContent: 'center' },
@@ -146,16 +179,15 @@ const ss = StyleSheet.create({
   summaryStatVal: { fontSize: 20, lineHeight: 20 },
   summaryStatLabel: { fontSize: 9, marginLeft: 4 },
   section: { fontSize: 9, letterSpacing: 1.5, marginTop: 24, marginBottom: 8 },
-  group: { borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  group: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth },
   rowIcon: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   rowLabel: { flex: 1, fontSize: 13 },
   rowValue: { fontSize: 12, marginRight: 4 },
   appInfo: { alignItems: 'center', paddingTop: 24, paddingBottom: 8 },
-  logoWrap: { borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, padding: 18, alignItems: 'center', gap: 8, overflow: 'hidden' },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  logoN: { width: 32, height: 32, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  logoNText: { fontSize: 22, lineHeight: 24 },
+  logoWrap: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 18, alignItems: 'center', gap: 8, overflow: 'hidden', minWidth: 220 },
+  logoNGrad: { width: 36, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  logoNText: { fontSize: 22, lineHeight: 24, color: '#C8A96E' },
   logoLabel: { fontSize: 20 },
   version: { fontSize: 11 },
 });

@@ -4,6 +4,7 @@ import {
   ActivityIndicator, Platform, TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { Feather } from '@expo/vector-icons';
@@ -62,20 +63,33 @@ export default function InvitesScreen() {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View>
-            <View style={{ paddingTop: topPad + 20, paddingHorizontal: 16, paddingBottom: 16 }}>
-              <Text style={[ss.eye, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>LA CÉLÉBRATION</Text>
-              <Text style={[ss.title, { fontFamily: SERIF, color: colors.foreground }]}>Gestion des invités</Text>
+            {/* ── Hero gradient header ── */}
+            <LinearGradient
+              colors={[colors.plumDark, colors.plum, colors.plumLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[ss.hero, { paddingTop: topPad + 20 }]}
+            >
+              {/* Ambient rose blob */}
+              <View style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: colors.rose + '22' }} pointerEvents="none" />
+              <View style={{ position: 'absolute', bottom: 0, left: 20, width: 70, height: 70, borderRadius: 35, backgroundColor: colors.sage + '18' }} pointerEvents="none" />
+              <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
+              <View style={ss.goldBar} />
 
+              <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>LA CÉLÉBRATION</Text>
+              <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Gestion des invités</Text>
+            </LinearGradient>
+
+            <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
               {/* Glassmorphic stats bar */}
               {stats && (
                 <View style={[ss.statsWrap, shadow('md')]}>
                   <BlurView
                     intensity={Platform.OS === 'web' ? 0 : 85}
                     tint="light"
-                    style={[ss.statsBar, { backgroundColor: Platform.OS === 'web' ? colors.card + 'ee' : 'rgba(248,245,239,0.75)', borderColor: 'rgba(255,255,255,0.60)' }]}
+                    style={[ss.statsBar, { backgroundColor: Platform.OS === 'web' ? colors.card + 'ee' : 'rgba(248,245,239,0.80)', borderColor: 'rgba(255,255,255,0.65)' }]}
                   >
-                    {/* Rim */}
-                    <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.75)' }]} />
+                    <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.80)' }]} />
                     <StatBlock value={stats.total} label="Total" color={colors.foreground} colors={colors} />
                     <View style={[ss.statDivider, { backgroundColor: colors.border }]} />
                     <StatBlock value={stats.confirmed} label="Confirmés" color={colors.success} colors={colors} />
@@ -95,21 +109,14 @@ export default function InvitesScreen() {
                     <TouchableOpacity
                       key={f.key}
                       onPress={() => setFilter(f.key)}
+                      activeOpacity={0.75}
                       style={[
                         ss.filterPill,
                         isActive ? accentShadow('sm') : shadow('xs'),
-                        {
-                          backgroundColor: isActive ? colors.navy : 'rgba(255,255,255,0.70)',
-                          borderColor: isActive ? colors.navy : colors.border,
-                        },
+                        { backgroundColor: isActive ? colors.plum : 'rgba(255,255,255,0.70)', borderColor: isActive ? colors.plum : colors.border },
                       ]}
                     >
-                      <Text
-                        style={[
-                          ss.filterText,
-                          { fontFamily: SANS_MEDIUM, color: isActive ? colors.primaryForeground : colors.mutedForeground },
-                        ]}
-                      >
+                      <Text style={[ss.filterText, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>
                         {f.label}
                       </Text>
                     </TouchableOpacity>
@@ -136,11 +143,11 @@ export default function InvitesScreen() {
             <TouchableOpacity
               onPress={() => handleGuestPress(item)}
               activeOpacity={0.75}
-              style={[ss.guestRow, shadow('xs'), { backgroundColor: colors.card, borderColor: colors.border, marginHorizontal: 16, marginBottom: 8 }]}
+              style={[ss.guestRow, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border, marginHorizontal: 16, marginBottom: 8 }]}
             >
-              <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.60)' }]} />
+              <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
               <View style={[ss.av, { backgroundColor: avatarBg }, shadow('xs')]}>
-                <Text style={[ss.avText, { fontFamily: SERIF, color: colors.navy }]}>{av}</Text>
+                <Text style={[ss.avText, { fontFamily: SERIF, color: colors.plumDark }]}>{av}</Text>
               </View>
               <View style={ss.guestInfo}>
                 <Text style={[ss.guestName, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]} numberOfLines={1}>{item.name}</Text>
@@ -151,7 +158,7 @@ export default function InvitesScreen() {
               <View style={ss.guestRight}>
                 <StatusBadge label={label} tone={tone} />
                 <View style={{ height: 4 }} />
-                <Feather name="chevron-right" size={13} color={colors.border} />
+                <Feather name="chevron-right" size={13} color={colors.goldDim} />
               </View>
             </TouchableOpacity>
           );
@@ -180,21 +187,24 @@ function StatBlock({ value, label, color, colors }: {
 }
 
 const ss = StyleSheet.create({
+  hero: { paddingHorizontal: 20, paddingBottom: 22, overflow: 'hidden' },
+  heroSheen: { ...StyleSheet.absoluteFillObject, height: 80 },
+  goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
   eye: { fontSize: 9, letterSpacing: 2, marginBottom: 4 },
-  title: { fontSize: 34, lineHeight: 34, marginBottom: 14 },
-  statsWrap: { borderRadius: 10, marginBottom: 14, overflow: 'hidden' },
-  statsBar: { flexDirection: 'row', borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, padding: 14, alignItems: 'center', overflow: 'hidden' },
+  title: { fontSize: 34, lineHeight: 34 },
+  statsWrap: { borderRadius: 12, marginBottom: 14, overflow: 'hidden' },
+  statsBar: { flexDirection: 'row', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 14, alignItems: 'center', overflow: 'hidden' },
   rim: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },
   statBlock: { flex: 1, alignItems: 'center', gap: 2 },
   statDivider: { width: StyleSheet.hairlineWidth, height: 32 },
   statValue: { fontSize: 26, lineHeight: 26 },
   statLabel: { fontSize: 9, letterSpacing: 0.5 },
-  filterRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
-  filterPill: { borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 12, paddingVertical: 6 },
+  filterRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 8 },
+  filterPill: { borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, paddingVertical: 7 },
   filterText: { fontSize: 11 },
   loading: { padding: 40, alignItems: 'center' },
   emptyWrap: { flex: 1, minHeight: 300 },
-  guestRow: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 8, borderWidth: StyleSheet.hairlineWidth, padding: 12, overflow: 'hidden' },
+  guestRow: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, padding: 12, overflow: 'hidden' },
   av: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   avText: { fontSize: 15 },
   guestInfo: { flex: 1 },

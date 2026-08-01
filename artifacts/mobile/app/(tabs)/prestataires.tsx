@@ -4,6 +4,7 @@ import {
   ActivityIndicator, Platform, TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useListWeddings, useListVendors } from '@workspace/api-client-react';
@@ -54,28 +55,44 @@ export default function PrestatairesScreen() {
         onRefresh={refetch}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
-          <View style={{ paddingTop: topPad + 20, paddingHorizontal: 16, paddingBottom: 8 }}>
-            <Text style={[ss.eye, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>L'ÉQUIPE CRÉATIVE</Text>
-            <Text style={[ss.title, { fontFamily: SERIF, color: colors.foreground }]}>Prestataires</Text>
-            {activeWedding && (
-              <Text style={[ss.subtitle, { fontFamily: SANS, color: colors.mutedForeground }]}>{activeWedding.names}</Text>
-            )}
-            {/* Search bar — elevated */}
-            <View style={[ss.searchWrap, shadow('sm'), { backgroundColor: 'rgba(255,255,255,0.80)', borderColor: colors.border }]}>
-              <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.80)' }]} />
-              <Feather name="search" size={15} color={colors.mutedForeground} />
-              <TextInput
-                value={search}
-                onChangeText={setSearch}
-                placeholder="Rechercher..."
-                placeholderTextColor={colors.mutedForeground}
-                style={[ss.searchInput, { fontFamily: SANS, color: colors.foreground }]}
-              />
-              {search.length > 0 && (
-                <TouchableOpacity onPress={() => setSearch('')}>
-                  <Feather name="x" size={14} color={colors.mutedForeground} />
-                </TouchableOpacity>
+          <View>
+            {/* ── Hero gradient header ── */}
+            <LinearGradient
+              colors={[colors.plumDark, colors.plum, colors.plumLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[ss.hero, { paddingTop: topPad + 20 }]}
+            >
+              <View style={{ position: 'absolute', top: -24, right: -28, width: 110, height: 110, borderRadius: 55, backgroundColor: colors.gold + '1E' }} pointerEvents="none" />
+              <View style={{ position: 'absolute', bottom: -16, left: -16, width: 80, height: 80, borderRadius: 40, backgroundColor: colors.sage + '20' }} pointerEvents="none" />
+              <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
+              <View style={ss.goldBar} />
+
+              <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>L'ÉQUIPE CRÉATIVE</Text>
+              <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Prestataires</Text>
+              {activeWedding && (
+                <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]}>{activeWedding.names}</Text>
               )}
+            </LinearGradient>
+
+            {/* Search bar */}
+            <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
+              <View style={[ss.searchWrap, shadow('sm'), { backgroundColor: 'rgba(255,255,255,0.85)', borderColor: colors.border }]}>
+                <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.85)' }]} />
+                <Feather name="search" size={15} color={colors.mutedForeground} />
+                <TextInput
+                  value={search}
+                  onChangeText={setSearch}
+                  placeholder="Rechercher..."
+                  placeholderTextColor={colors.mutedForeground}
+                  style={[ss.searchInput, { fontFamily: SANS, color: colors.foreground }]}
+                />
+                {search.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearch('')}>
+                    <Feather name="x" size={14} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           </View>
         }
@@ -96,13 +113,13 @@ export default function PrestatairesScreen() {
             <TouchableOpacity
               onPress={() => handleVendorPress(item.id)}
               activeOpacity={0.75}
-              style={[ss.card, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border, marginHorizontal: 16, marginBottom: 10 }]}
+              style={[ss.card, shadow('md'), { backgroundColor: colors.card, borderColor: colors.border, marginHorizontal: 16, marginBottom: 10 }]}
             >
               {/* Rim highlight */}
-              <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.60)' }]} />
+              <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
               <View style={ss.cardTop}>
                 <View style={[ss.av, { backgroundColor: avatarBg }, shadow('xs')]}>
-                  <Text style={[ss.avText, { fontFamily: SERIF, color: colors.navy }]}>{av}</Text>
+                  <Text style={[ss.avText, { fontFamily: SERIF, color: colors.plumDark }]}>{av}</Text>
                 </View>
                 <View style={ss.cardInfo}>
                   <Text style={[ss.vendorName, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]} numberOfLines={1}>{item.name}</Text>
@@ -110,7 +127,7 @@ export default function PrestatairesScreen() {
                 </View>
                 <View style={ss.cardRight}>
                   <StatusBadge label={label} tone={tone} />
-                  <Feather name="chevron-right" size={14} color={colors.border} style={{ marginTop: 6 }} />
+                  <Feather name="chevron-right" size={14} color={colors.goldDim} style={{ marginTop: 6 }} />
                 </View>
               </View>
               <View style={[ss.cardFooter, { borderTopColor: colors.border }]}>
@@ -120,7 +137,7 @@ export default function PrestatairesScreen() {
                     <Text style={[ss.footerText, { fontFamily: SANS, color: colors.mutedForeground }]}>{item.contactName}</Text>
                   </View>
                 ) : <View />}
-                <Text style={[ss.amount, { fontFamily: SERIF, color: colors.foreground }]}>
+                <Text style={[ss.amount, { fontFamily: SERIF, color: colors.plumDark }]}>
                   {formatCents(item.totalAmountCents, activeWedding?.currency)}
                 </Text>
               </View>
@@ -141,15 +158,18 @@ export default function PrestatairesScreen() {
 }
 
 const ss = StyleSheet.create({
+  hero: { paddingHorizontal: 20, paddingBottom: 22, overflow: 'hidden' },
+  heroSheen: { ...StyleSheet.absoluteFillObject, height: 80 },
+  goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
   eye: { fontSize: 9, letterSpacing: 2, marginBottom: 4 },
   title: { fontSize: 34, lineHeight: 34, marginBottom: 2 },
-  subtitle: { fontSize: 12, marginBottom: 14 },
-  searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, height: 44, marginBottom: 4, overflow: 'hidden' },
+  subtitle: { fontSize: 12, marginBottom: 4 },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, height: 44, overflow: 'hidden' },
   rim: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },
   searchInput: { flex: 1, fontSize: 13, height: 44 },
   loading: { padding: 40, alignItems: 'center' },
   emptyWrap: { flex: 1, minHeight: 300 },
-  card: { borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  card: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   av: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   avText: { fontSize: 16 },
