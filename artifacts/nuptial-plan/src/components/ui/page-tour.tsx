@@ -16,9 +16,9 @@ interface PageTourProps {
   steps: TourStep[];
 }
 
-const STORAGE_PREFIX = 'nuptial-tour-seen:';
+export const STORAGE_PREFIX = 'nuptial-tour-seen:';
 
-export function PageTour({ tourKey, pageTitle, pageIcon: PageIcon, steps }: PageTourProps) {
+export function PageTour({ tourKey, pageTitle, pageIcon: PageIcon, steps, forceOpen = 0 }: PageTourProps & { forceOpen?: number }) {
   const storageKey = STORAGE_PREFIX + tourKey;
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
@@ -30,6 +30,14 @@ export function PageTour({ tourKey, pageTitle, pageIcon: PageIcon, steps }: Page
       return () => clearTimeout(t);
     }
   }, [storageKey]);
+
+  // External trigger: increment forceOpen to open the tour programmatically
+  useEffect(() => {
+    if (forceOpen > 0) {
+      setStep(0);
+      setOpen(true);
+    }
+  }, [forceOpen]);
 
   const close = () => {
     localStorage.setItem(storageKey, '1');

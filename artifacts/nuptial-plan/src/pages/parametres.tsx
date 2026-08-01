@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { PageTour } from '@/components/ui/page-tour';
+import { PageTour, STORAGE_PREFIX } from '@/components/ui/page-tour';
 import {
   User,
   Building2,
@@ -15,6 +16,14 @@ import {
   Trash2,
   AlertTriangle,
   Globe,
+  Sparkles,
+  UserCircle2,
+  FileText,
+  CreditCard,
+  FolderOpen,
+  PlayCircle,
+  RotateCcw,
+  BookOpen,
 } from 'lucide-react';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
@@ -46,6 +55,18 @@ import {
 } from '@/components/ui/dialog';
 
 /* ── Constants ── */
+const TOUR_PAGES = [
+  { key: 'dashboard',     label: 'Aperçu',       route: '/',             icon: Sparkles    },
+  { key: 'calendrier',    label: 'Calendrier',   route: '/calendrier',   icon: CalendarDays },
+  { key: 'prestataires',  label: 'Prestataires', route: '/prestataires', icon: Users       },
+  { key: 'invites',       label: 'Invités',      route: '/invites',      icon: UserCircle2 },
+  { key: 'budget',        label: 'Budget',       route: '/budget',       icon: Wallet      },
+  { key: 'contrats',      label: 'Contrats',     route: '/contrats',     icon: FileText    },
+  { key: 'paiements',     label: 'Paiements',    route: '/paiements',    icon: CreditCard  },
+  { key: 'documents',     label: 'Documents',    route: '/documents',    icon: FolderOpen  },
+  { key: 'parametres',    label: 'Paramètres',   route: '/parametres',   icon: Building2   },
+] as const;
+
 const CURRENCIES = [
   { code: 'EUR', label: 'Euro (€)', symbol: '€' },
   { code: 'GBP', label: 'Livre sterling (£)', symbol: '£' },
@@ -108,6 +129,7 @@ function SettingsSection({
 /* ── Main page ── */
 export default function Parametres() {
   const { activeWeddingId, setActiveWeddingId } = useActiveWedding();
+  const [, navigate] = useLocation();
   const { data: wedding, isLoading } = useGetWedding(activeWeddingId ?? 0, {
     query: { enabled: !!activeWeddingId },
   });
@@ -118,6 +140,25 @@ export default function Parametres() {
   const { toast } = useToast();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [tourTrigger, setTourTrigger] = useState(0);
+
+  const replayTour = (tourKey: string, route: string) => {
+    localStorage.removeItem(STORAGE_PREFIX + tourKey);
+    if (tourKey === 'parametres') {
+      // Same page — force re-open via forceOpen prop on the existing PageTour
+      setTourTrigger((t) => t + 1);
+    } else {
+      navigate(route);
+    }
+  };
+
+  const resetAllTours = () => {
+    TOUR_PAGES.forEach(({ key }) => localStorage.removeItem(STORAGE_PREFIX + key));
+    toast({
+      title: 'Guides réinitialisés',
+      description: 'Chaque guide s\'affichera à nouveau à votre prochaine visite.',
+    });
+  };
 
   const form = useForm<WeddingForm>({
     resolver: zodResolver(weddingSchema),
@@ -226,6 +267,7 @@ export default function Parametres() {
         tourKey="parametres"
         pageTitle="Paramètres"
         pageIcon={Building2}
+        forceOpen={tourTrigger}
         steps={[
           { icon: Building2, title: 'Dossier de mariage', body: 'Modifiez à tout moment les informations du mariage actif : noms des mariés, date du mariage, lieu de réception et notes.' },
           { icon: Globe, title: 'Devise', body: 'Changez la devise (€, £, $, CHF) pour adapter l\'affichage budgétaire à votre destination ou aux préférences des mariés.' },
@@ -451,6 +493,50 @@ export default function Parametres() {
                   La gestion du profil sera disponible une fois l'authentification activée.
                 </p>
               </div>
+            </div>
+          </SettingsSection>
+
+          {/* ── Guides d'utilisation ── */}
+          <SettingsSection icon={BookOpen} eyebrow="Aide" title="Guides d'utilisation">
+            <p className="mb-4 text-[12px] text-muted-foreground">
+              Chaque page dispose d'un guide illustré. Cliquez sur « Rejouer » pour le revoir, ou réinitialisez-les tous d'un coup.
+            </p>
+            <div className="space-y-1">
+              {TOUR_PAGES.map(({ key, label, route, icon: Icon }) => (
+                <div
+                  key={key}
+                  className="flex items-center justify-between rounded-xl px-3 py-2.5 transition hover:bg-muted/40"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="flex h-7 w-7 items-center justify-center rounded-lg"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(93,45,93,0.10) 0%, rgba(93,45,93,0.04) 100%)',
+                        border: '1px solid rgba(93,45,93,0.14)',
+                      }}
+                    >
+                      <Icon size={13} className="text-primary/70" />
+                    </span>
+                    <span className="text-[13px] font-medium text-foreground">{label}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => replayTour(key, route)}
+                    className="flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                  >
+                    <PlayCircle size={12} /> Rejouer
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 border-t border-border/40 pt-4">
+              <button
+                type="button"
+                onClick={resetAllTours}
+                className="flex items-center gap-2 rounded-xl border border-border/50 px-4 py-2.5 text-[11px] font-semibold text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+              >
+                <RotateCcw size={13} /> Réinitialiser tous les guides
+              </button>
             </div>
           </SettingsSection>
 
