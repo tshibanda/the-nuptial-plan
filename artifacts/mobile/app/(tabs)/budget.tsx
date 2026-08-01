@@ -15,6 +15,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
+import { exportBudgetPDF } from '@/utils/budget-pdf';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -638,6 +639,31 @@ export default function BudgetScreen() {
 
   const closeSheet = () => setSheetMode(null);
 
+  // ── PDF export ──────────────────────────────────────────────────────────────
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = useCallback(async () => {
+    if (!budgetSummary || isExporting) return;
+    setIsExporting(true);
+    try {
+      await exportBudgetPDF({
+        weddingNames: activeWedding?.names ?? 'Budget',
+        weddingDate: activeWedding?.weddingDate ?? null,
+        currency,
+        totalAllocated: budgetSummary.totalAllocated,
+        totalSpent: budgetSummary.totalSpent,
+        categories: categories.map(c => ({
+          id: c.id,
+          name: c.name,
+          allocatedCents: c.allocatedCents,
+          spentCents: c.spentCents,
+        })),
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [budgetSummary, activeWedding, currency, categories, isExporting]);
+
   const fabBottom = Platform.OS === 'web' ? 94 : insets.bottom + 84;
 
   return (
@@ -683,6 +709,24 @@ export default function BudgetScreen() {
             pointerEvents="none"
           />
           <View style={ss.goldBar} />
+
+          {/* Export button — top right, below status bar */}
+          {budgetSummary && (
+            <TouchableOpacity
+              onPress={handleExport}
+              disabled={isExporting}
+              activeOpacity={0.75}
+              style={[ss.exportBtn, { top: topPad + 16 }]}
+            >
+              {isExporting
+                ? <ActivityIndicator size="small" color="#C8A96E" />
+                : <Feather name="share" size={14} color="#C8A96E" />
+              }
+              <Text style={[ss.exportBtnText, { fontFamily: SANS_SEMIBOLD }]}>
+                {isExporting ? 'Export…' : 'Exporter'}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>
             FINANCES
@@ -838,6 +882,24 @@ const ss = StyleSheet.create({
   eye: { fontSize: 9, letterSpacing: 2, marginBottom: 4 },
   title: { fontSize: 34, lineHeight: 34, marginBottom: 2 },
   subtitle: { fontSize: 12, marginBottom: 4 },
+  exportBtn: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(200,169,110,0.35)',
+  },
+  exportBtnText: {
+    fontSize: 11,
+    color: '#C8A96E',
+  },
 
   // Content
   content: { paddingHorizontal: 16, paddingTop: 16 },
