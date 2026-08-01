@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   SectionList, View, Text, StyleSheet,
-  ActivityIndicator, Platform, TouchableOpacity,
+  ActivityIndicator, Platform, TouchableOpacity, TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,11 +22,18 @@ import { EventDetailSheet } from '@/components/EventDetailSheet';
 
 type Filter = 'all' | 'upcoming' | 'done';
 type ViewMode = 'list' | 'calendar';
+type ToneFilter = 'gold' | 'rose' | 'sage';
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'Tous' },
   { key: 'upcoming', label: 'À venir' },
   { key: 'done', label: 'Terminés' },
+];
+
+const TONE_FILTERS: { key: ToneFilter; label: string }[] = [
+  { key: 'gold', label: 'Or' },
+  { key: 'rose', label: 'Rose' },
+  { key: 'sage', label: 'Sauge' },
 ];
 
 const FR_DAYS_SHORT = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
@@ -382,6 +389,8 @@ export default function EvenementsScreen() {
 
   const [filter, setFilter] = useState<Filter>('all');
   const [view, setView] = useState<ViewMode>('list');
+  const [search, setSearch] = useState('');
+  const [toneFilter, setToneFilter] = useState<ToneFilter | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
@@ -448,10 +457,30 @@ export default function EvenementsScreen() {
         return d.getFullYear() === calYear && d.getMonth() === calMonth;
       });
     }
-    if (filter === 'upcoming') return allEvents.filter((e) => !e.completed);
-    if (filter === 'done') return allEvents.filter((e) => !!e.completed);
-    return allEvents;
-  }, [allEvents, view, filter, selectedDay, calYear, calMonth]);
+
+    let result = allEvents;
+
+    // Status filter
+    if (filter === 'upcoming') result = result.filter((e) => !e.completed);
+    else if (filter === 'done') result = result.filter((e) => !!e.completed);
+
+    // Keyword search (title + notes)
+    const q = search.trim().toLowerCase();
+    if (q) {
+      result = result.filter(
+        (e) =>
+          e.title.toLowerCase().includes(q) ||
+          (e.detail && e.detail.toLowerCase().includes(q)),
+      );
+    }
+
+    // Tone / colour filter
+    if (toneFilter) {
+      result = result.filter((e) => e.tone === toneFilter);
+    }
+
+    return result;
+  }, [allEvents, view, filter, selectedDay, calYear, calMonth, search, toneFilter]);
 
   const sections = buildSections(filtered);
   const upcomingCount = allEvents.filter((e) => !e.completed).length;
@@ -506,9 +535,18 @@ export default function EvenementsScreen() {
                 </View>
               )}
 
-              {/* View toggle + filter pills row */}
+              {/* View toggle + status filter pills row */}
               <View style={hs.controlsRow}>
-                <ViewToggle view={view} onChange={(v) => { setView(v); setSelectedDay(null); }} colors={colors} />
+                <ViewToggle
+                  view={view}
+                  onChange={(v) => {
+                    setView(v);
+                    setSelectedDay(null);
+                    setSearch('');
+                    setToneFilter(null);
+                  }}
+                  colors={colors}
+                />
                 {view === 'list' && (
                   <View style={hs.filterRow}>
                     {FILTERS.map((f) => {
@@ -525,6 +563,64 @@ export default function EvenementsScreen() {
                   </View>
                 )}
               </View>
+
+              {/* Search bar + tone chips (list view only) */}
+              {view === 'list' && (
+                <>
+                  {/* Search input */}
+                  <View style={[hs.searchWrap, shadow('xs'), { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={[hs.rim, { borderTopColor: 'rgba(255,255,255,0.60)' }]} />
+                    <Feather name="search" size={14} color={colors.mutedForeground} />
+                    <TextInput
+                      value={search}
+                      onChangeText={setSearch}
+                      placeholder="Rechercher un événement…"
+                      placeholderTextColor={colors.mutedForeground}
+                      style={[hs.searchInput, { fontFamily: SANS, color: colors.foreground }]}
+                      returnKeyType="search"
+                      clearButtonMode="while-editing"
+                      autoCorrect={false}
+                    />
+                    {search.length > 0 && (
+                      <TouchableOpacity
+                        onPress={() => setSearch('')}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Feather name="x-circle" size={14} color={colors.mutedForeground} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Tone / colour chips */}
+                  <View style={hs.toneRow}>
+                    {TONE_FILTERS.map((t) => {
+                      const isActive = toneFilter === t.key;
+                      const dotColor = t.key === 'gold' ? colors.gold : t.key === 'rose' ? colors.rose : colors.sage;
+                      return (
+                        <TouchableOpacity
+                          key={t.key}
+                          onPress={() => setToneFilter(isActive ? null : t.key)}
+                          activeOpacity={0.75}
+                          style={[
+                            hs.toneChip,
+                            isActive
+                              ? { backgroundColor: dotColor + '22', borderColor: dotColor + '88' }
+                              : { backgroundColor: 'rgba(255,255,255,0.60)', borderColor: colors.border },
+                          ]}
+                        >
+                          <View style={[hs.toneDot, { backgroundColor: dotColor }]} />
+                          <Text style={[hs.toneLabel, { fontFamily: SANS_MEDIUM, color: isActive ? dotColor : colors.mutedForeground }]}>
+                            {t.label}
+                          </Text>
+                          {isActive && (
+                            <Feather name="x" size={10} color={dotColor} />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
 
               {/* ── Calendar grid (calendar view only) ── */}
               {view === 'calendar' && (
@@ -577,16 +673,24 @@ export default function EvenementsScreen() {
           ) : (
             <View style={hs.emptyWrap}>
               <EmptyState
-                icon="calendar"
+                icon={view === 'list' && (search || toneFilter) ? 'search' : 'calendar'}
                 title={
                   view === 'calendar'
                     ? selectedDay ? 'Journée libre' : 'Mois sans événements'
-                    : filter === 'done' ? 'Aucun événement terminé' : 'Aucun événement'
+                    : search.trim()
+                      ? 'Aucun résultat'
+                      : toneFilter
+                        ? 'Aucun événement de cette couleur'
+                        : filter === 'done' ? 'Aucun événement terminé' : 'Aucun événement'
                 }
                 subtitle={
                   view === 'calendar'
                     ? calEmptySubtitle
-                    : filter === 'all' ? 'Ajoutez votre premier événement avec le bouton +.' : undefined
+                    : search.trim()
+                      ? `Aucun événement ne correspond à « ${search.trim()} ».`
+                      : toneFilter
+                        ? 'Essayez une autre couleur ou effacez le filtre.'
+                        : filter === 'all' ? 'Ajoutez votre premier événement avec le bouton +.' : undefined
                 }
               />
             </View>
@@ -691,4 +795,30 @@ const hs = StyleSheet.create({
   emptyWrap: { flex: 1, minHeight: 300 },
   fab: { position: 'absolute', right: 20, width: 52, height: 52, borderRadius: 26, overflow: 'hidden' },
   fabInner: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
+  // Search bar
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+    marginBottom: 10,
+    overflow: 'hidden',
+  },
+  searchInput: { flex: 1, fontSize: 13, padding: 0 },
+  // Tone chips
+  toneRow: { flexDirection: 'row', gap: 6, marginBottom: 14 },
+  toneChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  toneDot: { width: 7, height: 7, borderRadius: 3.5 },
+  toneLabel: { fontSize: 11 },
 });
