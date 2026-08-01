@@ -3,6 +3,7 @@ import {
   SectionList, View, Text, StyleSheet,
   ActivityIndicator, Platform, TouchableOpacity, TextInput,
 } from 'react-native';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -13,12 +14,37 @@ import type { CalendarEvent } from '@workspace/api-client-react';
 import { useListWeddings, useListEvents, useUpdateEvent, getListEventsQueryKey } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
+import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatDateParts, formatDateShort } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { EventAddSheet } from '@/components/EventAddSheet';
 import { EventDetailSheet } from '@/components/EventDetailSheet';
+import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+
+const TOUR_STEPS = [
+  {
+    icon: 'calendar',
+    title: 'Votre agenda',
+    description: 'Gérez tous vos événements et rendez-vous de préparation du mariage en un seul endroit.',
+  },
+  {
+    icon: 'grid',
+    title: 'Deux vues au choix',
+    description: "Basculez entre la vue Liste et la vue Calendrier grâce aux boutons en haut de l'écran.",
+  },
+  {
+    icon: 'filter',
+    title: 'Filtres & couleurs',
+    description: 'Filtrez par statut (à venir, terminés) ou par couleur Or, Rose, Sauge pour organiser vos événements.',
+  },
+  {
+    icon: 'plus-circle',
+    title: 'Ajouter un événement',
+    description: 'Appuyez sur le bouton + en bas à droite pour créer un nouvel événement ou rendez-vous.',
+  },
+];
 
 type Filter = 'all' | 'upcoming' | 'done';
 type ViewMode = 'list' | 'calendar';
@@ -386,6 +412,7 @@ export default function EvenementsScreen() {
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const { tourVisible, openTour, closeTour } = useTour('tour:evenements');
 
   const [filter, setFilter] = useState<Filter>('all');
   const [view, setView] = useState<ViewMode>('list');
@@ -781,6 +808,13 @@ export default function EvenementsScreen() {
           queryClient.invalidateQueries({ queryKey: EVENTS_QUERY_KEY });
         }}
       />
+
+      {/* Sit above the "+" FAB (52 px tall + 8 px gap) */}
+      <TourHelpFab
+        onPress={openTour}
+        bottom={Platform.OS === 'web' ? 154 : insets.bottom + 144}
+      />
+      <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
   );
 }

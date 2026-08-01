@@ -12,12 +12,37 @@ import type { Guest } from '@workspace/api-client-react';
 import { useListWeddings, useListGuests, useGetGuestStats } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
+import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { rsvpLabel } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
 import { GuestDetailSheet } from '@/components/GuestDetailSheet';
+import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+
+const TOUR_STEPS = [
+  {
+    icon: 'users',
+    title: 'Gestion des invités',
+    description: 'Gérez la liste complète de vos invités et suivez les réponses RSVP en temps réel.',
+  },
+  {
+    icon: 'bar-chart-2',
+    title: 'Statistiques RSVP',
+    description: 'Les chiffres en haut affichent le récapitulatif : total, confirmés, en attente et déclinés.',
+  },
+  {
+    icon: 'filter',
+    title: 'Filtrer par statut',
+    description: 'Appuyez sur un filtre — Confirmés, En attente ou Déclinés — pour afficher uniquement les invités correspondants.',
+  },
+  {
+    icon: 'edit-2',
+    title: 'Fiche invité',
+    description: 'Appuyez sur un invité pour consulter ses informations, modifier son statut RSVP ou noter ses préférences alimentaires.',
+  },
+];
 
 type Filter = 'all' | 'confirmed' | 'pending' | 'declined';
 
@@ -35,6 +60,7 @@ export default function InvitesScreen() {
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const { tourVisible, openTour, closeTour } = useTour('tour:invites');
   const [filter, setFilter] = useState<Filter>('all');
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
 
@@ -170,6 +196,12 @@ export default function InvitesScreen() {
         onClose={() => setSelectedGuest(null)}
         guest={selectedGuest}
       />
+
+      <TourHelpFab
+        onPress={openTour}
+        bottom={Platform.OS === 'web' ? 94 : insets.bottom + 84}
+      />
+      <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
   );
 }

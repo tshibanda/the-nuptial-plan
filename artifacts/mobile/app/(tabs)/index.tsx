@@ -12,11 +12,36 @@ import {
 } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
+import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents, formatDateParts, daysUntil, vendorStatusLabel } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
+import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+
+const TOUR_STEPS = [
+  {
+    icon: 'home',
+    title: "Bienvenue sur l'Aperçu",
+    description: "Cette page résume l'essentiel de votre mariage : compte à rebours, invités confirmés, prestataires et budget engagé.",
+  },
+  {
+    icon: 'grid',
+    title: 'Métriques clés',
+    description: "Les quatre cartes colorées vous donnent un coup d'œil instantané sur vos chiffres. Tirez vers le bas pour actualiser.",
+  },
+  {
+    icon: 'calendar',
+    title: 'Événements à venir',
+    description: "Retrouvez ici vos prochains rendez-vous et jalons. Appuyez sur un événement pour accéder à l'agenda complet.",
+  },
+  {
+    icon: 'briefcase',
+    title: 'Votre équipe',
+    description: 'Les premiers prestataires apparaissent en bas de page. Appuyez sur une fiche pour accéder aux détails.',
+  },
+];
 
 // ── Botanical decoration blobs ────────────────────────────────────────────────
 function BotanicalBlobs({ colors }: { colors: ReturnType<typeof useColors> }) {
@@ -100,6 +125,7 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { selectedWeddingId, selectWedding } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const { tourVisible, openTour, closeTour } = useTour('tour:accueil');
 
   const { data: weddings, isLoading: loadingWeddings } = useListWeddings();
 
@@ -144,7 +170,10 @@ export default function DashboardScreen() {
     ? Math.round((summary.budgetSpent / summary.budgetTotal) * 100) : 0;
   const days = Math.max(0, daysUntil(activeWedding.weddingDate));
 
+  const fabBottom = Platform.OS === 'web' ? 94 : insets.bottom + 84;
+
   return (
+    <>
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{ paddingBottom: 100 }}
@@ -295,6 +324,10 @@ export default function DashboardScreen() {
         )}
       </View>
     </ScrollView>
+
+    <TourHelpFab onPress={openTour} bottom={fabBottom} />
+    <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+    </>
   );
 }
 

@@ -10,12 +10,32 @@ import * as Haptics from 'expo-haptics';
 import { useListWeddings, useListVendors } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
+import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents, vendorStatusLabel } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
 import { VendorDetailSheet } from '@/components/VendorDetailSheet';
+import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+
+const TOUR_STEPS = [
+  {
+    icon: 'briefcase',
+    title: 'Votre équipe créative',
+    description: "Retrouvez ici tous vos prestataires : traiteur, photographe, fleuriste et bien d'autres.",
+  },
+  {
+    icon: 'search',
+    title: 'Recherche rapide',
+    description: 'Utilisez la barre de recherche pour trouver un prestataire par nom ou par catégorie.',
+  },
+  {
+    icon: 'user',
+    title: 'Fiche prestataire',
+    description: 'Appuyez sur un prestataire pour consulter ses coordonnées, ses contrats et ses paiements.',
+  },
+];
 
 const AVATAR_COLORS = ['#eadfcf', '#dce7df', '#eadfdf', '#e1dceb', '#e0e7dc', '#dce0e7'];
 
@@ -24,6 +44,7 @@ export default function PrestatairesScreen() {
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const { tourVisible, openTour, closeTour } = useTour('tour:prestataires');
   const [search, setSearch] = useState('');
   const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
 
@@ -153,6 +174,12 @@ export default function PrestatairesScreen() {
         vendorId={selectedVendorId}
         currency={activeWedding?.currency}
       />
+
+      <TourHelpFab
+        onPress={openTour}
+        bottom={Platform.OS === 'web' ? 94 : insets.bottom + 84}
+      />
+      <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
   );
 }
