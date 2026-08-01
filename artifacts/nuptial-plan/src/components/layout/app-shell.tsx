@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, useMemo, ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   Bell,
@@ -18,7 +18,13 @@ import {
   UserCircle2,
   Heart,
 } from 'lucide-react';
-import { useListWeddings, useCreateWedding, getListWeddingsQueryKey } from '@workspace/api-client-react';
+import {
+  useListWeddings,
+  useCreateWedding,
+  getListWeddingsQueryKey,
+  useListPayments,
+  useGetWeddingSummary,
+} from '@workspace/api-client-react';
 import { useActiveWedding } from '@/lib/wedding-context';
 import { formatDateShort, calculateDaysUntil } from '@/lib/format';
 import { useQueryClient } from '@tanstack/react-query';
@@ -53,6 +59,7 @@ const navItems = [
   { label: 'Contrats', icon: FileText, path: '/contrats' },
   { label: 'Paiements', icon: CreditCard, path: '/paiements' },
   { label: 'Documents', icon: Paperclip, path: '/documents' },
+  { label: 'Jour J',    icon: Heart,     path: '/jour-j'    },
 ];
 
 const CURRENCIES = [
@@ -278,10 +285,61 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const { activeWeddingId, setActiveWeddingId } = useActiveWedding();
   const { data: weddings = [], isLoading } = useListWeddings();
+  const { data: payments = [] } = useListPayments(activeWeddingId ?? 0);
+  const { data: weddingSummary } = useGetWeddingSummary(activeWeddingId ?? 0);
 
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
+
+  const notifications = useMemo(() => {
+    if (!activeWeddingId) return [];
+    type Notif = { id: string; urgency: 'high' | 'medium' | 'low'; title: string; body: string; route: string };
+    const items: Notif[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Overdue payments
+    (payments as Array<{ id: number; status: string; description?: string | null; dueDate: string; amountCents: number }>)
+      .filter(p => p.status === 'overdue')
+      .forEach(p => {
+        items.push({ id: `overdue-${p.id}`, urgency: 'high', title: 'Paiement en retard', body: p.description ?? 'Échéance dépassée', route: '/paiements' });
+      });
+
+    // Pending payments due within 7 days
+    (payments as Array<{ id: number; status: string; description?: string | null; dueDate: string; amountCents: number }>)
+      .filter(p => p.status === 'pending')
+      .forEach(p => {
+        const days = Math.ceil((new Date(p.dueDate).getTime() - today.getTime()) / 86_400_000);
+        if (days >= 0 && days <= 7) {
+          items.push({
+            id: `soon-${p.id}`,
+            urgency: days <= 3 ? 'high' : 'medium',
+            title: days === 0 ? 'Paiement dû aujourd\'hui' : `Paiement dans ${days} j`,
+            body: p.description ?? '',
+            route: '/paiements',
+          });
+        }
+      });
+
+    // Budget threshold
+    if (weddingSummary && (weddingSummary as { budgetTotal: number; budgetSpent: number }).budgetTotal > 0) {
+      const s = weddingSummary as { budgetTotal: number; budgetSpent: number; totalGuests: number; confirmedGuests: number };
+      const pct = s.budgetSpent / s.budgetTotal;
+      if (pct >= 0.95)
+        items.push({ id: 'budget-critical', urgency: 'high', title: 'Budget presque épuisé', body: `${Math.round(pct * 100)}% du budget engagé`, route: '/budget' });
+      else if (pct >= 0.80)
+        items.push({ id: 'budget-warn', urgency: 'medium', title: 'Budget à surveiller', body: `${Math.round(pct * 100)}% du budget engagé`, route: '/budget' });
+
+      // Many unconfirmed guests
+      const pending = s.totalGuests - s.confirmedGuests;
+      if (s.totalGuests > 0 && pending / s.totalGuests > 0.3)
+        items.push({ id: 'guests-pending', urgency: 'low', title: `${pending} invité${pending > 1 ? 's' : ''} sans réponse`, body: 'Relancez les invitations en attente', route: '/invites' });
+    }
+
+    return items;
+  }, [activeWeddingId, payments, weddingSummary]);
 
   // Auto-select first wedding if none selected
   useEffect(() => {
@@ -520,16 +578,72 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Search size={12} /> Rechercher…
               </button>
 
-              {/* Notification bell with glow dot */}
-              <button
-                className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border/50 bg-white/60 text-muted-foreground transition hover:bg-white/80"
-                data-testid="button-notifications"
-                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.80)' }}
-              >
-                <Bell size={16} />
-                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#C8A96E]"
-                  style={{ boxShadow: '0 0 6px rgba(200,169,110,0.70)' }} />
-              </button>
+              {/* Notification bell */}
+              <div className="relative">
+                <button
+                  className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border/50 bg-white/60 text-muted-foreground transition hover:bg-white/80"
+                  data-testid="button-notifications"
+                  onClick={() => setNotifOpen(!notifOpen)}
+                  style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.80)' }}
+                >
+                  <Bell size={16} />
+                  {notifications.length > 0 ? (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full text-[8px] font-bold text-white"
+                      style={{ background: '#D94E4E' }}>
+                      {Math.min(notifications.length, 9)}
+                    </span>
+                  ) : (
+                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#C8A96E]"
+                      style={{ boxShadow: '0 0 6px rgba(200,169,110,0.70)' }} />
+                  )}
+                </button>
+
+                {notifOpen && (
+                  <>
+                    {/* Invisible backdrop to close on outside click */}
+                    <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+
+                    {/* Panel */}
+                    <div className="absolute right-0 top-[44px] z-50 w-80 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 shadow-[0_8px_40px_rgba(93,45,93,0.20)] backdrop-blur-md">
+                      <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
+                        <p className="text-[12px] font-semibold text-foreground">Notifications</p>
+                        {notifications.length > 0 && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary">
+                            {notifications.length} nouvelle{notifications.length > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="max-h-[320px] overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="flex flex-col items-center py-8 text-center">
+                            <span className="mb-2 text-[22px]">✓</span>
+                            <p className="text-[12px] font-medium text-foreground/70">Tout est en ordre</p>
+                            <p className="text-[10px] text-muted-foreground/60">Aucune action urgente</p>
+                          </div>
+                        ) : (
+                          notifications.map((n) => (
+                            <button
+                              key={n.id}
+                              onClick={() => { setNotifOpen(false); navigate(n.route); }}
+                              className="flex w-full items-start gap-3 border-b border-border/20 px-4 py-3 text-left transition last:border-0 hover:bg-muted/40"
+                            >
+                              <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
+                                n.urgency === 'high'   ? 'bg-[#D94E4E]' :
+                                n.urgency === 'medium' ? 'bg-[#C8A96E]' : 'bg-[#6B8C72]'
+                              }`} />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[11px] font-semibold text-foreground">{n.title}</p>
+                                {n.body && <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{n.body}</p>}
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
 
               <div className="hidden h-5 w-px bg-border/50 sm:block" />
 

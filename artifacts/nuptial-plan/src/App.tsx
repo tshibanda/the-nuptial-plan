@@ -14,6 +14,7 @@ import Contrats from '@/pages/contrats';
 import Paiements from '@/pages/paiements';
 import Documents from '@/pages/documents';
 import Parametres from '@/pages/parametres';
+import JourJ from '@/pages/jour-j';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +38,7 @@ function Router() {
         <Route path="/paiements" component={Paiements} />
         <Route path="/documents" component={Documents} />
         <Route path="/parametres" component={Parametres} />
+        <Route path="/jour-j" component={JourJ} />
         <Route component={NotFound} />
       </Switch>
     </AppShell>

@@ -225,12 +225,14 @@ export default function Dashboard() {
           <button
             className="btn-glass flex items-center gap-2 rounded-xl px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em]"
             data-testid="button-add-task"
+            onClick={() => navigate('/calendrier')}
           >
             <Plus size={13} /> Ajouter une tâche
           </button>
           <button
             className="btn-glow flex items-center gap-2 rounded-xl px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em]"
             data-testid="button-open-workspace"
+            onClick={() => navigate('/jour-j')}
           >
             Ouvrir l'espace <ChevronRight size={13} />
           </button>
