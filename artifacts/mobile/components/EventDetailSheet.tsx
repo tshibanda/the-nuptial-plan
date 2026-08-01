@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import type { CalendarEvent } from '@workspace/api-client-react';
-import { useDeleteEvent } from '@workspace/api-client-react';
+import { useDeleteEvent, useUpdateEvent } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatDateShort } from '@/utils/format';
@@ -38,6 +38,12 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
   const colors = useColors();
   const [showEdit, setShowEdit] = useState(false);
 
+  // Local optimistic completed state — reset whenever we get a new event
+  const [isCompleted, setIsCompleted] = useState(event?.completed ?? false);
+  useEffect(() => {
+    setIsCompleted(event?.completed ?? false);
+  }, [event?.id, event?.completed]);
+
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent({
     mutation: {
       onSuccess: () => {
@@ -47,6 +53,20 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
       },
       onError: () => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      },
+    },
+  });
+
+  const { mutate: updateEvent, isPending: isUpdating } = useUpdateEvent({
+    mutation: {
+      onSuccess: () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        onUpdated();
+      },
+      onError: () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        // Revert optimistic update on error
+        setIsCompleted(event?.completed ?? false);
       },
     },
   });
@@ -78,6 +98,13 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
         },
       ],
     );
+  };
+
+  const handleToggleComplete = () => {
+    const next = !isCompleted;
+    Haptics.impactAsync(next ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
+    setIsCompleted(next); // optimistic
+    updateEvent({ weddingId, id: event.id, data: { completed: next } });
   };
 
   return (
@@ -132,19 +159,40 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
             </View>
           ) : null}
 
-          {/* Status */}
+          {/* Status — tappable toggle */}
           <View style={ss.section}>
             <Text style={[ss.sectionTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>STATUT</Text>
-            <View style={[ss.statusRow, { borderColor: colors.border, backgroundColor: colors.background }]}>
-              <Feather
-                name={event.completed ? 'check-circle' : 'circle'}
-                size={16}
-                color={event.completed ? colors.sage : colors.mutedForeground}
-              />
-              <Text style={[ss.statusText, { fontFamily: SANS_MEDIUM, color: event.completed ? colors.sage : colors.mutedForeground }]}>
-                {event.completed ? 'Terminé' : 'À venir'}
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={handleToggleComplete}
+              disabled={isUpdating}
+              style={[
+                ss.statusRow,
+                {
+                  borderColor: isCompleted ? colors.sage + '55' : colors.border,
+                  backgroundColor: isCompleted ? colors.sage + '12' : colors.background,
+                },
+              ]}
+            >
+              {isUpdating ? (
+                <ActivityIndicator size="small" color={colors.sage} />
+              ) : (
+                <Feather
+                  name={isCompleted ? 'check-circle' : 'circle'}
+                  size={16}
+                  color={isCompleted ? colors.sage : colors.mutedForeground}
+                />
+              )}
+              <Text style={[
+                ss.statusText,
+                { fontFamily: SANS_MEDIUM, color: isCompleted ? colors.sage : colors.mutedForeground, flex: 1 },
+              ]}>
+                {isCompleted ? 'Terminé' : 'À venir'}
               </Text>
-            </View>
+              <Text style={[ss.statusHint, { fontFamily: SANS, color: colors.tertiaryText }]}>
+                {isCompleted ? 'Marquer à venir' : 'Marquer terminé'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Actions */}
@@ -261,6 +309,7 @@ const ss = StyleSheet.create({
     paddingVertical: 12,
   },
   statusText: { fontSize: 13 },
+  statusHint: { fontSize: 10 },
   actions: {
     flexDirection: 'row',
     gap: 10,

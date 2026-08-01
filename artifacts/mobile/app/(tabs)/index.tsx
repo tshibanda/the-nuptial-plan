@@ -271,7 +271,12 @@ export default function DashboardScreen() {
                 const { label, tone } = vendorStatusLabel(v.status);
                 const av = v.name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
                 return (
-                  <View key={v.id} style={[ss.vrow, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <TouchableOpacity
+                    key={v.id}
+                    activeOpacity={0.78}
+                    onPress={() => router.push('/(tabs)/prestataires')}
+                    style={[ss.vrow, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}
+                  >
                     <View style={[ss.rimLight, { borderTopColor: 'rgba(255,255,255,0.50)' }]} />
                     <View style={[ss.vav, { backgroundColor: colors.goldLight }, shadow('xs')]}>
                       <Text style={[ss.vavText, { fontFamily: SERIF, color: colors.plumDark }]}>{av}</Text>
@@ -281,7 +286,8 @@ export default function DashboardScreen() {
                       <Text style={[ss.vcat, { fontFamily: SANS, color: colors.mutedForeground }]}>{v.category}</Text>
                     </View>
                     <StatusBadge label={label} tone={tone} />
-                  </View>
+                    <Feather name="chevron-right" size={13} color={colors.goldDim} style={{ marginLeft: 4 }} />
+                  </TouchableOpacity>
                 );
               })}
             </View>

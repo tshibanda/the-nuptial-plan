@@ -1,6 +1,7 @@
 import {
-  ScrollView, View, Text, StyleSheet, Platform, TouchableOpacity,
+  ScrollView, View, Text, StyleSheet, Platform, TouchableOpacity, Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,10 +12,11 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 
-function RowItem({ icon, label, value, variant = 'default', colors }: {
+function RowItem({ icon, label, value, variant = 'default', colors, onPress }: {
   icon: string; label: string; value?: string;
   variant?: 'default' | 'gold' | 'sage' | 'rose';
   colors: ReturnType<typeof useColors>;
+  onPress?: () => void;
 }) {
   const iconBg = variant === 'gold' ? colors.goldLight
     : variant === 'sage' ? colors.sageBg
@@ -26,13 +28,17 @@ function RowItem({ icon, label, value, variant = 'default', colors }: {
     : colors.mutedForeground;
 
   return (
-    <TouchableOpacity activeOpacity={0.7} style={[ss.row, { borderBottomColor: colors.border }]}>
+    <TouchableOpacity
+      activeOpacity={onPress ? 0.7 : 1}
+      onPress={onPress}
+      style={[ss.row, { borderBottomColor: colors.border }]}
+    >
       <View style={[ss.rowIcon, { backgroundColor: iconBg }]}>
         <Feather name={icon as any} size={15} color={iconColor} />
       </View>
       <Text style={[ss.rowLabel, { fontFamily: SANS, color: colors.foreground }]}>{label}</Text>
       {value ? <Text style={[ss.rowValue, { fontFamily: SANS_MEDIUM, color: colors.mutedForeground }]}>{value}</Text> : null}
-      <Feather name="chevron-right" size={14} color={colors.goldDim} />
+      <Feather name="chevron-right" size={14} color={onPress ? colors.goldDim : colors.border} />
     </TouchableOpacity>
   );
 }
@@ -40,6 +46,7 @@ function RowItem({ icon, label, value, variant = 'default', colors }: {
 export default function ProfilScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
 
@@ -49,11 +56,18 @@ export default function ProfilScreen() {
 
   const { data: summary } = useGetWeddingSummary(wId);
 
+  const showComingSoon = (feature: string) =>
+    Alert.alert(feature, 'Cette fonctionnalité sera disponible dans une prochaine version.', [{ text: 'OK' }]);
+
+  const showWebOnly = (feature: string) =>
+    Alert.alert(feature, 'Gérez vos ' + feature.toLowerCase() + ' depuis l\'application web.', [{ text: 'OK' }]);
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{ paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
     >
       {/* Profile hero */}
       <LinearGradient
@@ -88,7 +102,11 @@ export default function ProfilScreen() {
       <View style={{ paddingHorizontal: 16 }}>
         {/* Active wedding summary */}
         {activeWedding && (
-          <View style={[ss.summaryCard, shadow('md'), { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push('/(tabs)/mariages')}
+            style={[ss.summaryCard, shadow('md'), { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
             <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
             <View style={ss.summaryTop}>
               <View>
@@ -114,26 +132,52 @@ export default function ProfilScreen() {
                 ))}
               </View>
             )}
-          </View>
+          </TouchableOpacity>
         )}
 
         {/* Quick actions — Gestion */}
         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>GESTION</Text>
         <View style={[ss.group, shadow('sm'), { backgroundColor: Platform.OS !== 'web' ? 'rgba(248,245,239,0.90)' : colors.card, borderColor: colors.border }]}>
           <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
-          <RowItem icon="heart" label="Mes mariages" value={String(weddings?.length ?? 0)} variant="rose" colors={colors} />
-          <RowItem icon="users" label="Invités" value={summary ? `${summary.totalGuests} invités` : undefined} variant="gold" colors={colors} />
-          <RowItem icon="briefcase" label="Prestataires" value={summary ? `${summary.vendorCount}` : undefined} variant="sage" colors={colors} />
-          <RowItem icon="file-text" label="Contrats" colors={colors} />
+          <RowItem
+            icon="heart" label="Mes mariages" value={String(weddings?.length ?? 0)}
+            variant="rose" colors={colors}
+            onPress={() => router.push('/(tabs)/mariages')}
+          />
+          <RowItem
+            icon="users" label="Invités" value={summary ? `${summary.totalGuests} invités` : undefined}
+            variant="gold" colors={colors}
+            onPress={() => router.push('/(tabs)/invites')}
+          />
+          <RowItem
+            icon="briefcase" label="Prestataires" value={summary ? `${summary.vendorCount}` : undefined}
+            variant="sage" colors={colors}
+            onPress={() => router.push('/(tabs)/prestataires')}
+          />
+          <RowItem
+            icon="file-text" label="Contrats" colors={colors}
+            onPress={() => showWebOnly('Contrats')}
+          />
         </View>
 
         {/* Application */}
         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>APPLICATION</Text>
         <View style={[ss.group, shadow('sm'), { backgroundColor: Platform.OS !== 'web' ? 'rgba(248,245,239,0.90)' : colors.card, borderColor: colors.border }]}>
           <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
-          <RowItem icon="settings" label="Paramètres" colors={colors} />
-          <RowItem icon="bell" label="Notifications" colors={colors} />
-          <RowItem icon="help-circle" label="Aide & support" colors={colors} />
+          <RowItem
+            icon="settings" label="Paramètres" colors={colors}
+            onPress={() => showComingSoon('Paramètres')}
+          />
+          <RowItem
+            icon="bell" label="Notifications" colors={colors}
+            onPress={() => showComingSoon('Notifications')}
+          />
+          <RowItem
+            icon="help-circle" label="Aide & support" colors={colors}
+            onPress={() =>
+              Alert.alert('Aide & support', 'Pour toute assistance, contactez-nous à support@thenuptialplan.com', [{ text: 'OK' }])
+            }
+          />
         </View>
 
         {/* App identity card */}

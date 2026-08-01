@@ -22,13 +22,17 @@ function isDueSoon(p: Payment): boolean {
   return due >= new Date() && due <= in48h;
 }
 
-function formatAmount(amountCents: number): string {
-  return (amountCents / 100).toLocaleString('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
+function formatAmount(amountCents: number, currency = 'EUR'): string {
+  try {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amountCents / 100);
+  } catch {
+    return `${(amountCents / 100).toFixed(0)} ${currency}`;
+  }
 }
 
 async function cancelExistingPaymentNotifications(): Promise<void> {
@@ -40,7 +44,7 @@ async function cancelExistingPaymentNotifications(): Promise<void> {
   );
 }
 
-async function schedulePaymentAlert(payment: Payment): Promise<void> {
+async function schedulePaymentAlert(payment: Payment, currency: string): Promise<void> {
   const overdue = isOverdue(payment);
   const dueStr = parseDueDate(payment.dueDate).toLocaleDateString('fr-FR', {
     day: 'numeric', month: 'long',
@@ -51,8 +55,8 @@ async function schedulePaymentAlert(payment: Payment): Promise<void> {
     content: {
       title: overdue ? '⚠️ Paiement en retard' : '💳 Paiement à venir',
       body: overdue
-        ? `${payment.vendorName} · ${formatAmount(payment.amountCents)} était dû le ${dueStr}`
-        : `${payment.vendorName} · ${formatAmount(payment.amountCents)} dû le ${dueStr}`,
+        ? `${payment.vendorName} · ${formatAmount(payment.amountCents, currency)} était dû le ${dueStr}`
+        : `${payment.vendorName} · ${formatAmount(payment.amountCents, currency)} dû le ${dueStr}`,
       data: { type: 'payment', paymentId: payment.id, weddingId: payment.weddingId },
       sound: 'default',
       ...(Platform.OS === 'android' && { channelId: 'payments' }),
@@ -68,7 +72,7 @@ async function schedulePaymentAlert(payment: Payment): Promise<void> {
  * - Overdue payments (fires ~5 s after the app opens)
  * - Payments due within the next 48 hours (fires 48 h before the due date)
  */
-export function usePaymentNotifications(weddingId: number | null): void {
+export function usePaymentNotifications(weddingId: number | null, currency = 'EUR'): void {
   // Pass 0 when weddingId is null — the query is disabled and returns no data.
   const { data: payments } = useListPayments(weddingId ?? 0);
 
@@ -83,7 +87,7 @@ export function usePaymentNotifications(weddingId: number | null): void {
     }
 
     cancelExistingPaymentNotifications()
-      .then(() => Promise.all(alertable.map(schedulePaymentAlert)))
+      .then(() => Promise.all(alertable.map(p => schedulePaymentAlert(p, currency))))
       .catch(() => {});
-  }, [payments, weddingId]);
+  }, [payments, weddingId, currency]);
 }
