@@ -64,9 +64,9 @@ function TabPill({ sfName, featherName, label, focused, colors }: TabPillProps) 
     return (
       <View style={tp.iconOnly}>
         {isIOS ? (
-          <SymbolView name={sfName as SFSymbol} tintColor={colors.mutedForeground} size={20} />
+          <SymbolView name={sfName as SFSymbol} tintColor={colors.mutedForeground} size={26} />
         ) : (
-          <Feather name={featherName as any} size={20} color={colors.mutedForeground} />
+          <Feather name={featherName as any} size={26} color={colors.mutedForeground} />
         )}
       </View>
     );
@@ -81,9 +81,9 @@ function TabPill({ sfName, featherName, label, focused, colors }: TabPillProps) 
     >
       <View style={tp.rim} />
       {isIOS ? (
-        <SymbolView name={sfName as SFSymbol} tintColor="#FBF5FB" size={16} />
+        <SymbolView name={sfName as SFSymbol} tintColor="#FBF5FB" size={20} />
       ) : (
-        <Feather name={featherName as any} size={16} color="#FBF5FB" />
+        <Feather name={featherName as any} size={20} color="#FBF5FB" />
       )}
       <Text style={[tp.label, { fontFamily: SANS_SEMIBOLD }]} numberOfLines={1}>
         {label}
@@ -94,7 +94,7 @@ function TabPill({ sfName, featherName, label, focused, colors }: TabPillProps) 
 
 const tp = StyleSheet.create({
   iconOnly: {
-    width: 52,
+    width: 60,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 6,
@@ -103,10 +103,10 @@ const tp = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 18,
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 20,
     overflow: 'hidden',
     ...(Platform.OS === 'web'
       ? { boxShadow: '0 2px 10px rgba(93,45,93,0.30)' } as any
@@ -149,7 +149,7 @@ function ScrollableTabBar({ state, navigation, insets }: ScrollableTabBarProps) 
   const tabLayouts = useRef<{ [index: number]: { x: number; width: number } }>({});
   const hasPeeked = useRef(false);
 
-  const BAR_H = 70;
+  const BAR_H = 78;
   const bottomPad = insets?.bottom ?? 0;
   const bgColor = isDark ? colors.card : '#FDFAF7';
 
@@ -188,10 +188,10 @@ function ScrollableTabBar({ state, navigation, insets }: ScrollableTabBarProps) 
 
   return (
     <View style={[sb.container, { height: BAR_H + bottomPad }]}>
-      {/* ── Background ─────────────────────────────────────────────────────── */}
+      {/* ── Background — single layer, covers tab area + entire safe-area zone ── */}
       {isIOS ? (
         <BlurView
-          intensity={95}
+          intensity={100}
           tint={isDark ? 'dark' : 'light'}
           style={StyleSheet.absoluteFill}
         />
@@ -208,9 +208,8 @@ function ScrollableTabBar({ state, navigation, insets }: ScrollableTabBarProps) 
         horizontal
         showsHorizontalScrollIndicator={false}
         decelerationRate="fast"
-        contentContainerStyle={[sb.scrollContent, { paddingBottom: 0 }]}
+        contentContainerStyle={sb.scrollContent}
         style={{ height: BAR_H }}
-        // Preserve momentum-based feel
         scrollEventThrottle={16}
       >
         {state.routes.map((route: { key: string; name: string }, index: number) => {
@@ -277,10 +276,6 @@ function ScrollableTabBar({ state, navigation, insets }: ScrollableTabBarProps) 
         pointerEvents="none"
       />
 
-      {/* ── Bottom safe-area fill ───────────────────────────────────────────── */}
-      {bottomPad > 0 && (
-        <View style={[sb.safeArea, { height: bottomPad, backgroundColor: bgColor }]} />
-      )}
     </View>
   );
 }
@@ -291,7 +286,7 @@ const sb = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    overflow: 'hidden',
+    // No overflow:hidden — would clip the iOS blur at the bottom edge
   },
   goldRim: {
     position: 'absolute',
@@ -327,12 +322,6 @@ const sb = StyleSheet.create({
     width: 32,
     zIndex: 1,
     pointerEvents: 'none' as any,
-  },
-  safeArea: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
   },
 });
 

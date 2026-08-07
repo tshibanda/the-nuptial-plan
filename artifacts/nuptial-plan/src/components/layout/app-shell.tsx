@@ -630,7 +630,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-rose-300/80 transition hover:bg-white/[0.08]"
                     data-testid="button-sidebar-sign-out"
-                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); handleSignOut({ redirectUrl: '/connexion' }); }}
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); handleSignOut(); }}
                   >
                     <LogOut size={13} className="text-rose-300/60" /> Se déconnecter
                   </button>
