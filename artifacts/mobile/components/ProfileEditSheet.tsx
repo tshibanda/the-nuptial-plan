@@ -93,6 +93,14 @@ export function ProfileEditSheet({ visible, onClose }: Props) {
         await user.setProfileImage({ file: blob });
       }
 
+      // Reload the Clerk user object so every mounted useUser() consumer
+      // (profile hero, header, sidebar, etc.) receives the fresh imageUrl
+      // without requiring a full app restart.
+      // Pattern: always call user.reload() after any mutation that changes
+      // user.imageUrl or user.firstName/lastName, so all avatar display sites
+      // stay in sync automatically.
+      await user.reload();
+
       onClose();
     } catch (err: any) {
       const msg =

@@ -100,6 +100,9 @@ export default function ProfilScreen() {
   })();
 
   const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+  // user.imageUrl is kept fresh by ProfileEditSheet calling user.reload() after
+  // every save. Any new avatar display site should read from useUser() directly
+  // rather than caching the URL locally, so it benefits from the same reload.
   const avatarUrl = user?.imageUrl ?? null;
 
   const [editVisible, setEditVisible] = useState(false);
