@@ -14,6 +14,7 @@ import {
   Plus,
   Search,
   Settings,
+  Trash2,
   Users,
   WalletCards,
   X,
@@ -24,6 +25,7 @@ import {
 import {
   useListWeddings,
   useCreateWedding,
+  useDeleteWedding,
   getListWeddingsQueryKey,
   useListPayments,
   useGetWeddingSummary,
@@ -290,6 +292,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [sidebarUserMenuOpen, setSidebarUserMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [deleteWeddingId, setDeleteWeddingId] = useState<number | null>(null);
+  const [deletingWedding, setDeletingWedding] = useState(false);
 
   const { user } = useUser();
   const { signOut, session } = useClerk();
@@ -309,6 +313,25 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { activeWeddingId, setActiveWeddingId } = useActiveWedding();
   const { data: weddings = [], isLoading } = useListWeddings();
   const { data: payments = [] } = useListPayments(activeWeddingId ?? 0);
+  const deleteWedding = useDeleteWedding();
+
+  const handleDeleteWedding = () => {
+    if (!deleteWeddingId) return;
+    setDeletingWedding(true);
+    deleteWedding.mutate(
+      { id: deleteWeddingId },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
+          const remaining = weddings.filter((w) => w.id !== deleteWeddingId);
+          setActiveWeddingId(remaining.length > 0 ? remaining[0]!.id : null);
+          setDeleteWeddingId(null);
+          setDeletingWedding(false);
+        },
+        onError: () => setDeletingWedding(false),
+      },
+    );
+  };
   const { data: weddingSummary } = useGetWeddingSummary(activeWeddingId ?? 0);
 
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
@@ -375,6 +398,28 @@ export function AppShell({ children }: { children: ReactNode }) {
         onClose={() => setCreateOpen(false)}
         onCreated={(id) => setActiveWeddingId(id)}
       />
+
+      {/* Delete wedding confirmation dialog */}
+      <Dialog open={!!deleteWeddingId} onOpenChange={(o) => { if (!o && !deletingWedding) setDeleteWeddingId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-serif text-xl text-destructive">
+              <Trash2 size={17} /> Supprimer le dossier
+            </DialogTitle>
+            <DialogDescription>
+              Cette action est irréversible. Toutes les données liées à ce mariage (prestataires, invités, budget, documents…) seront définitivement supprimées.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setDeleteWeddingId(null)} disabled={deletingWedding}>
+              Annuler
+            </Button>
+            <Button variant="destructive" className="flex-1" onClick={handleDeleteWedding} disabled={deletingWedding}>
+              {deletingWedding ? 'Suppression…' : 'Supprimer définitivement'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex min-h-[100dvh]">
         {/* Sidebar */}
@@ -462,53 +507,63 @@ export function AppShell({ children }: { children: ReactNode }) {
                   const av = avatarStyles[idx % avatarStyles.length];
 
                   return (
-                    <button
-                      key={w.id}
-                      onClick={() => {
-                        setActiveWeddingId(w.id);
-                        setMobileOpen(false);
-                      }}
-                      className={`group w-full rounded-2xl px-4 py-3.5 text-left transition-all duration-200 ${
-                        isActive
-                          ? 'sidebar-card-active'
-                          : 'hover:bg-white/[0.07]'
-                      }`}
-                      data-testid={`button-wedding-${w.id}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-serif text-[15px]"
-                          style={{
-                            background: av.bg,
-                            color: av.color,
-                            boxShadow: isActive
-                              ? '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.20)'
-                              : '0 2px 6px rgba(0,0,0,0.25)',
-                          }}
-                        >
-                          {initials}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[12px] font-semibold text-sidebar-foreground">
-                            {w.names}
+                    <div key={w.id} className="group relative">
+                      <button
+                        onClick={() => {
+                          setActiveWeddingId(w.id);
+                          setMobileOpen(false);
+                        }}
+                        className={`w-full rounded-2xl px-4 py-3.5 text-left transition-all duration-200 ${
+                          isActive
+                            ? 'sidebar-card-active'
+                            : 'hover:bg-white/[0.07]'
+                        }`}
+                        data-testid={`button-wedding-${w.id}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-serif text-[15px]"
+                            style={{
+                              background: av.bg,
+                              color: av.color,
+                              boxShadow: isActive
+                                ? '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.20)'
+                                : '0 2px 6px rgba(0,0,0,0.25)',
+                            }}
+                          >
+                            {initials}
                           </span>
-                          <span className="mt-0.5 block text-[10px] text-sidebar-foreground/45">
-                            {formatDateShort(w.weddingDate)}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[12px] font-semibold text-sidebar-foreground">
+                              {w.names}
+                            </span>
+                            <span className="mt-0.5 block text-[10px] text-sidebar-foreground/45">
+                              {formatDateShort(w.weddingDate)}
+                            </span>
                           </span>
-                        </span>
-                        {/* Countdown chip */}
-                        {daysUntil > 0 && (
-                          <span className="countdown-chip shrink-0">
-                            J-{daysUntil}
-                          </span>
+                          {/* Countdown chip */}
+                          {daysUntil > 0 && (
+                            <span className="countdown-chip shrink-0">
+                              J-{daysUntil}
+                            </span>
+                          )}
+                        </div>
+                        {isActive && w.venue && (
+                          <p className="ml-12 mt-2 truncate text-[9.5px] text-sidebar-foreground/35">
+                            {w.venue}
+                          </p>
                         )}
-                      </div>
-                      {isActive && w.venue && (
-                        <p className="ml-12 mt-2 truncate text-[9.5px] text-sidebar-foreground/35">
-                          {w.venue}
-                        </p>
-                      )}
-                    </button>
+                      </button>
+                      {/* Delete button — appears on hover */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeleteWeddingId(w.id); }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-lg opacity-0 transition-opacity duration-150 group-hover:opacity-100 hover:bg-red-500/20"
+                        title="Supprimer ce dossier"
+                        data-testid={`button-delete-wedding-${w.id}`}
+                      >
+                        <Trash2 size={12} className="text-red-400" />
+                      </button>
+                    </div>
                   );
                 })}
               </div>

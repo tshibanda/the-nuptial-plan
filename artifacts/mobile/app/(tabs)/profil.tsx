@@ -254,7 +254,7 @@ export default function ProfilScreen() {
           />
           <RowItem
             icon="file-text" label="Contrats" colors={colors}
-            onPress={() => showWebOnly('Contrats')}
+            onPress={() => router.push('/(tabs)/contrats')}
           />
         </View>
 
@@ -264,7 +264,7 @@ export default function ProfilScreen() {
           <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
           <RowItem
             icon="settings" label="Paramètres" colors={colors}
-            onPress={() => showComingSoon('Paramètres')}
+            onPress={() => router.push('/(tabs)/parametres')}
           />
           <RowItem
             icon="bell" label="Notifications" colors={colors}

@@ -43,6 +43,8 @@ const TAB_META: Record<string, { sf: string; feather: string; label: string }> =
   invites:      { sf: 'person.2',           feather: 'users',        label: 'Invités' },
   budget:       { sf: 'chart.pie',          feather: 'pie-chart',    label: 'Budget' },
   paiements:    { sf: 'creditcard',         feather: 'credit-card',  label: 'Paiements' },
+  contrats:     { sf: 'doc.text',           feather: 'file-text',    label: 'Contrats' },
+  parametres:   { sf: 'gearshape',          feather: 'settings',     label: 'Paramètres' },
   profil:       { sf: 'person.crop.circle', feather: 'user',         label: 'Profil' },
 };
 
@@ -348,6 +350,8 @@ function ClassicTabLayout() {
       <Tabs.Screen name="invites" />
       <Tabs.Screen name="budget" />
       <Tabs.Screen name="paiements" />
+      <Tabs.Screen name="contrats" />
+      <Tabs.Screen name="parametres" />
       <Tabs.Screen name="profil" />
     </Tabs>
   );

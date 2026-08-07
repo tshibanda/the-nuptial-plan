@@ -1,0 +1,279 @@
+import React, { useState } from 'react';
+import {
+  ScrollView, View, Text, StyleSheet, Platform,
+  TouchableOpacity, Alert, Switch,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  useListWeddings,
+  useDeleteWedding,
+  getListWeddingsQueryKey,
+} from '@workspace/api-client-react';
+import { useWedding } from '@/context/WeddingContext';
+import { useColors } from '@/hooks/useColors';
+import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
+import { shadow, accentShadow } from '@/utils/shadow';
+
+// ── Row item ─────────────────────────────────────────────────────────────────
+function RowItem({ icon, label, value, iconBg, iconColor, onPress, rightElement, colors, destructive = false }: {
+  icon: string;
+  label: string;
+  value?: string;
+  iconBg: string;
+  iconColor: string;
+  onPress?: () => void;
+  rightElement?: React.ReactNode;
+  colors: ReturnType<typeof useColors>;
+  destructive?: boolean;
+}) {
+  return (
+    <TouchableOpacity
+      activeOpacity={onPress ? 0.72 : 1}
+      onPress={onPress}
+      style={[ps.row, { borderBottomColor: colors.border }]}
+    >
+      <View style={[ps.rowIcon, { backgroundColor: iconBg }]}>
+        <Feather name={icon as any} size={15} color={iconColor} />
+      </View>
+      <Text style={[ps.rowLabel, { fontFamily: SANS, color: destructive ? colors.roseDark : colors.foreground }]}>
+        {label}
+      </Text>
+      {value ? (
+        <Text style={[ps.rowValue, { fontFamily: SANS_MEDIUM, color: colors.mutedForeground }]}>{value}</Text>
+      ) : null}
+      {rightElement ?? (
+        onPress ? <Feather name="chevron-right" size={14} color={destructive ? colors.roseDark + '88' : colors.goldDim} /> : null
+      )}
+    </TouchableOpacity>
+  );
+}
+
+// ── Section header ────────────────────────────────────────────────────────────
+function SectionHeader({ label, colors }: { label: string; colors: ReturnType<typeof useColors> }) {
+  return (
+    <Text style={[ps.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
+      {label}
+    </Text>
+  );
+}
+
+// ── Group card ────────────────────────────────────────────────────────────────
+function Group({ children, colors }: { children: React.ReactNode; colors: ReturnType<typeof useColors> }) {
+  return (
+    <View style={[ps.group, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={[ps.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
+      {children}
+    </View>
+  );
+}
+
+// ── Main screen ───────────────────────────────────────────────────────────────
+export default function ParametresScreen() {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+
+  const { selectedWeddingId, selectWedding } = useWedding();
+  const queryClient = useQueryClient();
+
+  const { data: weddings } = useListWeddings();
+  const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
+  const deleteWedding = useDeleteWedding();
+
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
+  const handleDeleteWedding = () => {
+    if (!activeWedding) return;
+
+    Alert.alert(
+      'Supprimer ce dossier',
+      `Toutes les données de "${activeWedding.names}" seront définitivement supprimées (invités, prestataires, budget, paiements…). Cette action est irréversible.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer définitivement',
+          style: 'destructive',
+          onPress: () => {
+            deleteWedding.mutate(
+              { id: activeWedding.id },
+              {
+                onSuccess: () => {
+                  queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
+                  // Select next available wedding or clear selection
+                  const remaining = (weddings ?? []).filter((w) => w.id !== activeWedding.id);
+                  selectWedding(remaining[0]?.id ?? 0);
+                  Alert.alert('Dossier supprimé', `Le mariage "${activeWedding.names}" a été supprimé.`);
+                },
+                onError: () => {
+                  Alert.alert('Erreur', 'Impossible de supprimer ce dossier. Réessayez.');
+                },
+              },
+            );
+          },
+        },
+      ],
+    );
+  };
+
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{ paddingBottom: 100 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      <LinearGradient
+        colors={[colors.plumDark, colors.plum, colors.plumLight]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[ps.hero, { paddingTop: topPad + 24 }]}
+      >
+        <View style={{ position: 'absolute', top: -20, right: -20, width: 120, height: 120, borderRadius: 60, backgroundColor: colors.rose + '20' }} pointerEvents="none" />
+        <View style={{ position: 'absolute', bottom: -10, left: -20, width: 90, height: 90, borderRadius: 45, backgroundColor: colors.gold + '18' }} pointerEvents="none" />
+        <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ps.heroSheen} pointerEvents="none" />
+        <View style={ps.goldBar} />
+
+        <View style={[ps.settingsIcon, accentShadow('md')]}>
+          <LinearGradient colors={[colors.gold, colors.goldDim]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={ps.settingsIconGrad}>
+            <Feather name="settings" size={22} color="#3C1A3C" />
+          </LinearGradient>
+        </View>
+        <Text style={[ps.heroTitle, { fontFamily: SERIF }]}>Paramètres</Text>
+        <Text style={[ps.heroSub, { fontFamily: SANS }]}>Pour que rien ne manque à votre bonheur</Text>
+      </LinearGradient>
+
+      <View style={{ paddingHorizontal: 16 }}>
+
+        {/* ── Dossier de mariage actif ────────────────────────────────────── */}
+        {activeWedding && (
+          <>
+            <SectionHeader label="DOSSIER DE MARIAGE" colors={colors} />
+            <View style={[ps.weddingCard, shadow('md'), { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[ps.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
+
+              <View style={ps.weddingCardTop}>
+                <View>
+                  <Text style={[ps.weddingCardEye, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>MARIAGE ACTIF</Text>
+                  <Text style={[ps.weddingCardNames, { fontFamily: SERIF, color: colors.foreground }]}>{activeWedding.names}</Text>
+                </View>
+                <View style={[ps.activePill, { backgroundColor: colors.successBg }]}>
+                  <Text style={[ps.activePillText, { fontFamily: SANS_SEMIBOLD, color: colors.success }]}>Actif</Text>
+                </View>
+              </View>
+
+              <View style={[ps.weddingStats, { borderTopColor: colors.border }]}>
+                {[
+                  { icon: 'calendar', value: new Date(activeWedding.weddingDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) },
+                  { icon: 'map-pin', value: activeWedding.venue },
+                  { icon: 'users', value: `${activeWedding.guestCount} invités` },
+                ].map((item) => (
+                  <View key={item.icon} style={ps.weddingStatRow}>
+                    <Feather name={item.icon as any} size={13} color={colors.goldDim} />
+                    <Text style={[ps.weddingStatText, { fontFamily: SANS, color: colors.mutedForeground }]} numberOfLines={1}>
+                      {item.value}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* ── Préférences application ─────────────────────────────────────── */}
+        <SectionHeader label="APPLICATION" colors={colors} />
+        <Group colors={colors}>
+          <RowItem
+            icon="bell"
+            label="Notifications"
+            iconBg={colors.goldLight}
+            iconColor={colors.goldDim}
+            colors={colors}
+            rightElement={
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={setNotificationsEnabled}
+                trackColor={{ false: colors.border, true: colors.plum + '88' }}
+                thumbColor={notificationsEnabled ? colors.plum : colors.mutedForeground}
+              />
+            }
+          />
+          <RowItem
+            icon="help-circle"
+            label="Aide & support"
+            iconBg={colors.sageBg}
+            iconColor={colors.sageDark}
+            colors={colors}
+            onPress={() =>
+              Alert.alert('Aide & support', 'Pour toute assistance, contactez-nous à support@thenuptialplan.com', [{ text: 'OK' }])
+            }
+          />
+          <RowItem
+            icon="info"
+            label="Version"
+            value="1.0.0"
+            iconBg={colors.muted}
+            iconColor={colors.mutedForeground}
+            colors={colors}
+          />
+        </Group>
+
+        {/* ── Zone danger ─────────────────────────────────────────────────── */}
+        {activeWedding && (
+          <>
+            <SectionHeader label="ZONE DANGER" colors={colors} />
+            <Group colors={colors}>
+              <TouchableOpacity
+                activeOpacity={0.72}
+                onPress={handleDeleteWedding}
+                style={[ps.row, { borderBottomColor: 'transparent' }]}
+                disabled={deleteWedding.isPending}
+              >
+                <View style={[ps.rowIcon, { backgroundColor: colors.roseBg }]}>
+                  <Feather name="trash-2" size={15} color={colors.roseDark} />
+                </View>
+                <Text style={[ps.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>
+                  {deleteWedding.isPending ? 'Suppression…' : 'Supprimer ce dossier'}
+                </Text>
+                <Feather name="chevron-right" size={14} color={colors.roseDark + '88'} />
+              </TouchableOpacity>
+            </Group>
+            <Text style={[ps.dangerHint, { fontFamily: SANS, color: colors.mutedForeground }]}>
+              La suppression est définitive et irréversible. Toutes les données liées à ce mariage seront perdues.
+            </Text>
+          </>
+        )}
+
+      </View>
+    </ScrollView>
+  );
+}
+
+const ps = StyleSheet.create({
+  hero: { paddingHorizontal: 20, paddingBottom: 32, alignItems: 'center', overflow: 'hidden' },
+  heroSheen: { ...StyleSheet.absoluteFillObject, height: 100 },
+  goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
+  settingsIcon: { marginBottom: 16 },
+  settingsIconGrad: { width: 62, height: 62, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  heroTitle: { fontSize: 32, color: '#FBF5FB', marginBottom: 6 },
+  heroSub: { fontSize: 11, color: '#8eacaa', letterSpacing: 0.3 },
+  section: { fontSize: 9, letterSpacing: 1.5, marginTop: 24, marginBottom: 8 },
+  group: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  rim: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  rowIcon: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  rowLabel: { flex: 1, fontSize: 13 },
+  rowValue: { fontSize: 12, marginRight: 4 },
+  weddingCard: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', marginTop: 8 },
+  weddingCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', padding: 14 },
+  weddingCardEye: { fontSize: 8, letterSpacing: 1.4, marginBottom: 3 },
+  weddingCardNames: { fontSize: 20, lineHeight: 22 },
+  activePill: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  activePillText: { fontSize: 10 },
+  weddingStats: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, paddingVertical: 12, gap: 8 },
+  weddingStatRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  weddingStatText: { fontSize: 12, flex: 1 },
+  dangerHint: { fontSize: 11, lineHeight: 15, marginTop: 8, paddingHorizontal: 4, opacity: 0.7 },
+});

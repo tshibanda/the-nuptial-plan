@@ -1,12 +1,13 @@
 import {
   FlatList, View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Platform,
+  ActivityIndicator, Platform, Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useListWeddings } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useListWeddings, useDeleteWedding, getListWeddingsQueryKey } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
@@ -46,11 +47,45 @@ export default function MariagesScreen() {
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const { tourVisible, openTour, closeTour } = useTour('tour:mariages');
 
+  const queryClient = useQueryClient();
   const { data: weddings, isLoading, refetch, isRefetching } = useListWeddings();
+  const deleteWedding = useDeleteWedding();
 
   const handleSelect = (id: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     selectWedding(id);
+  };
+
+  const handleLongPress = (id: number, names: string) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    Alert.alert(
+      'Supprimer ce dossier',
+      `Toutes les données de "${names}" seront définitivement supprimées (invités, prestataires, budget, paiements…). Cette action est irréversible.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            deleteWedding.mutate(
+              { id },
+              {
+                onSuccess: () => {
+                  queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
+                  if (selectedWeddingId === id) {
+                    const remaining = (weddings ?? []).filter((w) => w.id !== id);
+                    selectWedding(remaining[0]?.id ?? 0);
+                  }
+                },
+                onError: () => {
+                  Alert.alert('Erreur', 'Impossible de supprimer ce dossier. Réessayez.');
+                },
+              },
+            );
+          },
+        },
+      ],
+    );
   };
 
   const fabBottom = Platform.OS === 'web' ? 94 : insets.bottom + 84;
@@ -110,6 +145,8 @@ export default function MariagesScreen() {
         return (
           <TouchableOpacity
             onPress={() => handleSelect(item.id)}
+            onLongPress={() => handleLongPress(item.id, item.names)}
+            delayLongPress={550}
             activeOpacity={0.85}
             style={[ss.wcard, { marginHorizontal: 16, marginBottom: 14 }, cardShadow]}
           >
