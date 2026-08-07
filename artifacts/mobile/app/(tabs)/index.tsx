@@ -3,6 +3,7 @@ import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
   ActivityIndicator, Platform, TouchableOpacity,
 } from 'react-native';
+import { useUser } from '@clerk/expo';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -126,6 +127,8 @@ export default function DashboardScreen() {
   const { selectedWeddingId, selectWedding } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const { tourVisible, openTour, closeTour } = useTour('tour:accueil');
+  const { user } = useUser();
+  const greeting = user?.firstName ? `Bonjour, ${user.firstName}` : 'Bonjour';
 
   const { data: weddings, isLoading: loadingWeddings } = useListWeddings();
 
@@ -198,6 +201,7 @@ export default function DashboardScreen() {
         {/* Gold accent bar */}
         <View style={ss.goldBar} />
 
+        <Text style={[ss.heroGreeting, { fontFamily: SANS }]}>{greeting}</Text>
         <Text style={[ss.heroEye, { fontFamily: SANS_MEDIUM }]}>LA CÉLÉBRATION</Text>
         <Text style={[ss.heroNames, { fontFamily: SERIF }]}>{activeWedding.names}</Text>
         <Text style={[ss.heroVenue, { fontFamily: SANS }]} numberOfLines={1}>{activeWedding.venue}</Text>
@@ -336,6 +340,7 @@ const ss = StyleSheet.create({
   hero: { paddingHorizontal: 20, paddingBottom: 28, overflow: 'hidden' },
   heroSheen: { ...StyleSheet.absoluteFillObject, height: 120 },
   goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
+  heroGreeting: { fontSize: 13, color: 'rgba(251,245,251,0.55)', marginBottom: 14, letterSpacing: 0.2 },
   heroEye: { fontSize: 9, letterSpacing: 2, color: '#C8A96E', marginBottom: 8 },
   heroNames: { fontSize: 36, lineHeight: 36, color: '#FBF5FB', marginBottom: 4 },
   heroVenue: { fontSize: 12, color: '#DEC0DE', marginBottom: 18 },
