@@ -44,12 +44,18 @@ export function daysUntil(dateStr: string): number {
   return Math.ceil(diff / 86400000);
 }
 
-/** Get two-letter initials from a name. */
+/**
+ * Get two-letter initials from a wedding names string like "Marie & Jean".
+ * Splits on "&" so each spouse contributes their first letter, regardless
+ * of how many words their full name has.
+ * Falls back to splitting on whitespace when no "&" is present.
+ */
 export function initials(name: string): string {
-  return name
-    .split(/[\s&]+/)
-    .filter(Boolean)
-    .map((w) => w[0])
+  const parts = name.includes('&')
+    ? name.split('&').map((s) => s.trim()).filter(Boolean)
+    : name.split(/\s+/).filter(Boolean);
+  return parts
+    .map((p) => p[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);

@@ -100,7 +100,11 @@ export default function MariagesScreen() {
       renderItem={({ item }) => {
         const isActive = item.id === selectedWeddingId;
         const days = Math.max(0, daysUntil(item.weddingDate));
-        const av = (item.names ?? '').split(/[\s&]+/).map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
+        const rawNames = item.names ?? '';
+        const nameParts = rawNames.includes('&')
+          ? rawNames.split('&').map((s: string) => s.trim()).filter(Boolean)
+          : rawNames.split(/\s+/).filter(Boolean);
+        const av = nameParts.map((p: string) => p[0]).join('').toUpperCase().slice(0, 2);
         const cardShadow = isActive ? accentShadow('lg') : shadow('sm');
 
         return (

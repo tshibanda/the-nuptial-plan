@@ -15,10 +15,7 @@ import { SANS_SEMIBOLD } from '@/constants/fonts';
 import { NuptiaSheet } from '@/components/NuptiaSheet';
 
 // NativeTabs: iOS 26+ with liquid glass.
-// Limited to 5 tabs to avoid the native iOS "More" overflow screen
-// (which renders with system styling incompatible with our design charter).
-// The hidden routes (mariages, prestataires, paiements) stay accessible
-// via quick-access rows in the Profil screen.
+// All 8 routes exposed so every section is reachable directly from the tab bar.
 function NativeTabLayout() {
   return (
     <NativeTabs>
@@ -26,9 +23,17 @@ function NativeTabLayout() {
         <Icon sf={{ default: 'house', selected: 'house.fill' }} />
         <Label>Aperçu</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="mariages">
+        <Icon sf={{ default: 'heart', selected: 'heart.fill' }} />
+        <Label>Mariages</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="evenements">
         <Icon sf={{ default: 'calendar', selected: 'calendar.badge.checkmark' }} />
         <Label>Agenda</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="prestataires">
+        <Icon sf={{ default: 'building.2', selected: 'building.2.fill' }} />
+        <Label>Prestataires</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="invites">
         <Icon sf={{ default: 'person.2', selected: 'person.2.fill' }} />
@@ -37,6 +42,10 @@ function NativeTabLayout() {
       <NativeTabs.Trigger name="budget">
         <Icon sf={{ default: 'chart.pie', selected: 'chart.pie.fill' }} />
         <Label>Budget</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="paiements">
+        <Icon sf={{ default: 'creditcard', selected: 'creditcard.fill' }} />
+        <Label>Paiements</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profil">
         <Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} />

@@ -34,7 +34,10 @@ router.post("/", async (req, res): Promise<void> => {
     weddingId: wedding!.id,
     description: `Nouveau mariage créé : ${wedding!.names}`,
     entityType: "wedding",
-    initials: wedding!.names.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
+    initials: (wedding!.names.includes("&")
+      ? wedding!.names.split("&").map((s: string) => s.trim())
+      : wedding!.names.split(/\s+/)
+    ).filter(Boolean).map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
   });
   res.status(201).json(wedding);
 });
