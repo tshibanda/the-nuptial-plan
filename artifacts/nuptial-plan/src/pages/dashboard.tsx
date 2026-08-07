@@ -2,6 +2,7 @@ import {
   CalendarDays, Sparkles, ChevronRight, Plus, Clock3, MoreHorizontal,
   Users, Wallet, CheckSquare, TrendingUp,
 } from 'lucide-react';
+import { useUser } from '@clerk/react';
 import { PageTour } from '@/components/ui/page-tour';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
@@ -133,6 +134,8 @@ const toneChipClass: Record<string, string> = {
 export default function Dashboard() {
   const { activeWeddingId } = useActiveWedding();
   const [, navigate] = useLocation();
+  const { user } = useUser();
+  const firstName = user?.firstName?.trim() || '';
 
   const { data: wedding, isLoading: weddingLoading } = useGetWedding(activeWeddingId!, {
     query: { enabled: !!activeWeddingId, queryKey: getGetWeddingQueryKey(activeWeddingId!) },
@@ -203,6 +206,10 @@ export default function Dashboard() {
 
         <p className="eyebrow mb-3 flex items-center gap-2 text-[#a8893e]">
           <Sparkles size={12} strokeWidth={2} /> Mariage actif
+        </p>
+
+        <p className="mb-2 font-serif text-[18px] text-foreground/55 italic">
+          {firstName ? `Bonjour, ${firstName}` : 'Bonjour'}
         </p>
 
         <h1 className="font-serif text-[44px] leading-[0.88] text-foreground sm:text-[56px]">
