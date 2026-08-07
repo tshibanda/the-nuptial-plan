@@ -136,6 +136,8 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const { user } = useUser();
   const firstName = user?.firstName?.trim() || '';
+  const hour = new Date().getHours();
+  const greetingWord = hour < 12 ? 'Bon matin' : hour < 18 ? 'Bonjour' : 'Bonsoir';
 
   const { data: wedding, isLoading: weddingLoading } = useGetWedding(activeWeddingId!, {
     query: { enabled: !!activeWeddingId, queryKey: getGetWeddingQueryKey(activeWeddingId!) },
@@ -209,7 +211,7 @@ export default function Dashboard() {
         </p>
 
         <p className="mb-2 font-serif text-[18px] text-foreground/55 italic">
-          {firstName ? `Bonjour, ${firstName}` : 'Bonjour'}
+          {firstName ? `${greetingWord}, ${firstName}` : greetingWord}
         </p>
 
         <h1 className="font-serif text-[44px] leading-[0.88] text-foreground sm:text-[56px]">

@@ -128,7 +128,9 @@ export default function DashboardScreen() {
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const { tourVisible, openTour, closeTour } = useTour('tour:accueil');
   const { user } = useUser();
-  const greeting = user?.firstName ? `Bonjour, ${user.firstName}` : 'Bonjour';
+  const hour = new Date().getHours();
+  const greetingWord = hour < 12 ? 'Bon matin' : hour < 18 ? 'Bonjour' : 'Bonsoir';
+  const greeting = user?.firstName ? `${greetingWord}, ${user.firstName}` : greetingWord;
 
   const { data: weddings, isLoading: loadingWeddings } = useListWeddings();
 
