@@ -1,9 +1,6 @@
 import { useState, useEffect, useMemo, ReactNode } from 'react';
 import { NuptiaChat } from '@/components/nuptia/nuptia-chat';
-
-// No auth layer yet (Task #5). Token getter and sign-out are no-ops until Clerk is wired in.
-const noOpGetToken = () => Promise.resolve<string | null>(null);
-const noOpSignOut = (_opts?: { redirectUrl?: string }) => Promise.resolve();
+import { useUser, useClerk } from '@clerk/react';
 import { Link, useLocation } from 'wouter';
 import {
   Bell,
@@ -293,6 +290,22 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [sidebarUserMenuOpen, setSidebarUserMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+
+  const { user } = useUser();
+  const { signOut, session } = useClerk();
+
+  // Derived identity values with graceful fallbacks
+  const userFullName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || 'Planificateur'
+    : 'Planificateur';
+  const userFirstName = user?.firstName || userFullName.split(' ')[0];
+  const userInitials = user
+    ? ([user.firstName?.[0], user.lastName?.[0]].filter(Boolean).join('') || userFullName.slice(0, 2)).toUpperCase()
+    : '?';
+  const userImageUrl = user?.imageUrl ?? null;
+
+  const getToken = () => session?.getToken() ?? Promise.resolve<string | null>(null);
+  const handleSignOut = (opts?: { redirectUrl?: string }) => signOut(opts);
   const { activeWeddingId, setActiveWeddingId } = useActiveWedding();
   const { data: weddings = [], isLoading } = useListWeddings();
   const { data: payments = [] } = useListPayments(activeWeddingId ?? 0);
@@ -519,20 +532,29 @@ export function AppShell({ children }: { children: ReactNode }) {
                 data-testid="button-user-menu"
                 onClick={() => setSidebarUserMenuOpen((o) => !o)}
               >
-                {/* User avatar with gradient */}
-                <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-serif text-[14px]"
-                  style={{
-                    background: 'linear-gradient(135deg, #CC8C94 0%, #9A506A 100%)',
-                    color: '#FFF0F2',
-                    boxShadow: '0 3px 10px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.18)',
-                  }}
-                >
-                  É
-                </span>
+                {/* User avatar — photo or initials fallback */}
+                {userImageUrl ? (
+                  <img
+                    src={userImageUrl}
+                    alt={userFullName}
+                    className="h-9 w-9 shrink-0 rounded-xl object-cover"
+                    style={{ boxShadow: '0 3px 10px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.18)' }}
+                  />
+                ) : (
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-serif text-[14px]"
+                    style={{
+                      background: 'linear-gradient(135deg, #CC8C94 0%, #9A506A 100%)',
+                      color: '#FFF0F2',
+                      boxShadow: '0 3px 10px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.18)',
+                    }}
+                  >
+                    {userInitials.slice(0, 1)}
+                  </span>
+                )}
                 <span className="flex-1">
-                  <span className="block text-[12px] font-semibold text-sidebar-foreground">Élise Caron</span>
-                  <span className="block text-[9.5px] text-sidebar-foreground/40">Directrice artistique</span>
+                  <span className="block text-[12px] font-semibold text-sidebar-foreground">{userFullName}</span>
+                  <span className="block text-[9.5px] text-sidebar-foreground/40">Wedding planner</span>
                 </span>
                 <ChevronDown
                   size={13}
@@ -553,7 +575,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-rose-300/80 transition hover:bg-white/[0.08]"
                     data-testid="button-sidebar-sign-out"
-                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); noOpSignOut({ redirectUrl: '/connexion' }); }}
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); handleSignOut({ redirectUrl: '/connexion' }); }}
                   >
                     <LogOut size={13} className="text-rose-300/60" /> Se déconnecter
                   </button>
@@ -594,7 +616,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   })}
                 </p>
                 <p className="mt-1 font-serif text-[16px] leading-none text-foreground/80">
-                  Bonjour, <span className="text-primary">Élise</span>
+                  Bonjour, <span className="text-primary">{userFirstName}</span>
                 </p>
               </div>
             </div>
@@ -685,16 +707,25 @@ export function AppShell({ children }: { children: ReactNode }) {
                 data-testid="button-header-menu"
                 style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.80)' }}
               >
-                <span
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-[9px] font-bold text-sidebar-primary-foreground"
-                  style={{
-                    background: 'linear-gradient(135deg, #8A4A8A 0%, #5D2D5D 60%, #4A2060 100%)',
-                    boxShadow: '0 2px 8px rgba(93,45,93,0.35), inset 0 1px 0 rgba(255,255,255,0.22)',
-                  }}
-                >
-                  EC
-                </span>
-                <span className="hidden lg:block">Élise Caron</span>
+                {userImageUrl ? (
+                  <img
+                    src={userImageUrl}
+                    alt={userFullName}
+                    className="h-7 w-7 rounded-full object-cover"
+                    style={{ boxShadow: '0 2px 8px rgba(93,45,93,0.35)' }}
+                  />
+                ) : (
+                  <span
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-[9px] font-bold text-sidebar-primary-foreground"
+                    style={{
+                      background: 'linear-gradient(135deg, #8A4A8A 0%, #5D2D5D 60%, #4A2060 100%)',
+                      boxShadow: '0 2px 8px rgba(93,45,93,0.35), inset 0 1px 0 rgba(255,255,255,0.22)',
+                    }}
+                  >
+                    {userInitials}
+                  </span>
+                )}
+                <span className="hidden lg:block">{userFullName}</span>
                 <ChevronDown size={13} className="text-muted-foreground/60" />
               </button>
               {menuOpen && (
@@ -712,7 +743,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <button
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-destructive/80 transition hover:bg-destructive/6"
                       data-testid="button-sign-out"
-                      onClick={() => { setMenuOpen(false); noOpSignOut({ redirectUrl: '/connexion' }); }}
+                      onClick={() => { setMenuOpen(false); handleSignOut({ redirectUrl: '/connexion' }); }}
                     >
                       <LogOut size={13} className="text-destructive/70" /> Se déconnecter
                     </button>
@@ -783,7 +814,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       {/* Nuptia — floating AI assistant, available on every page */}
-      <NuptiaChat getToken={noOpGetToken} />
+      <NuptiaChat getToken={getToken} />
     </div>
   );
 }
