@@ -425,7 +425,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-h-[100dvh]">
         {/* Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 z-30 w-[285px] -translate-x-full sidebar-gradient text-sidebar-foreground transition-transform duration-300 md:relative md:translate-x-0 ${mobileOpen ? 'translate-x-0' : ''}`}
+          className={`fixed inset-y-0 left-0 z-30 w-[285px] -translate-x-full sidebar-gradient text-sidebar-foreground transition-transform duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 md:shrink-0 ${mobileOpen ? 'translate-x-0' : ''}`}
         >
           {/* Botanical watermark */}
           <div className="pointer-events-none absolute -bottom-6 -left-4 w-40 rotate-[15deg] text-sidebar-foreground opacity-[0.04]">

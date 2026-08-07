@@ -264,8 +264,13 @@
     @apply border-border;
   }
 
+  html {
+    overscroll-behavior: none;
+  }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    overscroll-behavior: none;
   }
 }
 

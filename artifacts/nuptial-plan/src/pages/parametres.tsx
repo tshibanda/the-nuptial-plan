@@ -25,6 +25,7 @@ import {
   RotateCcw,
   BookOpen,
 } from 'lucide-react';
+import { useUser } from '@clerk/react';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useGetWedding,
@@ -128,6 +129,7 @@ function SettingsSection({
 
 /* ── Main page ── */
 export default function Parametres() {
+  const { user } = useUser();
   const { activeWeddingId, setActiveWeddingId } = useActiveWedding();
   const [, navigate] = useLocation();
   const { data: wedding, isLoading } = useGetWedding(activeWeddingId ?? 0, {
@@ -475,25 +477,49 @@ export default function Parametres() {
 
           {/* ── Profil planificateur ── */}
           <SettingsSection icon={User} eyebrow="Compte" title="Profil planificateur">
-            <div className="flex items-center gap-4">
-              <span
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-serif text-[20px]"
-                style={{
-                  background: 'linear-gradient(135deg, #CC8C94 0%, #9A506A 100%)',
-                  color: '#FFF0F2',
-                  boxShadow: '0 4px 14px rgba(154,80,106,0.30), inset 0 1px 0 rgba(255,255,255,0.20)',
-                }}
-              >
-                É
-              </span>
-              <div>
-                <p className="text-[14px] font-semibold text-foreground">Élise Caron</p>
-                <p className="text-[11px] text-muted-foreground">Directrice artistique · The Nuptial Plan</p>
-                <p className="mt-1 text-[10px] text-muted-foreground/60">
-                  La gestion du profil sera disponible une fois l'authentification activée.
-                </p>
-              </div>
-            </div>
+            {(() => {
+              const fullName = user
+                ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || 'Planificateur'
+                : 'Planificateur';
+              const initials = user
+                ? ([user.firstName?.[0], user.lastName?.[0]].filter(Boolean).join('') || fullName.slice(0, 2)).toUpperCase()
+                : '?';
+              const email = user?.primaryEmailAddress?.emailAddress ?? null;
+              const imageUrl = user?.imageUrl ?? null;
+
+              return (
+                <div className="flex items-center gap-4">
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={fullName}
+                      className="h-14 w-14 shrink-0 rounded-2xl object-cover"
+                      style={{ boxShadow: '0 4px 14px rgba(93,45,93,0.25)' }}
+                    />
+                  ) : (
+                    <span
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-serif text-[20px]"
+                      style={{
+                        background: 'linear-gradient(135deg, #8A4A8A 0%, #5D2D5D 55%, #4A2060 100%)',
+                        color: '#FBF5FB',
+                        boxShadow: '0 4px 14px rgba(93,45,93,0.30), inset 0 1px 0 rgba(255,255,255,0.20)',
+                      }}
+                    >
+                      {initials}
+                    </span>
+                  )}
+                  <div>
+                    <p className="text-[14px] font-semibold text-foreground">{fullName}</p>
+                    {email && (
+                      <p className="text-[11px] text-muted-foreground">{email}</p>
+                    )}
+                    <p className="mt-1 text-[10px] text-muted-foreground/60">
+                      Pour modifier votre profil, rendez-vous sur votre compte Clerk.
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
           </SettingsSection>
 
           {/* ── Guides d'utilisation ── */}
