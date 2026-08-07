@@ -680,14 +680,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Search pill */}
-              <button
-                className="hidden items-center gap-2 rounded-full border border-border/60 bg-white/60 px-4 py-1.5 text-[11px] text-muted-foreground transition hover:border-border hover:bg-white/80 sm:flex"
-                data-testid="button-search"
-                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.80)' }}
-              >
-                <Search size={12} /> Rechercher…
-              </button>
+              {/* Search pill — hidden */}
 
               {/* Notification bell */}
               <div className="relative">
