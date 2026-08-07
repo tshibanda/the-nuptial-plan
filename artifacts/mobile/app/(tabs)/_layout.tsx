@@ -1,40 +1,23 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Platform,
-  StyleSheet,
-  useColorScheme,
-  View,
-  Text,
-  ScrollView,
-  Pressable,
+  Platform, StyleSheet, useColorScheme,
+  View, Text, Pressable, Modal, TouchableOpacity, ScrollView,
 } from 'react-native';
-import type { LayoutChangeEvent } from 'react-native';
-/** Minimal subset of BottomTabBarProps we actually use. */
-interface ScrollableTabBarProps {
-  state: { index: number; routes: ReadonlyArray<{ key: string; name: string }> };
-  navigation: {
-    emit: (event: {
-      type: string;
-      target: string;
-      canPreventDefault?: boolean;
-    }) => { defaultPrevented: boolean };
-    navigate: (name: string, params?: object) => void;
-  };
-  insets: { bottom: number; top: number; left: number; right: number };
-}
-import { useColors } from '@/hooks/useColors';
-import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Redirect, Tabs } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import { SymbolView } from 'expo-symbols';
 import type { SFSymbol } from 'expo-symbols';
+import { Redirect, Tabs } from 'expo-router';
 import { useAuth } from '@clerk/expo';
+import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useColors } from '@/hooks/useColors';
+import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
 import { setAuthTokenGetter } from '@workspace/api-client-react';
-import { SANS_SEMIBOLD } from '@/constants/fonts';
 import { NuptiaSheet } from '@/components/NuptiaSheet';
 
-// ── Tab metadata ──────────────────────────────────────────────────────────────
+// ── Tab metadata ───────────────────────────────────────────────────────────────
 const TAB_META: Record<string, { sf: string; feather: string; label: string }> = {
   index:        { sf: 'house',              feather: 'home',         label: 'Aperçu' },
   mariages:     { sf: 'heart',              feather: 'heart',        label: 'Mariages' },
@@ -48,289 +31,334 @@ const TAB_META: Record<string, { sf: string; feather: string; label: string }> =
   profil:       { sf: 'person.crop.circle', feather: 'user',         label: 'Profil' },
 };
 
-// ── TabPill ───────────────────────────────────────────────────────────────────
-interface TabPillProps {
-  sfName: string;
-  featherName: string;
-  label: string;
-  focused: boolean;
-  colors: ReturnType<typeof useColors>;
-}
+// 5 primary tabs always visible in the bar
+const PRIMARY = ['index', 'evenements', 'invites', 'budget', 'prestataires'];
 
-function TabPill({ sfName, featherName, label, focused, colors }: TabPillProps) {
+// All tabs shown in the burger sheet (full list for quick access)
+const ALL_TABS = [
+  'index', 'mariages', 'evenements', 'prestataires',
+  'invites', 'budget', 'paiements', 'contrats',
+  'parametres', 'profil',
+];
+
+// ── Icon helper ────────────────────────────────────────────────────────────────
+function TabIcon({ name, feather, size, color }: { name: string; feather: string; size: number; color: string }) {
   const isIOS = Platform.OS === 'ios';
-
-  if (!focused) {
-    return (
-      <View style={tp.iconOnly}>
-        {isIOS ? (
-          <SymbolView name={sfName as SFSymbol} tintColor={colors.mutedForeground} size={26} />
-        ) : (
-          <Feather name={featherName as any} size={26} color={colors.mutedForeground} />
-        )}
-      </View>
-    );
-  }
-
-  return (
-    <LinearGradient
-      colors={[colors.plumDark, colors.plum]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={tp.pill}
-    >
-      <View style={tp.rim} />
-      {isIOS ? (
-        <SymbolView name={sfName as SFSymbol} tintColor="#FBF5FB" size={20} />
-      ) : (
-        <Feather name={featherName as any} size={20} color="#FBF5FB" />
-      )}
-      <Text style={[tp.label, { fontFamily: SANS_SEMIBOLD }]} numberOfLines={1}>
-        {label}
-      </Text>
-    </LinearGradient>
-  );
+  if (isIOS) return <SymbolView name={name as SFSymbol} tintColor={color} size={size} />;
+  return <Feather name={feather as any} size={size} color={color} />;
 }
 
-const tp = StyleSheet.create({
-  iconOnly: {
-    width: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 20,
-    overflow: 'hidden',
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 2px 10px rgba(93,45,93,0.30)' } as any
-      : Platform.OS === 'android'
-        ? { elevation: 3 }
-        : {}),
-  },
-  rim: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-  },
-  label: {
-    fontSize: 10,
-    letterSpacing: 0.2,
-    color: '#FBF5FB',
-  },
-});
+// ── Fixed bottom tab bar ───────────────────────────────────────────────────────
+interface TabBarProps {
+  state: { index: number; routes: ReadonlyArray<{ key: string; name: string }> };
+  navigation: {
+    emit: (e: { type: string; target: string; canPreventDefault?: boolean }) => { defaultPrevented: boolean };
+    navigate: (name: string) => void;
+  };
+  insets: { bottom: number };
+}
 
-// ── Scrollable custom tab bar ─────────────────────────────────────────────────
-/**
- * Replaces the native BottomTabBar with a horizontal ScrollView so all 8 tabs
- * are reachable without the system "More" overflow screen.
- *
- * Visual cues for discoverability:
- *   • Right-edge gradient fade — always visible on first render.
- *   • Left-edge gradient fade — appears once the user scrolls right.
- *   • "Peek" animation on mount — scrolls 90 px right then snaps back so the
- *     user sees the cut-off tabs and immediately understands the bar scrolls.
- */
-function ScrollableTabBar({ state, navigation, insets }: ScrollableTabBarProps) {
+function FixedTabBar({ state, navigation, insets }: TabBarProps) {
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const isIOS = Platform.OS === 'ios';
+  const [burgerOpen, setBurgerOpen] = useState(false);
 
-  const scrollRef = useRef<ScrollView>(null);
-  // Track each tab's {x, width} so we can scroll it into view when focused
-  const tabLayouts = useRef<{ [index: number]: { x: number; width: number } }>({});
-  const hasPeeked = useRef(false);
-
-  const BAR_H = 78;
+  const BAR_H = 64;
   const bottomPad = insets?.bottom ?? 0;
   const bgColor = isDark ? colors.card : '#FDFAF7';
 
-  // ── Peek animation: nudge right → snap back on first mount ───────────────
-  useEffect(() => {
-    if (hasPeeked.current) return;
-    hasPeeked.current = true;
-    const t1 = setTimeout(() => {
-      scrollRef.current?.scrollTo({ x: 90, animated: true });
-    }, 700);
-    const t2 = setTimeout(() => {
-      scrollRef.current?.scrollTo({ x: 0, animated: true });
-    }, 1100);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
+  // Current tab name
+  const currentRoute = state.routes[state.index]?.name ?? '';
+  const isSecondaryActive = !PRIMARY.includes(currentRoute);
 
-  // ── Auto-scroll to keep the focused tab visible ───────────────────────────
-  useEffect(() => {
-    const info = tabLayouts.current[state.index];
-    if (info) {
-      // Target: center the focused tab, clamped to 0 so we never scroll past the start
-      scrollRef.current?.scrollTo({ x: Math.max(0, info.x - 20), animated: true });
-    }
-  }, [state.index]);
+  const navigateTo = (routeName: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const route = state.routes.find((r) => r.name === routeName);
+    if (!route) return;
+    const isFocused = state.routes[state.index]?.name === routeName;
+    const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+    if (!isFocused && !event.defaultPrevented) navigation.navigate(routeName);
+  };
 
-  const onTabLayout = useCallback((index: number, e: LayoutChangeEvent) => {
-    tabLayouts.current[index] = {
-      x: e.nativeEvent.layout.x,
-      width: e.nativeEvent.layout.width,
-    };
-  }, []);
-
-  const gradientColor = isIOS
-    ? (isDark ? 'rgba(10,4,10,0.92)' : 'rgba(253,250,247,0.92)')
-    : (isDark ? bgColor : bgColor);
+  const openBurger = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setBurgerOpen(true);
+  };
 
   return (
-    <View style={[sb.container, { height: BAR_H + bottomPad }]}>
-      {/* ── Background — single layer, covers tab area + entire safe-area zone ── */}
-      {isIOS ? (
-        <BlurView
-          intensity={100}
-          tint={isDark ? 'dark' : 'light'}
-          style={StyleSheet.absoluteFill}
-        />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: bgColor }]} />
-      )}
+    <>
+      {/* ── Fixed bar ── */}
+      <View style={[bar.container, { height: BAR_H + bottomPad }]}>
+        {/* Background */}
+        {isIOS ? (
+          <BlurView intensity={100} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: bgColor }]} />
+        )}
 
-      {/* ── Gold top rim ───────────────────────────────────────────────────── */}
-      <View style={sb.goldRim} />
+        {/* Gold top rim */}
+        <View style={bar.goldRim} />
 
-      {/* ── Scrollable tab row ─────────────────────────────────────────────── */}
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        contentContainerStyle={sb.scrollContent}
-        style={{ height: BAR_H }}
-        scrollEventThrottle={16}
-      >
-        {state.routes.map((route: { key: string; name: string }, index: number) => {
-          const meta = TAB_META[route.name];
-          if (!meta) return null;
-          const focused = state.index === index;
+        {/* Tab buttons */}
+        <View style={[bar.row, { height: BAR_H }]}>
+          {PRIMARY.map((tabName) => {
+            const meta = TAB_META[tabName]!;
+            const focused = currentRoute === tabName;
+            return (
+              <Pressable
+                key={tabName}
+                onPress={() => navigateTo(tabName)}
+                style={({ pressed }) => [bar.tabBtn, { opacity: pressed ? 0.7 : 1 }]}
+                accessibilityRole="tab"
+                accessibilityLabel={meta.label}
+                accessibilityState={{ selected: focused }}
+              >
+                <View style={bar.tabInner}>
+                  {/* Active dot / pill */}
+                  {focused && (
+                    <View style={[bar.activeDot, { backgroundColor: colors.plum }]} />
+                  )}
+                  <TabIcon
+                    name={meta.sf}
+                    feather={meta.feather}
+                    size={24}
+                    color={focused ? colors.plum : colors.mutedForeground}
+                  />
+                  <Text
+                    style={[
+                      bar.label,
+                      {
+                        fontFamily: focused ? SANS_SEMIBOLD : SANS,
+                        color: focused ? colors.plum : colors.mutedForeground,
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {meta.label}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
 
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!focused && !event.defaultPrevented) {
-              navigation.navigate(route.name as any);
-            }
-          };
+          {/* Burger button */}
+          <Pressable
+            onPress={openBurger}
+            style={({ pressed }) => [bar.tabBtn, { opacity: pressed ? 0.7 : 1 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Menu complet"
+          >
+            <View style={bar.tabInner}>
+              {isSecondaryActive && (
+                <View style={[bar.activeDot, { backgroundColor: colors.plum }]} />
+              )}
+              <View style={[bar.burgerIconWrap, isSecondaryActive && { backgroundColor: colors.plum + '18' }]}>
+                <Feather
+                  name="grid"
+                  size={22}
+                  color={isSecondaryActive ? colors.plum : colors.mutedForeground}
+                />
+              </View>
+              <Text
+                style={[
+                  bar.label,
+                  {
+                    fontFamily: isSecondaryActive ? SANS_SEMIBOLD : SANS,
+                    color: isSecondaryActive ? colors.plum : colors.mutedForeground,
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                Plus
+              </Text>
+            </View>
+          </Pressable>
+        </View>
+      </View>
 
-          const onLongPress = () => {
-            navigation.emit({ type: 'tabLongPress', target: route.key });
-          };
-
-          return (
-            <Pressable
-              key={route.key}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              onLayout={(e) => onTabLayout(index, e)}
-              style={({ pressed }) => [
-                sb.tabItem,
-                { height: BAR_H, opacity: pressed && !focused ? 0.7 : 1 },
-              ]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: focused }}
-              accessibilityLabel={meta.label}
-            >
-              <TabPill
-                sfName={meta.sf}
-                featherName={meta.feather}
-                label={meta.label}
-                focused={focused}
-                colors={colors}
-              />
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      {/* ── Right-edge fade — shows there are more tabs to the right ───────── */}
-      <LinearGradient
-        colors={['transparent', gradientColor]}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-        style={[sb.fadeRight, { height: BAR_H }]}
-        pointerEvents="none"
+      {/* ── Burger full-menu sheet ── */}
+      <BurgerSheet
+        visible={burgerOpen}
+        onClose={() => setBurgerOpen(false)}
+        currentRoute={currentRoute}
+        onNavigate={(name) => { setBurgerOpen(false); setTimeout(() => navigateTo(name), 50); }}
+        colors={colors}
+        isDark={isDark}
       />
-
-      {/* ── Left-edge fade — shows there are more tabs to the left ─────────── */}
-      <LinearGradient
-        colors={[gradientColor, 'transparent']}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-        style={[sb.fadeLeft, { height: BAR_H }]}
-        pointerEvents="none"
-      />
-
-    </View>
+    </>
   );
 }
 
-const sb = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    // No overflow:hidden — would clip the iOS blur at the bottom edge
-  },
-  goldRim: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: StyleSheet.hairlineWidth * 2,
-    backgroundColor: 'rgba(200,170,112,0.40)',
-    zIndex: 2,
-  },
-  scrollContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-  },
-  tabItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  fadeRight: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 56,
-    zIndex: 1,
-    pointerEvents: 'none' as any,
-  },
-  fadeLeft: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 32,
-    zIndex: 1,
-    pointerEvents: 'none' as any,
-  },
+const bar = StyleSheet.create({
+  container: { position: 'absolute', bottom: 0, left: 0, right: 0 },
+  goldRim: { position: 'absolute', top: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth * 2, backgroundColor: 'rgba(200,170,112,0.45)', zIndex: 2 },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  tabBtn: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  tabInner: { alignItems: 'center', gap: 3, paddingTop: 6 },
+  activeDot: { position: 'absolute', top: -1, width: 28, height: 3, borderRadius: 2 },
+  label: { fontSize: 9, letterSpacing: 0.2, marginTop: 1 },
+  burgerIconWrap: { width: 40, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 });
 
-// ── App layout with custom scrollable tab bar ─────────────────────────────────
+// ── Burger sheet modal ─────────────────────────────────────────────────────────
+function BurgerSheet({
+  visible, onClose, currentRoute, onNavigate, colors, isDark,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  currentRoute: string;
+  onNavigate: (name: string) => void;
+  colors: ReturnType<typeof useColors>;
+  isDark: boolean;
+}) {
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === 'ios';
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      {/* Backdrop */}
+      <Pressable style={bs.backdrop} onPress={onClose} />
+
+      {/* Sheet */}
+      <View
+        style={[
+          bs.sheet,
+          {
+            backgroundColor: isDark ? colors.card : '#FDFAF7',
+            paddingBottom: Math.max(insets.bottom + 12, 24),
+          },
+        ]}
+      >
+        {/* Handle */}
+        <View style={[bs.handle, { backgroundColor: colors.border }]} />
+
+        {/* Header */}
+        <View style={bs.header}>
+          <LinearGradient
+            colors={[colors.plumDark, colors.plum]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={bs.headerGrad}
+          >
+            <View style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}>
+              <View style={{ position: 'absolute', top: -12, right: -12, width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+              <View style={{ position: 'absolute', bottom: -8, left: 20, width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(200,170,112,0.12)' }} />
+            </View>
+            <Text style={[bs.headerEye, { fontFamily: SANS_MEDIUM }]}>NAVIGATION</Text>
+            <Text style={[bs.headerTitle, { fontFamily: SERIF }]}>The Nuptial Plan</Text>
+          </LinearGradient>
+          <TouchableOpacity onPress={onClose} style={bs.closeBtn} activeOpacity={0.7}>
+            <Feather name="x" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Grid of all tabs */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={bs.grid}
+        >
+          {ALL_TABS.map((tabName) => {
+            const meta = TAB_META[tabName]!;
+            const isActive = currentRoute === tabName;
+            const isPrimary = PRIMARY.includes(tabName);
+
+            return (
+              <TouchableOpacity
+                key={tabName}
+                onPress={() => onNavigate(tabName)}
+                activeOpacity={0.75}
+                style={[
+                  bs.gridItem,
+                  {
+                    backgroundColor: isActive
+                      ? colors.plum + '15'
+                      : isDark ? colors.background : '#F5F0F5',
+                    borderColor: isActive ? colors.plum + '40' : 'transparent',
+                  },
+                ]}
+              >
+                {/* Active indicator bar */}
+                {isActive && (
+                  <View style={[bs.activeBar, { backgroundColor: colors.plum }]} />
+                )}
+
+                {/* Icon container */}
+                <View
+                  style={[
+                    bs.iconWrap,
+                    {
+                      backgroundColor: isActive
+                        ? colors.plum + '20'
+                        : isDark ? colors.card : '#EDE6ED',
+                    },
+                  ]}
+                >
+                  <TabIcon
+                    name={meta.sf}
+                    feather={meta.feather}
+                    size={22}
+                    color={isActive ? colors.plum : colors.mutedForeground}
+                  />
+                </View>
+
+                <Text
+                  style={[
+                    bs.gridLabel,
+                    {
+                      fontFamily: isActive ? SANS_SEMIBOLD : SANS_MEDIUM,
+                      color: isActive ? colors.plum : colors.foreground,
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {meta.label}
+                </Text>
+
+                {/* "Principal" badge for primary tabs */}
+                {isPrimary && (
+                  <Text style={[bs.primaryBadge, { color: colors.goldDim, fontFamily: SANS }]}>
+                    ↓ barre
+                  </Text>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+const bs = StyleSheet.create({
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 16, paddingTop: 10, maxHeight: '88%' },
+  handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
+  header: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 18, gap: 10 },
+  headerGrad: { flex: 1, borderRadius: 16, padding: 16, overflow: 'hidden' },
+  headerEye: { fontSize: 8, letterSpacing: 2, color: 'rgba(200,170,112,0.80)', marginBottom: 4 },
+  headerTitle: { fontSize: 22, color: '#FBF5FB', lineHeight: 22 },
+  closeBtn: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.06)', marginTop: 4 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  gridItem: { width: '47%', borderRadius: 14, padding: 14, gap: 8, borderWidth: 1, overflow: 'hidden' },
+  activeBar: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, borderRadius: 2 },
+  iconWrap: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  gridLabel: { fontSize: 13 },
+  primaryBadge: { fontSize: 9, letterSpacing: 0.3 },
+});
+
+// ── App layout ─────────────────────────────────────────────────────────────────
 function ClassicTabLayout() {
   return (
     <Tabs
       screenOptions={{ headerShown: false }}
-      tabBar={(props) => <ScrollableTabBar {...(props as any)} />}
+      tabBar={(props) => <FixedTabBar {...(props as any)} />}
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="mariages" />
@@ -346,7 +374,7 @@ function ClassicTabLayout() {
   );
 }
 
-// ── Root layout ───────────────────────────────────────────────────────────────
+// ── Root layout ────────────────────────────────────────────────────────────────
 export default function TabLayout() {
   const { isSignedIn, getToken } = useAuth();
 
