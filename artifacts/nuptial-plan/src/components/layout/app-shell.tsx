@@ -393,7 +393,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [activeWeddingId, weddings, isLoading, setActiveWeddingId]);
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground font-sans">
+    <div className="h-screen overflow-hidden bg-background text-foreground font-sans">
       <CreateWeddingDialog
         open={createOpen}
         onClose={() => setCreateOpen(false)}
@@ -422,7 +422,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </DialogContent>
       </Dialog>
 
-      <div className="flex min-h-[100dvh]">
+      <div className="flex h-full">
         {/* Sidebar */}
         <aside
           className={`fixed inset-y-0 left-0 z-30 w-[285px] -translate-x-full sidebar-gradient text-sidebar-foreground transition-transform duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 md:shrink-0 ${mobileOpen ? 'translate-x-0' : ''}`}
@@ -465,7 +465,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             {/* Decorative separator */}
             <div className="mb-6 h-px w-full bg-gradient-to-r from-transparent via-sidebar-primary/30 to-transparent" />
 
-            {/* Weddings list */}
+            {/* Weddings list — scrollable middle zone */}
+            <div className="flex-1 overflow-y-auto min-h-0 -mx-7 px-7">
             <p className="mb-4 text-[9px] font-semibold uppercase tracking-[0.22em] text-sidebar-foreground/50">
               Vos mariages
             </p>
@@ -579,6 +580,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               <Plus size={13} /> Ajouter un mariage
             </button>
+            </div>{/* end scrollable middle zone */}
 
             {/* User section */}
             <div className="mt-auto pt-5">
@@ -651,7 +653,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
 
         {/* Main content */}
-        <main className="min-w-0 flex-1">
+        <main className="min-w-0 flex-1 flex flex-col h-full overflow-hidden">
           {/* Header — frosted glass */}
           <header className="relative z-20 flex h-[72px] items-center justify-between header-glass px-5 sm:px-9 lg:px-12"
             style={{ boxShadow: '0 1px 0 rgba(215,200,215,0.55), 0 4px 16px rgba(93,45,93,0.04)' }}>
@@ -834,7 +836,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           {/* Page content — ambient gradient background */}
-          <div className="content-bg">
+          <div className="content-bg flex-1 overflow-y-auto overscroll-contain">
             <div className="mx-auto max-w-[1390px] px-5 py-9 sm:px-9 lg:px-12 lg:py-12">
               {!isLoading && weddings.length === 0 ? (
                 <div className="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
