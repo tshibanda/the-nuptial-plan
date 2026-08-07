@@ -653,7 +653,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Main content */}
         <main className="min-w-0 flex-1">
           {/* Header — frosted glass */}
-          <header className="relative flex h-[72px] items-center justify-between header-glass px-5 sm:px-9 lg:px-12"
+          <header className="relative z-20 flex h-[72px] items-center justify-between header-glass px-5 sm:px-9 lg:px-12"
             style={{ boxShadow: '0 1px 0 rgba(215,200,215,0.55), 0 4px 16px rgba(93,45,93,0.04)' }}>
             {/* Gradient accent line at bottom */}
             <div className="absolute inset-x-0 bottom-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(180,120,180,0.45)] to-transparent" />
