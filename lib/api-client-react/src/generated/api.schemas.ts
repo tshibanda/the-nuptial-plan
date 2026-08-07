@@ -228,6 +228,11 @@ export interface GuestStats {
   declined: number;
 }
 
+export interface GuestImportResult {
+  created: number;
+  skipped: number;
+}
+
 export interface BudgetCategory {
   id: number;
   weddingId: number;
@@ -513,4 +518,8 @@ export interface OpenaiConversationWithMessages {
 export interface OpenaiError {
   error: string;
 }
+
+export type ImportGuestsBody = {
+  guests: GuestInput[];
+};
 

@@ -32,10 +32,12 @@ import type {
   ContractInput,
   ContractUpdate,
   Guest,
+  GuestImportResult,
   GuestInput,
   GuestStats,
   GuestUpdate,
   HealthStatus,
+  ImportGuestsBody,
   OpenaiConversation,
   OpenaiConversationInput,
   OpenaiConversationWithMessages,
@@ -1430,6 +1432,78 @@ export function useGetGuestStats<TData = Awaited<ReturnType<typeof getGuestStats
 
 
 
+
+export const getImportGuestsUrl = (weddingId: number,) => {
+
+
+
+
+  return `/api/weddings/${weddingId}/guests/import`
+}
+
+/**
+ * @summary Bulk import guests from parsed spreadsheet rows
+ */
+export const importGuests = async (weddingId: number,
+    importGuestsBody: ImportGuestsBody, options?: Parameters<typeof customFetch>[1]): Promise<GuestImportResult> => {
+
+  return customFetch<GuestImportResult>(getImportGuestsUrl(weddingId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(importGuestsBody)
+  }
+);}
+
+
+
+
+
+export const getImportGuestsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importGuests>>, TError,{weddingId: number;data: BodyType<ImportGuestsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importGuests>>, TError,{weddingId: number;data: BodyType<ImportGuestsBody>}, TContext> => {
+
+const mutationKey = ['importGuests'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importGuests>>, {weddingId: number;data: BodyType<ImportGuestsBody>}> = (props) => {
+          const {weddingId,data} = props ?? {};
+
+          return  importGuests(weddingId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportGuestsMutationResult = NonNullable<Awaited<ReturnType<typeof importGuests>>>
+    export type ImportGuestsMutationBody = BodyType<ImportGuestsBody>
+    export type ImportGuestsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Bulk import guests from parsed spreadsheet rows
+ */
+export const useImportGuests = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importGuests>>, TError,{weddingId: number;data: BodyType<ImportGuestsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof importGuests>>,
+        TError,
+        {weddingId: number;data: BodyType<ImportGuestsBody>},
+        TContext
+      > => {
+      return useMutation(getImportGuestsMutationOptions(options));
+    }
 
 export const getListBudgetCategoriesUrl = (weddingId: number,) => {
 

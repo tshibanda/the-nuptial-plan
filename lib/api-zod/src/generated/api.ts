@@ -402,6 +402,30 @@ export const GetGuestStatsResponse = zod.object({
 
 
 /**
+ * @summary Bulk import guests from parsed spreadsheet rows
+ */
+export const ImportGuestsParams = zod.object({
+  "weddingId": zod.coerce.number()
+})
+
+export const ImportGuestsBody = zod.object({
+  "guests": zod.array(zod.object({
+  "name": zod.string(),
+  "email": zod.string().optional(),
+  "tableNumber": zod.string().optional(),
+  "dietaryRequirements": zod.string().optional(),
+  "rsvpStatus": zod.enum(['confirmed', 'pending', 'declined']),
+  "notes": zod.string().optional()
+}))
+})
+
+export const ImportGuestsResponse = zod.object({
+  "created": zod.number(),
+  "skipped": zod.number()
+})
+
+
+/**
  * @summary List budget categories for a wedding
  */
 export const ListBudgetCategoriesParams = zod.object({

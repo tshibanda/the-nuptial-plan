@@ -314,6 +314,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: weddings = [], isLoading } = useListWeddings();
   const { data: payments = [] } = useListPayments(activeWeddingId ?? 0);
   const deleteWedding = useDeleteWedding();
+  const queryClient = useQueryClient();
 
   const handleDeleteWedding = () => {
     if (!deleteWeddingId) return;

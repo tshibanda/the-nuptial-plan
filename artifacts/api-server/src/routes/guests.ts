@@ -56,4 +56,31 @@ router.delete("/:id", async (req, res): Promise<void> => {
   res.status(204).send();
 });
 
+router.post("/import", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const rows = req.body?.guests;
+  if (!Array.isArray(rows)) { res.status(400).json({ error: "guests must be an array" }); return; }
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const parsed = CreateGuestBody.safeParse(row);
+    if (!parsed.success) { skipped++; continue; }
+    await db.insert(guestsTable).values({ ...parsed.data, weddingId });
+    created++;
+  }
+
+  if (created > 0) {
+    await db.insert(activityTable).values({
+      weddingId,
+      description: `${created} invité${created > 1 ? "s" : ""} importé${created > 1 ? "s" : ""} depuis un fichier`,
+      entityType: "guest",
+      initials: "IM",
+    });
+  }
+
+  res.json({ created, skipped });
+});
+
 export default router;

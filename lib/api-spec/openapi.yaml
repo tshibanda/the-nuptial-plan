@@ -402,6 +402,39 @@ paths:
               schema:
                 $ref: "#/components/schemas/GuestStats"
 
+  /weddings/{weddingId}/guests/import:
+    post:
+      operationId: importGuests
+      tags: [guests]
+      summary: Bulk import guests from parsed spreadsheet rows
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [guests]
+              properties:
+                guests:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/GuestInput"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestImportResult"
+
+
+
   # ─── Budget ───────────────────────────────────────────────────
   /weddings/{weddingId}/budget-categories:
     get:
@@ -1186,6 +1219,15 @@ components:
         pending:
           type: number
         declined:
+          type: number
+
+    GuestImportResult:
+      type: object
+      required: [created, skipped]
+      properties:
+        created:
+          type: number
+        skipped:
           type: number
 
     # ─── Budget ───────────────────────────────────────────────
