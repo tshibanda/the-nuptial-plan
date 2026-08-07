@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireAuth } from "../middlewares/requireAuth";
 import healthRouter from "./health";
 import weddingsRouter from "./weddings";
 import vendorsRouter from "./vendors";
@@ -14,7 +15,11 @@ import openaiConversationsRouter from "./openai/conversations";
 
 const router: IRouter = Router();
 
+// Public — no auth required
 router.use(healthRouter);
+
+// Auth-gated — all routes below require a valid Clerk session
+router.use(requireAuth);
 router.use(storageRouter);
 router.use("/openai/conversations", openaiConversationsRouter);
 router.use("/weddings", weddingsRouter);

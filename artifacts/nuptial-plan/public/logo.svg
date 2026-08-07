@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" fill="none">
+  <!-- Monogram box -->
+  <rect x="1" y="1" width="46" height="46" fill="none" stroke="#C8A96E" stroke-width="1.2"/>
+  <text x="24" y="34" font-family="Georgia, serif" font-size="28" fill="#C8A96E" text-anchor="middle">N</text>
+  <!-- Brand name -->
+  <text x="62" y="26" font-family="Georgia, serif" font-size="18" fill="#3C1A3C" letter-spacing="0.5">The Nuptial Plan</text>
+  <!-- Tagline -->
+  <text x="62" y="40" font-family="'DM Sans', Arial, sans-serif" font-size="8" fill="#9B7E9B" letter-spacing="1.5">ATELIER NUPTIAL</text>
+</svg>
