@@ -144,7 +144,7 @@ export default function SignUpScreen() {
               <Text style={[ss.monogramText, { fontFamily: SERIF }]}>N</Text>
             </View>
             <Text style={[ss.wordmark, { fontFamily: SERIF }]}>The Nuptial Plan</Text>
-            <Text style={[ss.tagline, { fontFamily: SANS }]}>Atelier de planification nuptiale</Text>
+            <Text style={[ss.tagline, { fontFamily: SANS }]}>Pour que rien ne manque à votre bonheur</Text>
           </View>
 
           <Text style={[ss.heading, { fontFamily: SERIF }]}>Créer un compte</Text>

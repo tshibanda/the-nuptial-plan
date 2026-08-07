@@ -190,7 +190,7 @@ export default function ProfilScreen() {
         {userEmail ? (
           <Text style={[ss.role, { fontFamily: SANS_MEDIUM }]}>{userEmail}</Text>
         ) : null}
-        <Text style={[ss.brand, { fontFamily: SANS }]}>The Nuptial Plan · Atelier nuptial</Text>
+        <Text style={[ss.brand, { fontFamily: SANS }]}>Pour que rien ne manque à votre bonheur</Text>
       </LinearGradient>
 
       <View style={{ paddingHorizontal: 16 }}>
@@ -307,7 +307,7 @@ export default function ProfilScreen() {
               <Text style={[ss.logoNText, { fontFamily: SERIF }]}>N</Text>
             </LinearGradient>
             <Text style={[ss.logoLabel, { fontFamily: SERIF, color: colors.foreground }]}>The Nuptial Plan</Text>
-            <Text style={[ss.version, { fontFamily: SANS, color: colors.tertiaryText }]}>Version 1.0.0 · Atelier de planification nuptiale</Text>
+            <Text style={[ss.version, { fontFamily: SANS, color: colors.tertiaryText }]}>Version 1.0.0 · Pour que rien ne manque à votre bonheur</Text>
           </View>
         </View>
       </View>
