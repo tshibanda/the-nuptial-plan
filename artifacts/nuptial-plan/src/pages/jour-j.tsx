@@ -645,7 +645,8 @@ export default function JourJ() {
           detail: e.detail, tone: e.tone, completed: e.completed,
         }))
       );
-    } catch {
+    } catch (err) {
+      console.error('[PDF export]', err);
       toast({ title: 'Erreur', description: "Impossible de générer le PDF.", variant: 'destructive' });
     } finally {
       setPdfLoading(false);
