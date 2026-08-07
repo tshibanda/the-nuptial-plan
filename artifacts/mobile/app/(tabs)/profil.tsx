@@ -231,7 +231,7 @@ export default function ProfilScreen() {
 
         {/* Quick actions — Gestion */}
         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>GESTION</Text>
-        <View style={[ss.group, shadow('sm'), { backgroundColor: Platform.OS !== 'web' ? 'rgba(248,245,239,0.90)' : colors.card, borderColor: colors.border }]}>
+        <View style={[ss.group, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
           <RowItem
             icon="heart" label="Mes mariages" value={String(weddings?.length ?? 0)}
@@ -260,7 +260,7 @@ export default function ProfilScreen() {
 
         {/* Application */}
         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>APPLICATION</Text>
-        <View style={[ss.group, shadow('sm'), { backgroundColor: Platform.OS !== 'web' ? 'rgba(248,245,239,0.90)' : colors.card, borderColor: colors.border }]}>
+        <View style={[ss.group, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
           <RowItem
             icon="settings" label="Paramètres" colors={colors}
@@ -280,7 +280,7 @@ export default function ProfilScreen() {
 
         {/* Compte */}
         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>COMPTE</Text>
-        <View style={[ss.group, shadow('sm'), { backgroundColor: Platform.OS !== 'web' ? 'rgba(248,245,239,0.90)' : colors.card, borderColor: colors.border }]}>
+        <View style={[ss.group, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
           <TouchableOpacity
             activeOpacity={0.7}

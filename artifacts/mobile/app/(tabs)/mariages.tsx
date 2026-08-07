@@ -116,7 +116,7 @@ export default function MariagesScreen() {
             <LinearGradient
               colors={isActive
                 ? [colors.plumDark, colors.plum, colors.plumLight]
-                : ['rgba(255,255,255,0.60)', colors.card]}
+                : [colors.muted, colors.card]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={[ss.wcardInner, { borderColor: isActive ? colors.gold + 'BB' : colors.border }]}
@@ -132,7 +132,7 @@ export default function MariagesScreen() {
               <View style={ss.wcardTop}>
                 <View style={[
                   ss.avatar,
-                  { backgroundColor: isActive ? 'rgba(200,170,112,0.20)' : 'rgba(255,255,255,0.70)' },
+                  { backgroundColor: isActive ? 'rgba(200,170,112,0.20)' : colors.muted },
                   shadow('xs'),
                 ]}>
                   <Text style={[ss.avatarText, { fontFamily: SERIF, color: isActive ? colors.gold : colors.plumDark }]}>{av}</Text>
@@ -164,7 +164,7 @@ export default function MariagesScreen() {
                 </View>
                 <View style={[
                   ss.daysBadge,
-                  { backgroundColor: isActive ? 'rgba(200,170,112,0.22)' : 'rgba(255,255,255,0.75)' },
+                  { backgroundColor: isActive ? 'rgba(200,170,112,0.22)' : colors.muted },
                   shadow('xs'),
                 ]}>
                   <Text style={[ss.daysNum, { fontFamily: SERIF, color: isActive ? colors.gold : colors.plumDark }]}>{days}</Text>

@@ -4,47 +4,13 @@ import { useColors } from '@/hooks/useColors';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Redirect, Tabs } from 'expo-router';
-import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
 import { SymbolView } from 'expo-symbols';
 import type { SFSymbol } from 'expo-symbols';
 import { useAuth } from '@clerk/expo';
 import { setAuthTokenGetter } from '@workspace/api-client-react';
 import { SANS_SEMIBOLD } from '@/constants/fonts';
 import { NuptiaSheet } from '@/components/NuptiaSheet';
-
-// NativeTabs: iOS 26+ with liquid glass.
-// Strictly limited to 5 tabs — iOS triggers the native system-styled "More"
-// screen for any overflow, which we cannot style to match the charter.
-// Hidden routes (invites, prestataires, paiements) stay reachable via the
-// quick-access rows on the Profil screen.
-function NativeTabLayout() {
-  return (
-    <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: 'house', selected: 'house.fill' }} />
-        <Label>Aperçu</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="mariages">
-        <Icon sf={{ default: 'heart', selected: 'heart.fill' }} />
-        <Label>Mariages</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="evenements">
-        <Icon sf={{ default: 'calendar', selected: 'calendar.badge.checkmark' }} />
-        <Label>Agenda</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="budget">
-        <Icon sf={{ default: 'chart.pie', selected: 'chart.pie.fill' }} />
-        <Label>Budget</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profil">
-        <Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} />
-        <Label>Profil</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
-}
 
 // ── Per-tab icon/label data ───────────────────────────────────────────────────
 interface TabPillProps {
@@ -259,7 +225,7 @@ export default function TabLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-      {isLiquidGlassAvailable() ? <NativeTabLayout /> : <ClassicTabLayout />}
+      <ClassicTabLayout />
       <NuptiaSheet />
     </View>
   );

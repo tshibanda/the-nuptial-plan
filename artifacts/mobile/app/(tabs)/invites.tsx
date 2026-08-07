@@ -110,11 +110,7 @@ export default function InvitesScreen() {
               {/* Glassmorphic stats bar */}
               {stats && (
                 <View style={[ss.statsWrap, shadow('md')]}>
-                  <BlurView
-                    intensity={Platform.OS === 'web' ? 0 : 85}
-                    tint="light"
-                    style={[ss.statsBar, { backgroundColor: Platform.OS === 'web' ? colors.card + 'ee' : 'rgba(248,245,239,0.80)', borderColor: 'rgba(255,255,255,0.65)' }]}
-                  >
+                  <View style={[ss.statsBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.80)' }]} />
                     <StatBlock value={stats.total} label="Total" color={colors.foreground} colors={colors} />
                     <View style={[ss.statDivider, { backgroundColor: colors.border }]} />
@@ -123,7 +119,7 @@ export default function InvitesScreen() {
                     <StatBlock value={stats.pending} label="En attente" color={colors.warning} colors={colors} />
                     <View style={[ss.statDivider, { backgroundColor: colors.border }]} />
                     <StatBlock value={stats.declined} label="Déclinés" color={colors.mutedForeground} colors={colors} />
-                  </BlurView>
+                  </View>
                 </View>
               )}
 
@@ -139,7 +135,7 @@ export default function InvitesScreen() {
                       style={[
                         ss.filterPill,
                         isActive ? accentShadow('sm') : shadow('xs'),
-                        { backgroundColor: isActive ? colors.plum : 'rgba(255,255,255,0.70)', borderColor: isActive ? colors.plum : colors.border },
+                        { backgroundColor: isActive ? colors.plum : colors.muted, borderColor: isActive ? colors.plum : colors.border },
                       ]}
                     >
                       <Text style={[ss.filterText, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>

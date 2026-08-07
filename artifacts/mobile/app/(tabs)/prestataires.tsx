@@ -98,7 +98,7 @@ export default function PrestatairesScreen() {
 
             {/* Search bar */}
             <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
-              <View style={[ss.searchWrap, shadow('sm'), { backgroundColor: 'rgba(255,255,255,0.85)', borderColor: colors.border }]}>
+              <View style={[ss.searchWrap, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.85)' }]} />
                 <Feather name="search" size={15} color={colors.mutedForeground} />
                 <TextInput

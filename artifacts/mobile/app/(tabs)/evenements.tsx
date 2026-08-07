@@ -550,16 +550,14 @@ export default function EvenementsScreen() {
               {/* Stats bar (list view only) */}
               {view === 'list' && allEvents.length > 0 && (
                 <View style={[hs.statsWrap, shadow('md')]}>
-                  <BlurView intensity={Platform.OS === 'web' ? 0 : 85} tint="light"
-                    style={[hs.statsBar, { backgroundColor: Platform.OS === 'web' ? colors.card + 'ee' : 'rgba(248,245,239,0.80)', borderColor: 'rgba(255,255,255,0.65)' }]}
-                  >
+                  <View style={[hs.statsBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={[hs.rim, { borderTopColor: 'rgba(255,255,255,0.80)' }]} />
                     <StatBlock value={allEvents.length} label="Total" color={colors.foreground} colors={colors} />
                     <View style={[hs.divider, { backgroundColor: colors.border }]} />
                     <StatBlock value={upcomingCount} label="À venir" color={colors.plum} colors={colors} />
                     <View style={[hs.divider, { backgroundColor: colors.border }]} />
                     <StatBlock value={doneCount} label="Terminés" color={colors.sage} colors={colors} />
-                  </BlurView>
+                  </View>
                 </View>
               )}
 
@@ -582,7 +580,7 @@ export default function EvenementsScreen() {
                       return (
                         <TouchableOpacity key={f.key} onPress={() => setFilter(f.key)} activeOpacity={0.75}
                           style={[hs.pill, isActive ? accentShadow('sm') : shadow('xs'),
-                            { backgroundColor: isActive ? colors.plum : 'rgba(255,255,255,0.70)', borderColor: isActive ? colors.plum : colors.border }]}
+                            { backgroundColor: isActive ? colors.plum : colors.muted, borderColor: isActive ? colors.plum : colors.border }]}
                         >
                           <Text style={[hs.pillText, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>{f.label}</Text>
                         </TouchableOpacity>
@@ -633,7 +631,7 @@ export default function EvenementsScreen() {
                             hs.toneChip,
                             isActive
                               ? { backgroundColor: dotColor + '22', borderColor: dotColor + '88' }
-                              : { backgroundColor: 'rgba(255,255,255,0.60)', borderColor: colors.border },
+                              : { backgroundColor: colors.muted, borderColor: colors.border },
                           ]}
                         >
                           <View style={[hs.toneDot, { backgroundColor: dotColor }]} />
