@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { LegalFooter } from '@/components/legal-footer';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -590,6 +591,7 @@ export default function Parametres() {
           </div>
         </form>
       </Form>
+      <LegalFooter className="pb-2 pt-10" />
     </>
   );
 }

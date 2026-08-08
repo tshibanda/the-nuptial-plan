@@ -19,6 +19,8 @@ import Documents from '@/pages/documents';
 import Parametres from '@/pages/parametres';
 import JourJ from '@/pages/jour-j';
 import NotFound from '@/pages/not-found';
+import { PrivacyPage, PolicyPage } from '@/pages/legal';
+import { LegalFooter } from '@/components/legal-footer';
 
 // ── Clerk key & proxy ─────────────────────────────────────────────────────────
 // REQUIRED — copy verbatim. Resolves from hostname so one build serves multiple domains.
@@ -120,26 +122,28 @@ function ClerkQueryClientCacheInvalidator() {
 // ── Sign-in / Sign-up pages ───────────────────────────────────────────────────
 function SignInPage() {
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-[#F8F3EE] px-4 py-12">
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-4 py-12">
       <SignIn
         routing="path"
         path={`${basePath}/sign-in`}
         signUpUrl={`${basePath}/sign-up`}
         forceRedirectUrl={`${basePath}/`}
       />
+      <LegalFooter className="mt-6" />
     </div>
   );
 }
 
 function SignUpPage() {
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-[#F8F3EE] px-4 py-12">
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-4 py-12">
       <SignUp
         routing="path"
         path={`${basePath}/sign-up`}
         signInUrl={`${basePath}/sign-in`}
         forceRedirectUrl={`${basePath}/`}
       />
+      <LegalFooter className="mt-6" />
     </div>
   );
 }
@@ -215,6 +219,8 @@ function AppRouter() {
 
   return (
     <Switch>
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/policy" component={PolicyPage} />
       {/* REQUIRED — exactly /*? — matches bare URL and Clerk's OAuth sub-paths */}
       <Route path="/sign-in/*?" component={SignInPage} />
       <Route path="/sign-up/*?" component={SignUpPage} />
