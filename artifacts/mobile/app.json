@@ -16,6 +16,11 @@
     "ios": {
       "supportsTablet": false
     },
+    "autolinking": {
+      "exclude": [
+        "@clerk/expo"
+      ]
+    },
     "android": {},
     "web": {
       "favicon": "./assets/images/icon.png"
