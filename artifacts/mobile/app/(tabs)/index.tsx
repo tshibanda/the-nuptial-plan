@@ -270,7 +270,7 @@ export default function DashboardScreen() {
                   >
                     <View style={[
                       ss.evtDate,
-                      { backgroundColor: i === 0 ? colors.goldLight : colors.background },
+                       { backgroundColor: i === 0 ? colors.rose + '18' : colors.plum + '0A' },
                       i === 0 && shadow('xs'),
                     ]}>
                       <Text style={[ss.evtDay, { fontFamily: SERIF, color: colors.foreground }]}>{day}</Text>
@@ -280,7 +280,7 @@ export default function DashboardScreen() {
                       <Text style={[ss.evtTitle, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]} numberOfLines={1}>{evt.title}</Text>
                       {evt.detail ? <Text style={[ss.evtDetail, { fontFamily: SANS, color: colors.mutedForeground }]} numberOfLines={1}>{evt.detail}</Text> : null}
                     </View>
-                    <Feather name="chevron-right" size={14} color={colors.goldDim} />
+                     <Feather name="chevron-right" size={14} color={colors.plum} />
                   </TouchableOpacity>
                 );
               })}
@@ -313,15 +313,15 @@ export default function DashboardScreen() {
                     style={[ss.vrow, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}
                   >
                     <View style={[ss.rimLight, { borderTopColor: 'rgba(255,255,255,0.50)' }]} />
-                    <View style={[ss.vav, { backgroundColor: colors.goldLight }, shadow('xs')]}>
-                      <Text style={[ss.vavText, { fontFamily: SERIF, color: colors.plumDark }]}>{av}</Text>
+                     <View style={[ss.vav, { backgroundColor: colors.sage + '28', borderColor: colors.sage + '55' }, shadow('xs')]}>
+                       <Text style={[ss.vavText, { fontFamily: SERIF, color: colors.plum }]}>{av}</Text>
                     </View>
                     <View style={ss.vinfo}>
                       <Text style={[ss.vname, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]} numberOfLines={1}>{v.name}</Text>
                       <Text style={[ss.vcat, { fontFamily: SANS, color: colors.mutedForeground }]}>{v.category}</Text>
                     </View>
                     <StatusBadge label={label} tone={tone} />
-                    <Feather name="chevron-right" size={13} color={colors.goldDim} style={{ marginLeft: 4 }} />
+                     <Feather name="chevron-right" size={13} color={colors.plum} style={{ marginLeft: 4 }} />
                   </TouchableOpacity>
                 );
               })}
@@ -369,7 +369,7 @@ const ss = StyleSheet.create({
   evtDetail: { fontSize: 10 },
   vlist: { gap: 8 },
   vrow: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, padding: 12, overflow: 'hidden' },
-  vav: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  vav: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth },
   vavText: { fontSize: 15 },
   vinfo: { flex: 1 },
   vname: { fontSize: 12, marginBottom: 2 },

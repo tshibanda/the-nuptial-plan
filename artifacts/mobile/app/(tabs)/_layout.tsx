@@ -200,7 +200,7 @@ const bar = StyleSheet.create({
   tabInner: { alignItems: 'center', gap: 3, paddingTop: 6 },
   activeDot: { position: 'absolute', top: -1, width: 28, height: 3, borderRadius: 2 },
   label: { fontSize: 9, letterSpacing: 0.2, marginTop: 1 },
-  burgerIconWrap: { width: 40, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  burgerIconWrap: { width: 40, height: 24, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 });
 
 // ── Burger sheet modal ─────────────────────────────────────────────────────────
@@ -234,7 +234,7 @@ function BurgerSheet({
           bs.sheet,
           {
             backgroundColor: isDark ? colors.card : '#FDFAF7',
-            paddingBottom: Math.max(insets.bottom + 12, 24),
+            paddingBottom: Math.max(insets.bottom + 6, 18),
           },
         ]}
       >
