@@ -443,14 +443,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             {/* Logo */}
             <div className="mb-12 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {/* Double-border monogram */}
-                <div className="relative flex h-10 w-10 items-center justify-center">
-                  <div className="absolute inset-0 rounded-full border border-sidebar-primary/20" />
-                  <span className="flex h-8 w-8 items-center justify-center border border-sidebar-primary/70 font-serif text-[22px] text-sidebar-primary"
-                    style={{ boxShadow: '0 0 12px rgba(200,169,110,0.25), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
-                    N
-                  </span>
-                </div>
+                <img
+                  src="/tnp-gold-logo.png"
+                  alt="The Nuptial Plan"
+                  className="h-10 w-10 object-contain"
+                />
                 <div>
                   <p className="font-serif text-[20px] leading-none">The Nuptial Plan</p>
                   <p className="mt-1 text-[8.5px] uppercase tracking-[0.2em] text-sidebar-foreground/40">

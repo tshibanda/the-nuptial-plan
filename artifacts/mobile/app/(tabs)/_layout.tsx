@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Platform, StyleSheet, useColorScheme,
-  View, Text, Pressable, Modal, TouchableOpacity, ScrollView,
+  View, Text, Image, Pressable, Modal, TouchableOpacity, ScrollView,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +16,7 @@ import { useColors } from '@/hooks/useColors';
 import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
 import { setAuthTokenGetter } from '@workspace/api-client-react';
 import { NuptiaSheet } from '@/components/NuptiaSheet';
+import logoImage from '@/assets/images/tnp-gold-logo.png';
 
 // ── Tab metadata ───────────────────────────────────────────────────────────────
 const TAB_META: Record<string, { sf: string; feather: string; label: string }> = {
@@ -251,6 +252,7 @@ function BurgerSheet({
               <View style={{ position: 'absolute', top: -12, right: -12, width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.08)' }} />
               <View style={{ position: 'absolute', bottom: -8, left: 20, width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(200,170,112,0.12)' }} />
             </View>
+            <Image source={logoImage} style={bs.logoImage} resizeMode="contain" />
             <Text style={[bs.headerEye, { fontFamily: SANS_MEDIUM }]}>NAVIGATION</Text>
             <Text style={[bs.headerTitle, { fontFamily: SERIF }]}>The Nuptial Plan</Text>
           </LinearGradient>
@@ -342,6 +344,7 @@ const bs = StyleSheet.create({
   handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
   header: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 18, gap: 10 },
   headerGrad: { flex: 1, borderRadius: 16, padding: 16, overflow: 'hidden' },
+  logoImage: { width: 34, height: 34, marginBottom: 4 },
   headerEye: { fontSize: 8, letterSpacing: 2, color: 'rgba(200,170,112,0.80)', marginBottom: 4 },
   headerTitle: { fontSize: 22, color: '#FBF5FB', lineHeight: 22 },
   closeBtn: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.06)', marginTop: 4 },

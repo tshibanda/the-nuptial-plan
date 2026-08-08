@@ -16,6 +16,7 @@ import { formatCents } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { TourSheet, TourHelpFab } from '@/components/TourSheet';
 import { ProfileEditSheet } from '@/components/ProfileEditSheet';
+import logoImage from '@/assets/images/tnp-gold-logo.png';
 
 const TOUR_STEPS = [
   {
@@ -299,13 +300,7 @@ export default function ProfilScreen() {
         <View style={ss.appInfo}>
           <View style={[ss.logoWrap, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.75)' }]} />
-            <LinearGradient
-              colors={[colors.plumDark, colors.plum]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={ss.logoNGrad}
-            >
-              <Text style={[ss.logoNText, { fontFamily: SERIF }]}>N</Text>
-            </LinearGradient>
+            <Image source={logoImage} style={ss.logoImage} resizeMode="contain" />
             <Text style={[ss.logoLabel, { fontFamily: SERIF, color: colors.foreground }]}>The Nuptial Plan</Text>
             <Text style={[ss.version, { fontFamily: SANS, color: colors.tertiaryText }]}>Version 1.0.0 · Pour que rien ne manque à votre bonheur</Text>
           </View>
@@ -358,6 +353,7 @@ const ss = StyleSheet.create({
   rowValue: { fontSize: 12, marginRight: 4 },
   appInfo: { alignItems: 'center', paddingTop: 24, paddingBottom: 8 },
   logoWrap: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 18, alignItems: 'center', gap: 8, overflow: 'hidden', minWidth: 220 },
+  logoImage: { width: 58, height: 58 },
   logoNGrad: { width: 36, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   logoNText: { fontSize: 22, lineHeight: 24, color: '#C8A96E' },
   logoLabel: { fontSize: 20 },

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Image,
   KeyboardAvoidingView, ScrollView, Platform, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,6 +11,7 @@ import * as AuthSession from 'expo-auth-session';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
+import logoImage from '@/assets/images/tnp-gold-logo.png';
 
 // Required: complete any pending OAuth session on mount.
 WebBrowser.maybeCompleteAuthSession();
@@ -140,9 +141,7 @@ export default function SignInScreen() {
         >
           {/* ── Logo ── */}
           <View style={ss.logoArea}>
-            <View style={ss.monogram}>
-              <Text style={[ss.monogramText, { fontFamily: SERIF }]}>N</Text>
-            </View>
+            <Image source={logoImage} style={ss.logoImage} resizeMode="contain" />
             <Text style={[ss.wordmark, { fontFamily: SERIF }]}>The Nuptial Plan</Text>
             <Text style={[ss.tagline, { fontFamily: SANS }]}>Pour que rien ne manque à votre bonheur</Text>
           </View>
@@ -256,6 +255,7 @@ const ss = StyleSheet.create({
     width: 64, height: 64, borderWidth: 1.5, borderColor: GOLD,
     alignItems: 'center', justifyContent: 'center', marginBottom: 12,
   },
+  logoImage: { width: 58, height: 58, marginBottom: 8 },
   monogramText: { fontSize: 36, color: GOLD, lineHeight: 40 },
   wordmark: { fontSize: 26, color: IVORY, marginBottom: 4 },
   tagline: { fontSize: 11, color: MUTED, letterSpacing: 0.4 },

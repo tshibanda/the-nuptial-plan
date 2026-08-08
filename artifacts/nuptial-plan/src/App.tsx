@@ -49,7 +49,7 @@ const clerkAppearance = {
   options: {
     logoPlacement: 'inside' as const,
     logoLinkUrl: basePath || '/',
-    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
+    logoImageUrl: `${window.location.origin}${basePath}/tnp-gold-logo.png`,
   },
   variables: {
     colorPrimary: '#5D2D5D',           // prune
@@ -148,9 +148,13 @@ function SignUpPage() {
 function LandingPage() {
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-6 text-center">
-      {/* Monogram */}
-      <div className="mb-6 flex h-16 w-16 items-center justify-center border border-[#C8A96E]">
-        <span className="font-serif text-3xl text-[#C8A96E]">N</span>
+      {/* Logo */}
+      <div className="mb-6 flex h-20 w-20 items-center justify-center">
+        <img
+          src="/tnp-gold-logo.png"
+          alt="The Nuptial Plan"
+          className="h-full w-full object-contain"
+        />
       </div>
 
       <h1 className="mb-2 font-serif text-4xl text-[#3C1A3C]">The Nuptial Plan</h1>
