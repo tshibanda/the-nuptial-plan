@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
-import { Plus, UserCircle2, Users, CheckSquare, FileUp, AlertTriangle } from 'lucide-react';
+import { Plus, UserCircle2, Users, CheckSquare, FileUp, AlertTriangle, Search } from 'lucide-react';
 import { PageTour } from '@/components/ui/page-tour';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
@@ -145,6 +145,7 @@ export default function Invites() {
   const { data: stats } = useGetGuestStats(activeWeddingId!);
   const [open, setOpen] = useState(false);
   const [editingGuest, setEditingGuest] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -250,6 +251,10 @@ export default function Invites() {
   }
 
   const confirmedPct = stats ? Math.round((stats.confirmed / stats.total) * 100) : 0;
+  const normalizedSearchQuery = normalizeStr(searchQuery);
+  const filteredGuests = normalizedSearchQuery
+    ? guests.filter((guest) => normalizeStr(guest.name).includes(normalizedSearchQuery))
+    : guests;
 
   return (
     <div>
@@ -376,12 +381,33 @@ export default function Invites() {
 
       {/* Guests List */}
       <div className="card-depth overflow-hidden">
+        <div className="border-b border-[#e3dbd0] bg-white/40 px-4 py-3 sm:px-5">
+          <div className="relative max-w-md">
+            <Search
+              size={16}
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#858b89]"
+            />
+            <Input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Rechercher un invité par son nom"
+              aria-label="Rechercher un invité par son nom"
+              className="h-10 rounded-xl border-[#e3dbd0] bg-white pl-9 pr-3 text-sm"
+              data-testid="input-search-guest"
+            />
+          </div>
+        </div>
         {guests.length === 0 ? (
           <div className="px-6 py-12 text-center text-[11px] text-[#858b89]">
             Aucun invité. Cliquez sur "Ajouter un invité" pour commencer, ou importez un fichier Excel.
           </div>
+        ) : filteredGuests.length === 0 ? (
+          <div className="px-6 py-12 text-center text-[11px] text-[#858b89]">
+            Aucun invité ne correspond à « {searchQuery} ».
+          </div>
         ) : (
-          guests.map((guest) => {
+          filteredGuests.map((guest) => {
             const initials = guest.name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
             return (
               <div key={guest.id} className="flex items-center gap-3 border-b border-[#e3dbd0] px-4 py-4 last:border-0 sm:px-5">
