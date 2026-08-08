@@ -19,7 +19,12 @@
     "autolinking": {
       "exclude": [
         "@clerk/expo"
-      ]
+      ],
+      "ios": {
+        "exclude": [
+          "@clerk/expo"
+        ]
+      }
     },
     "android": {},
     "web": {
