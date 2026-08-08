@@ -234,7 +234,7 @@ function BurgerSheet({
           bs.sheet,
           {
             backgroundColor: isDark ? colors.card : '#FDFAF7',
-            paddingBottom: Math.max(insets.bottom + 2, 12),
+            paddingBottom: Math.max(insets.bottom, 8),
           },
         ]}
       >
