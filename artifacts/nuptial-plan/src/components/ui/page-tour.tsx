@@ -29,6 +29,7 @@ export function PageTour({ tourKey, pageTitle, pageIcon: PageIcon, steps, forceO
       const t = setTimeout(() => setOpen(true), 400);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [storageKey]);
 
   // External trigger: increment forceOpen to open the tour programmatically

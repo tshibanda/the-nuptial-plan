@@ -133,7 +133,10 @@ export default function Parametres() {
   const { activeWeddingId, setActiveWeddingId } = useActiveWedding();
   const [, navigate] = useLocation();
   const { data: wedding, isLoading } = useGetWedding(activeWeddingId ?? 0, {
-    query: { enabled: !!activeWeddingId },
+    query: {
+      enabled: !!activeWeddingId,
+      queryKey: getGetWeddingQueryKey(activeWeddingId ?? 0),
+    },
   });
   const updateWedding = useUpdateWedding();
   const deleteWedding = useDeleteWedding();
@@ -243,16 +246,7 @@ export default function Parametres() {
     );
   };
 
-  if (!activeWeddingId) {
-    return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
-        <p className="font-serif text-[24px] text-foreground/60">Aucun mariage sélectionné</p>
-        <p className="text-[13px] text-muted-foreground">Sélectionnez un mariage dans la barre latérale pour accéder à ses paramètres.</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
+  if (activeWeddingId && isLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <p className="text-[13px] text-muted-foreground">Chargement…</p>
@@ -309,12 +303,19 @@ export default function Parametres() {
         <p className="eyebrow mb-2 text-[#a8893e]">Configuration</p>
         <h1 className="font-serif text-[38px] leading-[0.92] text-foreground">Paramètres</h1>
         <p className="mt-2 text-[13px] text-muted-foreground">
-          Modifiez les informations du dossier de mariage actif.
+          {activeWeddingId
+            ? 'Modifiez les informations du dossier de mariage actif.'
+            : 'Gérez votre profil et vos guides, puis créez un dossier quand vous serez prêt.'}
         </p>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {!activeWeddingId && (
+            <div className="rounded-2xl border border-accent/30 bg-accent/10 px-4 py-3 text-[12px] text-muted-foreground">
+              Aucun mariage actif. Les informations du dossier apparaîtront ici après la création ou la sélection d’un mariage.
+            </div>
+          )}
           {/* ── Mariés ── */}
           <SettingsSection icon={User} eyebrow="Identité" title="Les mariés">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -581,7 +582,7 @@ export default function Parametres() {
             <Button
               type="submit"
               className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={updateWedding.isPending}
+              disabled={!activeWeddingId || updateWedding.isPending}
             >
               <Save size={14} />
               {updateWedding.isPending ? 'Sauvegarde…' : 'Sauvegarder les modifications'}

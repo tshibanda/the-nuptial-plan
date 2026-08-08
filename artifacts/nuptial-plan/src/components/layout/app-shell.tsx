@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, ReactNode } from 'react';
 import { NuptiaChat } from '@/components/nuptia/nuptia-chat';
+import { PageTour } from '@/components/ui/page-tour';
 import { useUser, useClerk } from '@clerk/react';
 import { Link, useLocation } from 'wouter';
 import {
@@ -21,6 +22,7 @@ import {
   CreditCard,
   UserCircle2,
   Heart,
+  Sparkles,
 } from 'lucide-react';
 import {
   useListWeddings,
@@ -336,6 +338,20 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: weddingSummary } = useGetWeddingSummary(activeWeddingId ?? 0);
 
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
+  const noWeddingTour = useMemo(() => {
+    const tours: Record<string, { title: string; body: string }> = {
+      '/': { title: 'Votre aperçu', body: 'Cette page présente les indicateurs principaux du mariage actif. Créez ou sélectionnez un dossier pour afficher vos données.' },
+      '/calendrier': { title: 'Votre calendrier', body: 'Le calendrier rassemble les événements importants de votre mariage. Il sera disponible dès qu’un dossier sera créé.' },
+      '/prestataires': { title: 'Vos prestataires', body: 'Centralisez ici les coordonnées et le suivi de vos prestataires une fois votre premier dossier créé.' },
+      '/invites': { title: 'Vos invités', body: 'Gérez votre liste d’invités et leurs réponses depuis cette page après avoir créé un dossier.' },
+      '/budget': { title: 'Votre budget', body: 'Suivez les catégories et dépenses du mariage actif dès qu’un dossier est disponible.' },
+      '/contrats': { title: 'Vos contrats', body: 'Retrouvez ici les contrats liés au dossier de mariage sélectionné.' },
+      '/paiements': { title: 'Vos paiements', body: 'Suivez les échéances et paiements du mariage actif depuis cet espace.' },
+      '/documents': { title: 'Vos documents', body: 'Conservez les documents importants dans le dossier de mariage correspondant.' },
+      '/jour-j': { title: 'Le Jour J', body: 'Préparez votre déroulé du jour J dès qu’un dossier de mariage est créé.' },
+    };
+    return tours[location] ?? null;
+  }, [location]);
 
   const notifications = useMemo(() => {
     if (!activeWeddingId) return [];
@@ -828,8 +844,16 @@ export function AppShell({ children }: { children: ReactNode }) {
           {/* Page content — ambient gradient background */}
           <div className="content-bg flex-1 overflow-y-auto overscroll-contain">
             <div className="mx-auto max-w-[1390px] px-5 pt-9 pb-28 sm:px-9 lg:px-12 lg:pt-12 lg:pb-32">
-              {!isLoading && weddings.length === 0 ? (
+              {!isLoading && !activeWeddingId && location !== '/parametres' ? (
                 <div className="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
+                  {noWeddingTour && (
+                    <PageTour
+                      tourKey={`no-wedding-${location.replace(/\W+/g, '-')}`}
+                      pageTitle={noWeddingTour.title}
+                      pageIcon={Sparkles}
+                      steps={[{ icon: Sparkles, title: 'Commencer sans mariage actif', body: noWeddingTour.body }]}
+                    />
+                  )}
                   <div className="relative flex h-20 w-20 items-center justify-center rounded-full"
                     style={{
                       background: 'linear-gradient(145deg, rgba(204,140,148,0.28) 0%, rgba(204,140,148,0.10) 100%)',
@@ -842,15 +866,17 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <p className="eyebrow mb-3 text-[#a8893e]">Studio nuptial</p>
                     <h2 className="font-serif text-[38px] leading-[0.92] text-foreground">Bienvenue dans<br/>votre studio</h2>
                     <p className="mt-3 text-[13px] text-muted-foreground">
-                      Commencez par créer votre premier dossier de mariage.
+                      {weddings.length === 0
+                        ? 'Commencez par créer votre premier dossier de mariage.'
+                        : 'Sélectionnez un mariage dans la barre latérale pour afficher ses données.'}
                     </p>
                   </div>
                   <button
                     className="btn-glow flex items-center gap-2 rounded-xl px-7 py-3 text-[11px] font-semibold uppercase tracking-[0.12em]"
-                    onClick={() => setCreateOpen(true)}
+                    onClick={() => weddings.length === 0 ? setCreateOpen(true) : setActiveWeddingId(weddings[0].id)}
                     data-testid="button-create-first-wedding"
                   >
-                    <Plus size={14} /> Créer un dossier de mariage
+                    <Plus size={14} /> {weddings.length === 0 ? 'Créer un dossier de mariage' : 'Sélectionner un dossier'}
                   </button>
                 </div>
               ) : (
