@@ -12,6 +12,7 @@ import contractsRouter from "./contracts";
 import paymentsRouter from "./payments";
 import documentsRouter from "./documents";
 import storageRouter from "./storage";
+import dashboardRouter from "./dashboard";
 import openaiConversationsRouter from "./openai/conversations";
 
 const router: IRouter = Router();
@@ -23,6 +24,7 @@ router.use(healthRouter);
 router.use(requireAuth);
 router.use(storageRouter);
 router.use("/openai/conversations", openaiConversationsRouter);
+router.use(dashboardRouter);
 router.use("/weddings", weddingsRouter);
 router.use("/weddings/:weddingId/vendors", requireWeddingOwnership, vendorsRouter);
 router.use("/weddings/:weddingId/guests", requireWeddingOwnership, guestsRouter);

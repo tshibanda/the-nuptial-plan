@@ -101,6 +101,7 @@ export function useDocumentUpload(
             name: file.name,
             size: file.size,
             contentType: file.type || 'application/octet-stream',
+            weddingId,
           }),
         });
         if (!urlRes.ok) throw new Error('Impossible d\'obtenir l\'URL de téléchargement');

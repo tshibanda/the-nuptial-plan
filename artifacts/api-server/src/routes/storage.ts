@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { Router, type IRouter, type Request, type Response } from 'express';
 
-interface UploadUrlBody { name: string; size: number; contentType: string; }
+interface UploadUrlBody { name: string; size: number; contentType: string; weddingId: number; }
 
 const RequestUploadUrlBody = {
   safeParse(data: unknown): { success: true; data: UploadUrlBody } | { success: false } {
@@ -11,6 +11,7 @@ const RequestUploadUrlBody = {
       'name' in data && typeof (data as UploadUrlBody).name === 'string' &&
       'size' in data && typeof (data as UploadUrlBody).size === 'number' &&
       'contentType' in data && typeof (data as UploadUrlBody).contentType === 'string'
+       && 'weddingId' in data && typeof (data as UploadUrlBody).weddingId === 'number'
     ) {
       return { success: true, data: data as UploadUrlBody };
     }
@@ -65,7 +66,19 @@ router.post(
     }
 
     try {
-      const { name, size, contentType } = parsed.data;
+      const { name, size, contentType, weddingId } = parsed.data;
+      const ownerId = (req as Request & { userId?: string }).userId;
+      const [wedding] = await db
+        .select({ id: weddingsTable.id })
+        .from(weddingsTable)
+        .where(and(
+          eq(weddingsTable.id, weddingId),
+          eq(weddingsTable.ownerId, ownerId ?? ''),
+        ));
+      if (!wedding) {
+        res.status(404).json({ error: 'Wedding not found' });
+        return;
+      }
 
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
       const objectPath =

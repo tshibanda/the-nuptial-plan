@@ -1,7 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, weddingsTable, paymentsTable, contractsTable, milestonesTable, vendorsTable } from "@workspace/db";
+import { db, weddingsTable, paymentsTable, contractsTable, vendorsTable } from "@workspace/db";
 import { eq, inArray } from "drizzle-orm";
-import { GetDashboardOverviewResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
@@ -15,9 +14,6 @@ router.get("/dashboard/overview", async (req, res): Promise<void> => {
   const contracts = weddingIds.length
     ? await db.select().from(contractsTable).where(inArray(contractsTable.weddingId, weddingIds))
     : [];
-  const milestones = weddingIds.length
-    ? await db.select().from(milestonesTable).where(inArray(milestonesTable.weddingId, weddingIds))
-    : [];
   const vendors = weddingIds.length
     ? await db.select().from(vendorsTable).where(inArray(vendorsTable.weddingId, weddingIds))
     : [];
@@ -27,28 +23,21 @@ router.get("/dashboard/overview", async (req, res): Promise<void> => {
 
   const upcomingCount = weddings.filter(w => w.weddingDate >= todayStr).length;
 
-  const totalBudgetCommitted = vendors.reduce((sum, v) => sum + parseFloat(v.totalAmount ?? "0"), 0);
-  const totalBudgetRemaining = weddings.reduce((sum, w) => sum + parseFloat(w.budgetTotal ?? "0"), 0) - totalBudgetCommitted;
+  const totalBudgetCommitted = vendors.reduce((sum, v) => sum + parseFloat(v.totalAmountCents ?? "0"), 0);
+  const totalBudgetRemaining = weddings.reduce((sum, w) => sum + parseFloat(w.totalBudget ?? "0"), 0) - totalBudgetCommitted;
 
   const pendingPaymentsCount = payments.filter(p => p.status !== "Payé").length;
   const pendingContractsCount = contracts.filter(c => c.status !== "Signé").length;
 
-  const upcomingMilestones = milestones
-    .filter(m => !m.completed && m.dueDate >= todayStr)
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
-    .slice(0, 5);
-
-  res.json(
-    GetDashboardOverviewResponse.parse({
-      totalWeddings: weddings.length,
-      upcomingCount,
-      totalBudgetCommitted,
-      totalBudgetRemaining,
-      pendingPaymentsCount,
-      pendingContractsCount,
-      upcomingMilestones,
-    })
-  );
+  res.json({
+    totalWeddings: weddings.length,
+    upcomingCount,
+    totalBudgetCommitted,
+    totalBudgetRemaining,
+    pendingPaymentsCount,
+    pendingContractsCount,
+    upcomingMilestones: [],
+  });
 });
 
 export default router;
