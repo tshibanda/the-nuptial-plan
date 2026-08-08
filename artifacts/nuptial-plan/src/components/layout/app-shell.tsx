@@ -830,7 +830,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           {/* Page content — ambient gradient background */}
           <div className="content-bg flex-1 overflow-y-auto overscroll-contain">
-            <div className="mx-auto max-w-[1390px] px-5 py-9 sm:px-9 lg:px-12 lg:py-12">
+            <div className="mx-auto max-w-[1390px] px-5 pt-9 pb-28 sm:px-9 lg:px-12 lg:pt-12 lg:pb-32">
               {!isLoading && weddings.length === 0 ? (
                 <div className="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
                   <div className="relative flex h-20 w-20 items-center justify-center rounded-full"
