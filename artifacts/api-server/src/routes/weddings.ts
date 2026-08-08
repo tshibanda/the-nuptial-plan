@@ -9,16 +9,19 @@ import {
   paymentsTable,
   activityTable,
 } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { CreateWeddingBody, UpdateWeddingBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
 const p = (req: { params: Record<string, string> }, key: string) => Number(req.params[key]);
+const owner = (req: unknown) => (req as { userId?: string }).userId;
 
 // List all weddings
 router.get("/", async (req, res): Promise<void> => {
-  const weddings = await db.select().from(weddingsTable).orderBy(weddingsTable.weddingDate);
+  const weddings = await db.select().from(weddingsTable)
+    .where(eq(weddingsTable.ownerId, owner(req)!))
+    .orderBy(weddingsTable.weddingDate);
   res.json(weddings);
 });
 
@@ -29,7 +32,9 @@ router.post("/", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [wedding] = await db.insert(weddingsTable).values(parsed.data).returning();
+  const [wedding] = await db.insert(weddingsTable)
+    .values({ ...parsed.data, ownerId: owner(req)! })
+    .returning();
   await db.insert(activityTable).values({
     weddingId: wedding!.id,
     description: `Nouveau mariage créé : ${wedding!.names}`,
@@ -45,7 +50,8 @@ router.post("/", async (req, res): Promise<void> => {
 // Get a wedding by id
 router.get("/:id", async (req, res): Promise<void> => {
   const id = p(req, "id");
-  const [wedding] = await db.select().from(weddingsTable).where(eq(weddingsTable.id, id));
+  const [wedding] = await db.select().from(weddingsTable)
+    .where(and(eq(weddingsTable.id, id), eq(weddingsTable.ownerId, owner(req)!)));
   if (!wedding) { res.status(404).json({ error: "Not found" }); return; }
   res.json(wedding);
 });
@@ -55,7 +61,8 @@ router.patch("/:id", async (req, res): Promise<void> => {
   const id = p(req, "id");
   const body = UpdateWeddingBody.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
-  const [wedding] = await db.update(weddingsTable).set(body.data).where(eq(weddingsTable.id, id)).returning();
+  const [wedding] = await db.update(weddingsTable).set(body.data)
+    .where(and(eq(weddingsTable.id, id), eq(weddingsTable.ownerId, owner(req)!))).returning();
   if (!wedding) { res.status(404).json({ error: "Not found" }); return; }
   res.json(wedding);
 });
@@ -63,14 +70,16 @@ router.patch("/:id", async (req, res): Promise<void> => {
 // Delete a wedding
 router.delete("/:id", async (req, res): Promise<void> => {
   const id = p(req, "id");
-  await db.delete(weddingsTable).where(eq(weddingsTable.id, id));
+  await db.delete(weddingsTable)
+    .where(and(eq(weddingsTable.id, id), eq(weddingsTable.ownerId, owner(req)!)));
   res.status(204).send();
 });
 
 // Dashboard summary
 router.get("/:id/summary", async (req, res): Promise<void> => {
   const id = p(req, "id");
-  const [wedding] = await db.select().from(weddingsTable).where(eq(weddingsTable.id, id));
+  const [wedding] = await db.select().from(weddingsTable)
+    .where(and(eq(weddingsTable.id, id), eq(weddingsTable.ownerId, owner(req)!)));
   if (!wedding) { res.status(404).json({ error: "Not found" }); return; }
 
   const now = new Date();
@@ -118,6 +127,10 @@ router.get("/:id/summary", async (req, res): Promise<void> => {
 // Activity feed
 router.get("/:id/activity", async (req, res): Promise<void> => {
   const id = p(req, "id");
+  const [wedding] = await db.select({ id: weddingsTable.id })
+    .from(weddingsTable)
+    .where(and(eq(weddingsTable.id, id), eq(weddingsTable.ownerId, owner(req)!)));
+  if (!wedding) { res.status(404).json({ error: "Not found" }); return; }
   const activity = await db
     .select()
     .from(activityTable)

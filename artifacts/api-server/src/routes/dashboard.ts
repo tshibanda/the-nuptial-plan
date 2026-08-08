@@ -1,15 +1,26 @@
 import { Router, type IRouter } from "express";
 import { db, weddingsTable, paymentsTable, contractsTable, milestonesTable, vendorsTable } from "@workspace/db";
+import { eq, inArray } from "drizzle-orm";
 import { GetDashboardOverviewResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
 router.get("/dashboard/overview", async (req, res): Promise<void> => {
-  const weddings = await db.select().from(weddingsTable);
-  const payments = await db.select().from(paymentsTable);
-  const contracts = await db.select().from(contractsTable);
-  const milestones = await db.select().from(milestonesTable);
-  const vendors = await db.select().from(vendorsTable);
+  const ownerId = (req as typeof req & { userId: string }).userId;
+  const weddings = await db.select().from(weddingsTable).where(eq(weddingsTable.ownerId, ownerId));
+  const weddingIds = weddings.map((w) => w.id);
+  const payments = weddingIds.length
+    ? await db.select().from(paymentsTable).where(inArray(paymentsTable.weddingId, weddingIds))
+    : [];
+  const contracts = weddingIds.length
+    ? await db.select().from(contractsTable).where(inArray(contractsTable.weddingId, weddingIds))
+    : [];
+  const milestones = weddingIds.length
+    ? await db.select().from(milestonesTable).where(inArray(milestonesTable.weddingId, weddingIds))
+    : [];
+  const vendors = weddingIds.length
+    ? await db.select().from(vendorsTable).where(inArray(vendorsTable.weddingId, weddingIds))
+    : [];
 
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];

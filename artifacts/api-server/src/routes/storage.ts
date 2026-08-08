@@ -23,6 +23,8 @@ const RequestUploadUrlResponse = {
 };
 
 import { ObjectPermission } from '../lib/objectAcl';
+import { and, eq } from 'drizzle-orm';
+import { db, documentsTable, weddingsTable } from '@workspace/db';
 import {
   ObjectNotFoundError,
   ObjectStorageService,
@@ -134,6 +136,19 @@ router.get('/storage/objects/*path', async (req: Request, res: Response) => {
     const raw = req.params.path;
     const wildcardPath = Array.isArray(raw) ? raw.join('/') : raw;
     const objectPath = `/objects/${wildcardPath}`;
+    const ownerId = (req as Request & { userId?: string }).userId;
+    const [document] = await db
+      .select({ id: documentsTable.id })
+      .from(documentsTable)
+      .innerJoin(weddingsTable, eq(documentsTable.weddingId, weddingsTable.id))
+      .where(and(
+        eq(documentsTable.objectPath, objectPath),
+        eq(weddingsTable.ownerId, ownerId ?? ''),
+      ));
+    if (!document) {
+      res.status(404).json({ error: 'Object not found' });
+      return;
+    }
     const objectFile =
       await objectStorageService.getObjectEntityFile(objectPath);
 

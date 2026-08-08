@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { requireAuth } from "../middlewares/requireAuth";
+import { requireWeddingOwnership } from "../middlewares/requireWeddingOwnership";
 import healthRouter from "./health";
 import weddingsRouter from "./weddings";
 import vendorsRouter from "./vendors";
@@ -23,13 +24,13 @@ router.use(requireAuth);
 router.use(storageRouter);
 router.use("/openai/conversations", openaiConversationsRouter);
 router.use("/weddings", weddingsRouter);
-router.use("/weddings/:weddingId/vendors", vendorsRouter);
-router.use("/weddings/:weddingId/guests", guestsRouter);
-router.use("/weddings/:weddingId/budget-categories", budgetRouter);
-router.use("/weddings/:weddingId/budget-summary", budgetSummaryRouter);
-router.use("/weddings/:weddingId/events", eventsRouter);
-router.use("/weddings/:weddingId/contracts", contractsRouter);
-router.use("/weddings/:weddingId/payments", paymentsRouter);
-router.use("/weddings/:weddingId/documents", documentsRouter);
+router.use("/weddings/:weddingId/vendors", requireWeddingOwnership, vendorsRouter);
+router.use("/weddings/:weddingId/guests", requireWeddingOwnership, guestsRouter);
+router.use("/weddings/:weddingId/budget-categories", requireWeddingOwnership, budgetRouter);
+router.use("/weddings/:weddingId/budget-summary", requireWeddingOwnership, budgetSummaryRouter);
+router.use("/weddings/:weddingId/events", requireWeddingOwnership, eventsRouter);
+router.use("/weddings/:weddingId/contracts", requireWeddingOwnership, contractsRouter);
+router.use("/weddings/:weddingId/payments", requireWeddingOwnership, paymentsRouter);
+router.use("/weddings/:weddingId/documents", requireWeddingOwnership, documentsRouter);
 
 export default router;

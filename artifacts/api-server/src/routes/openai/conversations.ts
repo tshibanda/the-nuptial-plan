@@ -5,6 +5,7 @@ import { eq, asc } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router: IRouter = Router();
+const owner = (req: unknown) => (req as { userId?: string }).userId!;
 
 const SYSTEM_PROMPT = `Tu es Nuptia, l'assistante IA du Nuptial Plan — une application de planification de mariage élégante et bienveillante.
 
@@ -19,10 +20,11 @@ Si un contexte de mariage t'est fourni (noms, date, lieu, budget), utilise-le po
 Tu ne peux pas accéder à Internet ni modifier directement les données de l'application. Tu peux en revanche guider les utilisateurs, répondre à leurs questions, les inspirer et les aider à prendre de meilleures décisions.`;
 
 /* ── List conversations ──────────────────────────────────────────────────── */
-router.get("/", async (_req, res): Promise<void> => {
+router.get("/", async (req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(conversations)
+    .where(eq(conversations.ownerId, owner(req)))
     .orderBy(asc(conversations.createdAt));
   res.json(rows);
 });
@@ -36,7 +38,7 @@ router.post("/", async (req, res): Promise<void> => {
   }
   const [conv] = await db
     .insert(conversations)
-    .values({ title: title.slice(0, 200) })
+    .values({ title: title.slice(0, 200), ownerId: owner(req) })
     .returning();
   res.status(201).json(conv);
 });
@@ -48,6 +50,7 @@ router.get("/:id", async (req, res): Promise<void> => {
     .select()
     .from(conversations)
     .where(eq(conversations.id, id));
+  if (conv?.ownerId !== owner(req)) { res.status(404).json({ error: "Not found" }); return; }
   if (!conv) { res.status(404).json({ error: "Not found" }); return; }
 
   const msgs = await db
@@ -67,6 +70,7 @@ router.delete("/:id", async (req, res): Promise<void> => {
     .from(conversations)
     .where(eq(conversations.id, id));
   if (!conv) { res.status(404).json({ error: "Not found" }); return; }
+  if (conv.ownerId !== owner(req)) { res.status(404).json({ error: "Not found" }); return; }
   await db.delete(conversations).where(eq(conversations.id, id));
   res.status(204).end();
 });
@@ -74,6 +78,8 @@ router.delete("/:id", async (req, res): Promise<void> => {
 /* ── List messages ───────────────────────────────────────────────────────── */
 router.get("/:id/messages", async (req, res): Promise<void> => {
   const id = Number(req.params["id"]);
+  const [conv] = await db.select().from(conversations).where(eq(conversations.id, id));
+  if (!conv || conv.ownerId !== owner(req)) { res.status(404).json({ error: "Not found" }); return; }
   const msgs = await db
     .select()
     .from(messages)
@@ -91,6 +97,7 @@ router.post("/:id/messages", async (req, res): Promise<void> => {
     .from(conversations)
     .where(eq(conversations.id, id));
   if (!conv) { res.status(404).json({ error: "Not found" }); return; }
+  if (conv.ownerId !== owner(req)) { res.status(404).json({ error: "Not found" }); return; }
 
   const { content, weddingContext } = req.body as {
     content?: string;
