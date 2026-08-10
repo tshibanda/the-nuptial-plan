@@ -1,0 +1,99 @@
+STOP. Le build EAS a échoué EXACTEMENT à la même ligne qu'avant, avec la même
+version dans le chemin :
+
+node_modules/.pnpm/expo-file-system@18.0.12_expo@54.0.36_.../ios/FileSystemModule.swift:10:84
+cannot find 'ExpoAppDelegate' in scope
+
+Conclusion : expo-file-system est TOUJOURS en 18.0.12. La correction précédente
+n'a pas pris effet. Ne me redis pas que c'est corrigé sans preuve.
+
+RAPPEL DE LA CAUSE (vérifiée, ne la remets pas en question)
+expo-file-system 18.0.12 = Expo SDK 52. Le projet est sur expo@54.0.36.
+La 18.0.12 appelle `ExpoAppDelegate.getSubscriberOfType(...)`, API absente de
+expo-modules-core@3.0.30 (SDK 54). La version SDK 54 est expo-file-system 19.0.23,
+dont FileSystemModule.swift ne contient plus cette ligne.
+
+C'est un monorepo pnpm (app dans artifacts/mobile, node_modules à la racine).
+La difficulté vient très probablement de là.
+
+ÉTAPE 1 — DIAGNOSTIC (fais ça AVANT toute modification, montre-moi les sorties brutes)
+
+  a) Où la version est-elle déclarée ?
+     grep -rn "expo-file-system" --include=package.json --include=pnpm-workspace.yaml \
+       --include=pnpm-lock.yaml --include=.npmrc . | grep -v node_modules
+
+  b) Qui la tire ?
+     pnpm why expo-file-system -r
+
+  c) Qu'y a-t-il réellement sur le disque ?
+     ls -d node_modules/.pnpm/expo-file-system@*
+
+  Vérifie en particulier ces trois pièges :
+   - artifacts/mobile/package.json déclare peut-être "expo-file-system": "catalog:"
+     et la vraie version est figée dans pnpm-workspace.yaml (catalog) → c'est LÀ
+     qu'il faut la changer, `expo install --fix` ne la touchera pas.
+   - un bloc "pnpm": { "overrides": ... } ou "resolutions" dans le package.json
+     racine peut forcer la 18.x.
+   - expo-file-system peut n'être qu'une dépendance transitive d'un autre package,
+     donc absente de artifacts/mobile/package.json.
+
+ÉTAPE 2 — CORRECTION
+
+  Selon ce que révèle l'étape 1 :
+   - version dans un package.json → passe-la à "~19.0.23"
+   - version dans un catalog pnpm-workspace.yaml → change-la là
+   - dépendance transitive uniquement → ajoute à la racine du monorepo :
+       "pnpm": { "overrides": { "expo-file-system": "19.0.23" } }
+     ET ajoute aussi "expo-file-system": "~19.0.23" dans les dependencies de
+     artifacts/mobile/package.json.
+
+  Puis, depuis la racine :
+     pnpm install
+
+ÉTAPE 3 — PREUVE OBLIGATOIRE (ne passe pas à la suite sans ça)
+
+  Exécute et colle-moi la sortie brute :
+     ls -d node_modules/.pnpm/expo-file-system@*
+     grep -c "ExpoAppDelegate" node_modules/expo-file-system/ios/FileSystemModule.swift \
+       2>/dev/null || echo "chemin à adapter selon pnpm"
+
+  Le résultat DOIT montrer uniquement du 19.0.x et AUCUN répertoire 18.x.
+  Tant que `expo-file-system@18` existe encore dans .pnpm, le build échouera à
+  l'identique. Si tu n'arrives pas à l'éliminer, arrête-toi et dis-le moi
+  explicitement au lieu de lancer un build.
+
+ÉTAPE 4 — MIGRATION DU CODE JS
+
+  expo-file-system 19 a changé d'API. Cherche dans tout artifacts/mobile (hors
+  node_modules) les usages de : documentDirectory, cacheDirectory,
+  readAsStringAsync, writeAsStringAsync, getInfoAsync, makeDirectoryAsync,
+  deleteAsync, copyAsync, moveAsync, downloadAsync, uploadAsync, EncodingType,
+  readDirectoryAsync.
+  Dans chaque fichier concerné, remplace
+      from 'expo-file-system'
+  par
+      from 'expo-file-system/legacy'
+  Ne réécris PAS vers la nouvelle API File/Directory. Liste-moi les fichiers modifiés.
+
+ÉTAPE 5 — ALIGNEMENT GLOBAL
+
+  cd artifacts/mobile && npx expo install --check
+  Colle-moi la sortie complète. S'il reste d'autres packages désalignés SDK 54,
+  applique-leur le même traitement qu'à l'étape 2 (pnpm ne respecte pas toujours
+  `expo install --fix` en workspace). Puis : npx expo-doctor
+
+ÉTAPE 6 — REBUILD PROPRE
+
+  rm -rf artifacts/mobile/ios/Pods artifacts/mobile/ios/Podfile.lock artifacts/mobile/ios/build
+  cd artifacts/mobile && npx expo prebuild -p ios --clean
+  Vérifie que ios/Podfile.properties.json contient toujours
+  "ios.deploymentTarget": "17.0" (correctif Clerk, ne le casse pas).
+  Assure-toi que package.json, pnpm-lock.yaml et pnpm-workspace.yaml modifiés sont
+  bien COMMITÉS avant de lancer le build EAS — sinon EAS rebuildera l'ancien état.
+  Puis lance le build iOS.
+
+CONTRAINTES
+- Ne downgrade ni expo, ni react-native, ni expo-modules-core.
+- Ne modifie rien dans node_modules ni .pnpm à la main.
+- Ne touche pas au correctif Clerk (deploymentTarget 17.0, plugin @clerk/expo).
+- Ne déclare aucune étape "terminée" sans la sortie de commande correspondante.
