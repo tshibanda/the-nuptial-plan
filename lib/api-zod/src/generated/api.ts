@@ -496,6 +496,20 @@ export const DeleteGuestResponse = zod.void()
 
 
 /**
+ * @summary Create or retrieve a public RSVP link for a guest
+ */
+export const CreateGuestRsvpLinkParams = zod.object({
+  "weddingId": zod.coerce.number(),
+  "id": zod.coerce.number()
+})
+
+export const CreateGuestRsvpLinkResponse = zod.object({
+  "token": zod.string(),
+  "url": zod.string()
+})
+
+
+/**
  * @summary RSVP stats for a wedding
  */
 export const GetGuestStatsParams = zod.object({
@@ -531,6 +545,89 @@ export const ImportGuestsBody = zod.object({
 export const ImportGuestsResponse = zod.object({
   "created": zod.number(),
   "skipped": zod.number()
+})
+
+
+/**
+ * @summary Get the invitation details for a public RSVP link
+ */
+export const GetPublicRsvpParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const GetPublicRsvpResponse = zod.object({
+  "guest": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "rsvpStatus": zod.enum(['confirmed', 'pending', 'declined'])
+}),
+  "wedding": zod.object({
+  "id": zod.number(),
+  "names": zod.string(),
+  "weddingDate": zod.string(),
+  "venue": zod.string()
+})
+})
+
+
+/**
+ * @summary Save a guest RSVP response
+ */
+export const RespondPublicRsvpParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const RespondPublicRsvpBody = zod.object({
+  "rsvpStatus": zod.enum(['confirmed', 'declined'])
+})
+
+export const RespondPublicRsvpResponse = zod.object({
+  "guest": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "rsvpStatus": zod.enum(['confirmed', 'declined'])
+})
+})
+
+
+/**
+ * @summary List notifications for a wedding
+ */
+export const ListNotificationsQueryParams = zod.object({
+  "weddingId": zod.coerce.number()
+})
+
+export const ListNotificationsResponseItem = zod.object({
+  "id": zod.number(),
+  "weddingId": zod.number(),
+  "kind": zod.string(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "route": zod.string().nullish(),
+  "read": zod.boolean(),
+  "dedupeKey": zod.string(),
+  "createdAt": zod.string()
+})
+export const ListNotificationsResponse = zod.array(ListNotificationsResponseItem)
+
+
+/**
+ * @summary Mark a notification as read
+ */
+export const MarkNotificationReadParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkNotificationReadResponse = zod.object({
+  "id": zod.number(),
+  "weddingId": zod.number(),
+  "kind": zod.string(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "route": zod.string().nullish(),
+  "read": zod.boolean(),
+  "dedupeKey": zod.string(),
+  "createdAt": zod.string()
 })
 
 

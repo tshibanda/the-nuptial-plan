@@ -18,6 +18,10 @@ tags:
     description: Planner address book and favorite vendors
   - name: guests
     description: Guest list management
+  - name: public-rsvp
+    description: Public guest RSVP responses
+  - name: notifications
+    description: Planner notifications
   - name: budget
     description: Budget tracking
   - name: events
@@ -483,6 +487,28 @@ paths:
         "204":
           description: Deleted
 
+  /weddings/{weddingId}/guests/{id}/rsvp-link:
+    post:
+      operationId: createGuestRsvpLink
+      tags: [guests]
+      summary: Create or retrieve a public RSVP link for a guest
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema: { type: number }
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: RSVP link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RsvpLink"
+
   /weddings/{weddingId}/guests/stats:
     get:
       operationId: getGuestStats
@@ -526,6 +552,84 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuestImportResult"
+
+  /public/rsvp/{token}:
+    get:
+      operationId: getPublicRsvp
+      tags: [public-rsvp]
+      summary: Get the invitation details for a public RSVP link
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Invitation details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicRsvp"
+  /public/rsvp/{token}/respond:
+    post:
+      operationId: respondPublicRsvp
+      tags: [public-rsvp]
+      summary: Save a guest RSVP response
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicRsvpResponse"
+      responses:
+        "200":
+          description: Saved RSVP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicRsvpResponseResult"
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for a wedding
+      parameters:
+        - name: weddingId
+          in: query
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
 
 
 
@@ -1328,6 +1432,71 @@ components:
           type: ["string", "null"]
         createdAt:
           type: string
+
+    RsvpLink:
+      type: object
+      required: [token, url]
+      properties:
+        token: { type: string }
+        url: { type: string }
+
+    PublicRsvp:
+      type: object
+      required: [guest, wedding]
+      properties:
+        guest:
+          type: object
+          required: [id, name, rsvpStatus]
+          properties:
+            id: { type: number }
+            name: { type: string }
+            rsvpStatus:
+              type: string
+              enum: [confirmed, pending, declined]
+        wedding:
+          type: object
+          required: [id, names, weddingDate, venue]
+          properties:
+            id: { type: number }
+            names: { type: string }
+            weddingDate: { type: string }
+            venue: { type: string }
+
+    PublicRsvpResponse:
+      type: object
+      required: [rsvpStatus]
+      properties:
+        rsvpStatus:
+          type: string
+          enum: [confirmed, declined]
+
+    PublicRsvpResponseResult:
+      type: object
+      required: [guest]
+      properties:
+        guest:
+          type: object
+          required: [id, name, rsvpStatus]
+          properties:
+            id: { type: number }
+            name: { type: string }
+            rsvpStatus:
+              type: string
+              enum: [confirmed, declined]
+
+    Notification:
+      type: object
+      required: [id, weddingId, kind, title, body, read, dedupeKey, createdAt]
+      properties:
+        id: { type: number }
+        weddingId: { type: number }
+        kind: { type: string }
+        title: { type: string }
+        body: { type: string }
+        route: { type: ["string", "null"] }
+        read: { type: boolean }
+        dedupeKey: { type: string }
+        createdAt: { type: string }
 
     GuestInput:
       type: object

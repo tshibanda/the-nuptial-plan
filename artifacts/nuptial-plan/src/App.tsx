@@ -25,6 +25,7 @@ import CarnetAdresse from '@/pages/carnet-adresse';
 import Retroplanning from '@/pages/retroplanning';
 import Moodboards from '@/pages/moodboards';
 import Business from '@/pages/business';
+import PublicRsvp from '@/pages/public-rsvp';
 
 // ── Clerk key & proxy ─────────────────────────────────────────────────────────
 // REQUIRED — copy verbatim. Resolves from hostname so one build serves multiple domains.
@@ -229,6 +230,7 @@ function AppRouter() {
     <Switch>
       <Route path="/privacy" component={PrivacyPage} />
       <Route path="/policy" component={PolicyPage} />
+      <Route path="/rsvp/:token" component={PublicRsvp} />
       {/* REQUIRED — exactly /*? — matches bare URL and Clerk's OAuth sub-paths */}
       <Route path="/sign-in/*?" component={SignInPage} />
       <Route path="/sign-up/*?" component={SignUpPage} />

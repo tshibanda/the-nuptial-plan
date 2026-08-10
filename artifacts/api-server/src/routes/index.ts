@@ -15,17 +15,21 @@ import storageRouter from "./storage";
 import dashboardRouter from "./dashboard";
 import openaiConversationsRouter from "./openai/conversations";
 import addressBookRouter from "./address-book";
+import publicRsvpRouter from "./public-rsvp";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
 // Public — no auth required
 router.use(healthRouter);
+router.use("/public/rsvp", publicRsvpRouter);
 
 // Auth-gated — all routes below require a valid Clerk session
 router.use(requireAuth);
 router.use(storageRouter);
 router.use("/openai/conversations", openaiConversationsRouter);
 router.use(addressBookRouter);
+router.use("/notifications", notificationsRouter);
 router.use(dashboardRouter);
 router.use("/weddings", weddingsRouter);
 router.use("/weddings/:weddingId/vendors", requireWeddingOwnership, vendorsRouter);

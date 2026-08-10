@@ -223,6 +223,81 @@ export interface Guest {
   createdAt: string;
 }
 
+export interface RsvpLink {
+  token: string;
+  url: string;
+}
+
+export type PublicRsvpGuestRsvpStatus = typeof PublicRsvpGuestRsvpStatus[keyof typeof PublicRsvpGuestRsvpStatus];
+
+
+export const PublicRsvpGuestRsvpStatus = {
+  confirmed: 'confirmed',
+  pending: 'pending',
+  declined: 'declined',
+} as const;
+
+export type PublicRsvpGuest = {
+  id: number;
+  name: string;
+  rsvpStatus: PublicRsvpGuestRsvpStatus;
+};
+
+export type PublicRsvpWedding = {
+  id: number;
+  names: string;
+  weddingDate: string;
+  venue: string;
+};
+
+export interface PublicRsvp {
+  guest: PublicRsvpGuest;
+  wedding: PublicRsvpWedding;
+}
+
+export type PublicRsvpResponseRsvpStatus = typeof PublicRsvpResponseRsvpStatus[keyof typeof PublicRsvpResponseRsvpStatus];
+
+
+export const PublicRsvpResponseRsvpStatus = {
+  confirmed: 'confirmed',
+  declined: 'declined',
+} as const;
+
+export interface PublicRsvpResponse {
+  rsvpStatus: PublicRsvpResponseRsvpStatus;
+}
+
+export type PublicRsvpResponseResultGuestRsvpStatus = typeof PublicRsvpResponseResultGuestRsvpStatus[keyof typeof PublicRsvpResponseResultGuestRsvpStatus];
+
+
+export const PublicRsvpResponseResultGuestRsvpStatus = {
+  confirmed: 'confirmed',
+  declined: 'declined',
+} as const;
+
+export type PublicRsvpResponseResultGuest = {
+  id: number;
+  name: string;
+  rsvpStatus: PublicRsvpResponseResultGuestRsvpStatus;
+};
+
+export interface PublicRsvpResponseResult {
+  guest: PublicRsvpResponseResultGuest;
+}
+
+export interface Notification {
+  id: number;
+  weddingId: number;
+  kind: string;
+  title: string;
+  body: string;
+  /** @nullable */
+  route?: string | null;
+  read: boolean;
+  dedupeKey: string;
+  createdAt: string;
+}
+
 export type GuestInputRsvpStatus = typeof GuestInputRsvpStatus[keyof typeof GuestInputRsvpStatus];
 
 
@@ -560,4 +635,8 @@ export interface OpenaiConversationWithMessages {
 export interface OpenaiError {
   error: string;
 }
+
+export type ListNotificationsParams = {
+weddingId: number;
+};
 

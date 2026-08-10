@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { guestsTable, activityTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { CreateGuestBody, UpdateGuestBody } from "@workspace/api-zod";
+import { createRsvpToken } from "./public-rsvp";
 
 const router: IRouter = Router({ mergeParams: true });
 
@@ -25,11 +26,25 @@ router.get("/", async (req, res): Promise<void> => {
   res.json(guests);
 });
 
+router.post("/:id/rsvp-link", async (req, res): Promise<void> => {
+  const weddingId = p(req, "weddingId");
+  const id = p(req, "id");
+  const [existing] = await db.select().from(guestsTable)
+    .where(and(eq(guestsTable.id, id), eq(guestsTable.weddingId, weddingId)));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  const token = existing.rsvpToken ?? createRsvpToken();
+  if (!existing.rsvpToken) {
+    await db.update(guestsTable).set({ rsvpToken: token })
+      .where(and(eq(guestsTable.id, id), eq(guestsTable.weddingId, weddingId)));
+  }
+  res.json({ token, url: `/rsvp/${token}` });
+});
+
 router.post("/", async (req, res): Promise<void> => {
   const weddingId = p(req, "weddingId");
   const body = CreateGuestBody.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
-  const [guest] = await db.insert(guestsTable).values({ ...body.data, weddingId }).returning();
+  const [guest] = await db.insert(guestsTable).values({ ...body.data, weddingId, rsvpToken: createRsvpToken() }).returning();
   await db.insert(activityTable).values({
     weddingId,
     description: `Invité ajouté : ${guest!.name}`,
@@ -67,7 +82,7 @@ router.post("/import", async (req, res): Promise<void> => {
   for (const row of rows) {
     const parsed = CreateGuestBody.safeParse(row);
     if (!parsed.success) { skipped++; continue; }
-    await db.insert(guestsTable).values({ ...parsed.data, weddingId });
+    await db.insert(guestsTable).values({ ...parsed.data, weddingId, rsvpToken: createRsvpToken() });
     created++;
   }
 

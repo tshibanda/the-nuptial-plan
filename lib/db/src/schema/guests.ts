@@ -10,6 +10,7 @@ export const guestsTable = pgTable("guests", {
   tableNumber: text("table_number"),
   dietaryRequirements: text("dietary"),   // DB column is "dietary"
   rsvpStatus: text("rsvp_status").notNull().default("pending"),
+  rsvpToken: text("rsvp_token"),
   plusOne: boolean("plus_one").notNull().default(false),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

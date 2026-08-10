@@ -41,6 +41,8 @@ import type {
   GuestStats,
   GuestUpdate,
   HealthStatus,
+  ListNotificationsParams,
+  Notification,
   OpenaiConversation,
   OpenaiConversationInput,
   OpenaiConversationWithMessages,
@@ -50,6 +52,10 @@ import type {
   Payment,
   PaymentInput,
   PaymentUpdate,
+  PublicRsvp,
+  PublicRsvpResponse,
+  PublicRsvpResponseResult,
+  RsvpLink,
   Vendor,
   VendorInput,
   VendorUpdate,
@@ -1723,6 +1729,79 @@ export const useDeleteGuest = <TError = ErrorType<unknown>,
       return useMutation(getDeleteGuestMutationOptions(options));
     }
 
+export const getCreateGuestRsvpLinkUrl = (weddingId: number,
+    id: number,) => {
+
+
+
+
+  return `/api/weddings/${weddingId}/guests/${id}/rsvp-link`
+}
+
+/**
+ * @summary Create or retrieve a public RSVP link for a guest
+ */
+export const createGuestRsvpLink = async (weddingId: number,
+    id: number, options?: Parameters<typeof customFetch>[1]): Promise<RsvpLink> => {
+
+  return customFetch<RsvpLink>(getCreateGuestRsvpLinkUrl(weddingId,id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCreateGuestRsvpLinkMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGuestRsvpLink>>, TError,{weddingId: number;id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createGuestRsvpLink>>, TError,{weddingId: number;id: number}, TContext> => {
+
+const mutationKey = ['createGuestRsvpLink'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createGuestRsvpLink>>, {weddingId: number;id: number}> = (props) => {
+          const {weddingId,id} = props ?? {};
+
+          return  createGuestRsvpLink(weddingId,id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateGuestRsvpLinkMutationResult = NonNullable<Awaited<ReturnType<typeof createGuestRsvpLink>>>
+
+    export type CreateGuestRsvpLinkMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create or retrieve a public RSVP link for a guest
+ */
+export const useCreateGuestRsvpLink = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGuestRsvpLink>>, TError,{weddingId: number;id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createGuestRsvpLink>>,
+        TError,
+        {weddingId: number;id: number},
+        TContext
+      > => {
+      return useMutation(getCreateGuestRsvpLinkMutationOptions(options));
+    }
+
 export const getGetGuestStatsUrl = (weddingId: number,) => {
 
 
@@ -1870,6 +1949,310 @@ export const useImportGuests = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getImportGuestsMutationOptions(options));
+    }
+
+export const getGetPublicRsvpUrl = (token: string,) => {
+
+
+
+
+  return `/api/public/rsvp/${token}`
+}
+
+/**
+ * @summary Get the invitation details for a public RSVP link
+ */
+export const getPublicRsvp = async (token: string, options?: Parameters<typeof customFetch>[1]): Promise<PublicRsvp> => {
+
+  return customFetch<PublicRsvp>(getGetPublicRsvpUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicRsvpQueryKey = (token: string,) => {
+    return [
+    `/api/public/rsvp/${token}`
+    ] as const;
+    }
+
+
+export const getGetPublicRsvpQueryOptions = <TData = Awaited<ReturnType<typeof getPublicRsvp>>, TError = ErrorType<unknown>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicRsvp>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicRsvpQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicRsvp>>> = ({ signal }) => getPublicRsvp(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicRsvp>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicRsvpQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicRsvp>>>
+export type GetPublicRsvpQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get the invitation details for a public RSVP link
+ */
+
+export function useGetPublicRsvp<TData = Awaited<ReturnType<typeof getPublicRsvp>>, TError = ErrorType<unknown>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicRsvp>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicRsvpQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRespondPublicRsvpUrl = (token: string,) => {
+
+
+
+
+  return `/api/public/rsvp/${token}/respond`
+}
+
+/**
+ * @summary Save a guest RSVP response
+ */
+export const respondPublicRsvp = async (token: string,
+    publicRsvpResponse: PublicRsvpResponse, options?: Parameters<typeof customFetch>[1]): Promise<PublicRsvpResponseResult> => {
+
+  return customFetch<PublicRsvpResponseResult>(getRespondPublicRsvpUrl(token),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(publicRsvpResponse)
+  }
+);}
+
+
+
+
+
+export const getRespondPublicRsvpMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof respondPublicRsvp>>, TError,{token: string;data: BodyType<PublicRsvpResponse>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof respondPublicRsvp>>, TError,{token: string;data: BodyType<PublicRsvpResponse>}, TContext> => {
+
+const mutationKey = ['respondPublicRsvp'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof respondPublicRsvp>>, {token: string;data: BodyType<PublicRsvpResponse>}> = (props) => {
+          const {token,data} = props ?? {};
+
+          return  respondPublicRsvp(token,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RespondPublicRsvpMutationResult = NonNullable<Awaited<ReturnType<typeof respondPublicRsvp>>>
+    export type RespondPublicRsvpMutationBody = BodyType<PublicRsvpResponse>
+    export type RespondPublicRsvpMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Save a guest RSVP response
+ */
+export const useRespondPublicRsvp = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof respondPublicRsvp>>, TError,{token: string;data: BodyType<PublicRsvpResponse>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof respondPublicRsvp>>,
+        TError,
+        {token: string;data: BodyType<PublicRsvpResponse>},
+        TContext
+      > => {
+      return useMutation(getRespondPublicRsvpMutationOptions(options));
+    }
+
+export const getListNotificationsUrl = (params: ListNotificationsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/notifications?${stringifiedParams}` : `/api/notifications`
+}
+
+/**
+ * @summary List notifications for a wedding
+ */
+export const listNotifications = async (params: ListNotificationsParams, options?: Parameters<typeof customFetch>[1]): Promise<Notification[]> => {
+
+  return customFetch<Notification[]>(getListNotificationsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListNotificationsQueryKey = (params?: ListNotificationsParams,) => {
+    return [
+    `/api/notifications`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListNotificationsQueryOptions = <TData = Awaited<ReturnType<typeof listNotifications>>, TError = ErrorType<unknown>>(params: ListNotificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListNotificationsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listNotifications>>> = ({ signal }) => listNotifications(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListNotificationsQueryResult = NonNullable<Awaited<ReturnType<typeof listNotifications>>>
+export type ListNotificationsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List notifications for a wedding
+ */
+
+export function useListNotifications<TData = Awaited<ReturnType<typeof listNotifications>>, TError = ErrorType<unknown>>(
+ params: ListNotificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListNotificationsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getMarkNotificationReadUrl = (id: number,) => {
+
+
+
+
+  return `/api/notifications/${id}/read`
+}
+
+/**
+ * @summary Mark a notification as read
+ */
+export const markNotificationRead = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<Notification> => {
+
+  return customFetch<Notification>(getMarkNotificationReadUrl(id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+
+
+export const getMarkNotificationReadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markNotificationRead>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markNotificationRead>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['markNotificationRead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markNotificationRead>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  markNotificationRead(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkNotificationReadMutationResult = NonNullable<Awaited<ReturnType<typeof markNotificationRead>>>
+
+    export type MarkNotificationReadMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Mark a notification as read
+ */
+export const useMarkNotificationRead = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markNotificationRead>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markNotificationRead>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getMarkNotificationReadMutationOptions(options));
     }
 
 export const getListBudgetCategoriesUrl = (weddingId: number,) => {

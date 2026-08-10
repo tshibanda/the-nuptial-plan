@@ -33,6 +33,9 @@ import {
   getListWeddingsQueryKey,
   useListPayments,
   useGetWeddingSummary,
+  useListNotifications,
+  useMarkNotificationRead,
+  getListNotificationsQueryKey,
 } from '@workspace/api-client-react';
 import { useActiveWedding } from '@/lib/wedding-context';
 import { formatDateShort, calculateDaysUntil } from '@/lib/format';
@@ -317,6 +320,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { activeWeddingId, setActiveWeddingId } = useActiveWedding();
   const { data: weddings = [], isLoading } = useListWeddings();
   const { data: payments = [] } = useListPayments(activeWeddingId ?? 0);
+  const { data: serverNotifications = [] } = useListNotifications(
+    { weddingId: activeWeddingId ?? 0 },
+    {
+      query: {
+        queryKey: getListNotificationsQueryKey({ weddingId: activeWeddingId ?? 0 }),
+        enabled: Boolean(activeWeddingId),
+        refetchInterval: 60_000,
+      },
+    },
+  );
+  const markNotificationRead = useMarkNotificationRead();
   const deleteWedding = useDeleteWedding();
   const queryClient = useQueryClient();
 
@@ -404,8 +418,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         items.push({ id: 'guests-pending', urgency: 'low', title: `${pending} invité${pending > 1 ? 's' : ''} sans réponse`, body: 'Relancez les invitations en attente', route: '/invites' });
     }
 
+    for (const item of serverNotifications.filter((item) => !item.read)) {
+      items.push({
+        id: `server-${item.id}`,
+        urgency: item.kind === 'task_due_24h' ? 'high' : 'medium',
+        title: item.title,
+        body: item.body,
+        route: item.route ?? '/invites',
+      });
+    }
+
     return items;
-  }, [activeWeddingId, payments, weddingSummary]);
+  }, [activeWeddingId, payments, weddingSummary, serverNotifications]);
 
   // Auto-select first wedding if none selected
   useEffect(() => {
@@ -762,7 +786,22 @@ export function AppShell({ children }: { children: ReactNode }) {
                           notifications.map((n) => (
                             <button
                               key={n.id}
-                              onClick={() => { setNotifOpen(false); navigate(n.route); }}
+                              onClick={() => {
+                                setNotifOpen(false);
+                                if (n.id.startsWith('server-')) {
+                                  const id = Number(n.id.replace('server-', ''));
+                                  if (Number.isFinite(id)) {
+                                    markNotificationRead.mutate({ id }, {
+                                      onSuccess: () => {
+                                        queryClient.invalidateQueries({
+                                          queryKey: getListNotificationsQueryKey({ weddingId: activeWeddingId ?? 0 }),
+                                        });
+                                      },
+                                    });
+                                  }
+                                }
+                                navigate(n.route);
+                              }}
                               className="flex w-full items-start gap-3 border-b border-border/20 px-4 py-3 text-left transition last:border-0 hover:bg-muted/40"
                             >
                               <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${

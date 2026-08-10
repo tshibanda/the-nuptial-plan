@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
-import { Plus, UserCircle2, Users, CheckSquare, FileUp, AlertTriangle, Search } from 'lucide-react';
+import { Plus, UserCircle2, Users, CheckSquare, FileUp, AlertTriangle, Search, Link2 } from 'lucide-react';
 import { PageTour } from '@/components/ui/page-tour';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
@@ -207,6 +207,15 @@ export default function Invites() {
         },
       });
     }
+  };
+
+  const copyRsvpLink = async (id: number) => {
+    if (!activeWeddingId) return;
+    const response = await fetch(`/api/weddings/${activeWeddingId}/guests/${id}/rsvp-link`, { method: 'POST' });
+    if (!response.ok) { toast({ title: 'Impossible de créer le lien RSVP', variant: 'destructive' }); return; }
+    const result = await response.json() as { url: string };
+    await navigator.clipboard.writeText(`${window.location.origin}${result.url}`);
+    toast({ title: 'Lien RSVP copié' });
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -422,6 +431,9 @@ export default function Invites() {
                 <button className="text-[#a5a19a]" onClick={() => handleEdit(guest)} data-testid={`button-edit-guest-${guest.id}`}>
                   <UserCircle2 size={17} />
                 </button>
+                 <button className="text-[#a5a19a]" onClick={() => void copyRsvpLink(guest.id)} aria-label={`Copier le lien RSVP de ${guest.name}`} title="Copier le lien RSVP">
+                   <Link2 size={16} />
+                 </button>
               </div>
             );
           })
