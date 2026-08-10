@@ -33,6 +33,7 @@ const TAB_META: Record<string, { sf: string; feather: string; label: string }> =
   profil:       { sf: 'person.crop.circle', feather: 'user',         label: 'Profil' },
   moodboards:   { sf: 'square.grid.2x2',    feather: 'image',         label: 'Moodboards' },
   business:     { sf: 'briefcase',          feather: 'briefcase',      label: 'Business' },
+  'carnet-adresse': { sf: 'person.2',       feather: 'book-open',      label: 'Carnet d’adresses' },
   retroplanning:{ sf: 'calendar.badge.clock', feather: 'clock',       label: 'Rétro-planning' },
 };
 
@@ -43,7 +44,7 @@ const PRIMARY = ['index', 'evenements', 'invites', 'budget', 'prestataires'];
 const ALL_TABS = [
   'index', 'mariages', 'evenements', 'prestataires',
   'invites', 'budget', 'paiements', 'contrats',
-  'parametres', 'profil', 'moodboards', 'business', 'retroplanning',
+  'parametres', 'profil', 'moodboards', 'business', 'carnet-adresse', 'retroplanning',
 ];
 
 // ── Icon helper ────────────────────────────────────────────────────────────────
@@ -379,6 +380,7 @@ function ClassicTabLayout() {
       <Tabs.Screen name="profil" />
       <Tabs.Screen name="moodboards" />
       <Tabs.Screen name="business" />
+      <Tabs.Screen name="carnet-adresse" />
       <Tabs.Screen name="retroplanning" />
     </Tabs>
   );

@@ -240,9 +240,9 @@ export default function ProfilScreen() {
             onPress={() => router.push('/(tabs)/mariages')}
           />
           <RowItem
-             icon="briefcase" label="Mes prestataires" value={summary ? `${summary.vendorCount}` : undefined}
+             icon="book-open" label="Mon carnet d'adresses"
             variant="sage" colors={colors}
-            onPress={() => router.push('/(tabs)/prestataires')}
+            onPress={() => router.push('/(tabs)/carnet-adresse')}
           />
           <RowItem
              icon="trending-up" label="Mon business" colors={colors}
