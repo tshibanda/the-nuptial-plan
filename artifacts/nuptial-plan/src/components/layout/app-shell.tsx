@@ -24,8 +24,6 @@ import {
   Heart,
   Sparkles,
   BookOpen,
-  Palette,
-  CalendarClock,
   BriefcaseBusiness,
 } from 'lucide-react';
 import {
@@ -65,10 +63,6 @@ const navItems = [
   { label: 'Aperçu', icon: Home, path: '/' },
   { label: 'Calendrier', icon: CalendarDays, path: '/calendrier' },
   { label: 'Prestataires', icon: Users, path: '/prestataires' },
-  { label: 'Mon carnet d’adresse', icon: BookOpen, path: '/carnet-adresse' },
-  { label: 'Rétro-planning', icon: CalendarClock, path: '/retroplanning' },
-  { label: 'Moodboards', icon: Palette, path: '/moodboards' },
-  { label: 'Business', icon: BriefcaseBusiness, path: '/business' },
   { label: 'Invités', icon: UserCircle2, path: '/invites' },
   { label: 'Budget', icon: WalletCards, path: '/budget' },
   { label: 'Contrats', icon: FileText, path: '/contrats' },
@@ -654,6 +648,20 @@ export function AppShell({ children }: { children: ReactNode }) {
                   >
                     <Settings size={13} className="text-sidebar-foreground/40" /> Paramètres
                   </button>
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    data-testid="button-sidebar-address-book"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/carnet-adresse'); }}
+                  >
+                    <BookOpen size={13} className="text-sidebar-foreground/40" /> Mon carnet d’adresses
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    data-testid="button-sidebar-business"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/business'); }}
+                  >
+                    <BriefcaseBusiness size={13} className="text-sidebar-foreground/40" /> Mon business
+                  </button>
                   <div className="my-1 h-px bg-sidebar-foreground/10" />
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-rose-300/80 transition hover:bg-white/[0.08]"
@@ -814,6 +822,20 @@ export function AppShell({ children }: { children: ReactNode }) {
                       onClick={() => { setMenuOpen(false); navigate('/parametres'); }}
                     >
                       <Settings size={13} className="text-muted-foreground" /> Paramètres
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      data-testid="button-header-address-book"
+                      onClick={() => { setMenuOpen(false); navigate('/carnet-adresse'); }}
+                    >
+                      <BookOpen size={13} className="text-muted-foreground" /> Mon carnet d’adresses
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      data-testid="button-header-business"
+                      onClick={() => { setMenuOpen(false); navigate('/business'); }}
+                    >
+                      <BriefcaseBusiness size={13} className="text-muted-foreground" /> Mon business
                     </button>
                     <div className="my-1 h-px bg-border/40" />
                     <button
