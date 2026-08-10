@@ -1,0 +1,64 @@
+Le pod install passe désormais (Clerk/SPM OK, ne touche pas à cette config).
+Le build échoue maintenant à la compilation Swift :
+
+❌ node_modules/.pnpm/expo-file-system@18.0.12_expo@54.0.36_.../expo-file-system/ios/FileSystemModule.swift:10:84
+   cannot find 'ExpoAppDelegate' in scope
+   ** ARCHIVE FAILED ** (target 'ExpoFileSystem' from project 'Pods')
+
+CAUSE (vérifiée, ne cherche pas ailleurs)
+Le projet a expo-file-system@18.0.12, qui est la version d'Expo SDK 52, alors
+que le projet tourne sur expo@54.0.36. La 18.0.12 appelle
+`ExpoAppDelegate.getSubscriberOfType(...)`, une API supprimée dans
+expo-modules-core@3.0.30 (la version SDK 54, celle qui est installée).
+La version correcte pour SDK 54 est expo-file-system ~19.0.23, dont le
+FileSystemModule.swift ne contient plus cette ligne.
+
+À FAIRE (l'app Expo est dans artifacts/mobile)
+
+1. Diagnostiquer TOUTES les dépendances désalignées, pas seulement file-system :
+   cd artifacts/mobile
+   npx expo install --check
+   Affiche-moi la liste complète avant de corriger.
+
+2. Corriger l'alignement SDK 54 :
+   npx expo install --fix
+   Vérifie ensuite que artifacts/mobile/package.json contient bien
+   "expo-file-system": "~19.0.23" (ou la version que --fix a choisie pour SDK 54),
+   et plus aucune version en 18.x.
+
+3. IMPORTANT — expo-file-system 19 a une nouvelle API (File / Directory) et
+   l'ancienne API a été déplacée. Recherche dans tout le code source de l'app
+   les imports depuis 'expo-file-system' qui utilisent l'API legacy :
+   documentDirectory, cacheDirectory, readAsStringAsync, writeAsStringAsync,
+   getInfoAsync, makeDirectoryAsync, deleteAsync, copyAsync, moveAsync,
+   downloadAsync, EncodingType, readDirectoryAsync.
+   Pour chacun de ces fichiers, remplace :
+       import * as FileSystem from 'expo-file-system'
+   par :
+       import * as FileSystem from 'expo-file-system/legacy'
+   C'est la migration la plus sûre : elle garde le comportement identique.
+   Ne réécris PAS le code vers la nouvelle API File/Directory pour l'instant.
+   Liste-moi les fichiers modifiés.
+
+4. Vérifier la santé globale du projet :
+   npx expo-doctor
+   Corrige uniquement ce qui concerne des versions de packages Expo
+   incompatibles avec SDK 54. Montre-moi le rapport.
+
+5. Réinstaller et nettoyer avant rebuild :
+   - à la racine du repo : pnpm install
+   - supprimer artifacts/mobile/ios/Pods, ios/Podfile.lock, ios/build
+   - npx expo prebuild -p ios --clean
+   Vérifie après le prebuild que ios/Podfile.properties.json contient toujours
+   "ios.deploymentTarget": "17.0" (correctif Clerk appliqué précédemment).
+
+6. Relancer le build EAS iOS.
+
+CONTRAINTES
+- Ne downgrade pas expo, react-native ni expo-modules-core : c'est le SDK 54
+  qui fait référence, ce sont les packages satellites qui doivent s'aligner.
+- Ne modifie aucun fichier dans node_modules ni dans .pnpm.
+- Ne défais pas le correctif Clerk (deploymentTarget 17.0, plugin @clerk/expo,
+  expo-build-properties).
+- Montre-moi le diff de package.json et la liste des imports modifiés avant de
+  lancer le build.
