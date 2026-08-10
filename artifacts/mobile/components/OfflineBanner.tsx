@@ -22,6 +22,10 @@ export function OfflineBanner() {
   const slideAnim = useRef(new Animated.Value(-BANNER_HEIGHT)).current;
   const [lastSync, setLastSync] = useState<string | null>(null);
 
+  // iOS no longer displays the offline status pill. The cached-query
+  // behaviour remains enabled; only this visual notice is hidden.
+  if (Platform.OS === 'ios') return null;
+
   // Slide in / out when connectivity changes.
   useEffect(() => {
     if (isOffline) {
