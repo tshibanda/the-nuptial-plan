@@ -22,6 +22,11 @@
       "exclude": [
         "@clerk/expo"
       ],
+      "apple": {
+        "exclude": [
+          "@clerk/expo"
+        ]
+      },
       "ios": {
         "exclude": [
           "@clerk/expo"
