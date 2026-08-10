@@ -1,0 +1,50 @@
+Mon build iOS EAS échoue au moment du `pod install` avec cette erreur :
+
+[!] An error occurred while processing the post-install hook of the Podfile.
+undefined method `package_product_dependencies' for nil:NilClass
+node_modules/react-native/scripts/cocoapods/spm.rb:80:in `block in add_spm_to_target'
+
+J'ai identifié la cause exacte, applique le correctif ci-dessous sans chercher
+ailleurs.
+
+CAUSE
+Le podspec ClerkExpo (package @clerk/expo) déclare deux dépendances Swift
+Package Manager (ClerkKit et ClerkKitUI) et impose s.platforms = { :ios => '17.0' }.
+Le deployment target de mon projet est resté à 15.1 (valeur par défaut Expo 54).
+Conséquence : l'autolinking Expo LIT le podspec — ce qui enregistre la dépendance
+SPM globalement — mais N'INSTALLE PAS le pod ClerkExpo (vérifiable : aucun pod
+Clerk dans la liste "Installing ..." des logs). Au post_install, React Native
+cherche la target `ClerkExpo` dans le projet Pods, obtient nil, et plante.
+Le fix est donc de forcer le deployment target iOS à 17.0 AVANT le pod install.
+
+À FAIRE (l'app Expo est dans artifacts/mobile)
+
+1. Installer expo-build-properties :
+   cd artifacts/mobile && npx expo install expo-build-properties
+
+2. Dans artifacts/mobile/app.json, dans expo.plugins :
+   - s'assurer que "@clerk/expo" est présent
+   - ajouter ou mettre à jour :
+     ["expo-build-properties", { "ios": { "deploymentTarget": "17.0" } }]
+
+3. Si le dossier artifacts/mobile/ios existe (prebuild commité) :
+   - artifacts/mobile/ios/Podfile.properties.json → "ios.deploymentTarget": "17.0"
+   - artifacts/mobile/ios/Podfile → si `platform :ios, 'x.y'` est écrit en dur,
+     le passer à '17.0'
+   - artifacts/mobile/ios/*.xcodeproj/project.pbxproj → remplacer chaque
+     IPHONEOS_DEPLOYMENT_TARGET inférieur à 17.0 par 17.0
+   - supprimer artifacts/mobile/ios/Podfile.lock, ios/Pods et ios/build
+     (caches CocoaPods corrompus par l'install ratée)
+
+4. Vérifier que /ios et /android sont dans le .gitignore. Si le dossier ios/ est
+   versionné, EAS saute le prebuild et les plugins Clerk (deployment target,
+   entitlement Sign in with Apple, Info.plist) ne s'appliquent jamais — dans ce
+   cas, supprime le dossier ios/ et laisse EAS le régénérer.
+
+5. Relancer : npx expo prebuild -p ios --clean, puis le build EAS iOS.
+
+CONTRAINTES
+- Ne modifie pas spm.rb ni aucun fichier dans node_modules : ce n'est pas un
+  contournement acceptable, ça masquerait l'erreur et ClerkKit ne serait pas lié.
+- Ne downgrade pas @clerk/expo et ne touche pas aux autres dépendances.
+- Montre-moi le diff de app.json et de Podfile.properties.json avant de builder.
