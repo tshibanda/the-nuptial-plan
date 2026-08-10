@@ -359,7 +359,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       '/': { title: 'Votre aperçu', body: 'Cette page présente les indicateurs principaux du mariage actif. Créez ou sélectionnez un dossier pour afficher vos données.' },
       '/calendrier': { title: 'Votre calendrier', body: 'Le calendrier rassemble les événements importants de votre mariage. Il sera disponible dès qu’un dossier sera créé.' },
       '/prestataires': { title: 'Vos prestataires', body: 'Centralisez ici les coordonnées et le suivi de vos prestataires une fois votre premier dossier créé.' },
-      '/carnet-adresse': { title: 'Mon carnet d’adresse', body: 'Retrouvez vos prestataires favoris et ajoutez-les à vos mariages sans ressaisir leurs coordonnées.' },
+      '/carnet-adresse': { title: 'Mon carnet d’adresses', body: 'Retrouvez vos prestataires favoris et ajoutez-les à vos mariages sans ressaisir leurs coordonnées.' },
       '/retroplanning': { title: 'Rétro-planning', body: 'Un planning qui se recalcule automatiquement à partir de la date, du lieu et du traiteur.' },
       '/moodboards': { title: 'Moodboards', body: 'Rassemblez vos inspirations visuelles et vos directions artistiques.' },
       '/business': { title: 'Business', body: 'Pilotez votre trésorerie, votre rentabilité, votre acquisition et vos garde-fous professionnels.' },

@@ -4,9 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
-import { useTour } from '@/hooks/useTour';
 import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
-import { TourSheet } from '@/components/TourSheet';
 
 type Entry = { id: string; month: string; type: 'income' | 'expense'; label: string; amount: number };
 type BusinessData = { hourlyRate: number; annualRevenue: number; fixedCosts: number; microThreshold: number; packagePrice: number; projectHours: number; insurance: boolean; entries: Entry[] };
@@ -20,7 +18,6 @@ function money(value: number) { return `${Math.round(value).toLocaleString('fr-F
 
 export default function BusinessScreen() {
   const colors = useColors();
-  const { tourVisible, openTour, closeTour } = useTour('tour:business');
   const [data, setData] = useState<BusinessData>(() => Platform.OS === 'web' ? loadWebData() : defaults);
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -99,8 +96,6 @@ export default function BusinessScreen() {
           <View style={[styles.result, { backgroundColor: colors.plum + '12' }]}><Text style={[styles.small, { color: colors.mutedForeground, fontFamily: SANS }]}>Taux réel du dossier</Text><Text style={[styles.resultValue, { color: colors.plum, fontFamily: SERIF }]}>{data.projectHours > 0 ? Math.round(data.packagePrice / data.projectHours) : 0} €/h</Text></View>
         </Section>
       </ScrollView>
-      <TouchableOpacity onPress={openTour} style={[styles.help, { backgroundColor: colors.plum }]}><Text style={{ color: '#fff', fontFamily: SANS_SEMIBOLD }}>?</Text></TouchableOpacity>
-      <TourSheet visible={tourVisible} onClose={closeTour} steps={[{ icon: 'briefcase', title: 'Pilotez votre activité', description: 'Mesurez votre vrai taux horaire, anticipez les mois creux et gardez une vision claire de vos charges.' }]} />
     </>
   );
 }
@@ -111,5 +106,5 @@ function NumberSetting({ label, value, suffix, onChange, colors }: any) { return
 function Button({ label, onPress, colors, outline = false }: any) { return <TouchableOpacity onPress={onPress} style={[styles.button, { backgroundColor: outline ? colors.card : colors.plum, borderColor: colors.plum }, outline && styles.outlineButton]}><Text style={[styles.buttonText, { color: outline ? colors.plum : '#fff', fontFamily: SANS_SEMIBOLD }]}>{label}</Text></TouchableOpacity>; }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: 110, gap: 16 }, hero: { padding: 24, paddingTop: Platform.OS === 'web' ? 87 : 30, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }, eyebrow: { fontSize: 10, letterSpacing: 1.8, marginBottom: 8 }, heroTitle: { fontSize: 38, lineHeight: 42 }, heroBody: { marginTop: 14, fontSize: 13, lineHeight: 20, maxWidth: 600 }, metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 16 }, metric: { width: '47%', minHeight: 112, padding: 14, borderLeftWidth: 3, borderRadius: 12 }, metricLabel: { fontSize: 10, marginTop: 12 }, metricValue: { fontSize: 22, marginTop: 4 }, section: { marginHorizontal: 16, padding: 18, borderWidth: 1, borderRadius: 16 }, sectionTitle: { fontSize: 25 }, small: { fontSize: 11, lineHeight: 17 }, formGrid: { gap: 9 }, input: { minHeight: 42, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 12 }, select: { minHeight: 42, borderWidth: 1, borderRadius: 9, justifyContent: 'center', paddingHorizontal: 12 }, button: { minHeight: 42, borderRadius: 9, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1 }, outlineButton: { borderWidth: 1 }, buttonText: { fontSize: 11 }, empty: { textAlign: 'center', paddingVertical: 20, fontSize: 12 }, entry: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 9, borderBottomWidth: 1 }, dot: { width: 8, height: 8, borderRadius: 4 }, entryLabel: { flex: 1, fontSize: 11 }, entryAmount: { fontSize: 11 }, setting: { marginBottom: 14 }, settingLabel: { fontSize: 11, marginBottom: 6 }, numberRow: { flexDirection: 'row', alignItems: 'center', gap: 8 }, insurance: { borderTopWidth: 1, paddingTop: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }, result: { borderRadius: 12, padding: 14, marginTop: 4 }, resultValue: { fontSize: 27, marginTop: 3 }, help: { position: 'absolute', right: 18, bottom: 86, width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
+  content: { paddingBottom: 110, gap: 16 }, hero: { padding: 24, paddingTop: Platform.OS === 'web' ? 87 : 30, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }, eyebrow: { fontSize: 10, letterSpacing: 1.8, marginBottom: 8 }, heroTitle: { fontSize: 38, lineHeight: 42 }, heroBody: { marginTop: 14, fontSize: 13, lineHeight: 20, maxWidth: 600 }, metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 16 }, metric: { width: '47%', minHeight: 112, padding: 14, borderLeftWidth: 3, borderRadius: 12 }, metricLabel: { fontSize: 10, marginTop: 12 }, metricValue: { fontSize: 22, marginTop: 4 }, section: { marginHorizontal: 16, padding: 18, borderWidth: 1, borderRadius: 16 }, sectionTitle: { fontSize: 25 }, small: { fontSize: 11, lineHeight: 17 }, formGrid: { gap: 9 }, input: { minHeight: 42, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 12 }, select: { minHeight: 42, borderWidth: 1, borderRadius: 9, justifyContent: 'center', paddingHorizontal: 12 }, button: { minHeight: 42, borderRadius: 9, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1 }, outlineButton: { borderWidth: 1 }, buttonText: { fontSize: 11 }, empty: { textAlign: 'center', paddingVertical: 20, fontSize: 12 }, entry: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 9, borderBottomWidth: 1 }, dot: { width: 8, height: 8, borderRadius: 4 }, entryLabel: { flex: 1, fontSize: 11 }, entryAmount: { fontSize: 11 }, setting: { marginBottom: 14 }, settingLabel: { fontSize: 11, marginBottom: 6 }, numberRow: { flexDirection: 'row', alignItems: 'center', gap: 8 }, insurance: { borderTopWidth: 1, paddingTop: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }, result: { borderRadius: 12, padding: 14, marginTop: 4 }, resultValue: { fontSize: 27, marginTop: 3 },
 });
