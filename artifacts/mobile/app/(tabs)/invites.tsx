@@ -13,7 +13,7 @@ import { Feather } from '@expo/vector-icons';
 import type { Guest } from '@workspace/api-client-react';
 import {
   useListWeddings, useListGuests, useGetGuestStats,
-  useImportGuests, useCreateGuest, getListGuestsQueryKey, getGetGuestStatsQueryKey,
+  useImportGuests, useCreateGuest, useUpdateGuest, getListGuestsQueryKey, getGetGuestStatsQueryKey,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWedding } from '@/context/WeddingContext';
@@ -109,7 +109,10 @@ export default function InvitesScreen() {
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const { tourVisible, openTour, closeTour } = useTour('tour:invites');
   const [filter, setFilter] = useState<Filter>('all');
+  const [viewMode, setViewMode] = useState<'guests' | 'tables'>('guests');
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+  const [tableGuest, setTableGuest] = useState<Guest | null>(null);
+  const [tableInput, setTableInput] = useState('');
   const [addVisible, setAddVisible] = useState(false);
   const [newGuest, setNewGuest] = useState({
     name: '', email: '', tableNumber: '', dietaryRequirements: '', notes: '',
@@ -129,12 +132,42 @@ export default function InvitesScreen() {
   const { data: stats } = useGetGuestStats(wId);
   const importGuestsMutation = useImportGuests();
   const createGuestMutation = useCreateGuest();
+  const updateGuestMutation = useUpdateGuest();
 
   const filtered = (guests ?? []).filter((g) => filter === 'all' || g.rsvpStatus === filter);
+  const tableGroups = Array.from(
+    (guests ?? []).reduce((groups, guest) => {
+      const key = guest.tableNumber?.trim() || 'Sans table';
+      const current = groups.get(key) ?? [];
+      current.push(guest);
+      groups.set(key, current);
+      return groups;
+    }, new Map<string, Guest[]>()).entries(),
+  ).sort(([a], [b]) => a === 'Sans table' ? 1 : b === 'Sans table' ? -1 : a.localeCompare(b, 'fr', { numeric: true }));
 
   const handleGuestPress = (guest: Guest) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedGuest(guest);
+  };
+
+  const openTableEditor = (guest: Guest) => {
+    setTableGuest(guest);
+    setTableInput(guest.tableNumber ?? '');
+  };
+
+  const handleAssignTable = () => {
+    if (!tableGuest || !wId) return;
+    updateGuestMutation.mutate(
+      { weddingId: wId, id: tableGuest.id, data: { tableNumber: tableInput.trim() } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(wId) });
+          setTableGuest(null);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+        onError: () => Alert.alert('Erreur', 'Impossible de modifier la table de cet invité.'),
+      },
+    );
   };
 
   const handleCreateGuest = () => {
@@ -231,7 +264,7 @@ export default function InvitesScreen() {
   return (
     <>
       <FlatList
-        data={filtered}
+        data={viewMode === 'guests' ? filtered : []}
         keyExtractor={(item) => String(item.id)}
         style={{ flex: 1, backgroundColor: colors.background }}
         contentContainerStyle={{ paddingBottom: 100, flexGrow: 1 }}
@@ -253,32 +286,34 @@ export default function InvitesScreen() {
               <View style={ss.goldBar} />
 
               <View style={ss.heroTop}>
-                <View>
+                <View style={ss.heroTitleWrap}>
                   <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>LA CÉLÉBRATION</Text>
-                  <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Gestion des invités</Text>
+                  <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]} numberOfLines={2}>Gestion des invités</Text>
                 </View>
-                {/* Import button */}
-                <TouchableOpacity
-                  onPress={handlePickFile}
-                  activeOpacity={0.75}
-                  style={ss.importBtn}
-                  accessibilityLabel="Importer depuis Excel"
-                >
-                  <Feather name="upload" size={15} color="#C8A96E" />
-                  <Text style={[ss.importBtnText, { fontFamily: SANS_SEMIBOLD }]}>Importer</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setAddVisible(true)}
-                  activeOpacity={0.75}
-                  style={ss.addGuestBtn}
-                  accessibilityLabel="Ajouter un invité"
-                >
-                  <Feather name="plus" size={16} color="#FBF5FB" />
-                </TouchableOpacity>
+                <View style={ss.heroActions}>
+                  <TouchableOpacity onPress={handlePickFile} activeOpacity={0.75} style={ss.importBtn} accessibilityLabel="Importer depuis Excel">
+                    <Feather name="upload" size={15} color="#C8A96E" />
+                    <Text style={[ss.importBtnText, { fontFamily: SANS_SEMIBOLD }]}>Importer</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setAddVisible(true)} activeOpacity={0.75} style={ss.addGuestBtn} accessibilityLabel="Ajouter un invité">
+                    <Feather name="plus" size={16} color="#FBF5FB" />
+                    <Text style={[ss.addGuestText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </LinearGradient>
 
             <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+              <View style={[ss.viewTabs, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+                <TouchableOpacity onPress={() => setViewMode('guests')} style={[ss.viewTab, viewMode === 'guests' && { backgroundColor: colors.card, shadowColor: colors.plum, shadowOpacity: 0.12, shadowRadius: 5, elevation: 2 }]}>
+                  <Feather name="users" size={14} color={viewMode === 'guests' ? colors.plum : colors.mutedForeground} />
+                  <Text style={[ss.viewTabText, { fontFamily: SANS_SEMIBOLD, color: viewMode === 'guests' ? colors.plum : colors.mutedForeground }]}>Invités</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setViewMode('tables')} style={[ss.viewTab, viewMode === 'tables' && { backgroundColor: colors.card, shadowColor: colors.plum, shadowOpacity: 0.12, shadowRadius: 5, elevation: 2 }]}>
+                  <Feather name="grid" size={14} color={viewMode === 'tables' ? colors.plum : colors.mutedForeground} />
+                  <Text style={[ss.viewTabText, { fontFamily: SANS_SEMIBOLD, color: viewMode === 'tables' ? colors.plum : colors.mutedForeground }]}>Plan de table</Text>
+                </TouchableOpacity>
+              </View>
               {/* Stats bar */}
               {stats && (
                 <View style={[ss.statsWrap, shadow('md')]}>
@@ -311,16 +346,48 @@ export default function InvitesScreen() {
                   );
                 })}
               </View>
+              {viewMode === 'tables' && (
+                <View style={ss.tablePlan}>
+                  {tableGroups.length === 0 ? (
+                    <View style={[ss.noTables, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <Feather name="grid" size={22} color={colors.goldDim} />
+                      <Text style={[ss.noTablesTitle, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>Aucun invité</Text>
+                      <Text style={[ss.noTablesText, { fontFamily: SANS, color: colors.mutedForeground }]}>Ajoutez des invités pour commencer votre plan de table.</Text>
+                    </View>
+                  ) : tableGroups.map(([table, tableGuests]) => (
+                    <View key={table} style={[ss.tableCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <View style={ss.tableHeading}>
+                        <View style={[ss.tableIcon, { backgroundColor: table === 'Sans table' ? colors.muted : colors.plum + '18' }]}>
+                          <Feather name={table === 'Sans table' ? 'help-circle' : 'grid'} size={16} color={table === 'Sans table' ? colors.mutedForeground : colors.plum} />
+                        </View>
+                        <View style={ss.tableHeadingText}>
+                          <Text style={[ss.tableName, { fontFamily: SERIF, color: colors.foreground }]}>{table === 'Sans table' ? table : `Table ${table}`}</Text>
+                          <Text style={[ss.tableCount, { fontFamily: SANS, color: colors.mutedForeground }]}>{tableGuests.length} invité{tableGuests.length > 1 ? 's' : ''}</Text>
+                        </View>
+                      </View>
+                      {tableGuests.map((guest) => (
+                        <TouchableOpacity key={guest.id} onPress={() => openTableEditor(guest)} style={[ss.tableGuest, { borderTopColor: colors.border }]} activeOpacity={0.75}>
+                          <Text style={[ss.tableGuestName, { fontFamily: SANS_MEDIUM, color: colors.foreground }]} numberOfLines={1}>{guest.name}</Text>
+                          <StatusBadge label={RSVP_LABEL[guest.rsvpStatus]} tone={rsvpLabel(guest.rsvpStatus).tone} />
+                          <Feather name="edit-2" size={13} color={colors.mutedForeground} />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           </View>
         }
         ListEmptyComponent={
+          viewMode === 'tables' ? null : (
           isLoading ? (
             <View style={ss.loading}><ActivityIndicator color={colors.accent} /></View>
           ) : (
             <View style={ss.emptyWrap}>
               <EmptyState icon="users" title="Aucun invité" subtitle="Appuyez sur « Importer » pour charger un fichier Excel, ou ajoutez des invités depuis l'application web." />
             </View>
+          )
           )
         }
         renderItem={({ item, index }) => {
@@ -353,6 +420,23 @@ export default function InvitesScreen() {
       />
 
       <GuestDetailSheet visible={selectedGuest !== null} onClose={() => setSelectedGuest(null)} guest={selectedGuest} />
+      <BottomSheet visible={tableGuest !== null} onClose={() => setTableGuest(null)} eyebrow="PLAN DE TABLE" title={tableGuest?.name ?? ''}>
+        <View style={ss.tableEditor}>
+          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>NUMÉRO OU NOM DE TABLE</Text>
+          <TextInput
+            autoFocus
+            value={tableInput}
+            onChangeText={setTableInput}
+            placeholder="Ex. 5 ou Table des mariés"
+            placeholderTextColor={colors.mutedForeground}
+            style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+          />
+          <Text style={[ss.editorHint, { fontFamily: SANS, color: colors.mutedForeground }]}>Laissez vide pour retirer l’invité de sa table.</Text>
+          <TouchableOpacity disabled={updateGuestMutation.isPending} onPress={handleAssignTable} style={[ss.saveGuestBtn, { backgroundColor: colors.plum, opacity: updateGuestMutation.isPending ? 0.6 : 1 }]}>
+            {updateGuestMutation.isPending ? <ActivityIndicator color="#FBF5FB" /> : <Text style={[ss.saveGuestText, { fontFamily: SANS_SEMIBOLD }]}>Enregistrer la table</Text>}
+          </TouchableOpacity>
+        </View>
+      </BottomSheet>
       <BottomSheet
         visible={addVisible}
         onClose={() => setAddVisible(false)}
@@ -514,12 +598,18 @@ const ss = StyleSheet.create({
   hero: { paddingHorizontal: 20, paddingBottom: 22, overflow: 'hidden' },
   heroSheen: { ...StyleSheet.absoluteFillObject, height: 80 },
   goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
-  heroTop: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
+  heroTop: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
+  heroTitleWrap: { flex: 1, minWidth: 0 },
   eye: { fontSize: 9, letterSpacing: 2, marginBottom: 4 },
-  title: { fontSize: 34, lineHeight: 34 },
-  importBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(200,170,112,0.40)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  title: { fontSize: 32, lineHeight: 34 },
+  heroActions: { flexDirection: 'row', alignItems: 'center', gap: 7, flexShrink: 0 },
+  importBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(200,170,112,0.40)', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8 },
   importBtnText: { fontSize: 11, color: '#C8A96E', letterSpacing: 0.3 },
-  addGuestBtn: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', backgroundColor: '#5D2D5D', borderRadius: 10 },
+  addGuestBtn: { flexDirection: 'row', gap: 5, minHeight: 34, alignItems: 'center', justifyContent: 'center', backgroundColor: '#5D2D5D', borderRadius: 10, paddingHorizontal: 9 },
+  addGuestText: { color: '#FBF5FB', fontSize: 10 },
+  viewTabs: { flexDirection: 'row', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 3, marginBottom: 14 },
+  viewTab: { flex: 1, minHeight: 38, borderRadius: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  viewTabText: { fontSize: 11 },
   statsWrap: { borderRadius: 12, marginBottom: 14, overflow: 'hidden' },
   statsBar: { flexDirection: 'row', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 14, alignItems: 'center', overflow: 'hidden' },
   rim: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },
@@ -539,6 +629,20 @@ const ss = StyleSheet.create({
   guestName: { fontSize: 13, marginBottom: 2 },
   guestMeta: { fontSize: 10 },
   guestRight: { alignItems: 'center' },
+  tablePlan: { gap: 10, marginBottom: 8 },
+  tableCard: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  tableHeading: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
+  tableIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  tableHeadingText: { flex: 1 },
+  tableName: { fontSize: 18, lineHeight: 20 },
+  tableCount: { fontSize: 10, marginTop: 2 },
+  tableGuest: { minHeight: 46, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  tableGuestName: { flex: 1, fontSize: 12 },
+  noTables: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 24, alignItems: 'center', gap: 7 },
+  noTablesTitle: { fontSize: 14 },
+  noTablesText: { fontSize: 11, textAlign: 'center', lineHeight: 17 },
+  tableEditor: { padding: 16, gap: 10 },
+  editorHint: { fontSize: 11, lineHeight: 17, marginBottom: 4 },
   // Modal
   modalContainer: { flex: 1 },
   modalHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth },
