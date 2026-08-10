@@ -24,6 +24,9 @@ import {
   Heart,
   Sparkles,
   BookOpen,
+  Palette,
+  CalendarClock,
+  BriefcaseBusiness,
 } from 'lucide-react';
 import {
   useListWeddings,
@@ -63,6 +66,9 @@ const navItems = [
   { label: 'Calendrier', icon: CalendarDays, path: '/calendrier' },
   { label: 'Prestataires', icon: Users, path: '/prestataires' },
   { label: 'Mon carnet d’adresse', icon: BookOpen, path: '/carnet-adresse' },
+  { label: 'Rétro-planning', icon: CalendarClock, path: '/retroplanning' },
+  { label: 'Moodboards', icon: Palette, path: '/moodboards' },
+  { label: 'Business', icon: BriefcaseBusiness, path: '/business' },
   { label: 'Invités', icon: UserCircle2, path: '/invites' },
   { label: 'Budget', icon: WalletCards, path: '/budget' },
   { label: 'Contrats', icon: FileText, path: '/contrats' },
@@ -346,6 +352,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       '/calendrier': { title: 'Votre calendrier', body: 'Le calendrier rassemble les événements importants de votre mariage. Il sera disponible dès qu’un dossier sera créé.' },
       '/prestataires': { title: 'Vos prestataires', body: 'Centralisez ici les coordonnées et le suivi de vos prestataires une fois votre premier dossier créé.' },
       '/carnet-adresse': { title: 'Mon carnet d’adresse', body: 'Retrouvez vos prestataires favoris et ajoutez-les à vos mariages sans ressaisir leurs coordonnées.' },
+      '/retroplanning': { title: 'Rétro-planning', body: 'Un planning qui se recalcule automatiquement à partir de la date, du lieu et du traiteur.' },
+      '/moodboards': { title: 'Moodboards', body: 'Rassemblez vos inspirations visuelles et vos directions artistiques.' },
+      '/business': { title: 'Business', body: 'Pilotez votre trésorerie, votre rentabilité, votre acquisition et vos garde-fous professionnels.' },
       '/invites': { title: 'Vos invités', body: 'Gérez votre liste d’invités et leurs réponses depuis cette page après avoir créé un dossier.' },
       '/budget': { title: 'Votre budget', body: 'Suivez les catégories et dépenses du mariage actif dès qu’un dossier est disponible.' },
       '/contrats': { title: 'Vos contrats', body: 'Retrouvez ici les contrats liés au dossier de mariage sélectionné.' },
@@ -847,7 +856,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {/* Page content — ambient gradient background */}
           <div className="content-bg flex-1 overflow-y-auto overscroll-contain">
             <div className="mx-auto max-w-[1390px] px-5 pt-9 pb-28 sm:px-9 lg:px-12 lg:pt-12 lg:pb-32">
-              {!isLoading && !activeWeddingId && location !== '/parametres' && location !== '/carnet-adresse' ? (
+              {!isLoading && !activeWeddingId && !['/parametres', '/carnet-adresse', '/moodboards', '/business'].includes(location) ? (
                 <div className="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
                   {noWeddingTour && (
                     <PageTour

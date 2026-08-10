@@ -30,6 +30,9 @@ const TAB_META: Record<string, { sf: string; feather: string; label: string }> =
   contrats:     { sf: 'doc.text',           feather: 'file-text',    label: 'Contrats' },
   parametres:   { sf: 'gearshape',          feather: 'settings',     label: 'Paramètres' },
   profil:       { sf: 'person.crop.circle', feather: 'user',         label: 'Profil' },
+  moodboards:   { sf: 'square.grid.2x2',    feather: 'image',         label: 'Moodboards' },
+  business:     { sf: 'briefcase',          feather: 'briefcase',      label: 'Business' },
+  retroplanning:{ sf: 'calendar.badge.clock', feather: 'clock',       label: 'Rétro-planning' },
 };
 
 // 5 primary tabs always visible in the bar
@@ -39,7 +42,7 @@ const PRIMARY = ['index', 'evenements', 'invites', 'budget', 'prestataires'];
 const ALL_TABS = [
   'index', 'mariages', 'evenements', 'prestataires',
   'invites', 'budget', 'paiements', 'contrats',
-  'parametres', 'profil',
+  'parametres', 'profil', 'moodboards', 'business', 'retroplanning',
 ];
 
 // ── Icon helper ────────────────────────────────────────────────────────────────
@@ -373,6 +376,9 @@ function ClassicTabLayout() {
       <Tabs.Screen name="contrats" />
       <Tabs.Screen name="parametres" />
       <Tabs.Screen name="profil" />
+      <Tabs.Screen name="moodboards" />
+      <Tabs.Screen name="business" />
+      <Tabs.Screen name="retroplanning" />
     </Tabs>
   );
 }

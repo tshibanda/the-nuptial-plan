@@ -25,6 +25,7 @@ import {
   PlayCircle,
   RotateCcw,
   BookOpen,
+  BriefcaseBusiness,
 } from 'lucide-react';
 import { useUser } from '@clerk/react';
 import { useActiveWedding } from '@/lib/wedding-context';
@@ -67,6 +68,9 @@ const TOUR_PAGES = [
   { key: 'paiements',     label: 'Paiements',    route: '/paiements',    icon: CreditCard  },
   { key: 'documents',     label: 'Documents',    route: '/documents',    icon: FolderOpen  },
   { key: 'parametres',    label: 'Paramètres',   route: '/parametres',   icon: Building2   },
+  { key: 'retroplanning', label: 'Rétro-planning', route: '/retroplanning', icon: CalendarDays },
+  { key: 'moodboards',   label: 'Moodboards',    route: '/moodboards',    icon: Sparkles    },
+  { key: 'business',     label: 'Business',      route: '/business',      icon: BriefcaseBusiness },
 ] as const;
 
 const CURRENCIES = [

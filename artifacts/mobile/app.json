@@ -14,7 +14,9 @@
       "backgroundColor": "#f5f1eb"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.thenuptialplan.mobile",
+      "buildNumber": "1"
     },
     "autolinking": {
       "exclude": [

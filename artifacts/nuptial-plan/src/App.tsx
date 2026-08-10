@@ -22,6 +22,9 @@ import NotFound from '@/pages/not-found';
 import { PrivacyPage, PolicyPage } from '@/pages/legal';
 import { LegalFooter } from '@/components/legal-footer';
 import CarnetAdresse from '@/pages/carnet-adresse';
+import Retroplanning from '@/pages/retroplanning';
+import Moodboards from '@/pages/moodboards';
+import Business from '@/pages/business';
 
 // ── Clerk key & proxy ─────────────────────────────────────────────────────────
 // REQUIRED — copy verbatim. Resolves from hostname so one build serves multiple domains.
@@ -199,6 +202,9 @@ function AuthenticatedApp() {
             <Route path="/" component={Dashboard} />
             <Route path="/prestataires" component={Prestataires} />
             <Route path="/carnet-adresse" component={CarnetAdresse} />
+            <Route path="/retroplanning" component={Retroplanning} />
+            <Route path="/moodboards" component={Moodboards} />
+            <Route path="/business" component={Business} />
             <Route path="/invites" component={Invites} />
             <Route path="/budget" component={Budget} />
             <Route path="/calendrier" component={Calendrier} />
