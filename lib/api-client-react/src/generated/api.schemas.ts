@@ -160,6 +160,44 @@ export interface VendorUpdate {
   notes?: string;
 }
 
+export interface AddressBookEntry {
+  id: number;
+  ownerId: string;
+  name: string;
+  category: string;
+  /** @nullable */
+  contactName?: string | null;
+  /** @nullable */
+  contactEmail?: string | null;
+  /** @nullable */
+  contactPhone?: string | null;
+  /** @nullable */
+  website?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface AddressBookEntryInput {
+  name: string;
+  category: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  website?: string;
+  notes?: string;
+}
+
+export interface AddressBookEntryUpdate {
+  name?: string;
+  category?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  website?: string;
+  notes?: string;
+}
+
 export type GuestRsvpStatus = typeof GuestRsvpStatus[keyof typeof GuestRsvpStatus];
 
 
@@ -201,6 +239,10 @@ export interface GuestInput {
   dietaryRequirements?: string;
   rsvpStatus: GuestInputRsvpStatus;
   notes?: string;
+}
+
+export interface GuestImportInput {
+  guests: GuestInput[];
 }
 
 export type GuestUpdateRsvpStatus = typeof GuestUpdateRsvpStatus[keyof typeof GuestUpdateRsvpStatus];
@@ -518,8 +560,4 @@ export interface OpenaiConversationWithMessages {
 export interface OpenaiError {
   error: string;
 }
-
-export type ImportGuestsBody = {
-  guests: GuestInput[];
-};
 

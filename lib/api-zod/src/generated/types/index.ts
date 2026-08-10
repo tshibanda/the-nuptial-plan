@@ -8,6 +8,9 @@
 
 export * from './activityItem';
 export * from './activityItemEntityType';
+export * from './addressBookEntry';
+export * from './addressBookEntryInput';
+export * from './addressBookEntryUpdate';
 export * from './budgetCategory';
 export * from './budgetCategoryInput';
 export * from './budgetCategoryUpdate';
@@ -25,6 +28,7 @@ export * from './contractStatus';
 export * from './contractUpdate';
 export * from './contractUpdateStatus';
 export * from './guest';
+export * from './guestImportInput';
 export * from './guestImportResult';
 export * from './guestInput';
 export * from './guestInputRsvpStatus';
@@ -33,7 +37,6 @@ export * from './guestStats';
 export * from './guestUpdate';
 export * from './guestUpdateRsvpStatus';
 export * from './healthStatus';
-export * from './importGuestsBody';
 export * from './openaiConversation';
 export * from './openaiConversationInput';
 export * from './openaiConversationWithMessages';

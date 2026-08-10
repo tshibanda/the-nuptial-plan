@@ -9,3 +9,4 @@ export * from "./activity";
 export * from "./documents";
 export * from "./conversations";
 export * from "./messages";
+export * from "./address-book";

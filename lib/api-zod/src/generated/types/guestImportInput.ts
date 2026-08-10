@@ -7,6 +7,6 @@
  */
 import type { GuestInput } from './guestInput';
 
-export type ImportGuestsBody = {
+export interface GuestImportInput {
   guests: GuestInput[];
-};
+}

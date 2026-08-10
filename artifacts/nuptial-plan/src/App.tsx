@@ -21,6 +21,7 @@ import JourJ from '@/pages/jour-j';
 import NotFound from '@/pages/not-found';
 import { PrivacyPage, PolicyPage } from '@/pages/legal';
 import { LegalFooter } from '@/components/legal-footer';
+import CarnetAdresse from '@/pages/carnet-adresse';
 
 // ── Clerk key & proxy ─────────────────────────────────────────────────────────
 // REQUIRED — copy verbatim. Resolves from hostname so one build serves multiple domains.
@@ -197,6 +198,7 @@ function AuthenticatedApp() {
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/prestataires" component={Prestataires} />
+            <Route path="/carnet-adresse" component={CarnetAdresse} />
             <Route path="/invites" component={Invites} />
             <Route path="/budget" component={Budget} />
             <Route path="/calendrier" component={Calendrier} />

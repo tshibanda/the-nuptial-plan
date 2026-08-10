@@ -14,6 +14,8 @@ tags:
     description: Wedding file management
   - name: vendors
     description: Vendor team management
+  - name: address-book
+    description: Planner address book and favorite vendors
   - name: guests
     description: Guest list management
   - name: budget
@@ -290,6 +292,104 @@ paths:
         "204":
           description: Deleted
 
+  /address-book:
+    get:
+      operationId: listAddressBookEntries
+      tags: [address-book]
+      summary: List the planner's saved vendor contacts
+      responses:
+        "200":
+          description: Address book entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AddressBookEntry"
+    post:
+      operationId: createAddressBookEntry
+      tags: [address-book]
+      summary: Save a vendor contact to the planner's address book
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddressBookEntryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddressBookEntry"
+
+  /address-book/{id}:
+    patch:
+      operationId: updateAddressBookEntry
+      tags: [address-book]
+      summary: Update a saved vendor contact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddressBookEntryUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddressBookEntry"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteAddressBookEntry
+      tags: [address-book]
+      summary: Delete a saved vendor contact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/vendors/from-address-book/{addressBookId}:
+    post:
+      operationId: addAddressBookEntryToWedding
+      tags: [address-book]
+      summary: Add a saved vendor contact to a wedding
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: addressBookId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "201":
+          description: Vendor created from address book entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vendor"
+        "404":
+          description: Not found
+
   # ─── Guests ───────────────────────────────────────────────────
   /weddings/{weddingId}/guests:
     get:
@@ -418,13 +518,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [guests]
-              properties:
-                guests:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/GuestInput"
+              $ref: "#/components/schemas/GuestImportInput"
       responses:
         "200":
           description: Import result
@@ -1148,6 +1242,68 @@ components:
         notes:
           type: string
 
+    AddressBookEntry:
+      type: object
+      required: [id, ownerId, name, category, createdAt]
+      properties:
+        id:
+          type: number
+        ownerId:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        contactName:
+          type: ["string", "null"]
+        contactEmail:
+          type: ["string", "null"]
+        contactPhone:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AddressBookEntryInput:
+      type: object
+      required: [name, category]
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        website:
+          type: string
+        notes:
+          type: string
+
+    AddressBookEntryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        website:
+          type: string
+        notes:
+          type: string
+
     # ─── Guest ────────────────────────────────────────────────
     Guest:
       type: object
@@ -1190,6 +1346,15 @@ components:
           enum: [confirmed, pending, declined]
         notes:
           type: string
+
+    GuestImportInput:
+      type: object
+      required: [guests]
+      properties:
+        guests:
+          type: array
+          items:
+            $ref: "#/components/schemas/GuestInput"
 
     GuestUpdate:
       type: object

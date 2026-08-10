@@ -296,6 +296,115 @@ export const DeleteVendorResponse = zod.void()
 
 
 /**
+ * @summary List the planner's saved vendor contacts
+ */
+export const ListAddressBookEntriesResponseItem = zod.object({
+  "id": zod.number(),
+  "ownerId": zod.string(),
+  "name": zod.string(),
+  "category": zod.string(),
+  "contactName": zod.string().nullish(),
+  "contactEmail": zod.string().nullish(),
+  "contactPhone": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const ListAddressBookEntriesResponse = zod.array(ListAddressBookEntriesResponseItem)
+
+
+/**
+ * @summary Save a vendor contact to the planner's address book
+ */
+export const CreateAddressBookEntryBody = zod.object({
+  "name": zod.string(),
+  "category": zod.string(),
+  "contactName": zod.string().optional(),
+  "contactEmail": zod.string().optional(),
+  "contactPhone": zod.string().optional(),
+  "website": zod.string().optional(),
+  "notes": zod.string().optional()
+})
+
+export const CreateAddressBookEntryResponse = zod.object({
+  "id": zod.number(),
+  "ownerId": zod.string(),
+  "name": zod.string(),
+  "category": zod.string(),
+  "contactName": zod.string().nullish(),
+  "contactEmail": zod.string().nullish(),
+  "contactPhone": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Update a saved vendor contact
+ */
+export const UpdateAddressBookEntryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateAddressBookEntryBody = zod.object({
+  "name": zod.string().optional(),
+  "category": zod.string().optional(),
+  "contactName": zod.string().optional(),
+  "contactEmail": zod.string().optional(),
+  "contactPhone": zod.string().optional(),
+  "website": zod.string().optional(),
+  "notes": zod.string().optional()
+})
+
+export const UpdateAddressBookEntryResponse = zod.object({
+  "id": zod.number(),
+  "ownerId": zod.string(),
+  "name": zod.string(),
+  "category": zod.string(),
+  "contactName": zod.string().nullish(),
+  "contactEmail": zod.string().nullish(),
+  "contactPhone": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a saved vendor contact
+ */
+export const DeleteAddressBookEntryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteAddressBookEntryResponse = zod.void()
+
+
+/**
+ * @summary Add a saved vendor contact to a wedding
+ */
+export const AddAddressBookEntryToWeddingParams = zod.object({
+  "weddingId": zod.coerce.number(),
+  "addressBookId": zod.coerce.number()
+})
+
+export const AddAddressBookEntryToWeddingResponse = zod.object({
+  "id": zod.number(),
+  "weddingId": zod.number(),
+  "name": zod.string(),
+  "category": zod.string(),
+  "status": zod.enum(['confirmed', 'awaiting_contract', 'deposit_paid', 'cancelled']),
+  "totalAmountCents": zod.number(),
+  "depositAmountCents": zod.number().nullish(),
+  "contactName": zod.string().nullish(),
+  "contactEmail": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary List guests for a wedding
  */
 export const ListGuestsParams = zod.object({

@@ -21,6 +21,9 @@ import type {
 
 import type {
   ActivityItem,
+  AddressBookEntry,
+  AddressBookEntryInput,
+  AddressBookEntryUpdate,
   BudgetCategory,
   BudgetCategoryInput,
   BudgetCategoryUpdate,
@@ -32,12 +35,12 @@ import type {
   ContractInput,
   ContractUpdate,
   Guest,
+  GuestImportInput,
   GuestImportResult,
   GuestInput,
   GuestStats,
   GuestUpdate,
   HealthStatus,
-  ImportGuestsBody,
   OpenaiConversation,
   OpenaiConversationInput,
   OpenaiConversationWithMessages,
@@ -1060,6 +1063,370 @@ export const useDeleteVendor = <TError = ErrorType<unknown>,
       return useMutation(getDeleteVendorMutationOptions(options));
     }
 
+export const getListAddressBookEntriesUrl = () => {
+
+
+
+
+  return `/api/address-book`
+}
+
+/**
+ * @summary List the planner's saved vendor contacts
+ */
+export const listAddressBookEntries = async ( options?: Parameters<typeof customFetch>[1]): Promise<AddressBookEntry[]> => {
+
+  return customFetch<AddressBookEntry[]>(getListAddressBookEntriesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAddressBookEntriesQueryKey = () => {
+    return [
+    `/api/address-book`
+    ] as const;
+    }
+
+
+export const getListAddressBookEntriesQueryOptions = <TData = Awaited<ReturnType<typeof listAddressBookEntries>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAddressBookEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAddressBookEntriesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAddressBookEntries>>> = ({ signal }) => listAddressBookEntries({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAddressBookEntries>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAddressBookEntriesQueryResult = NonNullable<Awaited<ReturnType<typeof listAddressBookEntries>>>
+export type ListAddressBookEntriesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List the planner's saved vendor contacts
+ */
+
+export function useListAddressBookEntries<TData = Awaited<ReturnType<typeof listAddressBookEntries>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAddressBookEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAddressBookEntriesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAddressBookEntryUrl = () => {
+
+
+
+
+  return `/api/address-book`
+}
+
+/**
+ * @summary Save a vendor contact to the planner's address book
+ */
+export const createAddressBookEntry = async (addressBookEntryInput: AddressBookEntryInput, options?: Parameters<typeof customFetch>[1]): Promise<AddressBookEntry> => {
+
+  return customFetch<AddressBookEntry>(getCreateAddressBookEntryUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(addressBookEntryInput)
+  }
+);}
+
+
+
+
+
+export const getCreateAddressBookEntryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAddressBookEntry>>, TError,{data: BodyType<AddressBookEntryInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAddressBookEntry>>, TError,{data: BodyType<AddressBookEntryInput>}, TContext> => {
+
+const mutationKey = ['createAddressBookEntry'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAddressBookEntry>>, {data: BodyType<AddressBookEntryInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAddressBookEntry(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAddressBookEntryMutationResult = NonNullable<Awaited<ReturnType<typeof createAddressBookEntry>>>
+    export type CreateAddressBookEntryMutationBody = BodyType<AddressBookEntryInput>
+    export type CreateAddressBookEntryMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Save a vendor contact to the planner's address book
+ */
+export const useCreateAddressBookEntry = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAddressBookEntry>>, TError,{data: BodyType<AddressBookEntryInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAddressBookEntry>>,
+        TError,
+        {data: BodyType<AddressBookEntryInput>},
+        TContext
+      > => {
+      return useMutation(getCreateAddressBookEntryMutationOptions(options));
+    }
+
+export const getUpdateAddressBookEntryUrl = (id: number,) => {
+
+
+
+
+  return `/api/address-book/${id}`
+}
+
+/**
+ * @summary Update a saved vendor contact
+ */
+export const updateAddressBookEntry = async (id: number,
+    addressBookEntryUpdate: AddressBookEntryUpdate, options?: Parameters<typeof customFetch>[1]): Promise<AddressBookEntry> => {
+
+  return customFetch<AddressBookEntry>(getUpdateAddressBookEntryUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(addressBookEntryUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateAddressBookEntryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAddressBookEntry>>, TError,{id: number;data: BodyType<AddressBookEntryUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAddressBookEntry>>, TError,{id: number;data: BodyType<AddressBookEntryUpdate>}, TContext> => {
+
+const mutationKey = ['updateAddressBookEntry'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAddressBookEntry>>, {id: number;data: BodyType<AddressBookEntryUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateAddressBookEntry(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAddressBookEntryMutationResult = NonNullable<Awaited<ReturnType<typeof updateAddressBookEntry>>>
+    export type UpdateAddressBookEntryMutationBody = BodyType<AddressBookEntryUpdate>
+    export type UpdateAddressBookEntryMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a saved vendor contact
+ */
+export const useUpdateAddressBookEntry = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAddressBookEntry>>, TError,{id: number;data: BodyType<AddressBookEntryUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAddressBookEntry>>,
+        TError,
+        {id: number;data: BodyType<AddressBookEntryUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateAddressBookEntryMutationOptions(options));
+    }
+
+export const getDeleteAddressBookEntryUrl = (id: number,) => {
+
+
+
+
+  return `/api/address-book/${id}`
+}
+
+/**
+ * @summary Delete a saved vendor contact
+ */
+export const deleteAddressBookEntry = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteAddressBookEntryUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAddressBookEntryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAddressBookEntry>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAddressBookEntry>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteAddressBookEntry'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAddressBookEntry>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAddressBookEntry(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAddressBookEntryMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAddressBookEntry>>>
+
+    export type DeleteAddressBookEntryMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a saved vendor contact
+ */
+export const useDeleteAddressBookEntry = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAddressBookEntry>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAddressBookEntry>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteAddressBookEntryMutationOptions(options));
+    }
+
+export const getAddAddressBookEntryToWeddingUrl = (weddingId: number,
+    addressBookId: number,) => {
+
+
+
+
+  return `/api/weddings/${weddingId}/vendors/from-address-book/${addressBookId}`
+}
+
+/**
+ * @summary Add a saved vendor contact to a wedding
+ */
+export const addAddressBookEntryToWedding = async (weddingId: number,
+    addressBookId: number, options?: Parameters<typeof customFetch>[1]): Promise<Vendor> => {
+
+  return customFetch<Vendor>(getAddAddressBookEntryToWeddingUrl(weddingId,addressBookId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAddAddressBookEntryToWeddingMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addAddressBookEntryToWedding>>, TError,{weddingId: number;addressBookId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addAddressBookEntryToWedding>>, TError,{weddingId: number;addressBookId: number}, TContext> => {
+
+const mutationKey = ['addAddressBookEntryToWedding'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addAddressBookEntryToWedding>>, {weddingId: number;addressBookId: number}> = (props) => {
+          const {weddingId,addressBookId} = props ?? {};
+
+          return  addAddressBookEntryToWedding(weddingId,addressBookId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddAddressBookEntryToWeddingMutationResult = NonNullable<Awaited<ReturnType<typeof addAddressBookEntryToWedding>>>
+
+    export type AddAddressBookEntryToWeddingMutationError = ErrorType<void>
+
+    /**
+ * @summary Add a saved vendor contact to a wedding
+ */
+export const useAddAddressBookEntryToWedding = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addAddressBookEntryToWedding>>, TError,{weddingId: number;addressBookId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addAddressBookEntryToWedding>>,
+        TError,
+        {weddingId: number;addressBookId: number},
+        TContext
+      > => {
+      return useMutation(getAddAddressBookEntryToWeddingMutationOptions(options));
+    }
+
 export const getListGuestsUrl = (weddingId: number,) => {
 
 
@@ -1445,14 +1812,14 @@ export const getImportGuestsUrl = (weddingId: number,) => {
  * @summary Bulk import guests from parsed spreadsheet rows
  */
 export const importGuests = async (weddingId: number,
-    importGuestsBody: ImportGuestsBody, options?: Parameters<typeof customFetch>[1]): Promise<GuestImportResult> => {
+    guestImportInput: GuestImportInput, options?: Parameters<typeof customFetch>[1]): Promise<GuestImportResult> => {
 
   return customFetch<GuestImportResult>(getImportGuestsUrl(weddingId),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(importGuestsBody)
+    body: JSON.stringify(guestImportInput)
   }
 );}
 
@@ -1461,8 +1828,8 @@ export const importGuests = async (weddingId: number,
 
 
 export const getImportGuestsMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importGuests>>, TError,{weddingId: number;data: BodyType<ImportGuestsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof importGuests>>, TError,{weddingId: number;data: BodyType<ImportGuestsBody>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importGuests>>, TError,{weddingId: number;data: BodyType<GuestImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importGuests>>, TError,{weddingId: number;data: BodyType<GuestImportInput>}, TContext> => {
 
 const mutationKey = ['importGuests'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1474,7 +1841,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importGuests>>, {weddingId: number;data: BodyType<ImportGuestsBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importGuests>>, {weddingId: number;data: BodyType<GuestImportInput>}> = (props) => {
           const {weddingId,data} = props ?? {};
 
           return  importGuests(weddingId,data,requestOptions)
@@ -1488,18 +1855,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ImportGuestsMutationResult = NonNullable<Awaited<ReturnType<typeof importGuests>>>
-    export type ImportGuestsMutationBody = BodyType<ImportGuestsBody>
+    export type ImportGuestsMutationBody = BodyType<GuestImportInput>
     export type ImportGuestsMutationError = ErrorType<unknown>
 
     /**
  * @summary Bulk import guests from parsed spreadsheet rows
  */
 export const useImportGuests = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importGuests>>, TError,{weddingId: number;data: BodyType<ImportGuestsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importGuests>>, TError,{weddingId: number;data: BodyType<GuestImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof importGuests>>,
         TError,
-        {weddingId: number;data: BodyType<ImportGuestsBody>},
+        {weddingId: number;data: BodyType<GuestImportInput>},
         TContext
       > => {
       return useMutation(getImportGuestsMutationOptions(options));

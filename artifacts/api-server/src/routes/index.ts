@@ -14,6 +14,7 @@ import documentsRouter from "./documents";
 import storageRouter from "./storage";
 import dashboardRouter from "./dashboard";
 import openaiConversationsRouter from "./openai/conversations";
+import addressBookRouter from "./address-book";
 
 const router: IRouter = Router();
 
@@ -24,6 +25,7 @@ router.use(healthRouter);
 router.use(requireAuth);
 router.use(storageRouter);
 router.use("/openai/conversations", openaiConversationsRouter);
+router.use(addressBookRouter);
 router.use(dashboardRouter);
 router.use("/weddings", weddingsRouter);
 router.use("/weddings/:weddingId/vendors", requireWeddingOwnership, vendorsRouter);
