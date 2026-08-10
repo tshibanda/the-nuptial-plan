@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import {
-  FlatList, View, Text, StyleSheet, TextInput,
+  FlatList, View, Text, StyleSheet, TextInput, ScrollView,
   ActivityIndicator, Platform, TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useListWeddings, useListVendors } from '@workspace/api-client-react';
+import { useListWeddings, useListVendors, useCreateVendor, getListVendorsQueryKey } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
@@ -18,6 +19,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
 import { VendorDetailSheet } from '@/components/VendorDetailSheet';
 import { TourSheet } from '@/components/TourSheet';
+import { BottomSheet } from '@/components/BottomSheet';
 
 const TOUR_STEPS = [
   {
@@ -47,12 +49,16 @@ export default function PrestatairesScreen() {
   const { tourVisible, openTour, closeTour } = useTour('tour:prestataires');
   const [search, setSearch] = useState('');
   const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
+  const [addVisible, setAddVisible] = useState(false);
+  const [form, setForm] = useState({ name: '', category: '', contactName: '', contactEmail: '', amount: '' });
+  const queryClient = useQueryClient();
 
   const { data: weddings } = useListWeddings();
   const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
   const wId = activeWedding?.id ?? 0;
 
   const { data: vendors, isLoading, refetch, isRefetching } = useListVendors(wId);
+  const createVendor = useCreateVendor();
 
   const filtered = (vendors ?? []).filter(
     (v) =>
@@ -63,6 +69,20 @@ export default function PrestatairesScreen() {
   const handleVendorPress = (id: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedVendorId(id);
+  };
+
+  const saveVendor = () => {
+    if (!form.name.trim() || !form.category.trim()) return;
+    createVendor.mutate({
+      weddingId: wId,
+      data: {
+        name: form.name.trim(), category: form.category.trim(), status: 'awaiting_contract',
+        totalAmountCents: Math.round((Number(form.amount.replace(',', '.')) || 0) * 100),
+        contactName: form.contactName.trim() || undefined, contactEmail: form.contactEmail.trim() || undefined,
+      },
+    }, {
+      onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(wId) }); setForm({ name: '', category: '', contactName: '', contactEmail: '', amount: '' }); setAddVisible(false); },
+    });
   };
 
   return (
@@ -94,6 +114,9 @@ export default function PrestatairesScreen() {
               {activeWedding && (
                 <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]}>{activeWedding.names}</Text>
               )}
+              <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
+                <Feather name="plus" size={15} color="#FBF5FB" /><Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+              </TouchableOpacity>
             </LinearGradient>
 
             {/* Search bar */}
@@ -174,6 +197,14 @@ export default function PrestatairesScreen() {
         vendorId={selectedVendorId}
         currency={activeWedding?.currency}
       />
+      <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow="ÉQUIPE CRÉATIVE" title="Ajouter un prestataire">
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>
+          {([
+            ['name', 'Nom du prestataire *'], ['category', 'Catégorie *'], ['contactName', 'Nom du contact'], ['contactEmail', 'E-mail'], ['amount', 'Montant du devis (€)'],
+          ] as const).map(([key, placeholder]) => <TextInput key={key} value={form[key]} onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' ? 'decimal-pad' : key === 'contactEmail' ? 'email-address' : 'default'} autoCapitalize={key === 'contactEmail' ? 'none' : 'sentences'} style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />)}
+          <TouchableOpacity disabled={createVendor.isPending} onPress={saveVendor} style={[ss.saveBtn, { backgroundColor: colors.plum }]}><Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{createVendor.isPending ? 'Enregistrement…' : 'Enregistrer le prestataire'}</Text></TouchableOpacity>
+        </ScrollView>
+      </BottomSheet>
 
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
@@ -204,4 +235,10 @@ const ss = StyleSheet.create({
   footerItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   footerText: { fontSize: 11 },
   amount: { fontSize: 22, lineHeight: 22 },
+  addHeaderBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 14, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.13)' },
+  addHeaderText: { color: '#FBF5FB', fontSize: 11 },
+  form: { padding: 16, gap: 10 },
+  formInput: { minHeight: 44, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 12 },
+  saveBtn: { minHeight: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  saveText: { color: '#FBF5FB', fontSize: 12 },
 });

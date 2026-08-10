@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import {
-  FlatList, View, Text, StyleSheet, TextInput,
+  FlatList, View, Text, StyleSheet, TextInput, ScrollView, Alert,
   ActivityIndicator, Platform, TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useListContracts, useListWeddings } from '@workspace/api-client-react';
+import { useListContracts, useListWeddings, useCreateContract, getListContractsQueryKey } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
@@ -16,6 +17,7 @@ import { formatCents } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { TourSheet } from '@/components/TourSheet';
+import { BottomSheet } from '@/components/BottomSheet';
 
 const TOUR_STEPS = [
   {
@@ -56,6 +58,11 @@ export default function ContratsScreen() {
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const { tourVisible, openTour, closeTour } = useTour('tour:contrats');
   const [search, setSearch] = useState('');
+  const [addVisible, setAddVisible] = useState(false);
+  const [form, setForm] = useState({ vendorName: '', amount: '', deposit: '', signedDate: '', notes: '' });
+  const [status, setStatus] = useState<'pending' | 'signed' | 'partial' | 'cancelled'>('pending');
+  const queryClient = useQueryClient();
+  const createContract = useCreateContract();
 
   const { data: weddings } = useListWeddings();
   const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
@@ -107,6 +114,10 @@ export default function ContratsScreen() {
                   {activeWedding.names}
                 </Text>
               )}
+              <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
+                <Feather name="plus" size={15} color="#FBF5FB" />
+                <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+              </TouchableOpacity>
             </LinearGradient>
 
             {/* Search bar */}
@@ -128,7 +139,7 @@ export default function ContratsScreen() {
             <EmptyState
               icon="file-text"
               title={search ? 'Aucun résultat' : 'Aucun contrat'}
-              subtitle={search ? 'Modifiez votre recherche.' : 'Ajoutez vos contrats depuis l\'application web.'}
+              subtitle={search ? 'Modifiez votre recherche.' : 'Appuyez sur Ajouter pour créer votre premier contrat.'}
             />
           </View>
         }
@@ -186,6 +197,22 @@ export default function ContratsScreen() {
         }}
       />
 
+      <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow="DOCUMENTS" title="Ajouter un contrat">
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>
+          {([
+            ['vendorName', 'Nom du prestataire *'], ['amount', 'Montant total (€)'], ['deposit', 'Acompte versé (€)'], ['signedDate', 'Date de signature (AAAA-MM-JJ)'],
+          ] as const).map(([key, placeholder]) => (
+            <TextInput key={key} value={form[key]} onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' || key === 'deposit' ? 'decimal-pad' : 'default'} style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
+          ))}
+          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>STATUT</Text>
+          <View style={ss.statusRow}>{(['pending', 'signed', 'partial', 'cancelled'] as const).map((item) => <TouchableOpacity key={item} onPress={() => setStatus(item)} style={[ss.statusChoice, { backgroundColor: status === item ? colors.plum : colors.muted, borderColor: status === item ? colors.plum : colors.border }]}><Text style={[ss.statusText, { color: status === item ? '#FBF5FB' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{STATUS_LABELS[item]}</Text></TouchableOpacity>)}</View>
+          <TextInput value={form.notes} onChangeText={(value) => setForm((current) => ({ ...current, notes: value }))} placeholder="Notes" placeholderTextColor={colors.mutedForeground} multiline style={[ss.formInput, ss.formNotes, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
+          <TouchableOpacity disabled={createContract.isPending} onPress={() => {
+            if (!form.vendorName.trim()) { Alert.alert('Prestataire requis', 'Saisissez le nom du prestataire.'); return; }
+            createContract.mutate({ weddingId: wId, data: { vendorName: form.vendorName.trim(), status, totalAmountCents: Math.round((Number(form.amount.replace(',', '.')) || 0) * 100), depositPaidCents: Math.round((Number(form.deposit.replace(',', '.')) || 0) * 100), signedDate: form.signedDate.trim() || undefined, notes: form.notes.trim() || undefined } }, { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListContractsQueryKey(wId) }); setForm({ vendorName: '', amount: '', deposit: '', signedDate: '', notes: '' }); setStatus('pending'); setAddVisible(false); }, onError: () => Alert.alert('Erreur', 'Impossible d’ajouter ce contrat.') });
+          }} style={[ss.saveBtn, { backgroundColor: colors.plum }]}><Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{createContract.isPending ? 'Enregistrement…' : 'Enregistrer le contrat'}</Text></TouchableOpacity>
+        </ScrollView>
+      </BottomSheet>
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
   );
@@ -214,4 +241,15 @@ const ss = StyleSheet.create({
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, paddingVertical: 10 },
   footerItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   footerText: { fontSize: 12 },
+  addHeaderBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 14, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.13)' },
+  addHeaderText: { color: '#FBF5FB', fontSize: 11 },
+  form: { padding: 16, gap: 10 },
+  formInput: { minHeight: 44, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 12 },
+  formNotes: { minHeight: 72, paddingTop: 12, textAlignVertical: 'top' },
+  formLabel: { fontSize: 9, letterSpacing: 1.2, marginTop: 4 },
+  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  statusChoice: { borderWidth: 1, borderRadius: 9, paddingHorizontal: 10, minHeight: 36, justifyContent: 'center' },
+  statusText: { fontSize: 10 },
+  saveBtn: { minHeight: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  saveText: { color: '#FBF5FB', fontSize: 12 },
 });

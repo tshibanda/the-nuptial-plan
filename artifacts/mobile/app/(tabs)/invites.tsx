@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   FlatList, View, Text, StyleSheet, Modal, ScrollView,
-  ActivityIndicator, Platform, TouchableOpacity, Alert,
+  ActivityIndicator, Platform, TouchableOpacity, Alert, TextInput,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -13,7 +13,7 @@ import { Feather } from '@expo/vector-icons';
 import type { Guest } from '@workspace/api-client-react';
 import {
   useListWeddings, useListGuests, useGetGuestStats,
-  useImportGuests, getListGuestsQueryKey, getGetGuestStatsQueryKey,
+  useImportGuests, useCreateGuest, getListGuestsQueryKey, getGetGuestStatsQueryKey,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWedding } from '@/context/WeddingContext';
@@ -26,6 +26,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
 import { GuestDetailSheet } from '@/components/GuestDetailSheet';
 import { TourSheet } from '@/components/TourSheet';
+import { BottomSheet } from '@/components/BottomSheet';
 
 // ── Excel parsing ──────────────────────────────────────────────────────────────
 type RsvpStatus = 'confirmed' | 'pending' | 'declined';
@@ -109,6 +110,11 @@ export default function InvitesScreen() {
   const { tourVisible, openTour, closeTour } = useTour('tour:invites');
   const [filter, setFilter] = useState<Filter>('all');
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+  const [addVisible, setAddVisible] = useState(false);
+  const [newGuest, setNewGuest] = useState({
+    name: '', email: '', tableNumber: '', dietaryRequirements: '', notes: '',
+    rsvpStatus: 'pending' as RsvpStatus,
+  });
 
   // Import state
   const [importModalVisible, setImportModalVisible] = useState(false);
@@ -122,12 +128,43 @@ export default function InvitesScreen() {
   const { data: guests, isLoading, refetch, isRefetching } = useListGuests(wId);
   const { data: stats } = useGetGuestStats(wId);
   const importGuestsMutation = useImportGuests();
+  const createGuestMutation = useCreateGuest();
 
   const filtered = (guests ?? []).filter((g) => filter === 'all' || g.rsvpStatus === filter);
 
   const handleGuestPress = (guest: Guest) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedGuest(guest);
+  };
+
+  const handleCreateGuest = () => {
+    if (!wId || !newGuest.name.trim()) {
+      Alert.alert('Nom requis', 'Saisissez le nom de l’invité pour continuer.');
+      return;
+    }
+    createGuestMutation.mutate(
+      {
+        weddingId: wId,
+        data: {
+          name: newGuest.name.trim(),
+          email: newGuest.email.trim() || undefined,
+          tableNumber: newGuest.tableNumber.trim() || undefined,
+          dietaryRequirements: newGuest.dietaryRequirements.trim() || undefined,
+          notes: newGuest.notes.trim() || undefined,
+          rsvpStatus: newGuest.rsvpStatus,
+        },
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(wId) });
+          queryClient.invalidateQueries({ queryKey: getGetGuestStatsQueryKey(wId) });
+          setNewGuest({ name: '', email: '', tableNumber: '', dietaryRequirements: '', notes: '', rsvpStatus: 'pending' });
+          setAddVisible(false);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+        onError: () => Alert.alert('Erreur', 'Impossible d’ajouter cet invité.'),
+      },
+    );
   };
 
   const handlePickFile = async () => {
@@ -230,6 +267,14 @@ export default function InvitesScreen() {
                   <Feather name="upload" size={15} color="#C8A96E" />
                   <Text style={[ss.importBtnText, { fontFamily: SANS_SEMIBOLD }]}>Importer</Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setAddVisible(true)}
+                  activeOpacity={0.75}
+                  style={ss.addGuestBtn}
+                  accessibilityLabel="Ajouter un invité"
+                >
+                  <Feather name="plus" size={16} color="#FBF5FB" />
+                </TouchableOpacity>
               </View>
             </LinearGradient>
 
@@ -308,6 +353,77 @@ export default function InvitesScreen() {
       />
 
       <GuestDetailSheet visible={selectedGuest !== null} onClose={() => setSelectedGuest(null)} guest={selectedGuest} />
+      <BottomSheet
+        visible={addVisible}
+        onClose={() => setAddVisible(false)}
+        eyebrow="INVITÉS"
+        title="Ajouter un invité"
+      >
+        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={ss.addForm}>
+          <TextInput
+            autoFocus
+            value={newGuest.name}
+            onChangeText={(value) => setNewGuest((current) => ({ ...current, name: value }))}
+            placeholder="Nom complet *"
+            placeholderTextColor={colors.mutedForeground}
+            style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+          />
+          <TextInput
+            value={newGuest.email}
+            onChangeText={(value) => setNewGuest((current) => ({ ...current, email: value }))}
+            placeholder="Adresse e-mail"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            placeholderTextColor={colors.mutedForeground}
+            style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+          />
+          <View style={ss.formRow}>
+            <TextInput
+              value={newGuest.tableNumber}
+              onChangeText={(value) => setNewGuest((current) => ({ ...current, tableNumber: value }))}
+              placeholder="Table"
+              placeholderTextColor={colors.mutedForeground}
+              style={[ss.formInput, ss.formHalf, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+            />
+            <TextInput
+              value={newGuest.dietaryRequirements}
+              onChangeText={(value) => setNewGuest((current) => ({ ...current, dietaryRequirements: value }))}
+              placeholder="Régime alimentaire"
+              placeholderTextColor={colors.mutedForeground}
+              style={[ss.formInput, ss.formHalf, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+            />
+          </View>
+          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>STATUT RSVP</Text>
+          <View style={ss.rsvpChoices}>
+            {(['pending', 'confirmed', 'declined'] as RsvpStatus[]).map((status) => (
+              <TouchableOpacity
+                key={status}
+                onPress={() => setNewGuest((current) => ({ ...current, rsvpStatus: status }))}
+                style={[ss.rsvpChoice, { backgroundColor: newGuest.rsvpStatus === status ? colors.plum : colors.muted, borderColor: newGuest.rsvpStatus === status ? colors.plum : colors.border }]}
+              >
+                <Text style={[ss.rsvpChoiceText, { color: newGuest.rsvpStatus === status ? '#FBF5FB' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>
+                  {RSVP_LABEL[status]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TextInput
+            value={newGuest.notes}
+            onChangeText={(value) => setNewGuest((current) => ({ ...current, notes: value }))}
+            placeholder="Notes"
+            multiline
+            placeholderTextColor={colors.mutedForeground}
+            style={[ss.formInput, ss.formNotes, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+          />
+          <TouchableOpacity
+            disabled={createGuestMutation.isPending}
+            onPress={handleCreateGuest}
+            style={[ss.saveGuestBtn, { backgroundColor: colors.plum, opacity: createGuestMutation.isPending ? 0.6 : 1 }]}
+          >
+            {createGuestMutation.isPending ? <ActivityIndicator color="#FBF5FB" /> : <Text style={[ss.saveGuestText, { fontFamily: SANS_SEMIBOLD }]}>Enregistrer l’invité</Text>}
+          </TouchableOpacity>
+        </ScrollView>
+      </BottomSheet>
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
 
       {/* ── Import preview modal ─────────────────────────────────────────────── */}
@@ -403,6 +519,7 @@ const ss = StyleSheet.create({
   title: { fontSize: 34, lineHeight: 34 },
   importBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(200,170,112,0.40)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
   importBtnText: { fontSize: 11, color: '#C8A96E', letterSpacing: 0.3 },
+  addGuestBtn: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', backgroundColor: '#5D2D5D', borderRadius: 10 },
   statsWrap: { borderRadius: 12, marginBottom: 14, overflow: 'hidden' },
   statsBar: { flexDirection: 'row', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 14, alignItems: 'center', overflow: 'hidden' },
   rim: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },
@@ -433,6 +550,17 @@ const ss = StyleSheet.create({
   rsvpPill: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
   rsvpPillText: { fontSize: 9, letterSpacing: 0.3 },
   modalFooter: { paddingHorizontal: 16, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
+  addForm: { padding: 16, gap: 10 },
+  formInput: { minHeight: 44, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 12 },
+  formRow: { flexDirection: 'row', gap: 8 },
+  formHalf: { flex: 1 },
+  formLabel: { fontSize: 9, letterSpacing: 1.2, marginTop: 4 },
+  rsvpChoices: { flexDirection: 'row', gap: 7 },
+  rsvpChoice: { flex: 1, minHeight: 38, borderWidth: 1, borderRadius: 9, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  rsvpChoiceText: { fontSize: 10 },
+  formNotes: { minHeight: 72, paddingTop: 12, textAlignVertical: 'top' },
+  saveGuestBtn: { minHeight: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  saveGuestText: { color: '#FBF5FB', fontSize: 12 },
   confirmBtn: { borderRadius: 14, overflow: 'hidden' },
   confirmGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16 },
   confirmText: { fontSize: 13, color: '#FBF5FB', letterSpacing: 0.3 },

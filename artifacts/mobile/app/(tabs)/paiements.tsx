@@ -8,6 +8,8 @@ import {
   Text,
   ScrollView,
   StyleSheet,
+  TextInput,
+  Alert,
   ActivityIndicator,
   Platform,
   TouchableOpacity,
@@ -16,7 +18,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import { useListWeddings, useListPayments } from '@workspace/api-client-react';
+import { useListWeddings, useListPayments, useCreatePayment, getListPaymentsQueryKey } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Payment } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
@@ -26,6 +29,7 @@ import { formatCents, formatDateShort, paymentStatusLabel } from '@/utils/format
 import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { TourSheet } from '@/components/TourSheet';
+import { BottomSheet } from '@/components/BottomSheet';
 import { exportPaymentsPDF } from '@/utils/payments-pdf';
 
 // ── Tour steps ────────────────────────────────────────────────────────────────
@@ -205,6 +209,10 @@ export default function PaiementsScreen() {
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
 
   const { tourVisible, openTour, closeTour } = useTour('tour:paiements');
+  const [addVisible, setAddVisible] = useState(false);
+  const [form, setForm] = useState({ vendorName: '', description: '', amount: '', dueDate: '', notes: '' });
+  const [status, setStatus] = useState<'pending' | 'paid' | 'overdue' | 'scheduled'>('pending');
+  const queryClient = useQueryClient();
   const [isExporting, setIsExporting] = useState(false);
 
   const { data: weddings } = useListWeddings();
@@ -213,6 +221,7 @@ export default function PaiementsScreen() {
   const currency = activeWedding?.currency ?? 'EUR';
 
   const { data: payments, isLoading, refetch, isRefetching } = useListPayments(wId);
+  const createPayment = useCreatePayment();
 
   const sorted: Payment[] = [...(payments ?? [])].sort((a, b) => {
     const sA = statusSortOrder(a.status);
@@ -294,6 +303,10 @@ export default function PaiementsScreen() {
           {activeWedding && (
             <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]}>{activeWedding.names}</Text>
           )}
+          <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
+            <Feather name="plus" size={15} color="#FBF5FB" />
+            <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+          </TouchableOpacity>
         </LinearGradient>
 
         {/* ── Content ──────────────────────────────────────────────────────── */}
@@ -304,7 +317,7 @@ export default function PaiementsScreen() {
             <EmptyState
               icon="credit-card"
               title="Aucun paiement"
-              subtitle="Créez des paiements depuis l'application web."
+              subtitle="Appuyez sur Ajouter pour enregistrer un nouveau paiement."
             />
           ) : (
             <>
@@ -371,6 +384,66 @@ export default function PaiementsScreen() {
         </View>
       </ScrollView>
 
+      <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow="FINANCES" title="Ajouter un paiement">
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>
+          {([
+            ['vendorName', 'Nom du prestataire *'],
+            ['description', 'Libellé du paiement *'],
+            ['amount', 'Montant (€) *'],
+            ['dueDate', 'Date d’échéance (AAAA-MM-JJ) *'],
+          ] as const).map(([key, placeholder]) => (
+            <TextInput
+              key={key}
+              value={form[key]}
+              onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))}
+              placeholder={placeholder}
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType={key === 'amount' ? 'decimal-pad' : 'default'}
+              style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+            />
+          ))}
+          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>STATUT</Text>
+          <View style={ss.statusRow}>
+            {(['pending', 'scheduled', 'paid', 'overdue'] as const).map((item) => (
+              <TouchableOpacity key={item} onPress={() => setStatus(item)} style={[ss.statusChoice, { backgroundColor: status === item ? colors.plum : colors.muted, borderColor: status === item ? colors.plum : colors.border }]}>
+                <Text style={[ss.statusText, { color: status === item ? '#FBF5FB' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{paymentStatusLabel(item).label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TextInput value={form.notes} onChangeText={(value) => setForm((current) => ({ ...current, notes: value }))} placeholder="Notes" placeholderTextColor={colors.mutedForeground} multiline style={[ss.formInput, ss.formNotes, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
+          <TouchableOpacity
+            disabled={createPayment.isPending}
+            onPress={() => {
+              if (!form.vendorName.trim() || !form.description.trim() || !form.amount.trim() || !form.dueDate.trim()) {
+                Alert.alert('Informations manquantes', 'Renseignez le prestataire, le libellé, le montant et la date d’échéance.');
+                return;
+              }
+              createPayment.mutate({
+                weddingId: wId,
+                data: {
+                  vendorName: form.vendorName.trim(),
+                  description: form.description.trim(),
+                  amountCents: Math.round((Number(form.amount.replace(',', '.')) || 0) * 100),
+                  dueDate: form.dueDate.trim(),
+                  status,
+                  notes: form.notes.trim() || undefined,
+                },
+              }, {
+                onSuccess: () => {
+                  queryClient.invalidateQueries({ queryKey: getListPaymentsQueryKey(wId) });
+                  setForm({ vendorName: '', description: '', amount: '', dueDate: '', notes: '' });
+                  setStatus('pending');
+                  setAddVisible(false);
+                },
+                onError: () => Alert.alert('Erreur', 'Impossible d’ajouter ce paiement.'),
+              });
+            }}
+            style={[ss.saveBtn, { backgroundColor: colors.plum, opacity: createPayment.isPending ? 0.6 : 1 }]}
+          >
+            <Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{createPayment.isPending ? 'Enregistrement…' : 'Enregistrer le paiement'}</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </BottomSheet>
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
   );
@@ -430,4 +503,15 @@ const ss = StyleSheet.create({
   amount: { fontSize: 16, lineHeight: 18 },
   badge: { borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3 },
   badgeText: { fontSize: 9 },
+  addHeaderBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 14, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.13)' },
+  addHeaderText: { color: '#FBF5FB', fontSize: 11 },
+  form: { padding: 16, gap: 10 },
+  formInput: { minHeight: 44, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 12 },
+  formNotes: { minHeight: 72, paddingTop: 12, textAlignVertical: 'top' },
+  formLabel: { fontSize: 9, letterSpacing: 1.2, marginTop: 4 },
+  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  statusChoice: { borderWidth: 1, borderRadius: 9, paddingHorizontal: 10, minHeight: 36, justifyContent: 'center' },
+  statusText: { fontSize: 10 },
+  saveBtn: { minHeight: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  saveText: { color: '#FBF5FB', fontSize: 12 },
 });
