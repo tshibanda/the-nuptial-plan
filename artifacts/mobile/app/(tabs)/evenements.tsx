@@ -21,7 +21,7 @@ import { shadow, accentShadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { EventAddSheet } from '@/components/EventAddSheet';
 import { EventDetailSheet } from '@/components/EventDetailSheet';
-import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+import { TourSheet } from '@/components/TourSheet';
 
 const TOUR_STEPS = [
   {
@@ -807,11 +807,7 @@ export default function EvenementsScreen() {
         }}
       />
 
-      {/* Sit above the "+" FAB (52 px tall + 8 px gap) */}
-      <TourHelpFab
-        onPress={openTour}
-        bottom={Platform.OS === 'web' ? 154 : insets.bottom + 144}
-      />
+      {/* Tour */}
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
   );

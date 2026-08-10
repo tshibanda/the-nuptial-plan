@@ -143,7 +143,7 @@ export default function SignInScreen() {
           <View style={ss.logoArea}>
             <Image source={logoImage} style={ss.logoImage} resizeMode="contain" />
             <Text style={[ss.wordmark, { fontFamily: SERIF }]}>The Nuptial Plan</Text>
-            <Text style={[ss.tagline, { fontFamily: SANS }]}>Pour que rien ne manque à votre bonheur</Text>
+            <Text style={[ss.tagline, { fontFamily: SANS }]}>L'indispensable du Wedding Planner</Text>
           </View>
 
           <Text style={[ss.heading, { fontFamily: SERIF }]}>Connexion</Text>

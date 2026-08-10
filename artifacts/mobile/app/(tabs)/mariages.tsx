@@ -15,7 +15,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { daysUntil } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
-import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+import { TourSheet } from '@/components/TourSheet';
 
 const TOUR_STEPS = [
   {
@@ -214,7 +214,6 @@ export default function MariagesScreen() {
       }}
     />
 
-    <TourHelpFab onPress={openTour} bottom={fabBottom} />
     <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
   );

@@ -16,6 +16,7 @@ import { useColors } from '@/hooks/useColors';
 import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
 import { setAuthTokenGetter } from '@workspace/api-client-react';
 import { NuptiaSheet } from '@/components/NuptiaSheet';
+import { GlobalTourHelp } from '@/components/TourSheet';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
 
 // ── Tab metadata ───────────────────────────────────────────────────────────────
@@ -399,6 +400,7 @@ export default function TabLayout() {
     <View style={{ flex: 1 }}>
       <ClassicTabLayout />
       <NuptiaSheet />
+      <GlobalTourHelp />
     </View>
   );
 }

@@ -17,7 +17,7 @@ import { shadow } from '@/utils/shadow';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
 import { VendorDetailSheet } from '@/components/VendorDetailSheet';
-import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+import { TourSheet } from '@/components/TourSheet';
 
 const TOUR_STEPS = [
   {
@@ -175,10 +175,6 @@ export default function PrestatairesScreen() {
         currency={activeWedding?.currency}
       />
 
-      <TourHelpFab
-        onPress={openTour}
-        bottom={Platform.OS === 'web' ? 94 : insets.bottom + 84}
-      />
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
   );

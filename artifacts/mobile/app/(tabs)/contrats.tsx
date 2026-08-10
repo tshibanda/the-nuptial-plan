@@ -15,7 +15,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
-import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+import { TourSheet } from '@/components/TourSheet';
 
 const TOUR_STEPS = [
   {
@@ -186,7 +186,6 @@ export default function ContratsScreen() {
         }}
       />
 
-      <TourHelpFab onPress={openTour} bottom={fabBottom} />
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
   );

@@ -25,7 +25,7 @@ import { shadow, accentShadow } from '@/utils/shadow';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
 import { GuestDetailSheet } from '@/components/GuestDetailSheet';
-import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+import { TourSheet } from '@/components/TourSheet';
 
 // ── Excel parsing ──────────────────────────────────────────────────────────────
 type RsvpStatus = 'confirmed' | 'pending' | 'declined';
@@ -308,7 +308,6 @@ export default function InvitesScreen() {
       />
 
       <GuestDetailSheet visible={selectedGuest !== null} onClose={() => setSelectedGuest(null)} guest={selectedGuest} />
-      <TourHelpFab onPress={openTour} bottom={Platform.OS === 'web' ? 94 : insets.bottom + 84} />
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
 
       {/* ── Import preview modal ─────────────────────────────────────────────── */}

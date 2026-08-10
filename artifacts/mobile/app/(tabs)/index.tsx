@@ -19,7 +19,7 @@ import { formatCents, formatDateParts, daysUntil, vendorStatusLabel } from '@/ut
 import { shadow, accentShadow } from '@/utils/shadow';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
-import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+import { TourSheet } from '@/components/TourSheet';
 
 const TOUR_STEPS = [
   {
@@ -331,7 +331,6 @@ export default function DashboardScreen() {
       </View>
     </ScrollView>
 
-    <TourHelpFab onPress={openTour} bottom={fabBottom} />
     <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
   );

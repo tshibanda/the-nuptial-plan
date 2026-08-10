@@ -34,7 +34,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
-import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
 
 // ── Tour steps ────────────────────────────────────────────────────────────────
@@ -841,10 +841,6 @@ export default function BudgetScreen() {
       </ScrollView>
 
       {/* Tour */}
-      <TourHelpFab
-        onPress={openTour}
-        bottom={fabBottom}
-      />
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
 
       {/* Edit / Create sheet (from task #46) */}

@@ -14,7 +14,7 @@ import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
-import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+import { TourSheet } from '@/components/TourSheet';
 import { ProfileEditSheet } from '@/components/ProfileEditSheet';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
 
@@ -191,7 +191,7 @@ export default function ProfilScreen() {
         {userEmail ? (
           <Text style={[ss.role, { fontFamily: SANS_MEDIUM }]}>{userEmail}</Text>
         ) : null}
-        <Text style={[ss.brand, { fontFamily: SANS }]}>Pour que rien ne manque à votre bonheur</Text>
+        <Text style={[ss.brand, { fontFamily: SANS }]}>L'indispensable du Wedding Planner</Text>
       </LinearGradient>
 
       <View style={{ paddingHorizontal: 16 }}>
@@ -240,22 +240,13 @@ export default function ProfilScreen() {
             onPress={() => router.push('/(tabs)/mariages')}
           />
           <RowItem
-            icon="users" label="Invités" value={summary ? `${summary.totalGuests} invités` : undefined}
-            variant="gold" colors={colors}
-            onPress={() => router.push('/(tabs)/invites')}
-          />
-          <RowItem
-            icon="briefcase" label="Prestataires" value={summary ? `${summary.vendorCount}` : undefined}
+             icon="briefcase" label="Mes prestataires" value={summary ? `${summary.vendorCount}` : undefined}
             variant="sage" colors={colors}
             onPress={() => router.push('/(tabs)/prestataires')}
           />
           <RowItem
-            icon="credit-card" label="Paiements" colors={colors}
-            onPress={() => router.push('/(tabs)/paiements')}
-          />
-          <RowItem
-            icon="file-text" label="Contrats" colors={colors}
-            onPress={() => router.push('/(tabs)/contrats')}
+             icon="trending-up" label="Mon business" colors={colors}
+             onPress={() => router.push('/(tabs)/business')}
           />
         </View>
 
@@ -302,13 +293,12 @@ export default function ProfilScreen() {
             <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.75)' }]} />
             <Image source={logoImage} style={ss.logoImage} resizeMode="contain" />
             <Text style={[ss.logoLabel, { fontFamily: SERIF, color: colors.foreground }]}>The Nuptial Plan</Text>
-            <Text style={[ss.version, { fontFamily: SANS, color: colors.tertiaryText }]}>Version 1.0.0 · Pour que rien ne manque à votre bonheur</Text>
+            <Text style={[ss.version, { fontFamily: SANS, color: colors.tertiaryText }]}>Version 1.0.0 · L'indispensable du Wedding Planner</Text>
           </View>
         </View>
       </View>
     </ScrollView>
 
-    <TourHelpFab onPress={openTour} bottom={fabBottom} />
     <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     <ProfileEditSheet visible={editVisible} onClose={() => setEditVisible(false)} />
     </>

@@ -168,7 +168,7 @@ function LandingPage() {
 
       <h1 className="mb-2 font-serif text-4xl text-[#3C1A3C]">The Nuptial Plan</h1>
       <p className="mb-10 text-sm uppercase tracking-[0.2em] text-[#716471]">
-        Pour que rien ne manque à votre bonheur
+        L'indispensable du Wedding Planner
       </p>
 
       <div className="flex flex-col gap-3 sm:flex-row">

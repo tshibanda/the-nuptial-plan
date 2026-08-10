@@ -25,7 +25,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents, formatDateShort, paymentStatusLabel } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
-import { TourSheet, TourHelpFab } from '@/components/TourSheet';
+import { TourSheet } from '@/components/TourSheet';
 import { exportPaymentsPDF } from '@/utils/payments-pdf';
 
 // ── Tour steps ────────────────────────────────────────────────────────────────
@@ -371,7 +371,6 @@ export default function PaiementsScreen() {
         </View>
       </ScrollView>
 
-      <TourHelpFab onPress={openTour} bottom={fabBottom} />
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     </>
   );

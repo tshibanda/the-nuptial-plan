@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 
 export interface TourStep {
@@ -277,6 +278,58 @@ export function TourHelpFab({ onPress, bottom = 96 }: HelpFabProps) {
     >
       <Text style={[fab.label, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>?</Text>
     </TouchableOpacity>
+  );
+}
+
+const GLOBAL_HELP_STEPS = [
+  {
+    icon: 'grid',
+    title: 'Votre espace de planification',
+    description: 'Retrouvez vos mariages, invités, prestataires, budget et documents depuis la navigation principale.',
+  },
+  {
+    icon: 'help-circle',
+    title: 'Besoin d’aide ?',
+    description: 'Le bouton « ? » reste disponible en bas de l’écran, quelle que soit la page consultée.',
+  },
+  {
+    icon: 'heart',
+    title: 'Nuptia',
+    description: 'Utilisez l’assistante Nuptia pour poser vos questions sur l’organisation de votre mariage.',
+  },
+];
+
+export function GlobalTourHelp() {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const { tourVisible, openTour, closeTour } = useTour('tour:global-help');
+  const bottom = (Platform.OS === 'web' ? 74 : 64) + insets.bottom + 14;
+
+  return (
+    <>
+      <TouchableOpacity
+        onPress={openTour}
+        activeOpacity={0.82}
+        accessibilityRole="button"
+        accessibilityLabel="Ouvrir l’aide"
+        style={[
+          fab.btn,
+          {
+            bottom,
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            ...(Platform.OS === 'web'
+              ? { boxShadow: '0 2px 10px rgba(93,45,93,0.18), 0 1px 4px rgba(93,45,93,0.10)' } as any
+              : Platform.OS === 'ios'
+                ? { shadowColor: '#3C1A3C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.14, shadowRadius: 8 }
+                : { elevation: 4 }),
+          },
+        ]}
+      >
+        <Text style={[fab.label, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>?</Text>
+      </TouchableOpacity>
+      <TourSheet visible={tourVisible} onClose={closeTour} steps={GLOBAL_HELP_STEPS} />
+    </>
   );
 }
 

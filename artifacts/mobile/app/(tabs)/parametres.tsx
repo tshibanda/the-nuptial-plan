@@ -142,7 +142,7 @@ export default function ParametresScreen() {
           </LinearGradient>
         </View>
         <Text style={[ps.heroTitle, { fontFamily: SERIF }]}>Paramètres</Text>
-        <Text style={[ps.heroSub, { fontFamily: SANS }]}>Pour que rien ne manque à votre bonheur</Text>
+        <Text style={[ps.heroSub, { fontFamily: SANS }]}>L'indispensable du Wedding Planner</Text>
       </LinearGradient>
 
       <View style={{ paddingHorizontal: 16 }}>

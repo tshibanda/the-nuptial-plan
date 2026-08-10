@@ -497,7 +497,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div>
                   <p className="font-serif text-[20px] leading-none">The Nuptial Plan</p>
                   <p className="mt-1 text-[8.5px] uppercase tracking-[0.2em] text-sidebar-foreground/40">
-                    Pour que rien ne manque à votre bonheur
+                    L'indispensable du Wedding Planner
                   </p>
                 </div>
               </div>
