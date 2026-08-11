@@ -3,7 +3,16 @@ import { Plus, CircleEllipsis, Users, Tag } from 'lucide-react';
 import { PageTour } from '@/components/ui/page-tour';
 import { FileAttachments } from '@/components/file-attachments';
 import { useActiveWedding } from '@/lib/wedding-context';
-import { useListVendors, useCreateVendor, useUpdateVendor, useDeleteVendor, getListVendorsQueryKey, useListWeddings } from '@workspace/api-client-react';
+import {
+  useListVendors,
+  useCreateVendor,
+  useUpdateVendor,
+  useDeleteVendor,
+  getListVendorsQueryKey,
+  useListWeddings,
+  useListAddressBookEntries,
+  useAddAddressBookEntryToWedding,
+} from '@workspace/api-client-react';
 import { formatCurrency } from '@/lib/format';
 import { useQueryClient } from '@tanstack/react-query';
 import { VendorInputStatus } from '@workspace/api-client-react';
@@ -57,14 +66,17 @@ export default function Prestataires() {
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
   const currencySymbol = ({ EUR: '€', GBP: '£', USD: '$', CHF: 'CHF' } as Record<string, string>)[activeWedding?.currency ?? 'EUR'] ?? activeWedding?.currency ?? '€';
   const { data: vendors = [], isLoading } = useListVendors(activeWeddingId!);
+  const { data: addressBookEntries = [] } = useListAddressBookEntries();
   const [open, setOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<number | null>(null);
+  const [addressBookOpen, setAddressBookOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const createVendor = useCreateVendor();
   const updateVendor = useUpdateVendor();
   const deleteVendor = useDeleteVendor();
+  const addAddressBookEntry = useAddAddressBookEntryToWedding();
 
   const form = useForm<VendorFormData>({
     resolver: zodResolver(vendorSchema),
@@ -109,6 +121,26 @@ export default function Prestataires() {
         }
       );
     }
+  };
+
+  const importAddressBookEntry = (addressBookId: number) => {
+    if (!activeWeddingId) return;
+    addAddressBookEntry.mutate(
+      { weddingId: activeWeddingId, addressBookId },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(activeWeddingId) });
+          toast({ title: 'Prestataire ajouté', description: 'La fiche du carnet a été ajoutée à ce mariage.' });
+          setAddressBookOpen(false);
+          setOpen(false);
+        },
+        onError: () => toast({
+          title: 'Erreur',
+          description: 'Impossible d’ajouter ce prestataire au mariage.',
+          variant: 'destructive',
+        }),
+      },
+    );
   };
 
   const handleEdit = (vendor: any) => {
@@ -210,6 +242,51 @@ export default function Prestataires() {
             </SheetHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
+                 {!editingVendor && (
+                   <div className="rounded-xl border border-primary/20 bg-primary/[0.04] p-3">
+                     <button
+                       type="button"
+                       onClick={() => setAddressBookOpen((open) => !open)}
+                       className="flex w-full items-center justify-between gap-3 text-left"
+                       data-testid="button-import-vendor-from-address-book"
+                     >
+                       <span>
+                         <span className="block text-[11px] font-semibold text-primary">Importer du carnet d’adresses</span>
+                         <span className="mt-1 block text-[10px] text-muted-foreground">Ajoutez un prestataire enregistré sans ressaisir ses coordonnées.</span>
+                       </span>
+                       <span className="text-primary">{addressBookOpen ? '⌃' : '⌄'}</span>
+                     </button>
+                     {addressBookOpen && (
+                       <div className="mt-3 max-h-52 space-y-1 overflow-y-auto border-t border-border/50 pt-2">
+                         {addressBookEntries.length === 0 ? (
+                           <p className="py-3 text-center text-[10px] text-muted-foreground">Votre carnet d’adresses est encore vide.</p>
+                         ) : (
+                           addressBookEntries.map((entry) => (
+                             <button
+                               key={entry.id}
+                               type="button"
+                               onClick={() => importAddressBookEntry(entry.id)}
+                               disabled={addAddressBookEntry.isPending}
+                               className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-primary/5 disabled:opacity-60"
+                               data-testid={`button-import-vendor-address-book-${entry.id}`}
+                             >
+                               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(200,169,110,0.22)] font-serif text-xs text-primary">
+                                 {entry.name.split(/\s+/).map((word) => word[0]).join('').slice(0, 2).toUpperCase()}
+                               </span>
+                               <span className="min-w-0 flex-1">
+                                 <span className="block truncate text-[11px] font-semibold text-foreground">{entry.name}</span>
+                                 <span className="block truncate text-[10px] text-muted-foreground">
+                                   {entry.category}{entry.contactName ? ` · ${entry.contactName}` : ''}
+                                 </span>
+                               </span>
+                               <Plus size={14} className="shrink-0 text-primary" />
+                             </button>
+                           ))
+                         )}
+                       </div>
+                     )}
+                   </div>
+                 )}
                 <FormField
                   control={form.control}
                   name="name"

@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import {
-  FlatList, View, Text, StyleSheet, TextInput, ScrollView,
+  FlatList, View, Text, StyleSheet, TextInput, ScrollView, Alert,
   ActivityIndicator, Platform, TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useListWeddings, useListVendors, useCreateVendor, getListVendorsQueryKey } from '@workspace/api-client-react';
+import {
+  useListWeddings,
+  useListVendors,
+  useCreateVendor,
+  useListAddressBookEntries,
+  useAddAddressBookEntryToWedding,
+  getListVendorsQueryKey,
+} from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
@@ -50,6 +57,7 @@ export default function PrestatairesScreen() {
   const [search, setSearch] = useState('');
   const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
   const [addVisible, setAddVisible] = useState(false);
+  const [addressBookVisible, setAddressBookVisible] = useState(false);
   const [form, setForm] = useState({ name: '', category: '', contactName: '', contactEmail: '', amount: '' });
   const queryClient = useQueryClient();
 
@@ -59,6 +67,8 @@ export default function PrestatairesScreen() {
 
   const { data: vendors, isLoading, refetch, isRefetching } = useListVendors(wId);
   const createVendor = useCreateVendor();
+  const { data: addressBookEntries = [], isLoading: addressBookLoading } = useListAddressBookEntries();
+  const addAddressBookEntry = useAddAddressBookEntryToWedding();
 
   const filtered = (vendors ?? []).filter(
     (v) =>
@@ -83,6 +93,22 @@ export default function PrestatairesScreen() {
     }, {
       onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(wId) }); setForm({ name: '', category: '', contactName: '', contactEmail: '', amount: '' }); setAddVisible(false); },
     });
+  };
+
+  const importAddressBookEntry = (addressBookId: number) => {
+    if (!wId) return;
+    addAddressBookEntry.mutate(
+      { weddingId: wId, addressBookId },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(wId) });
+          setAddressBookVisible(false);
+          setAddVisible(false);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+        onError: () => Alert.alert('Erreur', 'Impossible d’ajouter ce prestataire au mariage.'),
+      },
+    );
   };
 
   return (
@@ -199,6 +225,47 @@ export default function PrestatairesScreen() {
       />
       <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow="ÉQUIPE CRÉATIVE" title="Ajouter un prestataire">
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>
+          <TouchableOpacity
+            onPress={() => setAddressBookVisible((visible) => !visible)}
+            style={[ss.addressBookBtn, { backgroundColor: colors.plumBg, borderColor: colors.plum + '40' }]}
+            activeOpacity={0.75}
+          >
+            <Feather name="book-open" size={15} color={colors.plum} />
+            <View style={ss.addressBookBtnText}>
+              <Text style={[ss.addressBookTitle, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>Importer du carnet d’adresses</Text>
+              <Text style={[ss.addressBookHint, { color: colors.mutedForeground, fontFamily: SANS }]}>Ajouter un contact déjà enregistré à ce mariage</Text>
+            </View>
+            <Feather name={addressBookVisible ? 'chevron-up' : 'chevron-down'} size={15} color={colors.plum} />
+          </TouchableOpacity>
+          {addressBookVisible && (
+            <View style={[ss.addressBookList, { borderColor: colors.border, backgroundColor: colors.card }]}>
+              {addressBookLoading ? (
+                <ActivityIndicator color={colors.plum} style={ss.addressBookLoading} />
+              ) : addressBookEntries.length === 0 ? (
+                <Text style={[ss.addressBookEmpty, { color: colors.mutedForeground, fontFamily: SANS }]}>Votre carnet d’adresses est encore vide.</Text>
+              ) : (
+                addressBookEntries.map((entry) => (
+                  <TouchableOpacity
+                    key={entry.id}
+                    onPress={() => importAddressBookEntry(entry.id)}
+                    disabled={addAddressBookEntry.isPending}
+                    style={[ss.addressBookRow, { borderBottomColor: colors.border, opacity: addAddressBookEntry.isPending ? 0.6 : 1 }]}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[ss.addressBookAvatar, { backgroundColor: colors.gold + '35' }]}>
+                      <Text style={[ss.addressBookAvatarText, { color: colors.plum, fontFamily: SERIF }]}>{entry.name.split(/\s+/).map((word) => word[0]).join('').slice(0, 2).toUpperCase()}</Text>
+                    </View>
+                    <View style={ss.addressBookInfo}>
+                      <Text style={[ss.addressBookName, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]} numberOfLines={1}>{entry.name}</Text>
+                      <Text style={[ss.addressBookCategory, { color: colors.mutedForeground, fontFamily: SANS }]} numberOfLines={1}>{entry.category}{entry.contactName ? ` · ${entry.contactName}` : ''}</Text>
+                    </View>
+                    <Feather name="plus-circle" size={17} color={colors.plum} />
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+          )}
+          <Text style={[ss.orLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>OU SAISIR UN NOUVEAU PRESTATAIRE</Text>
           {([
             ['name', 'Nom du prestataire *'], ['category', 'Catégorie *'], ['contactName', 'Nom du contact'], ['contactEmail', 'E-mail'], ['amount', 'Montant du devis (€)'],
           ] as const).map(([key, placeholder]) => <TextInput key={key} value={form[key]} onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' ? 'decimal-pad' : key === 'contactEmail' ? 'email-address' : 'default'} autoCapitalize={key === 'contactEmail' ? 'none' : 'sentences'} style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />)}
@@ -241,4 +308,18 @@ const ss = StyleSheet.create({
   formInput: { minHeight: 44, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 12 },
   saveBtn: { minHeight: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   saveText: { color: '#FBF5FB', fontSize: 12 },
+  addressBookBtn: { flexDirection: 'row', alignItems: 'center', gap: 9, borderWidth: 1, borderRadius: 10, padding: 11 },
+  addressBookBtnText: { flex: 1, gap: 2 },
+  addressBookTitle: { fontSize: 11 },
+  addressBookHint: { fontSize: 9, lineHeight: 13 },
+  addressBookList: { borderWidth: 1, borderRadius: 10, overflow: 'hidden' },
+  addressBookLoading: { paddingVertical: 16 },
+  addressBookEmpty: { padding: 14, fontSize: 11, textAlign: 'center' },
+  addressBookRow: { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 10, borderBottomWidth: StyleSheet.hairlineWidth },
+  addressBookAvatar: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  addressBookAvatarText: { fontSize: 12 },
+  addressBookInfo: { flex: 1, gap: 2 },
+  addressBookName: { fontSize: 11 },
+  addressBookCategory: { fontSize: 9 },
+  orLabel: { fontSize: 8, letterSpacing: 1.1, marginTop: 2 },
 });
