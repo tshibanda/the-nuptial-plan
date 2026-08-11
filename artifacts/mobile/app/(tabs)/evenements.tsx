@@ -574,18 +574,34 @@ export default function EvenementsScreen() {
                   colors={colors}
                 />
                 {view === 'list' && (
-                  <View style={hs.filterRow}>
-                    {FILTERS.map((f) => {
-                      const isActive = filter === f.key;
-                      return (
-                        <TouchableOpacity key={f.key} onPress={() => setFilter(f.key)} activeOpacity={0.75}
-                          style={[hs.pill, isActive ? accentShadow('sm') : shadow('xs'),
-                            { backgroundColor: isActive ? colors.plum : colors.muted, borderColor: isActive ? colors.plum : colors.border }]}
-                        >
-                          <Text style={[hs.pillText, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>{f.label}</Text>
-                        </TouchableOpacity>
-                      );
-                    })}
+                  <View style={hs.listActions}>
+                    <View style={hs.filterRow}>
+                      {FILTERS.map((f) => {
+                        const isActive = filter === f.key;
+                        return (
+                          <TouchableOpacity key={f.key} onPress={() => setFilter(f.key)} activeOpacity={0.75}
+                            style={[hs.pill, isActive ? accentShadow('sm') : shadow('xs'),
+                              { backgroundColor: isActive ? colors.plum : colors.muted, borderColor: isActive ? colors.plum : colors.border }]}
+                          >
+                            <Text style={[hs.pillText, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>{f.label}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setAddSheetInitialDate(null);
+                        setShowAdd(true);
+                      }}
+                      activeOpacity={0.8}
+                      style={[hs.listAddBtn, { backgroundColor: colors.plum, borderColor: colors.plum }]}
+                      accessibilityRole="button"
+                      accessibilityLabel="Ajouter un événement"
+                    >
+                      <Feather name="plus" size={13} color="#FBF5FB" />
+                      <Text style={[hs.listAddText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
               </View>
@@ -828,9 +844,12 @@ const hs = StyleSheet.create({
   statLabel: { fontSize: 9, letterSpacing: 0.5 },
   // Controls row: toggle left, pills right
   controlsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8, flexWrap: 'wrap' },
+  listActions: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' },
   filterRow: { flexDirection: 'row', gap: 6 },
   pill: { borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, paddingVertical: 7 },
   pillText: { fontSize: 11 },
+  listAddBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, minHeight: 32, borderRadius: 9, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10 },
+  listAddText: { color: '#FBF5FB', fontSize: 10 },
   // Calendar card
   calCard: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', marginBottom: 4 },
   dayBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth },

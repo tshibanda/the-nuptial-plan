@@ -460,9 +460,9 @@ const ss = StyleSheet.create({
   exportBtn: {
     position: 'absolute', right: 0,
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderWidth: 1, borderColor: 'rgba(200,169,110,0.35)',
+    paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(200,169,110,0.40)',
   },
   exportBtnText: { fontSize: 11, color: '#C8A96E' },
 
