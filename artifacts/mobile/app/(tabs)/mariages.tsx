@@ -104,7 +104,7 @@ export default function MariagesScreen() {
       data={weddings ?? []}
       keyExtractor={(item) => String(item.id)}
       style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{ paddingBottom: 100, flexGrow: 1 }}
+      contentContainerStyle={{ paddingBottom: 140, flexGrow: 1 }}
       refreshing={isRefetching}
       onRefresh={refetch}
       showsVerticalScrollIndicator={false}

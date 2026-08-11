@@ -267,7 +267,7 @@ export default function InvitesScreen() {
         data={viewMode === 'guests' ? filtered : []}
         keyExtractor={(item) => String(item.id)}
         style={{ flex: 1, backgroundColor: colors.background }}
-        contentContainerStyle={{ paddingBottom: 100, flexGrow: 1 }}
+        contentContainerStyle={{ paddingBottom: 132, flexGrow: 1 }}
         refreshing={isRefetching}
         onRefresh={refetch}
         showsVerticalScrollIndicator={false}
@@ -419,7 +419,7 @@ export default function InvitesScreen() {
         }}
       />
 
-      <GuestDetailSheet visible={selectedGuest !== null} onClose={() => setSelectedGuest(null)} guest={selectedGuest} />
+      <GuestDetailSheet visible={selectedGuest !== null} onClose={() => setSelectedGuest(null)} guest={selectedGuest} weddingId={wId} />
       <BottomSheet visible={tableGuest !== null} onClose={() => setTableGuest(null)} eyebrow="PLAN DE TABLE" title={tableGuest?.name ?? ''}>
         <View style={ss.tableEditor}>
           <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>NUMÉRO OU NOM DE TABLE</Text>

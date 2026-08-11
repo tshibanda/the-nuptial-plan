@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, Linking, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Linking, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useGetVendor } from '@workspace/api-client-react';
+import { getListVendorsQueryKey, useGetVendor, useUpdateVendor } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents, vendorStatusLabel } from '@/utils/format';
@@ -19,6 +20,10 @@ interface Props {
 export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, currency = 'EUR' }: Props) {
   const colors = useColors();
   const { data: vendor, isLoading } = useGetVendor(weddingId, vendorId ?? 0);
+  const updateVendor = useUpdateVendor();
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ name: '', category: '', contactName: '', contactEmail: '', amount: '', deposit: '', notes: '' });
 
   const av = vendor?.name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2) ?? '';
   const { label, tone } = vendor ? vendorStatusLabel(vendor.status) : { label: '', tone: 'neutral' as const };
@@ -26,6 +31,43 @@ export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, curre
   const remaining = vendor
     ? vendor.totalAmountCents - (vendor.depositAmountCents ?? 0)
     : 0;
+
+  const startEditing = () => {
+    if (!vendor) return;
+    setDraft({
+      name: vendor.name,
+      category: vendor.category,
+      contactName: vendor.contactName ?? '',
+      contactEmail: vendor.contactEmail ?? '',
+      amount: String((vendor.totalAmountCents / 100).toFixed(2)),
+      deposit: String(((vendor.depositAmountCents ?? 0) / 100).toFixed(2)),
+      notes: vendor.notes ?? '',
+    });
+    setEditing(true);
+  };
+
+  const save = () => {
+    if (!vendor || !draft.name.trim() || !draft.category.trim()) return;
+    updateVendor.mutate({
+      weddingId,
+      id: vendor.id,
+      data: {
+        name: draft.name.trim(),
+        category: draft.category.trim(),
+        contactName: draft.contactName.trim() || undefined,
+        contactEmail: draft.contactEmail.trim() || undefined,
+        totalAmountCents: Math.round((Number(draft.amount.replace(',', '.')) || 0) * 100),
+        depositAmountCents: Math.round((Number(draft.deposit.replace(',', '.')) || 0) * 100),
+        notes: draft.notes.trim() || undefined,
+      },
+    }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(weddingId) });
+        setEditing(false);
+      },
+      onError: () => Alert.alert('Erreur', 'Impossible de modifier ce prestataire.'),
+    });
+  };
 
   return (
     <BottomSheet
@@ -40,6 +82,23 @@ export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, curre
         </View>
       ) : (
         <View style={ss.body}>
+          <TouchableOpacity onPress={editing ? () => setEditing(false) : startEditing} style={[ss.editButton, { borderColor: colors.plum + '40', backgroundColor: colors.plum + '10' }]}>
+            <Feather name={editing ? 'x' : 'edit-2'} size={14} color={colors.plum} />
+            <Text style={[ss.editButtonText, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{editing ? 'Annuler' : 'Modifier le prestataire'}</Text>
+          </TouchableOpacity>
+          {editing && (
+            <View style={ss.editForm}>
+              {([
+                ['name', 'Nom du prestataire *'], ['category', 'Catégorie *'], ['contactName', 'Nom du contact'], ['contactEmail', 'E-mail'], ['amount', 'Montant total'], ['deposit', 'Acompte'],
+              ] as const).map(([key, placeholder]) => (
+                <TextInput key={key} value={draft[key]} onChangeText={(value) => setDraft((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' || key === 'deposit' ? 'decimal-pad' : key === 'contactEmail' ? 'email-address' : 'default'} style={[ss.editInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
+              ))}
+              <TextInput value={draft.notes} onChangeText={(value) => setDraft((current) => ({ ...current, notes: value }))} placeholder="Notes" placeholderTextColor={colors.mutedForeground} multiline style={[ss.editInput, ss.notesInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
+              <TouchableOpacity disabled={updateVendor.isPending} onPress={save} style={[ss.saveButton, { backgroundColor: colors.plum, opacity: updateVendor.isPending ? 0.6 : 1 }]}>
+                {updateVendor.isPending ? <ActivityIndicator color="#fff" /> : <Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>Enregistrer les modifications</Text>}
+              </TouchableOpacity>
+            </View>
+          )}
           {/* Avatar + status row */}
           <View style={[ss.heroRow, { borderBottomColor: colors.border }]}>
             <View style={[ss.av, { backgroundColor: colors.goldLight }]}>
@@ -200,4 +259,11 @@ const ss = StyleSheet.create({
   },
   noteText: { fontSize: 13, lineHeight: 20 },
   added: { fontSize: 10, textAlign: 'center', marginTop: 24, marginBottom: 4 },
+  editButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginHorizontal: 16, marginTop: 14, paddingVertical: 10, borderRadius: 9, borderWidth: 1 },
+  editButtonText: { fontSize: 11 },
+  editForm: { paddingHorizontal: 16, paddingTop: 12, gap: 9 },
+  editInput: { minHeight: 42, borderWidth: 1, borderRadius: 8, paddingHorizontal: 11, fontSize: 12 },
+  notesInput: { minHeight: 72, paddingTop: 11, textAlignVertical: 'top' },
+  saveButton: { minHeight: 44, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  saveText: { color: '#fff', fontSize: 11 },
 });

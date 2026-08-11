@@ -1,7 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Linking, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import type { Guest } from '@workspace/api-client-react';
+import { getListGuestsQueryKey, getGetGuestStatsQueryKey, useUpdateGuest } from '@workspace/api-client-react';
+import type { Guest, GuestRsvpStatus } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { rsvpLabel } from '@/utils/format';
@@ -12,15 +14,55 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   guest: Guest | null;
+  weddingId: number;
 }
 
-export function GuestDetailSheet({ visible, onClose, guest }: Props) {
+export function GuestDetailSheet({ visible, onClose, guest, weddingId }: Props) {
   const colors = useColors();
+  const updateGuest = useUpdateGuest();
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ name: '', email: '', tableNumber: '', dietaryRequirements: '', notes: '', rsvpStatus: 'pending' as GuestRsvpStatus });
 
   if (!guest) return null;
 
   const { label, tone } = rsvpLabel(guest.rsvpStatus);
   const av = guest.name.split(/\s+/).map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+
+  const startEditing = () => {
+    setDraft({
+      name: guest.name,
+      email: guest.email ?? '',
+      tableNumber: guest.tableNumber ?? '',
+      dietaryRequirements: guest.dietaryRequirements ?? '',
+      notes: guest.notes ?? '',
+      rsvpStatus: guest.rsvpStatus,
+    });
+    setEditing(true);
+  };
+
+  const save = () => {
+    if (!draft.name.trim()) return;
+    updateGuest.mutate({
+      weddingId,
+      id: guest.id,
+      data: {
+        name: draft.name.trim(),
+        email: draft.email.trim() || undefined,
+        tableNumber: draft.tableNumber.trim() || undefined,
+        dietaryRequirements: draft.dietaryRequirements.trim() || undefined,
+        notes: draft.notes.trim() || undefined,
+        rsvpStatus: draft.rsvpStatus,
+      },
+    }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(weddingId) });
+        queryClient.invalidateQueries({ queryKey: getGetGuestStatsQueryKey(weddingId) });
+        setEditing(false);
+      },
+      onError: () => Alert.alert('Erreur', 'Impossible de modifier cet invité.'),
+    });
+  };
 
   const fields: { icon: string; label: string; value: string; actionable?: boolean; onPress?: () => void }[] = [];
 
@@ -61,6 +103,31 @@ export function GuestDetailSheet({ visible, onClose, guest }: Props) {
       title={guest.name}
     >
       <View style={ss.body}>
+        <TouchableOpacity onPress={editing ? () => setEditing(false) : startEditing} style={[ss.editButton, { borderColor: colors.plum + '40', backgroundColor: colors.plum + '10' }]}>
+          <Feather name={editing ? 'x' : 'edit-2'} size={14} color={colors.plum} />
+          <Text style={[ss.editButtonText, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{editing ? 'Annuler' : 'Modifier l’invité'}</Text>
+        </TouchableOpacity>
+        {editing && (
+          <View style={ss.editForm}>
+            {([
+              ['name', 'Nom complet *'], ['email', 'Adresse e-mail'], ['tableNumber', 'Table'], ['dietaryRequirements', 'Régime alimentaire'],
+            ] as const).map(([key, placeholder]) => (
+              <TextInput key={key} value={draft[key]} onChangeText={(value) => setDraft((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} style={[ss.editInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
+            ))}
+            <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>STATUT RSVP</Text>
+            <View style={ss.rsvpChoices}>
+              {(['pending', 'confirmed', 'declined'] as GuestRsvpStatus[]).map((status) => (
+                <TouchableOpacity key={status} onPress={() => setDraft((current) => ({ ...current, rsvpStatus: status }))} style={[ss.rsvpChoice, { backgroundColor: draft.rsvpStatus === status ? colors.plum : colors.muted, borderColor: draft.rsvpStatus === status ? colors.plum : colors.border }]}>
+                  <Text style={[ss.rsvpChoiceText, { color: draft.rsvpStatus === status ? '#fff' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{status === 'confirmed' ? 'Confirmé' : status === 'declined' ? 'Décliné' : 'En attente'}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TextInput value={draft.notes} onChangeText={(value) => setDraft((current) => ({ ...current, notes: value }))} placeholder="Notes" placeholderTextColor={colors.mutedForeground} multiline style={[ss.editInput, ss.notesInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
+            <TouchableOpacity disabled={updateGuest.isPending} onPress={save} style={[ss.saveButton, { backgroundColor: colors.plum, opacity: updateGuest.isPending ? 0.6 : 1 }]}>
+              {updateGuest.isPending ? <ActivityIndicator color="#fff" /> : <Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>Enregistrer les modifications</Text>}
+            </TouchableOpacity>
+          </View>
+        )}
         {/* Avatar + RSVP hero */}
         <View style={[ss.heroRow, { borderBottomColor: colors.border }]}>
           <View style={[ss.av, { backgroundColor: colors.goldLight }]}>
@@ -172,4 +239,15 @@ const ss = StyleSheet.create({
   noteBox: { borderRadius: 8, borderWidth: StyleSheet.hairlineWidth, padding: 14 },
   noteText: { fontSize: 13, lineHeight: 20 },
   added: { fontSize: 10, textAlign: 'center', marginTop: 24, marginBottom: 4 },
+  editButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginHorizontal: 16, marginTop: 14, paddingVertical: 10, borderRadius: 9, borderWidth: 1 },
+  editButtonText: { fontSize: 11 },
+  editForm: { paddingHorizontal: 16, paddingTop: 12, gap: 9 },
+  editInput: { minHeight: 42, borderWidth: 1, borderRadius: 8, paddingHorizontal: 11, fontSize: 12 },
+  notesInput: { minHeight: 72, paddingTop: 11, textAlignVertical: 'top' },
+  formLabel: { fontSize: 9, letterSpacing: 1, marginTop: 2 },
+  rsvpChoices: { flexDirection: 'row', gap: 7 },
+  rsvpChoice: { flex: 1, minHeight: 36, borderRadius: 8, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  rsvpChoiceText: { fontSize: 10 },
+  saveButton: { minHeight: 44, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  saveText: { color: '#fff', fontSize: 11 },
 });
