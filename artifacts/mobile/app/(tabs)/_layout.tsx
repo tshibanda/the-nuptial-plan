@@ -11,6 +11,7 @@ import type { SFSymbol } from 'expo-symbols';
 import { Redirect, Tabs } from 'expo-router';
 import { useAuth } from '@clerk/expo';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
@@ -37,8 +38,9 @@ const TAB_META: Record<string, { sf: string; feather: string; label: string }> =
   retroplanning:{ sf: 'calendar.badge.clock', feather: 'clock',       label: 'Rétro-planning' },
 };
 
-// 5 primary tabs always visible in the bar
-const PRIMARY = ['index', 'evenements', 'invites', 'budget', 'prestataires'];
+// Five primary tabs visible in the bar. The selection is persisted locally.
+const DEFAULT_PRIMARY = ['index', 'evenements', 'invites', 'budget', 'prestataires'];
+const PRIMARY_TABS_STORAGE_KEY = '@nuptial-plan/primary-tabs';
 
 // All tabs shown in the burger sheet (full list for quick access)
 const ALL_TABS = [
@@ -70,6 +72,7 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
   const isDark = colorScheme === 'dark';
   const isIOS = Platform.OS === 'ios';
   const [burgerOpen, setBurgerOpen] = useState(false);
+  const [primaryTabs, setPrimaryTabs] = useState(DEFAULT_PRIMARY);
 
   const BAR_H = 64;
   const bottomPad = insets?.bottom ?? 0;
@@ -77,7 +80,32 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
 
   // Current tab name
   const currentRoute = state.routes[state.index]?.name ?? '';
-  const isSecondaryActive = !PRIMARY.includes(currentRoute);
+  const isSecondaryActive = !primaryTabs.includes(currentRoute);
+
+  useEffect(() => {
+    let mounted = true;
+    AsyncStorage.getItem(PRIMARY_TABS_STORAGE_KEY).then((stored) => {
+      if (!mounted || !stored) return;
+      try {
+        const parsed = JSON.parse(stored);
+        if (
+          Array.isArray(parsed) &&
+          parsed.length === 5 &&
+          parsed.every((name) => typeof name === 'string' && ALL_TABS.includes(name))
+        ) {
+          setPrimaryTabs(parsed);
+        }
+      } catch {
+        // Keep the defaults if the saved preference is invalid.
+      }
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  const updatePrimaryTabs = (tabs: string[]) => {
+    setPrimaryTabs(tabs);
+    void AsyncStorage.setItem(PRIMARY_TABS_STORAGE_KEY, JSON.stringify(tabs));
+  };
 
   const navigateTo = (routeName: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -109,7 +137,7 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
 
         {/* Tab buttons */}
         <View style={[bar.row, { height: BAR_H }]}>
-          {PRIMARY.map((tabName) => {
+          {primaryTabs.map((tabName) => {
             const meta = TAB_META[tabName]!;
             const focused = currentRoute === tabName;
             return (
@@ -190,6 +218,8 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
         onClose={() => setBurgerOpen(false)}
         currentRoute={currentRoute}
         onNavigate={(name) => { setBurgerOpen(false); setTimeout(() => navigateTo(name), 50); }}
+        primaryTabs={primaryTabs}
+        onPrimaryTabsChange={updatePrimaryTabs}
         colors={colors}
         isDark={isDark}
       />
@@ -210,17 +240,43 @@ const bar = StyleSheet.create({
 
 // ── Burger sheet modal ─────────────────────────────────────────────────────────
 function BurgerSheet({
-  visible, onClose, currentRoute, onNavigate, colors, isDark,
+  visible, onClose, currentRoute, onNavigate, primaryTabs, onPrimaryTabsChange, colors, isDark,
 }: {
   visible: boolean;
   onClose: () => void;
   currentRoute: string;
   onNavigate: (name: string) => void;
+  primaryTabs: string[];
+  onPrimaryTabsChange: (tabs: string[]) => void;
   colors: ReturnType<typeof useColors>;
   isDark: boolean;
 }) {
   const insets = useSafeAreaInsets();
-  const isIOS = Platform.OS === 'ios';
+  const [customizing, setCustomizing] = useState(false);
+  const [draftTabs, setDraftTabs] = useState(primaryTabs);
+
+  useEffect(() => {
+    if (visible) {
+      setDraftTabs(primaryTabs);
+      setCustomizing(false);
+    }
+  }, [visible, primaryTabs]);
+
+  const togglePrimaryTab = (tabName: string) => {
+    if (draftTabs.includes(tabName)) {
+      if (draftTabs.length <= 1) return;
+      setDraftTabs(draftTabs.filter((name) => name !== tabName));
+    } else if (draftTabs.length < 5) {
+      setDraftTabs([...draftTabs, tabName]);
+    }
+  };
+
+  const saveCustomization = () => {
+    if (draftTabs.length !== 5) return;
+    onPrimaryTabsChange(draftTabs);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setCustomizing(false);
+  };
 
   return (
     <Modal
@@ -266,6 +322,81 @@ function BurgerSheet({
           </TouchableOpacity>
         </View>
 
+        {!customizing ? (
+          <TouchableOpacity
+            onPress={() => setCustomizing(true)}
+            activeOpacity={0.75}
+            style={[bs.customizeButton, { backgroundColor: colors.plum + '12', borderColor: colors.plum + '30' }]}
+          >
+            <View style={[bs.customizeIcon, { backgroundColor: colors.plum + '18' }]}>
+              <Feather name="sliders" size={17} color={colors.plum} />
+            </View>
+            <View style={bs.customizeText}>
+              <Text style={[bs.customizeTitle, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]}>
+                Personnaliser le menu du bas
+              </Text>
+              <Text style={[bs.customizeHint, { color: colors.mutedForeground, fontFamily: SANS }]}>
+                Choisissez les 5 onglets que vous utilisez le plus.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={17} color={colors.plum} />
+          </TouchableOpacity>
+        ) : (
+          <View style={[bs.customizePanel, { backgroundColor: colors.plum + '08', borderColor: colors.plum + '25' }]}>
+            <View style={bs.customizePanelHeader}>
+              <TouchableOpacity onPress={() => setCustomizing(false)} style={bs.backButton} activeOpacity={0.7}>
+                <Feather name="arrow-left" size={16} color={colors.plum} />
+              </TouchableOpacity>
+              <View style={bs.customizeText}>
+                <Text style={[bs.customizeTitle, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]}>
+                  Menu du bas
+                </Text>
+                <Text style={[bs.customizeHint, { color: colors.mutedForeground, fontFamily: SANS }]}>
+                  {draftTabs.length}/5 onglets sélectionnés
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={saveCustomization}
+                disabled={draftTabs.length !== 5}
+                style={[bs.saveButton, { backgroundColor: draftTabs.length === 5 ? colors.plum : colors.muted }]}
+              >
+                <Text style={[bs.saveButtonText, { fontFamily: SANS_SEMIBOLD }]}>Enregistrer</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={[bs.selectionHint, { color: colors.mutedForeground, fontFamily: SANS }]}>
+              Appuyez sur les onglets à afficher dans la barre de navigation.
+            </Text>
+            <View style={bs.selectionList}>
+              {ALL_TABS.map((tabName) => {
+                const selected = draftTabs.includes(tabName);
+                return (
+                  <TouchableOpacity
+                    key={tabName}
+                    onPress={() => togglePrimaryTab(tabName)}
+                    activeOpacity={0.75}
+                    style={[bs.selectionRow, { borderBottomColor: colors.border }]}
+                  >
+                    <View style={[bs.selectionIcon, { backgroundColor: selected ? colors.plum + '18' : colors.background }]}>
+                      <TabIcon
+                        name={TAB_META[tabName]!.sf}
+                        feather={TAB_META[tabName]!.feather}
+                        size={17}
+                        color={selected ? colors.plum : colors.mutedForeground}
+                      />
+                    </View>
+                    <Text style={[bs.selectionLabel, { color: colors.foreground, fontFamily: selected ? SANS_SEMIBOLD : SANS }]}>
+                      {TAB_META[tabName]!.label}
+                    </Text>
+                    <View style={[bs.checkbox, { borderColor: selected ? colors.plum : colors.border, backgroundColor: selected ? colors.plum : 'transparent' }]}>
+                      {selected ? <Feather name="check" size={12} color="#fff" /> : null}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
         {/* Grid of all tabs */}
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -274,7 +405,7 @@ function BurgerSheet({
           {ALL_TABS.map((tabName) => {
             const meta = TAB_META[tabName]!;
             const isActive = currentRoute === tabName;
-            const isPrimary = PRIMARY.includes(tabName);
+            const isPrimary = primaryTabs.includes(tabName);
 
             return (
               <TouchableOpacity
@@ -359,6 +490,22 @@ const bs = StyleSheet.create({
   iconWrap: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   gridLabel: { fontSize: 13 },
   primaryBadge: { fontSize: 9, letterSpacing: 0.3 },
+  customizeButton: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 12 },
+  customizeIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  customizeText: { flex: 1, gap: 3 },
+  customizeTitle: { fontSize: 12 },
+  customizeHint: { fontSize: 10, lineHeight: 14 },
+  customizePanel: { borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 12 },
+  customizePanelHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  backButton: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(128,128,128,0.10)' },
+  saveButton: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
+  saveButtonText: { color: '#fff', fontSize: 10 },
+  selectionHint: { fontSize: 10, lineHeight: 14, marginTop: 10, marginBottom: 5 },
+  selectionList: { marginTop: 2 },
+  selectionRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: StyleSheet.hairlineWidth },
+  selectionIcon: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  selectionLabel: { flex: 1, fontSize: 11 },
+  checkbox: { width: 21, height: 21, borderRadius: 6, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
 });
 
 // ── App layout ─────────────────────────────────────────────────────────────────
