@@ -58,7 +58,7 @@ export default function MoodboardsScreen() {
 
   const save = () => {
     if (!title.trim() || (!imageUri && !sourceUrl.trim())) {
-      Alert.alert('Moodboard incomplet', 'Ajoutez un titre et une image ou un lien Pinterest/Instagram.');
+      Alert.alert('Moodboard incomplet', 'Ajoutez un titre et une image ou un lien Pinterest, Instagram ou Canva.');
       return;
     }
     const savedSourceUrl = sourceUrl.trim();
@@ -96,7 +96,7 @@ export default function MoodboardsScreen() {
               <TouchableOpacity onPress={chooseImage} style={[styles.imagePicker, { borderColor: colors.border, backgroundColor: colors.background }]}>
                 {imageUri ? <Image source={{ uri: imageUri }} style={styles.preview} /> : <><Feather name="image" size={24} color={colors.plum} /><Text style={[styles.pickerText, { color: colors.mutedForeground, fontFamily: SANS }]}>Choisir une image</Text></>}
               </TouchableOpacity>
-              <TextInput value={sourceUrl} onChangeText={setSourceUrl} placeholder="Lien Pinterest ou Instagram (https://…)" placeholderTextColor={colors.mutedForeground} autoCapitalize="none" keyboardType="url" style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
+              <TextInput value={sourceUrl} onChangeText={setSourceUrl} placeholder="Lien Pinterest, Instagram ou Canva (https://…)" placeholderTextColor={colors.mutedForeground} autoCapitalize="none" keyboardType="url" style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
               {sourceUrl ? <Text style={[styles.linkHint, { color: colors.mutedForeground, fontFamily: SANS }]}>Le lien sera conservé avec l’inspiration et ouvert au toucher.</Text> : null}
               <TextInput value={title} onChangeText={setTitle} placeholder="Nom de l’univers *" placeholderTextColor={colors.mutedForeground} style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
               <TextInput value={description} onChangeText={setDescription} placeholder="Intention, couleurs, notes…" placeholderTextColor={colors.mutedForeground} multiline style={[styles.input, styles.textarea, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
