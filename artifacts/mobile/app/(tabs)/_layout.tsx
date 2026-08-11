@@ -11,7 +11,7 @@ import type { SFSymbol } from 'expo-symbols';
 import { Redirect, Tabs } from 'expo-router';
 import { useAuth } from '@clerk/expo';
 import * as Haptics from 'expo-haptics';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
 import { setAuthTokenGetter } from '@workspace/api-client-react';
@@ -388,6 +388,7 @@ function ClassicTabLayout() {
 
 // ── Root layout ────────────────────────────────────────────────────────────────
 export default function TabLayout() {
+  const colors = useColors();
   const { isSignedIn, getToken } = useAuth();
 
   useEffect(() => {
@@ -399,10 +400,13 @@ export default function TabLayout() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView
+      edges={['top']}
+      style={{ flex: 1, backgroundColor: colors.plumDark }}
+    >
       <ClassicTabLayout />
       <NuptiaSheet />
       <GlobalTourHelp />
-    </View>
+    </SafeAreaView>
   );
 }

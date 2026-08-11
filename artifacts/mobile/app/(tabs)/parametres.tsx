@@ -74,7 +74,7 @@ function Group({ children, colors }: { children: React.ReactNode; colors: Return
 export default function ParametresScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad = Platform.OS === 'web' ? 67 : 0;
 
   const { selectedWeddingId, selectWedding } = useWedding();
   const queryClient = useQueryClient();

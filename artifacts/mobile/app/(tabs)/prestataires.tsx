@@ -45,7 +45,7 @@ export default function PrestatairesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:prestataires');
   const [search, setSearch] = useState('');
   const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);

@@ -16,6 +16,7 @@ import {
 } from '@expo-google-fonts/dm-sans';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { ClerkProvider, ClerkLoaded } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
@@ -86,6 +87,7 @@ export default function RootLayout() {
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache} proxyUrl={proxyUrl}>
       <ClerkLoaded>
         <SafeAreaProvider>
+          <StatusBar style="light" backgroundColor="#3C1A3C" translucent={false} />
           <ErrorBoundary>
             <PersistQueryClientProvider
               client={queryClient}

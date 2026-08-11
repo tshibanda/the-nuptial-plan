@@ -106,7 +106,7 @@ export default function InvitesScreen() {
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
   const queryClient = useQueryClient();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:invites');
   const [filter, setFilter] = useState<Filter>('all');
   const [viewMode, setViewMode] = useState<'guests' | 'tables'>('guests');

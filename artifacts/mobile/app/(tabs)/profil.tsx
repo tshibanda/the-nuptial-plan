@@ -79,7 +79,7 @@ export default function ProfilScreen() {
   const { signOut } = useClerk();
   const { user } = useUser();
   const { selectedWeddingId } = useWedding();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:profil');
 
   // Derive display values from Clerk user
