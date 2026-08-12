@@ -8,6 +8,7 @@ import { useColors } from '@/hooks/useColors';
 import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
 import { PaywallModal } from '@/components/PaywallModal';
+import { PremiumBadge } from '@/components/PremiumBadge';
 
 type Board = { id: string; title: string; description: string; imageUri: string; sourceUrl: string; accent: string };
 const STORAGE_KEY = 'tnp-moodboards';
@@ -88,7 +89,10 @@ export default function MoodboardsScreen() {
           <>
             <LinearGradient colors={[colors.plumDark, colors.plum, colors.plumLight]} style={styles.hero}>
               <Text style={[styles.eyebrow, { color: colors.gold, fontFamily: SANS_MEDIUM }]}>INSPIRATION VISUELLE</Text>
-              <Text style={[styles.heroTitle, { color: '#FBF5FB', fontFamily: SERIF }]}>Moodboards</Text>
+              <View style={styles.heroTitleRow}>
+                <Text style={[styles.heroTitle, { color: '#FBF5FB', fontFamily: SERIF }]}>Moodboards</Text>
+                <PremiumBadge />
+              </View>
               <Text style={[styles.heroBody, { color: '#F7EAF4', fontFamily: SANS }]}>Créez des univers visuels pour vos propositions, vos rendez-vous clients et vos mariages.</Text>
             </LinearGradient>
             <View style={styles.toolbar}>
@@ -132,6 +136,7 @@ const styles = StyleSheet.create({
   list: { paddingBottom: 160 },
   hero: { padding: 24, paddingTop: Platform.OS === 'web' ? 86 : 30, paddingBottom: 28, borderBottomLeftRadius: 26, borderBottomRightRadius: 26 },
   eyebrow: { fontSize: 10, letterSpacing: 1.8, marginBottom: 9 },
+  heroTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   heroTitle: { fontSize: 40, lineHeight: 44 },
   heroBody: { marginTop: 14, maxWidth: 520, fontSize: 13, lineHeight: 20 },
   toolbar: { paddingHorizontal: 18, paddingTop: 22, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

@@ -31,6 +31,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
 import { exportPaymentsPDF } from '@/utils/payments-pdf';
+import { PremiumBadge } from '@/components/PremiumBadge';
 
 // ── Tour steps ────────────────────────────────────────────────────────────────
 const TOUR_STEPS = [
@@ -282,7 +283,10 @@ export default function PaiementsScreen() {
 
           <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>FINANCES</Text>
           <View style={ss.heroTop}>
-            <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Paiements</Text>
+            <View style={ss.titleRow}>
+              <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Paiements</Text>
+              <PremiumBadge />
+            </View>
             <View style={ss.heroActions}>
               {payments && <TouchableOpacity onPress={handleExport} disabled={isExporting} activeOpacity={0.75} style={ss.heroAction}>
                 {isExporting ? <ActivityIndicator size="small" color="#C8A96E" /> : <Feather name="share" size={14} color="#C8A96E" />}
@@ -443,6 +447,7 @@ export default function PaiementsScreen() {
 const ss = StyleSheet.create({
   hero: { paddingHorizontal: 20, paddingBottom: 22, overflow: 'hidden' },
   heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   heroActions: { flexDirection: 'row', alignItems: 'center', gap: 7, flexShrink: 0 },
   heroAction: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 34, borderRadius: 9, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(200,169,110,0.40)' },
   heroSheen: { ...StyleSheet.absoluteFillObject, height: 80 },

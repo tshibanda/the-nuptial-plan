@@ -27,6 +27,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { VendorDetailSheet } from '@/components/VendorDetailSheet';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
+import { PremiumBadge } from '@/components/PremiumBadge';
 
 const TOUR_STEPS = [
   {
@@ -138,7 +139,10 @@ export default function PrestatairesScreen() {
               <View style={ss.heroTop}>
                 <View style={ss.heroTitleWrap}>
                   <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>L'ÉQUIPE CRÉATIVE</Text>
+                <View style={ss.titleRow}>
                   <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Prestataires</Text>
+                  <PremiumBadge />
+                </View>
                   {activeWedding && (
                     <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]}>{activeWedding.names}</Text>
                   )}
@@ -287,6 +291,7 @@ const ss = StyleSheet.create({
   heroSheen: { ...StyleSheet.absoluteFillObject, height: 80 },
   goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
   eye: { fontSize: 9, letterSpacing: 2, marginBottom: 4 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { fontSize: 34, lineHeight: 34, marginBottom: 2 },
   subtitle: { fontSize: 12, marginBottom: 4 },
   searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, height: 44, overflow: 'hidden' },

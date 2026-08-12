@@ -17,6 +17,7 @@ import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { EventAddSheet } from '@/components/EventAddSheet';
+import { PremiumBadge } from '@/components/PremiumBadge';
 
 type Tab = 'runsheet' | 'prestataires' | 'checklist';
 type EventStatus = 'terminé' | 'en_cours' | 'en_retard' | 'à_venir';
@@ -183,7 +184,10 @@ export default function JourJScreen() {
           <Text style={[ss.eyebrow, { color: colors.gold, fontFamily: SANS_MEDIUM }]}>GRAND JOUR</Text>
           <View style={ss.heroTitleRow}>
             <View style={{ flex: 1 }}>
-              <Text style={[ss.title, { color: '#FBF5FB', fontFamily: SERIF }]}>Jour J</Text>
+              <View style={ss.titleRow}>
+                <Text style={[ss.title, { color: '#FBF5FB', fontFamily: SERIF }]}>Jour J</Text>
+                <PremiumBadge />
+              </View>
               <Text style={[ss.subtitle, { color: '#DEC0DE', fontFamily: SANS }]}>{wedding?.names ?? 'Aucun mariage sélectionné'}</Text>
             </View>
             <View style={ss.heroActions}>
@@ -238,6 +242,7 @@ const ss = StyleSheet.create({
   hero: { paddingHorizontal: 20, paddingTop: 30, paddingBottom: 24, borderBottomLeftRadius: 26, borderBottomRightRadius: 26 },
   eyebrow: { fontSize: 9, letterSpacing: 2, marginBottom: 8 },
   heroTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   heroActions: { alignItems: 'flex-end', gap: 7 },
   title: { fontSize: 42, lineHeight: 44 },
   subtitle: { fontSize: 12, marginTop: 6 },

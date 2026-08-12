@@ -114,7 +114,10 @@ export default function ContratsScreen() {
               <View style={ss.heroTop}>
                 <View style={ss.heroTitleWrap}>
                   <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>THE NUPTIAL PLAN</Text>
-                  <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Contrats</Text>
+                  <View style={ss.titleRow}>
+                    <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Contrats</Text>
+                    <PremiumBadge />
+                  </View>
                   {activeWedding && (
                     <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]} numberOfLines={1}>
                       {activeWedding.names}
@@ -257,6 +260,7 @@ const ss = StyleSheet.create({
   footerText: { fontSize: 12 },
   heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   heroTitleWrap: { flex: 1, minWidth: 0 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   addHeaderBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.13)' },
   addHeaderText: { color: '#FBF5FB', fontSize: 11 },
   form: { padding: 16, gap: 10 },

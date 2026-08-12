@@ -27,6 +27,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { GuestDetailSheet } from '@/components/GuestDetailSheet';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
+import { PremiumBadge } from '@/components/PremiumBadge';
 
 // ── Excel parsing ──────────────────────────────────────────────────────────────
 type RsvpStatus = 'confirmed' | 'pending' | 'declined';
@@ -288,7 +289,10 @@ export default function InvitesScreen() {
               <View style={ss.heroTop}>
                 <View style={ss.heroTitleWrap}>
                   <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>LA CÉLÉBRATION</Text>
-                  <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]} numberOfLines={2}>Gestion des invités</Text>
+                  <View style={ss.titleRow}>
+                    <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]} numberOfLines={2}>Gestion des invités</Text>
+                    <PremiumBadge />
+                  </View>
                 </View>
                 <View style={ss.heroActions}>
                   <TouchableOpacity onPress={handlePickFile} activeOpacity={0.75} style={ss.importBtn} accessibilityLabel="Importer depuis Excel">
@@ -600,8 +604,9 @@ const ss = StyleSheet.create({
   goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
   heroTop: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
   heroTitleWrap: { flex: 1, minWidth: 0 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
   eye: { fontSize: 9, letterSpacing: 2, marginBottom: 4 },
-  title: { fontSize: 32, lineHeight: 34 },
+  title: { fontSize: 32, lineHeight: 34, flexShrink: 1 },
   heroActions: { flexDirection: 'row', alignItems: 'center', gap: 7, flexShrink: 0 },
   importBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(200,170,112,0.40)', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8 },
   importBtnText: { fontSize: 11, color: '#C8A96E', letterSpacing: 0.3 },
