@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import Purchases from "react-native-purchases";
 import { useUser, useAuth } from "@clerk/expo";
 
@@ -34,6 +35,10 @@ function getApiKey() {
   return process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY;
 }
 
+// Expo Go cannot load the native App Store / Google Play billing modules.
+// RevenueCat remains enabled in development builds and production binaries.
+const isExpoGo = Constants.appOwnership === "expo";
+
 function getPlatform(): string {
   if (Platform.OS === "ios") return "ios";
   if (Platform.OS === "android") return "android";
@@ -51,7 +56,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const [offerings, setOfferings] = useState<any>(null);
   const [customerInfo, setCustomerInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const available = Boolean(getApiKey());
+  const available = Boolean(getApiKey()) && !isExpoGo;
 
   /**
    * Trigger a server-side entitlement sync.
@@ -83,8 +88,13 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   }, [getToken]);
 
   useEffect(() => {
-    if (!available || Platform.OS === "web") return;
-    Purchases.configure({ apiKey: getApiKey()!, appUserID: user?.id });
+    if (!available || Platform.OS === "web" || isExpoGo) return;
+    try {
+      Purchases.configure({ apiKey: getApiKey()!, appUserID: user?.id });
+    } catch {
+      // Native billing is unavailable or misconfigured; keep the app usable.
+      return;
+    }
     void Promise.all([Purchases.getOfferings(), Purchases.getCustomerInfo()])
       .then(([nextOfferings, nextInfo]) => {
         setOfferings(nextOfferings);
