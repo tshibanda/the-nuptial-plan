@@ -9,6 +9,8 @@ type SubscriptionContextValue = {
   available: boolean;
   isActive: boolean;
   isTrialing: boolean;
+  /** RevenueCat product identifier for the active subscription (e.g. "tnp_premium_monthly"). */
+  productIdentifier: string | null;
   offerings: any;
   loading: boolean;
   purchase: (pkg: any) => Promise<void>;
@@ -19,6 +21,7 @@ const SubscriptionContext = createContext<SubscriptionContextValue>({
   available: false,
   isActive: false,
   isTrialing: false,
+  productIdentifier: null,
   offerings: null,
   loading: false,
   purchase: async () => undefined,
@@ -103,6 +106,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       available,
       isActive: Boolean(entitlement),
       isTrialing: entitlement?.periodType === "TRIAL",
+      productIdentifier: entitlement?.productIdentifier ?? null,
       offerings,
       loading,
       purchase: async (pkg) => {

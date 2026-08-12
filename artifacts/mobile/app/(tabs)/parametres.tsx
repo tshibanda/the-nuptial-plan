@@ -319,6 +319,20 @@ export default function ParametresScreen() {
                 Les achats intégrés seront disponibles après la configuration App Store et Google Play.
               </Text>
             )}
+            {subscription.isActive && (
+              <TouchableOpacity
+                onPress={() => {
+                  const url = Platform.OS === 'android'
+                    ? `https://play.google.com/store/account/subscriptions?sku=${subscription.productIdentifier ?? 'tnp_premium_monthly'}&package=com.thenuptialplan.mobile`
+                    : 'itms-apps://apps.apple.com/account/subscriptions';
+                  void Linking.openURL(url);
+                }}
+                style={[ps.manageButton, { backgroundColor: colors.plum + '14', borderColor: colors.plum + '30' }]}
+              >
+                <Feather name="external-link" size={13} color={colors.plum} />
+                <Text style={[ps.manageText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>Gérer mon abonnement</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={() => void subscription.restore()} disabled={subscription.loading} style={ps.restoreButton}>
               <Text style={[ps.restoreText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>Restaurer mes achats</Text>
             </TouchableOpacity>
@@ -390,6 +404,8 @@ const ps = StyleSheet.create({
   subscriptionOption: { minHeight: 52, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center' },
   subscriptionPlan: { fontSize: 12 },
   subscriptionPrice: { fontSize: 11, marginTop: 2 },
+  manageButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingVertical: 10 },
+  manageText: { fontSize: 12 },
   restoreButton: { alignItems: 'center', paddingVertical: 7 },
   restoreText: { fontSize: 11 },
 });
