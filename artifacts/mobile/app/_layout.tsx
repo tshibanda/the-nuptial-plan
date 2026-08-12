@@ -62,6 +62,7 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerBackTitle: 'Retour' }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
+      <Stack.Screen name="bug-report" options={{ headerShown: false }} />
     </Stack>
   );
 }
