@@ -107,17 +107,21 @@ export default function ContratsScreen() {
               <View style={{ position: 'absolute', bottom: -12, left: 10, width: 70, height: 70, borderRadius: 35, backgroundColor: colors.gold + '18' }} pointerEvents="none" />
               <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
               <View style={ss.goldBar} />
-              <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>THE NUPTIAL PLAN</Text>
-              <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Contrats</Text>
-              {activeWedding && (
-                <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]} numberOfLines={1}>
-                  {activeWedding.names}
-                </Text>
-              )}
-              <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
-                <Feather name="plus" size={15} color="#FBF5FB" />
-                <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
-              </TouchableOpacity>
+              <View style={ss.heroTop}>
+                <View style={ss.heroTitleWrap}>
+                  <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>THE NUPTIAL PLAN</Text>
+                  <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Contrats</Text>
+                  {activeWedding && (
+                    <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]} numberOfLines={1}>
+                      {activeWedding.names}
+                    </Text>
+                  )}
+                </View>
+                <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
+                  <Feather name="plus" size={15} color="#FBF5FB" />
+                  <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                </TouchableOpacity>
+              </View>
             </LinearGradient>
 
             {/* Search bar */}
@@ -241,7 +245,9 @@ const ss = StyleSheet.create({
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, paddingVertical: 10 },
   footerItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   footerText: { fontSize: 12 },
-  addHeaderBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 14, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.13)' },
+  heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  heroTitleWrap: { flex: 1, minWidth: 0 },
+  addHeaderBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.13)' },
   addHeaderText: { color: '#FBF5FB', fontSize: 11 },
   form: { padding: 16, gap: 10 },
   formInput: { minHeight: 44, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 12 },

@@ -283,18 +283,20 @@ export default function PaiementsScreen() {
           <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>FINANCES</Text>
           <View style={ss.heroTop}>
             <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Paiements</Text>
-            {payments && <TouchableOpacity onPress={handleExport} disabled={isExporting} activeOpacity={0.75} style={ss.heroAction}>
-              {isExporting ? <ActivityIndicator size="small" color="#C8A96E" /> : <Feather name="share" size={14} color="#C8A96E" />}
-              <Text style={[ss.exportBtnText, { fontFamily: SANS_SEMIBOLD }]}>{isExporting ? 'Export…' : 'Exporter'}</Text>
-            </TouchableOpacity>}
+            <View style={ss.heroActions}>
+              {payments && <TouchableOpacity onPress={handleExport} disabled={isExporting} activeOpacity={0.75} style={ss.heroAction}>
+                {isExporting ? <ActivityIndicator size="small" color="#C8A96E" /> : <Feather name="share" size={14} color="#C8A96E" />}
+                <Text style={[ss.exportBtnText, { fontFamily: SANS_SEMIBOLD }]}>{isExporting ? 'Export…' : 'Exporter'}</Text>
+              </TouchableOpacity>}
+              <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
+                <Feather name="plus" size={15} color="#FBF5FB" />
+                <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           {activeWedding && (
             <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]}>{activeWedding.names}</Text>
           )}
-          <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
-            <Feather name="plus" size={15} color="#FBF5FB" />
-            <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
-          </TouchableOpacity>
         </LinearGradient>
 
         {/* ── Content ──────────────────────────────────────────────────────── */}
@@ -441,6 +443,7 @@ export default function PaiementsScreen() {
 const ss = StyleSheet.create({
   hero: { paddingHorizontal: 20, paddingBottom: 22, overflow: 'hidden' },
   heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  heroActions: { flexDirection: 'row', alignItems: 'center', gap: 7, flexShrink: 0 },
   heroAction: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 34, borderRadius: 9, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(200,169,110,0.40)' },
   heroSheen: { ...StyleSheet.absoluteFillObject, height: 80 },
   goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
@@ -493,7 +496,7 @@ const ss = StyleSheet.create({
   amount: { fontSize: 16, lineHeight: 18 },
   badge: { borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3 },
   badgeText: { fontSize: 9 },
-  addHeaderBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 14, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.13)' },
+  addHeaderBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.13)' },
   addHeaderText: { color: '#FBF5FB', fontSize: 11 },
   form: { padding: 16, gap: 10 },
   formInput: { minHeight: 44, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 12 },
