@@ -15,7 +15,7 @@ export default function CarnetAdresseScreen() {
   const submit = () => { if (!form.name.trim() || !form.category.trim()) return; create.mutate({ data: form }, { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListAddressBookEntriesQueryKey() }); setForm({ name: '', category: '', contactName: '', contactEmail: '', contactPhone: '', website: '', notes: '' }); setAdding(false); }, onError: () => Alert.alert('Erreur', 'Impossible d’enregistrer ce contact.') }); };
   const field = (key: keyof typeof form, placeholder: string) => <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} value={form[key]} onChangeText={(value) => setForm({ ...form, [key]: value })} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} />;
   return <View style={{ flex: 1, backgroundColor: colors.background }}>
-    <FlatList data={filtered} keyExtractor={(item) => String(item.id)} contentContainerStyle={{ paddingBottom: 280 }} ListHeaderComponent={<>
+    <FlatList data={filtered} keyExtractor={(item) => String(item.id)} contentContainerStyle={{ paddingBottom: 160 }} ListHeaderComponent={<>
       <LinearGradient colors={[colors.plumDark, colors.plum, colors.plumLight]} style={[styles.hero, { paddingTop: insets + 28 }]}>
         <View style={styles.heroTop}>
           <View style={styles.heroTitleWrap}>

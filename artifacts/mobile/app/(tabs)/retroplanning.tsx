@@ -203,7 +203,7 @@ export default function RetroplanningScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={[styles.content, { paddingBottom: 280 + insets.bottom }]}
+      contentContainerStyle={[styles.content, { paddingBottom: 160 + insets.bottom }]}
       showsVerticalScrollIndicator={false}
     >
       <LinearGradient

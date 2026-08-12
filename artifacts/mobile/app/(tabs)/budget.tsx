@@ -670,7 +670,7 @@ export default function BudgetScreen() {
     <>
       <ScrollView
         style={{ flex: 1, backgroundColor: colors.background }}
-        contentContainerStyle={{ paddingBottom: 280, flexGrow: 1 }}
+        contentContainerStyle={{ paddingBottom: 160, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
