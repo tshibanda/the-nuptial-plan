@@ -264,6 +264,47 @@ eas build:configure
    the internal test track).
 6. Verify: `subscription.isActive === true` in the app.
 
+### RevenueCat server-side webhook (real-time subscription updates)
+
+The server exposes `POST /api/revenuecat/webhook`. RevenueCat calls this
+endpoint whenever a subscription renews, expires, or is cancelled — even when
+the planner's app is closed — so the `subscriptions` table always reflects the
+current state without waiting for the next app launch.
+
+**One-time setup (per deployment):**
+
+1. **Generate a webhook secret** — any long random string, e.g.:
+   ```
+   openssl rand -hex 32
+   ```
+2. **Store it as `REVENUECAT_WEBHOOK_SECRET`** in the Replit Secrets panel for
+   the API Server artifact.
+3. **Configure the webhook in RevenueCat:**
+   - Dashboard → Project `proj7339034d` → **Integrations** → **Webhooks** → **+ New webhook**
+   - URL: `https://<your-deployed-domain>/api/revenuecat/webhook`
+   - Authorization header value: the same secret from step 1
+   - Events to send: select all (the server ignores types it doesn't need)
+   - Click **Save** and use **Send test event** to verify the endpoint returns `{"received":true}`.
+
+**Handled events:**
+
+| RevenueCat event type          | Action on `subscriptions` row                                          |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `INITIAL_PURCHASE`             | status → `active`, cancelAtPeriodEnd → `false`                         |
+| `RENEWAL`                      | status → `active`, cancelAtPeriodEnd → `false`                         |
+| `CANCELLATION`                 | status → `active`, cancelAtPeriodEnd → `true` (auto-renew off; planner still entitled until period end) |
+| `UNCANCELLATION`               | status → `active`, cancelAtPeriodEnd → `false`                         |
+| `EXPIRATION`                   | status → `canceled`                                                    |
+| All other types                | acknowledged, no DB write                                              |
+
+All writes are **monotonic on `currentPeriodEnd`**: if the incoming event's period end is older than the stored one, the event is silently ignored. This prevents delayed/retried events from revoking access that a newer RENEWAL already extended.
+
+The `/api/subscription/sync` endpoint (triggered on app open) remains the
+authoritative server-side check. The webhook keeps the row current between
+app launches.
+
+---
+
 ### Sandbox purchase & restore (test store — no native build needed)
 
 The test store is active in Expo Go and does not require a native build.

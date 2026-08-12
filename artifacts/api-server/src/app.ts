@@ -11,6 +11,7 @@ import {
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { WebhookHandlers } from "./webhookHandlers";
+import revenueCatWebhookRouter from "./routes/revenuecat-webhook";
 
 const app: Express = express();
 
@@ -36,6 +37,9 @@ app.use(
 
 // Clerk proxy — must be before body parsers (streams raw bytes).
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
+
+// RevenueCat webhook — scoped JSON parser so Stripe's raw-body handler is unaffected.
+app.use("/api/revenuecat/webhook", express.json(), revenueCatWebhookRouter);
 
 app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
   const signature = req.headers["stripe-signature"];
