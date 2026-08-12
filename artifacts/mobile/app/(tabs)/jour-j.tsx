@@ -18,6 +18,8 @@ import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { EventAddSheet } from '@/components/EventAddSheet';
 import { PremiumBadge } from '@/components/PremiumBadge';
+import { PremiumPageGate } from '@/components/PremiumPageGate';
+import { useSubscription } from '@/lib/subscription';
 
 type Tab = 'runsheet' | 'prestataires' | 'checklist';
 type EventStatus = 'terminé' | 'en_cours' | 'en_retard' | 'à_venir';
@@ -65,6 +67,7 @@ function initials(name: string) {
 }
 
 export default function JourJScreen() {
+  const { isActive: isPremium } = useSubscription();
   const colors = useColors();
   const { selectedWeddingId } = useWedding();
   const queryClient = useQueryClient();
@@ -172,6 +175,7 @@ export default function JourJScreen() {
     );
   };
 
+  if (!isPremium) return <PremiumPageGate featureLabel="votre écran Jour J" />;
   return (
     <>
       <ScrollView

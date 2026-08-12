@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
 import { PageTour } from '@/components/ui/page-tour';
 import { PremiumBadge } from '@/components/premium-badge';
+import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useListPayments,
@@ -58,6 +59,7 @@ const paymentSchema = z.object({
 type PaymentFormData = z.infer<typeof paymentSchema>;
 
 export default function Paiements() {
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
@@ -173,6 +175,7 @@ export default function Paiements() {
     .filter((p) => p.status === 'pending' || p.status === 'overdue')
     .reduce((sum, p) => sum + p.amountCents, 0);
 
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="le suivi des paiements" />;
   return (
     <div>
       <PageTour

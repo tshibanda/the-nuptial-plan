@@ -6,6 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
 import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
 import { PremiumBadge } from '@/components/PremiumBadge';
+import { PremiumPageGate } from '@/components/PremiumPageGate';
+import { useSubscription } from '@/lib/subscription';
 
 type Entry = { id: string; month: string; type: 'income' | 'expense'; label: string; amount: number };
 type BusinessData = { hourlyRate: number; annualRevenue: number; fixedCosts: number; microThreshold: number; packagePrice: number; projectHours: number; insurance: boolean; entries: Entry[] };
@@ -19,6 +21,7 @@ function money(value: number) { return `${Math.round(value).toLocaleString('fr-F
 
 export default function BusinessScreen() {
   const colors = useColors();
+  const { isActive: isPremium } = useSubscription();
   const [data, setData] = useState<BusinessData>(() => Platform.OS === 'web' ? loadWebData() : defaults);
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -44,6 +47,7 @@ export default function BusinessScreen() {
   const updateNumber = (key: keyof Pick<BusinessData, 'hourlyRate' | 'annualRevenue' | 'fixedCosts' | 'microThreshold' | 'packagePrice' | 'projectHours'>, value: string) => persist({ ...data, [key]: Number(value) || 0 });
   const inputStyle = [styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }];
 
+  if (!isPremium) return <PremiumPageGate featureLabel="votre espace Business" />;
   return (
     <>
       <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

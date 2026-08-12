@@ -20,6 +20,7 @@ import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
 import { PaywallModal } from '@/components/PaywallModal';
 import { PremiumBadge } from '@/components/PremiumBadge';
+import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
 
 const TOUR_STEPS = [
@@ -88,6 +89,7 @@ export default function ContratsScreen() {
     );
   }
 
+  if (!isPremium) return <PremiumPageGate featureLabel="vos contrats" />;
   return (
     <>
       <FlatList

@@ -45,6 +45,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { PremiumBadge } from '@/components/premium-badge';
+import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 
 const contractSchema = z.object({
   vendorId: z.number().optional(),
@@ -59,6 +60,7 @@ const contractSchema = z.object({
 type ContractFormData = z.infer<typeof contractSchema>;
 
 export default function Contrats() {
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
@@ -165,6 +167,7 @@ export default function Contrats() {
     return <div className="text-center font-serif text-2xl text-muted-foreground">Chargement...</div>;
   }
 
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="vos contrats" />;
   return (
     <div>
       <PageTour

@@ -32,6 +32,8 @@ import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
 import { exportPaymentsPDF } from '@/utils/payments-pdf';
 import { PremiumBadge } from '@/components/PremiumBadge';
+import { PremiumPageGate } from '@/components/PremiumPageGate';
+import { useSubscription } from '@/lib/subscription';
 
 // ── Tour steps ────────────────────────────────────────────────────────────────
 const TOUR_STEPS = [
@@ -204,6 +206,7 @@ function SummaryCard({ payments, currency, colors }: SummaryCardProps) {
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function PaiementsScreen() {
+  const { isActive: isPremium } = useSubscription();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
@@ -259,6 +262,7 @@ export default function PaiementsScreen() {
   const pendingPayments   = sorted.filter(p => p.status === 'pending' || p.status === 'scheduled');
   const paidPayments      = sorted.filter(p => p.status === 'paid');
 
+  if (!isPremium) return <PremiumPageGate featureLabel="le suivi des paiements" />;
   return (
     <>
       <ScrollView

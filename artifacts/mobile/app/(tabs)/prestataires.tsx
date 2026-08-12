@@ -28,6 +28,8 @@ import { VendorDetailSheet } from '@/components/VendorDetailSheet';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
 import { PremiumBadge } from '@/components/PremiumBadge';
+import { PremiumPageGate } from '@/components/PremiumPageGate';
+import { useSubscription } from '@/lib/subscription';
 
 const TOUR_STEPS = [
   {
@@ -50,6 +52,7 @@ const TOUR_STEPS = [
 const AVATAR_COLORS = ['#eadfcf', '#dce7df', '#eadfdf', '#e1dceb', '#e0e7dc', '#dce0e7'];
 
 export default function PrestatairesScreen() {
+  const { isActive: isPremium } = useSubscription();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
@@ -112,6 +115,7 @@ export default function PrestatairesScreen() {
     );
   };
 
+  if (!isPremium) return <PremiumPageGate featureLabel="votre carnet de prestataires" />;
   return (
     <>
       <FlatList

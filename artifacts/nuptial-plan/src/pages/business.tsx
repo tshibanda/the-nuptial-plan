@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PageTour } from '@/components/ui/page-tour';
 import { PremiumBadge } from '@/components/premium-badge';
+import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 
 type Entry = { id: string; month: string; type: 'income' | 'expense'; label: string; amount: number };
 type BusinessData = {
@@ -20,6 +21,7 @@ const storageKey = 'tnp-business';
 const defaults: BusinessData = { hourlyRate: 45, annualRevenue: 0, fixedCosts: 0, microThreshold: 77700, packagePrice: 3500, projectHours: 80, insurance: false, entries: [] };
 
 export default function Business() {
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const [data, setData] = useState<BusinessData>(defaults);
   const [entry, setEntry] = useState({ month: new Date().toISOString().slice(0, 7), type: 'income' as Entry['type'], label: '', amount: '' });
   useEffect(() => { try { setData({ ...defaults, ...JSON.parse(localStorage.getItem(storageKey) || '{}') }); } catch { setData(defaults); } }, []);
@@ -27,6 +29,7 @@ export default function Business() {
   const totals = useMemo(() => data.entries.reduce((acc, item) => ({ income: acc.income + (item.type === 'income' ? item.amount : 0), expense: acc.expense + (item.type === 'expense' ? item.amount : 0) }), { income: 0, expense: 0 }), [data.entries]);
   const addEntry = () => { const amount = Number(entry.amount); if (!entry.label || !amount) return; persist({ ...data, entries: [...data.entries, { ...entry, id: `${Date.now()}`, amount }] }); setEntry({ ...entry, label: '', amount: '' }); };
   const removeEntry = (id: string) => persist({ ...data, entries: data.entries.filter((item) => item.id !== id) });
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="votre espace Business" />;
   return <div>
     <PageTour tourKey="business" pageTitle="Business" pageIcon={BriefcaseBusiness} steps={[{ icon: Calculator, title: 'Pilotez votre activité', body: 'Mesurez votre vrai taux horaire, anticipez les mois creux et gardez une vision claire de vos charges.' }]} />
     <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"><p className="eyebrow mb-2 text-[#a8893e]">Votre activité de wedding planner</p><div className="flex items-center gap-3"><h1 className="font-serif text-[43px] leading-[0.9]">Business</h1><PremiumBadge /></div><p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted-foreground">Un espace personnel pour sortir du pilotage au feeling : trésorerie, rentabilité, acquisition et protection.</p></div>

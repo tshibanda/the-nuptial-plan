@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { PageTour } from '@/components/ui/page-tour';
 import { PremiumBadge } from '@/components/premium-badge';
+import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 
 type Board = { id: string; title: string; description: string; imageUrl: string; sourceUrl?: string; accent: string };
 const schema = z.object({
@@ -26,6 +27,7 @@ function linkPreviewUrl(url: string) {
 }
 
 export default function Moodboards() {
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const [boards, setBoards] = useState<Board[]>([]);
   const [open, setOpen] = useState(false);
   const form = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { title: '', description: '', imageUrl: '', sourceUrl: '', accent: '#C8A96E' } });
@@ -40,6 +42,7 @@ export default function Moodboards() {
     setBoards(next); localStorage.setItem(key, JSON.stringify(next)); form.reset(); setOpen(false);
   };
   const remove = (id: string) => { const next = boards.filter((board) => board.id !== id); setBoards(next); localStorage.setItem(key, JSON.stringify(next)); };
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="vos moodboards et inspirations" />;
   return <div>
     <PageTour tourKey="moodboards" pageTitle="Moodboards" pageIcon={Palette} steps={[{ icon: Palette, title: 'Donnez une direction', body: 'Rassemblez les images, couleurs et intentions qui guideront chaque mariage.' }]} />
     <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60">

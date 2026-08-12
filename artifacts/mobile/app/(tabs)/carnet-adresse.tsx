@@ -7,14 +7,18 @@ import { getListAddressBookEntriesQueryKey, useCreateAddressBookEntry, useDelete
 import { useColors } from '@/hooks/useColors';
 import { SANS, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
 import { PremiumBadge } from '@/components/PremiumBadge';
+import { PremiumPageGate } from '@/components/PremiumPageGate';
+import { useSubscription } from '@/lib/subscription';
 
 export default function CarnetAdresseScreen() {
   const colors = useColors(); const insets = Platform.OS === 'web' ? 67 : 0; const queryClient = useQueryClient();
+  const { isActive: isPremium } = useSubscription();
   const { data: entries = [], isLoading } = useListAddressBookEntries(); const create = useCreateAddressBookEntry(); const remove = useDeleteAddressBookEntry();
   const [search, setSearch] = useState(''); const [adding, setAdding] = useState(false); const [form, setForm] = useState({ name: '', category: '', contactName: '', contactEmail: '', contactPhone: '', website: '', notes: '' });
   const filtered = useMemo(() => { const q = search.trim().toLocaleLowerCase(); return q ? entries.filter((e) => [e.name, e.category, e.contactName, e.contactEmail].filter(Boolean).join(' ').toLocaleLowerCase().includes(q)) : entries; }, [entries, search]);
   const submit = () => { if (!form.name.trim() || !form.category.trim()) return; create.mutate({ data: form }, { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListAddressBookEntriesQueryKey() }); setForm({ name: '', category: '', contactName: '', contactEmail: '', contactPhone: '', website: '', notes: '' }); setAdding(false); }, onError: () => Alert.alert('Erreur', 'Impossible d’enregistrer ce contact.') }); };
   const field = (key: keyof typeof form, placeholder: string) => <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} value={form[key]} onChangeText={(value) => setForm({ ...form, [key]: value })} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} />;
+  if (!isPremium) return <PremiumPageGate featureLabel="votre carnet d’adresses" />;
   return <View style={{ flex: 1, backgroundColor: colors.background }}>
     <FlatList data={filtered} keyExtractor={(item) => String(item.id)} contentContainerStyle={{ paddingBottom: 160 }} ListHeaderComponent={<>
       <LinearGradient colors={[colors.plumDark, colors.plum, colors.plumLight]} style={[styles.hero, { paddingTop: insets + 28 }]}>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, CircleEllipsis, Users, Tag } from 'lucide-react';
 import { PageTour } from '@/components/ui/page-tour';
 import { PremiumBadge } from '@/components/premium-badge';
+import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 import { FileAttachments } from '@/components/file-attachments';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
@@ -62,6 +63,7 @@ const vendorSchema = z.object({
 type VendorFormData = z.infer<typeof vendorSchema>;
 
 export default function Prestataires() {
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
@@ -199,6 +201,7 @@ export default function Prestataires() {
     return <div className="text-center font-serif text-2xl text-muted-foreground">Chargement...</div>;
   }
 
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="votre carnet de prestataires" />;
   return (
     <div>
       <PageTour

@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { downloadRunsheetPDF } from '@/components/jour-j/runsheet-pdf';
 import { PremiumBadge } from '@/components/premium-badge';
+import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 
 /* ── Types ── */
 type Tab = 'runsheet' | 'prestataires' | 'checklist';
@@ -532,6 +533,7 @@ function EventFormDialog({
 
 /* ── Main page ── */
 export default function JourJ() {
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -681,6 +683,7 @@ export default function JourJ() {
     { key: 'checklist'   as const, label: 'Checklist',    icon: Check         },
   ];
 
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="votre écran Jour J" />;
   return (
     <>
       <PageTour

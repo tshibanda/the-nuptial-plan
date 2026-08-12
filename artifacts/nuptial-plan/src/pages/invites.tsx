@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { Plus, UserCircle2, Users, CheckSquare, FileUp, AlertTriangle, Search, Link2 } from 'lucide-react';
 import { PageTour } from '@/components/ui/page-tour';
 import { PremiumBadge } from '@/components/premium-badge';
+import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useListGuests,
@@ -141,6 +142,7 @@ const RSVP_COLOR: Record<string, string> = { confirmed: 'badge-confirmed', pendi
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function Invites() {
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: guests = [], isLoading } = useListGuests(activeWeddingId!);
   const { data: stats } = useGetGuestStats(activeWeddingId!);
@@ -266,6 +268,7 @@ export default function Invites() {
     ? guests.filter((guest) => normalizeStr(guest.name).includes(normalizedSearchQuery))
     : guests;
 
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="la gestion des invités" />;
   return (
     <div>
       <PageTour

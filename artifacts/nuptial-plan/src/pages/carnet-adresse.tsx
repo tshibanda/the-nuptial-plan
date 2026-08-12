@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { BookOpen, CircleEllipsis, Globe, Mail, Phone, Plus, Search, Sparkles, Trash2, Users } from 'lucide-react';
 import { PremiumBadge } from '@/components/premium-badge';
+import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -40,6 +41,7 @@ const emptyValues: EntryForm = {
 };
 
 export default function CarnetAdresse() {
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: entries = [], isLoading } = useListAddressBookEntries();
   const { data: weddings = [] } = useListWeddings();
@@ -122,6 +124,7 @@ export default function CarnetAdresse() {
     });
   };
 
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="votre carnet d’adresses" />;
   return (
     <div>
       <PageTour

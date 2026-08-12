@@ -9,6 +9,7 @@ import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
 import { PaywallModal } from '@/components/PaywallModal';
 import { PremiumBadge } from '@/components/PremiumBadge';
+import { PremiumPageGate } from '@/components/PremiumPageGate';
 
 type Board = { id: string; title: string; description: string; imageUri: string; sourceUrl: string; accent: string };
 const STORAGE_KEY = 'tnp-moodboards';
@@ -27,7 +28,7 @@ function linkPreviewUri(url: string) {
 
 export default function MoodboardsScreen() {
   const colors = useColors();
-  const { paywallVisible, closePaywall, requirePremium } = usePremiumGate();
+  const { paywallVisible, closePaywall, requirePremium, isPremium } = usePremiumGate();
   const [boards, setBoards] = useState<Board[]>([]);
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
@@ -72,6 +73,7 @@ export default function MoodboardsScreen() {
 
   const empty = useMemo(() => boards.length === 0, [boards.length]);
 
+  if (!isPremium) return <PremiumPageGate featureLabel="vos moodboards et inspirations" />;
   return (
     <>
     <PaywallModal

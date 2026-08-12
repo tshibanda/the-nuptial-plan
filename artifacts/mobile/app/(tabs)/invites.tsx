@@ -28,6 +28,8 @@ import { GuestDetailSheet } from '@/components/GuestDetailSheet';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
 import { PremiumBadge } from '@/components/PremiumBadge';
+import { PremiumPageGate } from '@/components/PremiumPageGate';
+import { useSubscription } from '@/lib/subscription';
 
 // ── Excel parsing ──────────────────────────────────────────────────────────────
 type RsvpStatus = 'confirmed' | 'pending' | 'declined';
@@ -103,6 +105,7 @@ const AVATAR_COLORS = ['#ebe2d4', '#dce4e5', '#e2dceb', '#dce8df', '#f0e2cb'];
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function InvitesScreen() {
+  const { isActive: isPremium } = useSubscription();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
@@ -262,6 +265,7 @@ export default function InvitesScreen() {
     );
   };
 
+  if (!isPremium) return <PremiumPageGate featureLabel="la gestion des invités" />;
   return (
     <>
       <FlatList
