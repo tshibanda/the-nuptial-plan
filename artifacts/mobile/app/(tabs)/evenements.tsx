@@ -4,7 +4,6 @@ import {
   ActivityIndicator, Platform, TouchableOpacity, TextInput,
 } from 'react-native';
 
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
@@ -409,7 +408,6 @@ const vt = StyleSheet.create({
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function EvenementsScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:evenements');
@@ -779,21 +777,6 @@ export default function EvenementsScreen() {
         }}
       />
 
-      {/* FAB */}
-      <View style={[hs.fab, accentShadow('lg'), { backgroundColor: colors.plum, bottom: Platform.OS === 'web' ? 94 : insets.bottom + 84 }]} pointerEvents="box-none">
-        <TouchableOpacity
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setAddSheetInitialDate(null);
-            setShowAdd(true);
-          }}
-          activeOpacity={0.82}
-          style={hs.fabInner}
-        >
-          <Feather name="plus" size={22} color="#FBF5FB" />
-        </TouchableOpacity>
-      </View>
-
       <EventAddSheet
         visible={showAdd}
         onClose={() => { setShowAdd(false); setAddSheetInitialDate(null); }}
@@ -868,8 +851,6 @@ const hs = StyleSheet.create({
   separator: { height: StyleSheet.hairlineWidth, marginLeft: 72 },
   loading: { padding: 40, alignItems: 'center' },
   emptyWrap: { flex: 1, minHeight: 300 },
-  fab: { position: 'absolute', right: 20, width: 52, height: 52, borderRadius: 26, overflow: 'hidden' },
-  fabInner: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
   // Search bar
   searchWrap: {
     flexDirection: 'row',
