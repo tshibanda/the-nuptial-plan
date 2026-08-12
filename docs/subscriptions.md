@@ -30,19 +30,67 @@ latest planner access snapshot in `subscriptions`, and exposes:
 
 ## iOS and Android
 
-RevenueCat is attached to the environment and the Expo client uses its current
-offering. Configure the products above in RevenueCat, then connect:
+RevenueCat is configured via the Replit RevenueCat connector. Run the seed
+script (idempotent) to (re-)apply the product catalog:
 
-1. App Store app `com.thenuptialplan.mobile`, products
-   `tnp_premium_monthly` and `tnp_premium_annual`.
-2. Google Play app `com.thenuptialplan.mobile`, base plans `monthly` and
-   `annual`.
-3. Entitlement `premium`, attached to both products.
-4. A current offering containing the monthly and annual packages.
-5. A one-month introductory free trial in App Store Connect and Google Play
-   Billing. Store consoles are the source of truth for the trial metadata.
+```
+pnpm --filter @workspace/scripts run seed:revenuecat
+```
 
-Set the public RevenueCat keys emitted by the RevenueCat setup script as
-`EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`,
-`EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`, and
-`EXPO_PUBLIC_REVENUECAT_TEST_API_KEY`.
+### RevenueCat project (configured)
+
+| Resource           | ID / key                                |
+| ------------------ | --------------------------------------- |
+| Project            | `proj7339034d`                          |
+| Test Store app     | `app67e3ee8663`                         |
+| App Store app      | `appd42beb7cdc`                         |
+| Play Store app     | `app7ba77d54ef`                         |
+| Entitlement        | `premium`                               |
+| Offering           | `default` (current)                     |
+| Monthly package    | `$rc_monthly`                           |
+| Annual package     | `$rc_annual`                            |
+
+Environment variables set (see `artifacts/mobile/lib/subscription.tsx`):
+
+- `EXPO_PUBLIC_REVENUECAT_TEST_API_KEY`
+- `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`
+- `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`
+- `REVENUECAT_PROJECT_ID`
+- `REVENUECAT_TEST_STORE_APP_ID`
+- `REVENUECAT_APPLE_APP_STORE_APP_ID`
+- `REVENUECAT_GOOGLE_PLAY_STORE_APP_ID`
+
+### Production store setup (manual — done once per store)
+
+These steps must be completed in the real store consoles before submitting to
+the App Store or Google Play. The test store already works without them.
+
+**App Store Connect**
+
+1. App `com.thenuptialplan.mobile` — create two in-app purchases:
+   - `tnp_premium_monthly` (Auto-Renewable Subscription, €14.99/month)
+   - `tnp_premium_annual` (Auto-Renewable Subscription, €99.99/year)
+2. On each product, add a one-month free introductory offer.
+3. After publishing to TestFlight, use the Replit Publishing pane →
+   "Sync products to App Store Connect" to link RevenueCat ↔ Apple.
+4. Enroll in the [Apple Small Business Program](https://developer.apple.com/app-store/small-business-program/enroll/)
+   to reduce commission from 30% to 15%.
+
+**Google Play Console**
+
+1. App `com.thenuptialplan.mobile` — create a subscription with:
+   - Subscription ID `tnp_premium_monthly`, base plan `monthly` (€14.99/month)
+   - Subscription ID `tnp_premium_annual`, base plan `annual` (€99.99/year)
+2. On each base plan, add a one-month free trial.
+3. Connect the Google Play app to RevenueCat in the RevenueCat dashboard
+   (App Settings → Google Play → upload service account JSON).
+
+### Sandbox purchase & restore (test store)
+
+The test store is active in Expo Go and does not require a native build.
+RevenueCat automatically enters Preview API Mode in development, replacing
+native purchase calls with JavaScript mocks. A sandbox purchase flow can be
+verified end-to-end in the app's Paramètres → Abonnement section.
+
+To verify restore: purchase a package, sign out, sign back in, and tap
+"Restaurer mes achats" — the entitlement should reactivate.

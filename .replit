@@ -24,3 +24,14 @@ channel = "stable-25_05"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-49e09d34-b4bb-4aa1-a9b8-4845dafd2725"
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY = "goog_mBYVQFlcUPYhkPokBpdaRfQDSBV"
+EXPO_PUBLIC_REVENUECAT_IOS_API_KEY = "appl_DPvDqlxFvylugSdVsmAptlFgdlb"
+EXPO_PUBLIC_REVENUECAT_TEST_API_KEY = "test_AnBknYBMGcfFlcpnPuJAFTUjBHn"
+REVENUECAT_APPLE_APP_STORE_APP_ID = "appd42beb7cdc"
+REVENUECAT_GOOGLE_PLAY_STORE_APP_ID = "app7ba77d54ef"
+REVENUECAT_PROJECT_ID = "proj7339034d"
+REVENUECAT_TEST_STORE_APP_ID = "app67e3ee8663"
