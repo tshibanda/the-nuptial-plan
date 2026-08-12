@@ -13,8 +13,8 @@ export async function getUncachableStripeClient(): Promise<Stripe> {
     { headers: { Accept: "application/json", X_REPLIT_TOKEN: token } },
   );
   if (!response.ok) throw new Error(`Unable to load Stripe credentials (${response.status}).`);
-  const data = await response.json() as { items?: Array<{ settings?: { secret_key?: string } }> };
-  const secretKey = data.items?.[0]?.settings?.secret_key;
+  const data = await response.json() as { items?: Array<{ settings?: { secret?: string } }> };
+  const secretKey = data.items?.[0]?.settings?.secret;
   if (!secretKey) throw new Error("Stripe secret key is missing.");
   return new Stripe(secretKey);
 }
