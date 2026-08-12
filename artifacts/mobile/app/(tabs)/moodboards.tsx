@@ -119,7 +119,7 @@ export default function MoodboardsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  list: { paddingBottom: 140 },
+  list: { paddingBottom: 180 },
   hero: { padding: 24, paddingTop: Platform.OS === 'web' ? 86 : 30, paddingBottom: 28, borderBottomLeftRadius: 26, borderBottomRightRadius: 26 },
   eyebrow: { fontSize: 10, letterSpacing: 1.8, marginBottom: 9 },
   heroTitle: { fontSize: 40, lineHeight: 44 },

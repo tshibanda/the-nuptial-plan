@@ -234,7 +234,7 @@ function Empty({ icon, title, text, colors }: { icon: string; title: string; tex
 }
 
 const ss = StyleSheet.create({
-  list: { paddingBottom: 150, flexGrow: 1 },
+  list: { paddingBottom: 180, flexGrow: 1 },
   hero: { paddingHorizontal: 20, paddingTop: 30, paddingBottom: 24, borderBottomLeftRadius: 26, borderBottomRightRadius: 26 },
   eyebrow: { fontSize: 9, letterSpacing: 2, marginBottom: 8 },
   heroTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },

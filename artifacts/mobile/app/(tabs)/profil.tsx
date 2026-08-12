@@ -141,7 +141,7 @@ export default function ProfilScreen() {
     <>
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{ paddingBottom: 140 }}
+      contentContainerStyle={{ paddingBottom: 180 }}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
