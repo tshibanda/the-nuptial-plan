@@ -372,7 +372,13 @@ function BurgerSheet({
             <Text style={[bs.selectionHint, { color: colors.mutedForeground, fontFamily: SANS }]}>
               Appuyez sur les onglets à afficher dans la barre de navigation.
             </Text>
-            <View style={bs.selectionList}>
+            <ScrollView
+              style={bs.selectionScroll}
+              contentContainerStyle={bs.selectionList}
+              showsVerticalScrollIndicator
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+            >
               {ALL_TABS.map((tabName) => {
                 const selected = draftTabs.includes(tabName);
                 return (
@@ -399,16 +405,17 @@ function BurgerSheet({
                   </TouchableOpacity>
                 );
               })}
-            </View>
+            </ScrollView>
           </View>
         )}
 
         {/* Grid of all tabs */}
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={bs.grid}
-        >
-          {orderedMenuTabs.map((tabName) => {
+        {!customizing && (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={bs.grid}
+          >
+            {orderedMenuTabs.map((tabName) => {
             const meta = TAB_META[tabName]!;
             const isActive = currentRoute === tabName;
             const isPrimary = primaryTabs.includes(tabName);
@@ -473,8 +480,9 @@ function BurgerSheet({
                 )}
               </TouchableOpacity>
             );
-          })}
-        </ScrollView>
+            })}
+          </ScrollView>
+        )}
       </View>
     </Modal>
   );
@@ -507,7 +515,8 @@ const bs = StyleSheet.create({
   saveButton: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
   saveButtonText: { color: '#fff', fontSize: 10 },
   selectionHint: { fontSize: 10, lineHeight: 14, marginTop: 10, marginBottom: 5 },
-  selectionList: { marginTop: 2 },
+  selectionScroll: { maxHeight: 420, flexShrink: 1 },
+  selectionList: { marginTop: 2, paddingBottom: 2 },
   selectionRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   selectionIcon: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   selectionLabel: { flex: 1, fontSize: 11 },
