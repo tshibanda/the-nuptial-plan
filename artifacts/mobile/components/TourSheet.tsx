@@ -303,7 +303,9 @@ export function GlobalTourHelp({ hidden = false }: { hidden?: boolean }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { tourVisible, openTour, closeTour } = useTour('tour:global-help');
-  const bottom = (Platform.OS === 'web' ? 74 : 64) + insets.bottom + 14;
+  // Keep the help button close to the navigation bar and below the last
+  // content row; every tab reserves a larger bottom inset for this zone.
+  const bottom = (Platform.OS === 'web' ? 74 : 70) + insets.bottom + 4;
 
   if (hidden) return null;
 

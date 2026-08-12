@@ -248,9 +248,9 @@ export function NuptiaSheet() {
 
   // ── Position the FAB just above the tab bar ─────────────────────────────────
   const tabBarH = Platform.OS === 'web' ? 74 : 70;
-  // Keep the assistant clear of both the tab bar and the last content row.
-  // Screens reserve this same bottom zone in their list/scroll content.
-  const fabBottom = tabBarH + (Platform.OS === 'ios' ? insets.bottom : 0) + 14;
+  // Keep Nuptia close to the navigation bar so the reserved content zone
+  // remains clear above the floating controls.
+  const fabBottom = tabBarH + (Platform.OS === 'ios' ? insets.bottom : 0) + 4;
 
   return (
     <>

@@ -525,7 +525,7 @@ export default function EvenementsScreen() {
         sections={sections}
         keyExtractor={(item) => String(item.id)}
         style={{ flex: 1, backgroundColor: colors.background }}
-        contentContainerStyle={{ paddingBottom: 230, flexGrow: 1 }}
+        contentContainerStyle={{ paddingBottom: 280, flexGrow: 1 }}
         refreshing={isRefetching}
         onRefresh={refetch}
         showsVerticalScrollIndicator={false}
