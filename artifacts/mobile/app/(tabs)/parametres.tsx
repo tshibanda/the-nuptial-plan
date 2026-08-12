@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   ScrollView, View, Text, StyleSheet, Platform,
-  TouchableOpacity, Alert, Switch,
+  TouchableOpacity, Alert, Switch, Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -16,6 +16,7 @@ import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow, accentShadow } from '@/utils/shadow';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ── Row item ─────────────────────────────────────────────────────────────────
 function RowItem({ icon, label, value, iconBg, iconColor, onPress, rightElement, colors, destructive = false }: {
@@ -84,6 +85,38 @@ export default function ParametresScreen() {
   const deleteWedding = useDeleteWedding();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [reviewAvailable, setReviewAvailable] = useState(false);
+  const [reviewDaysLeft, setReviewDaysLeft] = useState(5);
+
+  React.useEffect(() => {
+    const key = '@nuptial-plan/first-opened-at';
+    void AsyncStorage.getItem(key).then(async (value) => {
+      const firstOpenedAt = value ? Number(value) : Date.now();
+      if (!value) await AsyncStorage.setItem(key, String(firstOpenedAt));
+      const days = Math.floor((Date.now() - firstOpenedAt) / 86_400_000);
+      setReviewAvailable(days >= 5);
+      setReviewDaysLeft(Math.max(0, 5 - days));
+    });
+  }, []);
+
+  const reportBug = () => {
+    const subject = encodeURIComponent('Rapport de bug — The Nuptial Plan');
+    const body = encodeURIComponent(
+      `Bonjour,\n\nJe souhaite signaler un bug dans The Nuptial Plan.\n\nDescription :\n\nÉtapes pour reproduire :\n\nAppareil / version :\n\nMerci.`,
+    );
+    void Linking.openURL(`mailto:contact@thenuptialplan.com?subject=${subject}&body=${body}`);
+  };
+
+  const openReview = () => {
+    const url = Platform.OS === 'android'
+      ? 'market://details?id=com.thenuptialplan.mobile'
+      : 'https://apps.apple.com/fr/search?term=The%20Nuptial%20Plan';
+    void Linking.openURL(url).catch(() => Linking.openURL('https://apps.apple.com/fr/search?term=The%20Nuptial%20Plan'));
+  };
+
+  const openLegal = (path: 'privacy' | 'policy') => {
+    void Linking.openURL(`https://thenuptialplan.com/${path}`);
+  };
 
   const handleDeleteWedding = () => {
     if (!activeWedding) return;
@@ -211,6 +244,24 @@ export default function ParametresScreen() {
             }
           />
           <RowItem
+            icon="alert-circle"
+            label="Signaler un bug"
+            value="Envoyer un rapport"
+            iconBg={colors.roseBg}
+            iconColor={colors.roseDark}
+            colors={colors}
+            onPress={reportBug}
+          />
+          <RowItem
+            icon="star"
+            label="Laisser un avis"
+            value={reviewAvailable ? 'Disponible' : `Dans ${reviewDaysLeft} jour${reviewDaysLeft > 1 ? 's' : ''}`}
+            iconBg={colors.goldLight}
+            iconColor={colors.goldDim}
+            colors={colors}
+            onPress={reviewAvailable ? openReview : undefined}
+          />
+          <RowItem
             icon="info"
             label="Version"
             value="1.0.0"
@@ -218,6 +269,12 @@ export default function ParametresScreen() {
             iconColor={colors.mutedForeground}
             colors={colors}
           />
+        </Group>
+
+        <SectionHeader label="INFORMATIONS LÉGALES" colors={colors} />
+        <Group colors={colors}>
+          <RowItem icon="shield" label="Politique de confidentialité" iconBg={colors.sageBg} iconColor={colors.sageDark} colors={colors} onPress={() => openLegal('privacy')} />
+          <RowItem icon="file-text" label="Conditions générales d’utilisation" iconBg={colors.muted} iconColor={colors.mutedForeground} colors={colors} onPress={() => openLegal('policy')} />
         </Group>
 
         {/* ── Zone danger ─────────────────────────────────────────────────── */}

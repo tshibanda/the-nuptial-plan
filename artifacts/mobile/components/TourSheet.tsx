@@ -299,11 +299,13 @@ const GLOBAL_HELP_STEPS = [
   },
 ];
 
-export function GlobalTourHelp() {
+export function GlobalTourHelp({ hidden = false }: { hidden?: boolean }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { tourVisible, openTour, closeTour } = useTour('tour:global-help');
   const bottom = (Platform.OS === 'web' ? 74 : 64) + insets.bottom + 14;
+
+  if (hidden) return null;
 
   return (
     <>

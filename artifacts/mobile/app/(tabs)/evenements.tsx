@@ -543,7 +543,19 @@ export default function EvenementsScreen() {
               <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={hs.heroSheen} pointerEvents="none" />
               <View style={hs.goldBar} />
               <Text style={[hs.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>LA CÉLÉBRATION</Text>
-              <Text style={[hs.heroTitle, { fontFamily: SERIF, color: '#FBF5FB' }]}>Agenda</Text>
+              <View style={hs.heroTop}>
+                <Text style={[hs.heroTitle, { fontFamily: SERIF, color: '#FBF5FB' }]}>Agenda</Text>
+                <TouchableOpacity
+                  onPress={() => { setAddSheetInitialDate(null); setShowAdd(true); }}
+                  activeOpacity={0.8}
+                  style={hs.heroAddBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ajouter un événement"
+                >
+                  <Feather name="plus" size={14} color="#FBF5FB" />
+                  <Text style={[hs.heroAddText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                </TouchableOpacity>
+              </View>
             </LinearGradient>
 
             <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
@@ -573,38 +585,22 @@ export default function EvenementsScreen() {
                   }}
                   colors={colors}
                 />
-                {view === 'list' && (
-                  <View style={hs.listActions}>
-                    <View style={hs.filterRow}>
-                      {FILTERS.map((f) => {
-                        const isActive = filter === f.key;
-                        return (
-                          <TouchableOpacity key={f.key} onPress={() => setFilter(f.key)} activeOpacity={0.75}
-                            style={[hs.pill, isActive ? accentShadow('sm') : shadow('xs'),
-                              { backgroundColor: isActive ? colors.plum : colors.muted, borderColor: isActive ? colors.plum : colors.border }]}
-                          >
-                            <Text style={[hs.pillText, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>{f.label}</Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setAddSheetInitialDate(null);
-                        setShowAdd(true);
-                      }}
-                      activeOpacity={0.8}
-                      style={[hs.listAddBtn, { backgroundColor: colors.plum, borderColor: colors.plum }]}
-                      accessibilityRole="button"
-                      accessibilityLabel="Ajouter un événement"
-                    >
-                      <Feather name="plus" size={13} color="#FBF5FB" />
-                      <Text style={[hs.listAddText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
               </View>
+              {view === 'list' && (
+                <View style={hs.filterRowBelow}>
+                  {FILTERS.map((f) => {
+                    const isActive = filter === f.key;
+                    return (
+                      <TouchableOpacity key={f.key} onPress={() => setFilter(f.key)} activeOpacity={0.75}
+                        style={[hs.pill, isActive ? accentShadow('sm') : shadow('xs'),
+                          { backgroundColor: isActive ? colors.plum : colors.muted, borderColor: isActive ? colors.plum : colors.border }]}
+                      >
+                        <Text style={[hs.pillText, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>{f.label}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
 
               {/* Search bar + tone chips (list view only) */}
               {view === 'list' && (
@@ -844,6 +840,10 @@ const hs = StyleSheet.create({
   statLabel: { fontSize: 9, letterSpacing: 0.5 },
   // Controls row: toggle left, pills right
   controlsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8, flexWrap: 'wrap' },
+  heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  heroAddBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 34, borderRadius: 9, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,0.14)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(200,170,112,0.45)' },
+  heroAddText: { color: '#FBF5FB', fontSize: 10 },
+  filterRowBelow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 14 },
   listActions: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' },
   filterRow: { flexDirection: 'row', gap: 6 },
   pill: { borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, paddingVertical: 7 },

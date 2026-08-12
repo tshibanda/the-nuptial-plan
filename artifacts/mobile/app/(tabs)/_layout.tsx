@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { SymbolView } from 'expo-symbols';
 import type { SFSymbol } from 'expo-symbols';
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect, Tabs, usePathname } from 'expo-router';
 import { useAuth } from '@clerk/expo';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -36,6 +36,7 @@ const TAB_META: Record<string, { sf: string; feather: string; label: string }> =
   business:     { sf: 'briefcase',          feather: 'briefcase',      label: 'Business' },
   'carnet-adresse': { sf: 'person.2',       feather: 'book-open',      label: 'Carnet d’adresses' },
   retroplanning:{ sf: 'calendar.badge.clock', feather: 'clock',       label: 'Rétro-planning' },
+  'jour-j':      { sf: 'sun.max',             feather: 'sun',          label: 'Jour-J' },
 };
 
 // Five primary tabs visible in the bar. The selection is persisted locally.
@@ -46,7 +47,7 @@ const PRIMARY_TABS_STORAGE_KEY = '@nuptial-plan/primary-tabs';
 const ALL_TABS = [
   'index', 'mariages', 'evenements', 'prestataires',
   'invites', 'budget', 'paiements', 'contrats',
-  'parametres', 'profil', 'moodboards', 'business', 'carnet-adresse', 'retroplanning',
+  'parametres', 'profil', 'moodboards', 'business', 'carnet-adresse', 'retroplanning', 'jour-j',
 ];
 
 // ── Icon helper ────────────────────────────────────────────────────────────────
@@ -529,6 +530,7 @@ function ClassicTabLayout() {
       <Tabs.Screen name="business" />
       <Tabs.Screen name="carnet-adresse" />
       <Tabs.Screen name="retroplanning" />
+      <Tabs.Screen name="jour-j" />
     </Tabs>
   );
 }
@@ -537,6 +539,7 @@ function ClassicTabLayout() {
 export default function TabLayout() {
   const colors = useColors();
   const { isSignedIn, getToken } = useAuth();
+  const pathname = usePathname();
 
   useEffect(() => {
     setAuthTokenGetter(() => getToken());
@@ -553,7 +556,7 @@ export default function TabLayout() {
     >
       <ClassicTabLayout />
       <NuptiaSheet />
-      <GlobalTourHelp />
+      <GlobalTourHelp hidden={pathname.includes('/evenements')} />
     </SafeAreaView>
   );
 }

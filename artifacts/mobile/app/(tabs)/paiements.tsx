@@ -280,26 +280,14 @@ export default function PaiementsScreen() {
           <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
           <View style={ss.goldBar} />
 
-          {/* Export button */}
-          {payments && (
-            <TouchableOpacity
-              onPress={handleExport}
-              disabled={isExporting}
-              activeOpacity={0.75}
-              style={[ss.exportBtn, { top: topPad + 16 }]}
-            >
-              {isExporting
-                ? <ActivityIndicator size="small" color="#C8A96E" />
-                : <Feather name="share" size={14} color="#C8A96E" />
-              }
-              <Text style={[ss.exportBtnText, { fontFamily: SANS_SEMIBOLD }]}>
-                {isExporting ? 'Export…' : 'Exporter'}
-              </Text>
-            </TouchableOpacity>
-          )}
-
           <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>FINANCES</Text>
-          <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Paiements</Text>
+          <View style={ss.heroTop}>
+            <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Paiements</Text>
+            {payments && <TouchableOpacity onPress={handleExport} disabled={isExporting} activeOpacity={0.75} style={ss.heroAction}>
+              {isExporting ? <ActivityIndicator size="small" color="#C8A96E" /> : <Feather name="share" size={14} color="#C8A96E" />}
+              <Text style={[ss.exportBtnText, { fontFamily: SANS_SEMIBOLD }]}>{isExporting ? 'Export…' : 'Exporter'}</Text>
+            </TouchableOpacity>}
+          </View>
           {activeWedding && (
             <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]}>{activeWedding.names}</Text>
           )}
@@ -452,6 +440,8 @@ export default function PaiementsScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 const ss = StyleSheet.create({
   hero: { paddingHorizontal: 20, paddingBottom: 22, overflow: 'hidden' },
+  heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  heroAction: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 34, borderRadius: 9, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(200,169,110,0.40)' },
   heroSheen: { ...StyleSheet.absoluteFillObject, height: 80 },
   goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
   eye: { fontSize: 9, letterSpacing: 2, marginBottom: 4 },
