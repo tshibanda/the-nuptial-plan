@@ -36,6 +36,8 @@ import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
+import { usePremiumGate } from '@/hooks/usePremiumGate';
+import { PaywallModal } from '@/components/PaywallModal';
 
 // ── Tour steps ────────────────────────────────────────────────────────────────
 const TOUR_STEPS = [
@@ -600,6 +602,9 @@ export default function BudgetScreen() {
 
   const { tourVisible, openTour, closeTour } = useTour('tour:budget');
 
+  // Premium gate for analytics chart
+  const { paywallVisible, openPaywall, closePaywall, isPremium } = usePremiumGate();
+
   // Chart selection state (from task #47)
   const [selectedCatId, setSelectedCatId] = useState<number | null>(null);
 
@@ -749,32 +754,64 @@ export default function BudgetScreen() {
                 colors={colors}
               />
 
-              {/* ── Donut chart (from task #47) ── */}
+              {/* ── Donut chart — Premium analytics ── */}
               {categories.length > 0 && (
-                <View
-                  style={[
-                    ss.chartCard,
-                    shadow('sm'),
-                    { backgroundColor: colors.card, borderColor: colors.border },
-                  ]}
-                >
-                  <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
-                  <Text style={[ss.chartTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>
-                    RÉPARTITION DU BUDGET
-                  </Text>
-                  <Text style={[ss.chartHint, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                    Appuyez sur une tranche pour détailler
-                  </Text>
-                  <DonutChart
-                    categories={categories}
-                    selectedId={selectedCatId}
-                    onSelect={handleSelectCat}
-                    totalSpent={budgetSummary.totalSpent}
-                    totalAllocated={budgetSummary.totalAllocated}
-                    currency={currency}
-                    colors={colors}
-                  />
-                </View>
+                isPremium ? (
+                  <View
+                    style={[
+                      ss.chartCard,
+                      shadow('sm'),
+                      { backgroundColor: colors.card, borderColor: colors.border },
+                    ]}
+                  >
+                    <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
+                    <Text style={[ss.chartTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>
+                      RÉPARTITION DU BUDGET
+                    </Text>
+                    <Text style={[ss.chartHint, { fontFamily: SANS, color: colors.mutedForeground }]}>
+                      Appuyez sur une tranche pour détailler
+                    </Text>
+                    <DonutChart
+                      categories={categories}
+                      selectedId={selectedCatId}
+                      onSelect={handleSelectCat}
+                      totalSpent={budgetSummary.totalSpent}
+                      totalAllocated={budgetSummary.totalAllocated}
+                      currency={currency}
+                      colors={colors}
+                    />
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={openPaywall}
+                    activeOpacity={0.85}
+                    style={[
+                      ss.chartCard,
+                      ss.paywallCard,
+                      shadow('sm'),
+                      { backgroundColor: colors.plumBg, borderColor: colors.plum + '40' },
+                    ]}
+                  >
+                    <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
+                    <View style={ss.paywallInner}>
+                      <View style={[ss.paywallIcon, { backgroundColor: colors.plum }]}>
+                        <Feather name="trending-up" size={20} color="#FBF5FB" />
+                      </View>
+                      <Text style={[ss.paywallTitle, { fontFamily: SERIF, color: colors.plumDark }]}>
+                        Analytiques avancées
+                      </Text>
+                      <Text style={[ss.paywallBody, { fontFamily: SANS, color: colors.mutedForeground }]}>
+                        La répartition graphique par catégorie est une fonctionnalité Premium. Débloquez-la pour visualiser vos dépenses.
+                      </Text>
+                      <View style={[ss.paywallCta, { backgroundColor: colors.plum }]}>
+                        <Feather name="award" size={13} color="#FBF5FB" />
+                        <Text style={[ss.paywallCtaText, { fontFamily: SANS_SEMIBOLD }]}>
+                          Passer à Premium
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                )
               )}
 
               {/* Section header + Ajouter button (from task #46) */}
@@ -828,6 +865,13 @@ export default function BudgetScreen() {
 
       {/* Tour */}
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+
+      {/* Premium paywall */}
+      <PaywallModal
+        visible={paywallVisible}
+        onClose={closePaywall}
+        featureLabel="Analytiques budget avancées"
+      />
 
       {/* Edit / Create sheet (from task #46) */}
       <EditCategorySheet
@@ -1010,4 +1054,48 @@ const ss = StyleSheet.create({
     marginTop: 4,
   },
   saveBtnText: { color: '#fff', fontSize: 15 },
+
+  // Paywall teaser card (non-premium)
+  paywallCard: {
+    marginTop: 12,
+  },
+  paywallInner: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 22,
+    gap: 10,
+  },
+  paywallIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  paywallTitle: {
+    fontSize: 22,
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  paywallBody: {
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+    maxWidth: 280,
+  },
+  paywallCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    marginTop: 4,
+  },
+  paywallCtaText: {
+    color: '#FBF5FB',
+    fontSize: 13,
+  },
 });

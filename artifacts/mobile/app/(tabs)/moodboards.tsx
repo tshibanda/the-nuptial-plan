@@ -6,6 +6,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
+import { usePremiumGate } from '@/hooks/usePremiumGate';
+import { PaywallModal } from '@/components/PaywallModal';
 
 type Board = { id: string; title: string; description: string; imageUri: string; sourceUrl: string; accent: string };
 const STORAGE_KEY = 'tnp-moodboards';
@@ -24,6 +26,7 @@ function linkPreviewUri(url: string) {
 
 export default function MoodboardsScreen() {
   const colors = useColors();
+  const { paywallVisible, closePaywall, requirePremium } = usePremiumGate();
   const [boards, setBoards] = useState<Board[]>([]);
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
@@ -69,6 +72,12 @@ export default function MoodboardsScreen() {
   const empty = useMemo(() => boards.length === 0, [boards.length]);
 
   return (
+    <>
+    <PaywallModal
+      visible={paywallVisible}
+      onClose={closePaywall}
+      featureLabel="Moodboards & inspirations"
+    />
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={boards}
@@ -87,7 +96,7 @@ export default function MoodboardsScreen() {
                 <Text style={[styles.sectionTitle, { color: colors.foreground, fontFamily: SERIF }]}>Vos inspirations</Text>
                 <Text style={[styles.sectionBody, { color: colors.mutedForeground, fontFamily: SANS }]}>{boards.length ? `${boards.length} univers enregistré${boards.length > 1 ? 's' : ''}` : 'Une bibliothèque visuelle à construire'}</Text>
               </View>
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel={adding ? 'Fermer le formulaire' : 'Ajouter un moodboard'} onPress={() => setAdding(!adding)} style={[styles.iconButton, { backgroundColor: colors.plum }]}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={adding ? 'Fermer le formulaire' : 'Ajouter un moodboard'} onPress={() => { if (adding) { setAdding(false); } else { requirePremium(() => setAdding(true)); } }} style={[styles.iconButton, { backgroundColor: colors.plum }]}>
                 <Feather name={adding ? 'x' : 'plus'} size={19} color="#fff" />
               </TouchableOpacity>
             </View>
@@ -114,6 +123,7 @@ export default function MoodboardsScreen() {
         </View>}
       />
     </View>
+    </>
   );
 }
 
