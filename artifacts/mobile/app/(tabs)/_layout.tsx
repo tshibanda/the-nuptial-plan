@@ -18,6 +18,7 @@ import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
 import { setAuthTokenGetter } from '@workspace/api-client-react';
 import { NuptiaSheet } from '@/components/NuptiaSheet';
 import { GlobalTourHelp } from '@/components/TourSheet';
+import { PremiumBadge } from '@/components/PremiumBadge';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
 
 // ── Tab metadata ───────────────────────────────────────────────────────────────
@@ -50,6 +51,11 @@ const ALL_TABS = [
   'invites', 'budget', 'paiements', 'contrats', 'documents',
   'parametres', 'profil', 'moodboards', 'business', 'carnet-adresse', 'retroplanning', 'jour-j',
 ];
+
+const PREMIUM_TABS = new Set([
+  'prestataires', 'invites', 'contrats', 'paiements', 'documents',
+  'moodboards', 'business', 'carnet-adresse', 'jour-j',
+]);
 
 // ── Icon helper ────────────────────────────────────────────────────────────────
 function TabIcon({ name, feather, size, color }: { name: string; feather: string; size: number; color: string }) {
@@ -400,6 +406,7 @@ function BurgerSheet({
                     <Text style={[bs.selectionLabel, { color: colors.foreground, fontFamily: selected ? SANS_SEMIBOLD : SANS }]}>
                       {TAB_META[tabName]!.label}
                     </Text>
+                    {PREMIUM_TABS.has(tabName) && <PremiumBadge variant="icon" />}
                     <View style={[bs.checkbox, { borderColor: selected ? colors.plum : colors.border, backgroundColor: selected ? colors.plum : 'transparent' }]}>
                       {selected ? <Feather name="check" size={12} color="#fff" /> : null}
                     </View>
@@ -472,6 +479,7 @@ function BurgerSheet({
                 >
                   {meta.label}
                 </Text>
+                {PREMIUM_TABS.has(tabName) && <PremiumBadge variant="icon" />}
 
                 {/* "Principal" badge for primary tabs */}
                 {isPrimary && (
