@@ -265,7 +265,7 @@ export default function ProfilScreen() {
           <RowItem
             icon="help-circle" label="Aide & support" colors={colors}
             onPress={() =>
-              Alert.alert('Aide & support', 'Pour toute assistance, contactez-nous à support@thenuptialplan.com', [{ text: 'OK' }])
+              Alert.alert('Aide & support', 'Pour toute assistance, contactez-nous à contact@thenuptialplan.com', [{ text: 'OK' }])
             }
           />
         </View>

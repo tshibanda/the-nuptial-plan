@@ -249,7 +249,7 @@ export default function ParametresScreen() {
             iconColor={colors.sageDark}
             colors={colors}
             onPress={() =>
-              Alert.alert('Aide & support', 'Pour toute assistance, contactez-nous à support@thenuptialplan.com', [{ text: 'OK' }])
+              Alert.alert('Aide & support', 'Pour toute assistance, contactez-nous à contact@thenuptialplan.com', [{ text: 'OK' }])
             }
           />
           <RowItem
