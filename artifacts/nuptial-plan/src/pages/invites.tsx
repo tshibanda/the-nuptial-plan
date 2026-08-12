@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { Plus, UserCircle2, Users, CheckSquare, FileUp, AlertTriangle, Search, Link2 } from 'lucide-react';
 import { PageTour } from '@/components/ui/page-tour';
+import { PremiumBadge } from '@/components/premium-badge';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useListGuests,
@@ -286,7 +287,10 @@ export default function Invites() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="eyebrow mb-2 text-[#a8893e]">La liste</p>
-            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Invités</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Invités</h1>
+              <PremiumBadge />
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {/* Import button */}

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { BookOpen, CircleEllipsis, Globe, Mail, Phone, Plus, Search, Sparkles, Trash2, Users } from 'lucide-react';
+import { PremiumBadge } from '@/components/premium-badge';
 import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -140,7 +141,10 @@ export default function CarnetAdresse() {
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="eyebrow mb-2 text-[#a8893e]">Votre réseau de confiance</p>
-            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Mon carnet d’adresses</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Mon carnet d’adresses</h1>
+              <PremiumBadge />
+            </div>
             <p className="mt-3 max-w-xl text-[11px] leading-relaxed text-muted-foreground">
               Vos prestataires favoris, prêts à être ajoutés à n’importe quel mariage.
             </p>

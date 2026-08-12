@@ -44,6 +44,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { PremiumBadge } from '@/components/premium-badge';
 
 const contractSchema = z.object({
   vendorId: z.number().optional(),
@@ -183,7 +184,10 @@ export default function Contrats() {
         <div className="flex items-end justify-between">
           <div>
             <p className="eyebrow mb-2 text-[#a8893e]">Documents essentiels</p>
-            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Contrats</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Contrats</h1>
+              <PremiumBadge />
+            </div>
           </div>
         <Sheet
           open={open}

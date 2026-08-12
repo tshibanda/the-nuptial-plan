@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ClipboardList,
   ChevronDown,
+  Crown,
   FileText,
   Home,
   LogOut,
@@ -68,16 +69,16 @@ const navItems = [
   { label: 'Aperçu', icon: Home, path: '/' },
   { label: 'Calendrier', icon: CalendarDays, path: '/calendrier' },
   { label: 'Rétroplanning', icon: ClipboardList, path: '/retroplanning' },
-  { label: 'Prestataires', icon: Users, path: '/prestataires' },
-  { label: 'Carnet d’adresses', icon: BookOpen, path: '/carnet-adresse' },
-  { label: 'Invités', icon: UserCircle2, path: '/invites' },
+  { label: 'Prestataires', icon: Users, path: '/prestataires', premium: true },
+  { label: 'Carnet d’adresses', icon: BookOpen, path: '/carnet-adresse', premium: true },
+  { label: 'Invités', icon: UserCircle2, path: '/invites', premium: true },
   { label: 'Budget', icon: WalletCards, path: '/budget' },
-  { label: 'Contrats', icon: FileText, path: '/contrats' },
-  { label: 'Paiements', icon: CreditCard, path: '/paiements' },
+  { label: 'Contrats', icon: FileText, path: '/contrats', premium: true },
+  { label: 'Paiements', icon: CreditCard, path: '/paiements', premium: true },
   { label: 'Documents', icon: Paperclip, path: '/documents' },
-  { label: 'Moodboards', icon: Sparkles, path: '/moodboards' },
-  { label: 'Business', icon: BriefcaseBusiness, path: '/business' },
-  { label: 'Jour J', icon: Heart, path: '/jour-j' },
+  { label: 'Moodboards', icon: Sparkles, path: '/moodboards', premium: true },
+  { label: 'Business', icon: BriefcaseBusiness, path: '/business', premium: true },
+  { label: 'Jour J', icon: Heart, path: '/jour-j', premium: true },
   { label: 'Paramètres', icon: Settings, path: '/parametres' },
 ];
 
@@ -900,7 +901,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {/* Navigation — floating pill tabs */}
           <div className="nav-tab-bar border-b border-[rgba(200,180,200,0.30)] px-5 py-3 sm:px-9 lg:px-12">
             <div className="flex gap-1 overflow-x-auto">
-              {navItems.map(({ label, icon: Icon, path }) => {
+              {navItems.map(({ label, icon: Icon, path, premium }) => {
                 const isActive = location === path;
                 return (
                   <Link
@@ -915,6 +916,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   >
                     <Icon size={13} strokeWidth={isActive ? 2.1 : 1.6} />
                     {label}
+                    {premium && <Crown size={10} className="text-[#A8893E]" />}
                   </Link>
                 );
               })}

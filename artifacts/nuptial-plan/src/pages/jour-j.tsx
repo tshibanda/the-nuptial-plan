@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { downloadRunsheetPDF } from '@/components/jour-j/runsheet-pdf';
+import { PremiumBadge } from '@/components/premium-badge';
 
 /* ── Types ── */
 type Tab = 'runsheet' | 'prestataires' | 'checklist';
@@ -698,7 +699,10 @@ export default function JourJ() {
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <p className="eyebrow mb-2 text-[#a8893e]">Grand jour</p>
-          <h1 className="font-serif text-[38px] leading-[0.92] text-foreground">Jour J</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-serif text-[38px] leading-[0.92] text-foreground">Jour J</h1>
+            <PremiumBadge />
+          </div>
           {wedding && (
             <p className="mt-2 flex items-center gap-2 text-[12px] text-muted-foreground">
               <Calendar size={12} className="text-[#a8893e]" />

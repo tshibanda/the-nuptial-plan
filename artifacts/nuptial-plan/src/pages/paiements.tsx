@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
 import { PageTour } from '@/components/ui/page-tour';
+import { PremiumBadge } from '@/components/premium-badge';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useListPayments,
@@ -191,7 +192,10 @@ export default function Paiements() {
         <div className="flex items-end justify-between">
           <div>
             <p className="eyebrow mb-2 text-[#a8893e]">Le calendrier financier</p>
-            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Paiements</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Paiements</h1>
+              <PremiumBadge />
+            </div>
           </div>
         <Sheet
           open={open}

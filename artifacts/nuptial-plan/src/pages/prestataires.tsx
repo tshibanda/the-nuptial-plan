@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, CircleEllipsis, Users, Tag } from 'lucide-react';
 import { PageTour } from '@/components/ui/page-tour';
+import { PremiumBadge } from '@/components/premium-badge';
 import { FileAttachments } from '@/components/file-attachments';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
@@ -217,7 +218,10 @@ export default function Prestataires() {
         <div className="flex items-end justify-between">
           <div>
             <p className="eyebrow mb-2 text-[#a8893e]">Votre équipe</p>
-            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Prestataires</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Prestataires</h1>
+              <PremiumBadge />
+            </div>
           </div>
         <Sheet open={open} onOpenChange={(o) => {
           setOpen(o);
