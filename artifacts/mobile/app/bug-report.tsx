@@ -3,6 +3,7 @@ import {
   ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Platform,
   ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +15,7 @@ const DESTINATION = 'contact@thenuptialplan.com';
 
 export default function BugReportScreen() {
   const colors = useColors();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [description, setDescription] = useState('');
   const [steps, setSteps] = useState('');
@@ -71,6 +73,10 @@ export default function BugReportScreen() {
             <View style={[ss.heroGlow, { backgroundColor: colors.gold + '18' }]} pointerEvents="none" />
             <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
             <View style={ss.goldBar} />
+            <TouchableOpacity onPress={() => router.back()} style={ss.backButton} accessibilityLabel="Retour aux paramètres">
+              <Feather name="arrow-left" size={17} color="#FBF5FB" />
+              <Text style={[ss.backText, { fontFamily: SANS_MEDIUM }]}>Retour aux paramètres</Text>
+            </TouchableOpacity>
             <View style={[ss.iconCircle, accentShadow('md')]}>
               <LinearGradient colors={[colors.gold, colors.goldDim]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={ss.iconGradient}>
                 <Feather name="alert-circle" size={25} color={colors.plumDark} />
@@ -150,6 +156,8 @@ const ss = StyleSheet.create({
   heroGlow: { position: 'absolute', bottom: -10, left: -20, width: 90, height: 90, borderRadius: 45 },
   heroSheen: { ...StyleSheet.absoluteFillObject },
   goldBar: { position: 'absolute', left: 22, top: 0, width: 52, height: 3, backgroundColor: '#C8A96E' },
+  backButton: { flexDirection: 'row', alignItems: 'center', gap: 7, alignSelf: 'flex-start', paddingVertical: 8, paddingRight: 10, marginBottom: 18 },
+  backText: { color: '#FBF5FB', fontSize: 11 },
   iconCircle: { width: 58, height: 58, borderRadius: 18, overflow: 'hidden', marginBottom: 15 },
   iconGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   eyebrow: { fontSize: 9, letterSpacing: 1.8, marginBottom: 8 },
