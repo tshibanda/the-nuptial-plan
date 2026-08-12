@@ -35,5 +35,5 @@ export function usePremiumGate() {
     [isActive],
   );
 
-  return { paywallVisible, openPaywall, closePaywall, requirePremium };
+  return { paywallVisible, openPaywall, closePaywall, requirePremium, isPremium: isActive };
 }

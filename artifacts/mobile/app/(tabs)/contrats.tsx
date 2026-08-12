@@ -19,6 +19,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
 import { PaywallModal } from '@/components/PaywallModal';
+import { PremiumBadge } from '@/components/PremiumBadge';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
 
 const TOUR_STEPS = [
@@ -59,7 +60,7 @@ export default function ContratsScreen() {
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:contrats');
-  const { paywallVisible, closePaywall, requirePremium } = usePremiumGate();
+  const { paywallVisible, closePaywall, requirePremium, isPremium } = usePremiumGate();
   const [search, setSearch] = useState('');
   const [addVisible, setAddVisible] = useState(false);
   const [form, setForm] = useState({ vendorName: '', amount: '', deposit: '', signedDate: '', notes: '' });
@@ -123,6 +124,7 @@ export default function ContratsScreen() {
                 <TouchableOpacity onPress={() => requirePremium(() => setAddVisible(true))} style={ss.addHeaderBtn}>
                   <Feather name="plus" size={15} color="#FBF5FB" />
                   <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                  <PremiumBadge hidden={isPremium} />
                 </TouchableOpacity>
               </View>
             </LinearGradient>
