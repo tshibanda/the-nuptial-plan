@@ -30,6 +30,7 @@ const TAB_META: Record<string, { sf: string; feather: string; label: string }> =
   budget:       { sf: 'chart.pie',          feather: 'pie-chart',    label: 'Budget' },
   paiements:    { sf: 'creditcard',         feather: 'credit-card',  label: 'Paiements' },
   contrats:     { sf: 'doc.text',           feather: 'file-text',    label: 'Contrats' },
+  documents:    { sf: 'folder',             feather: 'folder',       label: 'Documents' },
   parametres:   { sf: 'gearshape',          feather: 'settings',     label: 'Paramètres' },
   profil:       { sf: 'person.crop.circle', feather: 'user',         label: 'Profil' },
   moodboards:   { sf: 'square.grid.2x2',    feather: 'image',         label: 'Moodboards' },
@@ -46,7 +47,7 @@ const PRIMARY_TABS_STORAGE_KEY = '@nuptial-plan/primary-tabs';
 // All tabs shown in the burger sheet (full list for quick access)
 const ALL_TABS = [
   'index', 'mariages', 'evenements', 'prestataires',
-  'invites', 'budget', 'paiements', 'contrats',
+  'invites', 'budget', 'paiements', 'contrats', 'documents',
   'parametres', 'profil', 'moodboards', 'business', 'carnet-adresse', 'retroplanning', 'jour-j',
 ];
 

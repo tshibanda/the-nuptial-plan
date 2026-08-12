@@ -14,6 +14,8 @@ import { useListVendors } from '@workspace/api-client-react';
 import { useListContracts } from '@workspace/api-client-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { PremiumBadge } from '@/components/premium-badge';
+import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 
 function DocRow({
   doc,
@@ -145,11 +147,16 @@ function Section({
 }
 
 export default function Documents() {
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: allDocs = [] } = useListDocuments(activeWeddingId ?? undefined);
   const { data: vendors = [] } = useListVendors(activeWeddingId!);
   const { data: contracts = [] } = useListContracts(activeWeddingId!);
   const deleteDoc = useDeleteDocument(activeWeddingId!);
+
+  if (!premiumLoading && !isPremium) {
+    return <PremiumPageGate featureLabel="votre coffre-fort de documents" />;
+  }
 
   if (!activeWeddingId) {
     return (
@@ -212,7 +219,10 @@ export default function Documents() {
         <div className="flex items-end justify-between">
           <div>
             <p className="eyebrow mb-2 text-[#a8893e]">Dossier du mariage</p>
-            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Documents</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Documents</h1>
+              <PremiumBadge />
+            </div>
           </div>
           <span className="rounded-full badge-pending px-3 py-1.5 text-[10px] font-semibold">
             {allDocs.length} fichier{allDocs.length !== 1 ? 's' : ''}

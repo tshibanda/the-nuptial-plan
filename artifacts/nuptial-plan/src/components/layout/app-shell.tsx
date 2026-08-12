@@ -75,7 +75,7 @@ const navItems = [
   { label: 'Budget', icon: WalletCards, path: '/budget' },
   { label: 'Contrats', icon: FileText, path: '/contrats', premium: true },
   { label: 'Paiements', icon: CreditCard, path: '/paiements', premium: true },
-  { label: 'Documents', icon: Paperclip, path: '/documents' },
+  { label: 'Documents', icon: Paperclip, path: '/documents', premium: true },
   { label: 'Moodboards', icon: Sparkles, path: '/moodboards', premium: true },
   { label: 'Business', icon: BriefcaseBusiness, path: '/business', premium: true },
   { label: 'Jour J', icon: Heart, path: '/jour-j', premium: true },
