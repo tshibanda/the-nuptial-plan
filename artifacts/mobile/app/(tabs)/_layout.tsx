@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { SymbolView } from 'expo-symbols';
 import type { SFSymbol } from 'expo-symbols';
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect, Tabs, usePathname } from 'expo-router';
 import { useAuth } from '@clerk/expo';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -544,6 +544,7 @@ function ClassicTabLayout() {
 export default function TabLayout() {
   const colors = useColors();
   const { isSignedIn, getToken } = useAuth();
+  const pathname = usePathname();
 
   useEffect(() => {
     setAuthTokenGetter(() => getToken());
@@ -559,8 +560,8 @@ export default function TabLayout() {
       style={{ flex: 1, backgroundColor: colors.plumDark }}
     >
       <ClassicTabLayout />
-      <NuptiaSheet />
-      <GlobalTourHelp />
+      {!pathname.includes('/parametres') && <NuptiaSheet />}
+      {!pathname.includes('/parametres') && <GlobalTourHelp />}
     </SafeAreaView>
   );
 }
