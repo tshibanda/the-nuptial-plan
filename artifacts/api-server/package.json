@@ -13,6 +13,8 @@
     "@clerk/express": "^2.1.48",
     "@clerk/shared": "^4.25.9",
     "@google-cloud/storage": "^7.21.0",
+    "@replit/connectors-sdk": "^0.4.2",
+    "@replit/revenuecat-sdk": "^5.0.0",
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/integrations-openai-ai-server": "workspace:*",

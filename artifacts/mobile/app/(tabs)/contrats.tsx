@@ -18,6 +18,8 @@ import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
+import { PaywallModal } from '@/components/PaywallModal';
+import { usePremiumGate } from '@/hooks/usePremiumGate';
 
 const TOUR_STEPS = [
   {
@@ -57,6 +59,7 @@ export default function ContratsScreen() {
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:contrats');
+  const { paywallVisible, closePaywall, requirePremium } = usePremiumGate();
   const [search, setSearch] = useState('');
   const [addVisible, setAddVisible] = useState(false);
   const [form, setForm] = useState({ vendorName: '', amount: '', deposit: '', signedDate: '', notes: '' });
@@ -117,7 +120,7 @@ export default function ContratsScreen() {
                     </Text>
                   )}
                 </View>
-                <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
+                <TouchableOpacity onPress={() => requirePremium(() => setAddVisible(true))} style={ss.addHeaderBtn}>
                   <Feather name="plus" size={15} color="#FBF5FB" />
                   <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
                 </TouchableOpacity>
@@ -201,6 +204,11 @@ export default function ContratsScreen() {
         }}
       />
 
+      <PaywallModal
+        visible={paywallVisible}
+        onClose={closePaywall}
+        featureLabel="Contrats prestataires"
+      />
       <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow="DOCUMENTS" title="Ajouter un contrat">
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>
           {([

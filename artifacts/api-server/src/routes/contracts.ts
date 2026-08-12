@@ -3,10 +3,12 @@ import { db } from "@workspace/db";
 import { contractsTable, activityTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { CreateContractBody, UpdateContractBody } from "@workspace/api-zod";
+import { requirePremium } from "../middlewares/requirePremium";
 
 const router: IRouter = Router({ mergeParams: true });
 
-const p = (req: { params: Record<string, string> }, key: string) => Number(req.params[key]);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const p = (req: { params: Record<string, any> }, key: string) => Number(req.params[key]);
 
 router.get("/", async (req, res): Promise<void> => {
   const weddingId = p(req, "weddingId");
@@ -14,7 +16,7 @@ router.get("/", async (req, res): Promise<void> => {
   res.json(contracts);
 });
 
-router.post("/", async (req, res): Promise<void> => {
+router.post("/", requirePremium, async (req, res): Promise<void> => {
   const weddingId = p(req, "weddingId");
   const body = CreateContractBody.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
