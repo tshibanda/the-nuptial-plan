@@ -1,0 +1,43 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "test_AnBknYBMGcfFlcpnPuJAFTUjBHn"
+      }
+    },
+    "preview": {
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_DPvDqlxFvylugSdVsmAptlFgdlb",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_mBYVQFlcUPYhkPokBpdaRfQDSBV"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_DPvDqlxFvylugSdVsmAptlFgdlb",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_mBYVQFlcUPYhkPokBpdaRfQDSBV"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "contact@thenuptialplan.com",
+        "ascAppId": "FILL_IN_FROM_APP_STORE_CONNECT",
+        "appleTeamId": "FILL_IN_FROM_APPLE_DEVELOPER"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-key.json",
+        "track": "internal"
+      }
+    }
+  }
+}
