@@ -62,7 +62,7 @@ export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
                 key={plan.lookupKey}
                 disabled={isLoading || busy !== null}
                 onClick={() => void checkout(plan.lookupKey)}
-                className="gap-2 border-[#C8A96E] bg-[#E2B93B] text-[#3C1A3C] hover:bg-[#F0CC55]"
+                className="gap-2 border-[#C8A96E] bg-[#E2B93B] text-white hover:bg-[#F0CC55] hover:text-white"
               >
                 <Award size={15} />
                 {plan.plan === 'annual' ? 'Passer à Premium annuel' : 'Passer à Premium mensuel'}
