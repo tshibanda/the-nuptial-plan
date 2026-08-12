@@ -262,7 +262,7 @@ export default function PaiementsScreen() {
     <>
       <ScrollView
         style={{ flex: 1, backgroundColor: colors.background }}
-        contentContainerStyle={{ paddingBottom: 180, flexGrow: 1 }}
+        contentContainerStyle={{ paddingBottom: 230, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.plum} />

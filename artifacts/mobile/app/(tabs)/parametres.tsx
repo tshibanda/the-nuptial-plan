@@ -163,7 +163,7 @@ export default function ParametresScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{ paddingBottom: 180 }}
+      contentContainerStyle={{ paddingBottom: 230 }}
       showsVerticalScrollIndicator={false}
     >
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
