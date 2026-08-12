@@ -87,8 +87,6 @@ export default function ParametresScreen() {
   const deleteWedding = useDeleteWedding();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [reviewAvailable, setReviewAvailable] = useState(false);
-  const [reviewDaysLeft, setReviewDaysLeft] = useState(5);
 
   React.useEffect(() => {
     const key = '@nuptial-plan/first-opened-at';
@@ -96,8 +94,23 @@ export default function ParametresScreen() {
       const firstOpenedAt = value ? Number(value) : Date.now();
       if (!value) await AsyncStorage.setItem(key, String(firstOpenedAt));
       const days = Math.floor((Date.now() - firstOpenedAt) / 86_400_000);
-      setReviewAvailable(days >= 5);
-      setReviewDaysLeft(Math.max(0, 5 - days));
+      if (days < 5) return;
+
+      const promptKey = '@nuptial-plan/review-prompt-shown';
+      const promptShown = await AsyncStorage.getItem(promptKey);
+      if (promptShown) return;
+
+      // Persist before displaying the alert so it is only shown once,
+      // including if the user chooses not to leave a review.
+      await AsyncStorage.setItem(promptKey, 'true');
+      Alert.alert(
+        'Votre avis compte',
+        'Après quelques jours avec The Nuptial Plan, souhaitez-vous nous laisser une note ou un avis sur l’App Store ?',
+        [
+          { text: 'Plus tard', style: 'cancel' },
+          { text: 'Laisser un avis', onPress: openReview },
+        ],
+      );
     });
   }, []);
 
@@ -251,11 +264,11 @@ export default function ParametresScreen() {
           <RowItem
             icon="star"
             label="Laisser un avis"
-            value={reviewAvailable ? 'Disponible' : `Dans ${reviewDaysLeft} jour${reviewDaysLeft > 1 ? 's' : ''}`}
+            value="App Store"
             iconBg={colors.goldLight}
             iconColor={colors.goldDim}
             colors={colors}
-            onPress={reviewAvailable ? openReview : undefined}
+            onPress={openReview}
           />
           <RowItem
             icon="info"
