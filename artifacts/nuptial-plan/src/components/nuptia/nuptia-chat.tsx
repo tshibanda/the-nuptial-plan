@@ -7,6 +7,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Sparkles, Send, RotateCcw, ChevronDown } from 'lucide-react';
 import { useListWeddings, useGetWeddingSummary } from '@workspace/api-client-react';
 import { useActiveWedding } from '@/lib/wedding-context';
+import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 
 /* ── Types ── */
 interface ChatMessage {
@@ -120,6 +121,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
 
 /* ── Main component ── */
 export function NuptiaChat({ getToken }: NuptiaChatProps) {
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
@@ -131,6 +133,7 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
   const [streaming, setStreaming] = useState(false);
   const [convId, setConvId] = useState<number | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [premiumPrompt, setPremiumPrompt] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -289,7 +292,13 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
     <>
       {/* ── Floating bubble ── */}
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          if (!premiumLoading && !isPremium) {
+            setPremiumPrompt(true);
+          } else {
+            setOpen(true);
+          }
+        }}
         className={`fixed bottom-6 right-6 z-50 flex h-[52px] w-[52px] items-center justify-center rounded-full transition-all duration-300 ${
           open ? 'pointer-events-none scale-0 opacity-0' : 'scale-100 opacity-100'
         }`}
@@ -302,7 +311,17 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
         data-testid="button-nuptia-open"
       >
         <Sparkles size={22} color="#C8A96E" />
+        <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#E2B93B] text-[9px] font-bold text-[#3C1A3C]">★</span>
       </button>
+
+      {premiumPrompt && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#3C1A3C]/35 p-5" onClick={() => setPremiumPrompt(false)}>
+          <div className="w-full max-w-xl" onClick={(event) => event.stopPropagation()}>
+            <PremiumPageGate featureLabel="Nuptia, votre assistante IA" />
+            <button className="mx-auto mt-3 block text-xs text-white/90 underline" onClick={() => setPremiumPrompt(false)}>Fermer</button>
+          </div>
+        </div>
+      )}
 
       {/* ── Chat panel ── */}
       <div

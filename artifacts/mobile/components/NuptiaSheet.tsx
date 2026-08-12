@@ -25,6 +25,9 @@ import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow } from '@/utils/shadow';
+import { PremiumBadge } from '@/components/PremiumBadge';
+import { PaywallModal } from '@/components/PaywallModal';
+import { usePremiumGate } from '@/hooks/usePremiumGate';
 
 // ── API ───────────────────────────────────────────────────────────────────────
 const _DOMAIN = process.env.EXPO_PUBLIC_DOMAIN;
@@ -153,6 +156,7 @@ function TypingBubble({ cardBg, borderColor }: { cardBg: string; borderColor: st
 export function NuptiaSheet() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { paywallVisible, closePaywall, openPaywall, isPremium } = usePremiumGate();
   const { getToken } = useAuth();
   const { selectedWeddingId } = useWedding();
   const { data: weddings } = useListWeddings();
@@ -181,6 +185,10 @@ export function NuptiaSheet() {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
 
   const openSheet = async () => {
+    if (!isPremium) {
+      openPaywall();
+      return;
+    }
     setOpen(true);
     scrollToBottom();
     if (!convId) {
@@ -254,9 +262,14 @@ export function NuptiaSheet() {
 
   return (
     <>
+      <PaywallModal
+        visible={paywallVisible}
+        onClose={closePaywall}
+        featureLabel="Nuptia, votre assistante IA"
+      />
       {/* ── FAB ── */}
       <TouchableOpacity
-        onPress={openSheet}
+        onPress={() => void openSheet()}
         activeOpacity={0.85}
         style={[
           ss.fab,
@@ -273,6 +286,9 @@ export function NuptiaSheet() {
           style={ss.fabGradient}
         >
           <Feather name="message-circle" size={22} color="#C8A96E" />
+          <View style={ss.premiumMark}>
+            <PremiumBadge variant="icon" />
+          </View>
         </LinearGradient>
       </TouchableOpacity>
 
@@ -480,6 +496,11 @@ const ss = StyleSheet.create({
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  premiumMark: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
   },
 
   // Modal
