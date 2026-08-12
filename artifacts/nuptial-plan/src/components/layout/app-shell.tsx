@@ -6,6 +6,7 @@ import { Link, useLocation } from 'wouter';
 import {
   Bell,
   CalendarDays,
+  ClipboardList,
   ChevronDown,
   FileText,
   Home,
@@ -66,13 +67,18 @@ import { LegalFooter } from '@/components/legal-footer';
 const navItems = [
   { label: 'Aperçu', icon: Home, path: '/' },
   { label: 'Calendrier', icon: CalendarDays, path: '/calendrier' },
+  { label: 'Rétroplanning', icon: ClipboardList, path: '/retroplanning' },
   { label: 'Prestataires', icon: Users, path: '/prestataires' },
+  { label: 'Carnet d’adresses', icon: BookOpen, path: '/carnet-adresse' },
   { label: 'Invités', icon: UserCircle2, path: '/invites' },
   { label: 'Budget', icon: WalletCards, path: '/budget' },
   { label: 'Contrats', icon: FileText, path: '/contrats' },
   { label: 'Paiements', icon: CreditCard, path: '/paiements' },
   { label: 'Documents', icon: Paperclip, path: '/documents' },
-  { label: 'Jour J',    icon: Heart,     path: '/jour-j'    },
+  { label: 'Moodboards', icon: Sparkles, path: '/moodboards' },
+  { label: 'Business', icon: BriefcaseBusiness, path: '/business' },
+  { label: 'Jour J', icon: Heart, path: '/jour-j' },
+  { label: 'Paramètres', icon: Settings, path: '/parametres' },
 ];
 
 const CURRENCIES = [
