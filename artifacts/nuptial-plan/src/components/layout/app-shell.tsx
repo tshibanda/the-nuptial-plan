@@ -923,7 +923,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           {/* Page content — ambient gradient background */}
           <div className="content-bg flex-1 overflow-y-auto overscroll-contain">
-            <div className="mx-auto max-w-[1390px] px-5 pt-9 pb-28 sm:px-9 lg:px-12 lg:pt-12 lg:pb-32">
+            <div className="mx-auto flex min-h-full max-w-[1390px] flex-col px-5 pt-9 pb-28 sm:px-9 lg:px-12 lg:pt-12 lg:pb-32">
               {!isLoading && !activeWeddingId && !['/parametres', '/carnet-adresse', '/moodboards', '/business'].includes(location) ? (
                 <div className="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
                   {noWeddingTour && (
@@ -962,7 +962,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               ) : (
                 children
               )}
-              <LegalFooter className="pb-2 pt-10" />
+              <LegalFooter className="mt-auto pb-2 pt-10" />
             </div>
           </div>
         </main>

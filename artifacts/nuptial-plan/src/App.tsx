@@ -127,28 +127,28 @@ function ClerkQueryClientCacheInvalidator() {
 // ── Sign-in / Sign-up pages ───────────────────────────────────────────────────
 function SignInPage() {
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-4 py-12">
+    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-4 py-12">
       <SignIn
         routing="path"
         path={`${basePath}/sign-in`}
         signUpUrl={`${basePath}/sign-up`}
         forceRedirectUrl={`${basePath}/`}
       />
-      <LegalFooter className="mt-6" />
+      <LegalFooter className="absolute bottom-6 left-4 right-4" />
     </div>
   );
 }
 
 function SignUpPage() {
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-4 py-12">
+    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-4 py-12">
       <SignUp
         routing="path"
         path={`${basePath}/sign-up`}
         signInUrl={`${basePath}/sign-in`}
         forceRedirectUrl={`${basePath}/`}
       />
-      <LegalFooter className="mt-6" />
+      <LegalFooter className="absolute bottom-6 left-4 right-4" />
     </div>
   );
 }
@@ -156,7 +156,7 @@ function SignUpPage() {
 // ── Landing page (unauthenticated visitors at /) ──────────────────────────────
 function LandingPage() {
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-6 text-center">
+    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-6 pb-20 pt-12 text-center">
       {/* Logo */}
       <div className="mb-6 flex h-20 w-20 items-center justify-center">
         <img
@@ -189,7 +189,7 @@ function LandingPage() {
       <p className="mt-12 text-xs text-[#9B7E9B]">
         Atelier de planification nuptiale · Accès réservé aux planners
       </p>
-      <LegalFooter className="mt-8" />
+      <LegalFooter className="absolute bottom-6 left-4 right-4" />
     </div>
   );
 }

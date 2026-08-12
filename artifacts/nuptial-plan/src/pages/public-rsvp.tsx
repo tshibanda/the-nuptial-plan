@@ -75,11 +75,11 @@ export default function PublicRsvp() {
 
 function RsvpFrame({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-5 py-10 text-center">
+    <main className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-5 py-10 pb-20 text-center">
       <div className="w-full max-w-xl rounded-[28px] border border-[#E5DDE5] bg-[#FDF9FD] px-6 py-10 shadow-[0_18px_60px_rgba(93,45,93,0.12)] sm:px-12">
         {children}
       </div>
-      <LegalFooter className="mt-6" />
+      <LegalFooter className="absolute bottom-6 left-4 right-4" />
     </main>
   );
 }

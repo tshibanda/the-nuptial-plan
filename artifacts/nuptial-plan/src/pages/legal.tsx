@@ -137,7 +137,7 @@ export function LegalPage({ document }: { document: LegalDocument }) {
   const Icon = content.icon;
 
   return (
-    <div className="min-h-[100dvh] bg-[#F8F3EE] text-[#1A091A]">
+    <div className="flex min-h-[100dvh] flex-col bg-[#F8F3EE] text-[#1A091A]">
       <header className="border-b border-[#D7CDD7]/70 bg-[#FDF9FD]/80">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5 sm:px-8">
           <Link href="/" className="flex items-center gap-3 text-[#3C1A3C]">
@@ -150,7 +150,7 @@ export function LegalPage({ document }: { document: LegalDocument }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
+      <main className="mx-auto flex w-full flex-1 max-w-3xl flex-col px-5 py-12 sm:px-8 sm:py-16">
         <div className="mb-10 text-center">
           <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#5D2D5D]/10 text-[#5D2D5D]">
             <Icon size={24} />
@@ -174,7 +174,7 @@ export function LegalPage({ document }: { document: LegalDocument }) {
           </div>
         </article>
 
-        <LegalFooter className="mt-8" />
+        <LegalFooter className="mt-auto pt-8" />
       </main>
     </div>
   );
