@@ -82,7 +82,6 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
   // Current tab name
   const currentRoute = state.routes[state.index]?.name ?? '';
   const isSecondaryActive = !primaryTabs.includes(currentRoute);
-
   useEffect(() => {
     let mounted = true;
     AsyncStorage.getItem(PRIMARY_TABS_STORAGE_KEY).then((stored) => {
@@ -255,6 +254,12 @@ function BurgerSheet({
   const insets = useSafeAreaInsets();
   const [customizing, setCustomizing] = useState(false);
   const [draftTabs, setDraftTabs] = useState(primaryTabs);
+  const orderedMenuTabs = [
+    ...primaryTabs,
+    ...ALL_TABS
+      .filter((tabName) => !primaryTabs.includes(tabName))
+      .sort((a, b) => TAB_META[a]!.label.localeCompare(TAB_META[b]!.label, 'fr')),
+  ];
 
   useEffect(() => {
     if (visible) {
@@ -403,7 +408,7 @@ function BurgerSheet({
           showsVerticalScrollIndicator={false}
           contentContainerStyle={bs.grid}
         >
-          {ALL_TABS.map((tabName) => {
+          {orderedMenuTabs.map((tabName) => {
             const meta = TAB_META[tabName]!;
             const isActive = currentRoute === tabName;
             const isPrimary = primaryTabs.includes(tabName);
