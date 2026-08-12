@@ -241,6 +241,12 @@ export default function SignInScreen() {
               </TouchableOpacity>
             </Link>
           </View>
+          <View style={ss.legalFooter}>
+            <Text style={[ss.legalText, { fontFamily: SANS }]}>En continuant, vous acceptez nos </Text>
+            <Link href="/legal/policy" asChild><TouchableOpacity><Text style={[ss.legalLink, { fontFamily: SANS_SEMIBOLD }]}>CGU</Text></TouchableOpacity></Link>
+            <Text style={[ss.legalText, { fontFamily: SANS }]}> et notre </Text>
+            <Link href="/legal/privacy" asChild><TouchableOpacity><Text style={[ss.legalLink, { fontFamily: SANS_SEMIBOLD }]}>politique de confidentialité</Text></TouchableOpacity></Link>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
@@ -293,6 +299,9 @@ const ss = StyleSheet.create({
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
   footerText: { fontSize: 13, color: MUTED },
   footerLink: { fontSize: 13, color: GOLD },
+  legalFooter: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 18, paddingHorizontal: 8 },
+  legalText: { fontSize: 10, color: MUTED, textAlign: 'center' },
+  legalLink: { fontSize: 10, color: GOLD },
   verifyBox: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   verifyTitle: { fontSize: 26, color: IVORY, marginBottom: 8 },
   verifySubtitle: { fontSize: 13, color: MUTED, marginBottom: 24, textAlign: 'center' },

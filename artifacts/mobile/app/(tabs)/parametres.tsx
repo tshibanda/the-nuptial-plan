@@ -6,6 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useListWeddings,
@@ -75,6 +76,7 @@ function Group({ children, colors }: { children: React.ReactNode; colors: Return
 export default function ParametresScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const topPad = Platform.OS === 'web' ? 67 : 0;
 
   const { selectedWeddingId, selectWedding } = useWedding();
@@ -99,13 +101,7 @@ export default function ParametresScreen() {
     });
   }, []);
 
-  const reportBug = () => {
-    const subject = encodeURIComponent('Rapport de bug — The Nuptial Plan');
-    const body = encodeURIComponent(
-      `Bonjour,\n\nJe souhaite signaler un bug dans The Nuptial Plan.\n\nDescription :\n\nÉtapes pour reproduire :\n\nAppareil / version :\n\nMerci.`,
-    );
-    void Linking.openURL(`mailto:contact@thenuptialplan.com?subject=${subject}&body=${body}`);
-  };
+  const reportBug = () => router.push('/bug-report' as never);
 
   const openReview = () => {
     const url = Platform.OS === 'android'
@@ -115,7 +111,7 @@ export default function ParametresScreen() {
   };
 
   const openLegal = (path: 'privacy' | 'policy') => {
-    void Linking.openURL(`https://thenuptialplan.com/${path}`);
+    router.push(`/legal/${path}` as never);
   };
 
   const handleDeleteWedding = () => {
