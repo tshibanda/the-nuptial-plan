@@ -189,6 +189,7 @@ function LandingPage() {
       <p className="mt-12 text-xs text-[#9B7E9B]">
         Atelier de planification nuptiale · Accès réservé aux planners
       </p>
+      <LegalFooter className="mt-8" />
     </div>
   );
 }

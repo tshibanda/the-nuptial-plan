@@ -61,6 +61,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { LegalFooter } from '@/components/legal-footer';
 
 const navItems = [
   { label: 'Aperçu', icon: Home, path: '/' },
@@ -955,6 +956,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               ) : (
                 children
               )}
+              <LegalFooter className="pb-2 pt-10" />
             </div>
           </div>
         </main>
