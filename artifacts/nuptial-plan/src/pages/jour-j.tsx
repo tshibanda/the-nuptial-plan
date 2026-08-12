@@ -11,6 +11,7 @@ import {
   getListEventsQueryKey,
   useListVendors,
   useGetWedding,
+  getGetWeddingQueryKey,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDate } from '@/lib/format';
@@ -26,6 +27,7 @@ import { downloadRunsheetPDF } from '@/components/jour-j/runsheet-pdf';
 /* ── Types ── */
 type Tab = 'runsheet' | 'prestataires' | 'checklist';
 type EventStatus = 'terminé' | 'en_cours' | 'en_retard' | 'à_venir';
+type EventTone = 'plum' | 'gold' | 'rose' | 'sage' | 'lavender' | 'blue';
 
 interface CalEvent {
   id: number;
@@ -35,7 +37,7 @@ interface CalEvent {
   eventTime?: string | null;
   location?: string | null;
   actors?: string | null;
-  tone?: string | null;
+  tone?: EventTone | null;
   completed: boolean;
 }
 
@@ -57,7 +59,7 @@ interface EventForm {
   location: string;
   actors: string;
   detail: string;
-  tone: string;
+  tone: EventTone | '';
 }
 
 const BLANK_FORM: EventForm = {
@@ -91,7 +93,7 @@ function sortEvents(evts: CalEvent[]): CalEvent[] {
 }
 
 /* ── Tone palette ── */
-const TONES = [
+const TONES: Array<{ key: EventTone; hex: string; label: string }> = [
   { key: 'plum',     hex: '#5D2D5D', label: 'Prune'    },
   { key: 'gold',     hex: '#C8A96E', label: 'Or'       },
   { key: 'rose',     hex: '#CC8C94', label: 'Rose'     },
@@ -542,7 +544,10 @@ export default function JourJ() {
 
   /* Queries */
   const { data: wedding, isLoading: weddingLoading } = useGetWedding(activeWeddingId ?? 0, {
-    query: { enabled: !!activeWeddingId },
+    query: {
+      enabled: !!activeWeddingId,
+      queryKey: getGetWeddingQueryKey(activeWeddingId ?? 0),
+    },
   });
   const { data: rawEvents = [], isLoading: eventsLoading } = useListEvents(activeWeddingId!);
   const { data: vendors = [] } = useListVendors(activeWeddingId!);
