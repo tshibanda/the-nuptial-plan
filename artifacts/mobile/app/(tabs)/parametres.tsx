@@ -18,6 +18,7 @@ import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow, accentShadow } from '@/utils/shadow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSubscription } from '@/lib/subscription';
 
 // ── Row item ─────────────────────────────────────────────────────────────────
 function RowItem({ icon, label, value, iconBg, iconColor, onPress, rightElement, colors, destructive = false }: {
@@ -87,6 +88,7 @@ export default function ParametresScreen() {
   const deleteWedding = useDeleteWedding();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const subscription = useSubscription();
 
   React.useEffect(() => {
     const key = '@nuptial-plan/first-opened-at';
@@ -280,6 +282,49 @@ export default function ParametresScreen() {
           />
         </Group>
 
+        <SectionHeader label="ABONNEMENT" colors={colors} />
+        <Group colors={colors}>
+          <View style={{ padding: 16, gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={[ps.rowIcon, { backgroundColor: colors.goldLight }]}>
+                <Feather name="star" size={15} color={colors.goldDim} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[ps.rowLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>The Nuptial Plan Premium</Text>
+                <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>
+                  {subscription.isActive ? (subscription.isTrialing ? 'Votre essai gratuit est actif.' : 'Votre abonnement est actif.') : 'Un mois d’essai gratuit inclus.'}
+                </Text>
+              </View>
+            </View>
+            {subscription.offerings?.current?.availablePackages?.map((pkg: any) => (
+              <TouchableOpacity
+                key={pkg.identifier}
+                disabled={subscription.loading}
+                onPress={() => void subscription.purchase(pkg)}
+                style={[ps.subscriptionOption, { borderColor: colors.border, backgroundColor: colors.background }]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[ps.subscriptionPlan, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>
+                    {pkg.packageType === 'ANNUAL' ? 'Annuel' : 'Mensuel'}
+                  </Text>
+                  <Text style={[ps.subscriptionPrice, { fontFamily: SANS, color: colors.mutedForeground }]}>
+                    {pkg.product.priceString}
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={14} color={colors.goldDim} />
+              </TouchableOpacity>
+            ))}
+            {!subscription.available && (
+              <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>
+                Les achats intégrés seront disponibles après la configuration App Store et Google Play.
+              </Text>
+            )}
+            <TouchableOpacity onPress={() => void subscription.restore()} disabled={subscription.loading} style={ps.restoreButton}>
+              <Text style={[ps.restoreText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>Restaurer mes achats</Text>
+            </TouchableOpacity>
+          </View>
+        </Group>
+
         <SectionHeader label="INFORMATIONS LÉGALES" colors={colors} />
         <Group colors={colors}>
           <RowItem icon="shield" label="Politique de confidentialité" iconBg={colors.sageBg} iconColor={colors.sageDark} colors={colors} onPress={() => openLegal('privacy')} />
@@ -342,4 +387,9 @@ const ps = StyleSheet.create({
   weddingStatRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   weddingStatText: { fontSize: 12, flex: 1 },
   dangerHint: { fontSize: 11, lineHeight: 15, marginTop: 8, paddingHorizontal: 4, opacity: 0.7 },
+  subscriptionOption: { minHeight: 52, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center' },
+  subscriptionPlan: { fontSize: 12 },
+  subscriptionPrice: { fontSize: 11, marginTop: 2 },
+  restoreButton: { alignItems: 'center', paddingVertical: 7 },
+  restoreText: { fontSize: 11 },
 });

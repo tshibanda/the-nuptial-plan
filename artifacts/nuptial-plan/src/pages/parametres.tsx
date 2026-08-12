@@ -37,7 +37,7 @@ import {
   getListWeddingsQueryKey,
   getGetWeddingQueryKey,
 } from '@workspace/api-client-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -129,6 +129,93 @@ function SettingsSection({
       </div>
       {children}
     </div>
+  );
+}
+
+function SubscriptionSection() {
+  const { data: plans, isLoading: plansLoading } = useQuery({
+    queryKey: ['subscription-plans'],
+    queryFn: async () => {
+      const response = await fetch('/api/subscription/plans', { credentials: 'include' });
+      if (!response.ok) throw new Error('Plans unavailable');
+      return response.json() as Promise<{ data: Array<{ lookupKey: string; plan: 'monthly' | 'annual'; amount: number | null }> }>;
+    },
+  });
+  const { data: status } = useQuery({
+    queryKey: ['subscription-status'],
+    queryFn: async () => {
+      const response = await fetch('/api/subscription/status', { credentials: 'include' });
+      if (!response.ok) throw new Error('Subscription unavailable');
+      return response.json() as Promise<{ subscription: { status: string; trialEndsAt: string | null } | null }>;
+    },
+  });
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const checkout = async (lookupKey: string) => {
+    setBusy(lookupKey);
+    try {
+      const response = await fetch('/api/subscription/checkout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lookupKey }),
+      });
+      const data = await response.json() as { url?: string; error?: string };
+      if (!response.ok || !data.url) throw new Error(data.error ?? 'Checkout indisponible');
+      window.location.assign(data.url);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const manage = async () => {
+    const response = await fetch('/api/subscription/portal', { method: 'POST', credentials: 'include' });
+    const data = await response.json() as { url?: string };
+    if (data.url) window.location.assign(data.url);
+  };
+
+  return (
+    <SettingsSection icon={CreditCard} eyebrow="Abonnement" title="The Nuptial Plan Premium">
+      <div className="space-y-4">
+        <p className="text-sm leading-6 text-muted-foreground">
+          Un mois d’essai gratuit, puis choisissez la formule qui vous convient. Les prix sont fournis par Stripe.
+        </p>
+        {status?.subscription ? (
+          <div className="rounded-xl border border-[#C8A96E]/40 bg-[#F7EEDB]/50 p-4">
+            <p className="font-medium text-foreground">
+              {status.subscription.status === 'trialing' ? 'Votre essai gratuit est actif.' : 'Votre abonnement est actif.'}
+            </p>
+            {status.subscription.trialEndsAt && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Essai jusqu’au {new Date(status.subscription.trialEndsAt).toLocaleDateString('fr-FR')}.
+              </p>
+            )}
+            <Button variant="outline" className="mt-3" onClick={() => void manage()}>Gérer mon abonnement</Button>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(plans?.data ?? []).map((plan) => (
+              <Button
+                key={plan.lookupKey}
+                variant={plan.plan === 'annual' ? 'default' : 'outline'}
+                className="h-auto justify-between rounded-xl px-4 py-4 text-left"
+                disabled={plansLoading || busy !== null}
+                onClick={() => void checkout(plan.lookupKey)}
+              >
+                <span>
+                  <span className="block font-medium">{plan.plan === 'annual' ? 'Abonnement annuel' : 'Abonnement mensuel'}</span>
+                  <span className="mt-1 block text-xs opacity-75">1 mois d’essai inclus</span>
+                </span>
+                <span>{plan.amount == null ? '—' : `${(plan.amount / 100).toFixed(2).replace('.', ',')} €`}</span>
+              </Button>
+            ))}
+          </div>
+        )}
+        {!plansLoading && !plans?.data?.length && !status?.subscription && (
+          <p className="text-xs text-muted-foreground">Les formules seront disponibles dès que les produits Stripe seront configurés.</p>
+        )}
+      </div>
+    </SettingsSection>
   );
 }
 
@@ -527,6 +614,8 @@ export default function Parametres() {
               );
             })()}
           </SettingsSection>
+
+          <SubscriptionSection />
 
           {/* ── Guides d'utilisation ── */}
           <SettingsSection icon={BookOpen} eyebrow="Aide" title="Guides d'utilisation">

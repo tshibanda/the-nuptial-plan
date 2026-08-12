@@ -10,8 +10,8 @@ const p = (req: { params: Record<string, string> }, key: string) => Number(req.p
 router.get("/", async (req, res): Promise<void> => {
   const weddingId = p(req, "weddingId");
   const categories = await db.select().from(budgetCategoriesTable).where(eq(budgetCategoriesTable.weddingId, weddingId));
-  const totalAllocated = categories.reduce((sum, c) => sum + c.allocatedCents, 0);
-  const totalSpent = categories.reduce((sum, c) => sum + c.spentCents, 0);
+  const totalAllocated = categories.reduce((sum, c) => sum + Number(c.allocatedCents), 0);
+  const totalSpent = categories.reduce((sum, c) => sum + Number(c.spentCents), 0);
   res.json({ weddingId, totalAllocated, totalSpent, categories });
 });
 

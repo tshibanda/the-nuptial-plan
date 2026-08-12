@@ -33,7 +33,7 @@ router.post("/", async (req, res): Promise<void> => {
     return;
   }
   const [wedding] = await db.insert(weddingsTable)
-    .values({ ...parsed.data, ownerId: owner(req)! })
+    .values({ ...parsed.data, ownerId: owner(req)!, totalBudget: String(parsed.data.totalBudget) })
     .returning();
   await db.insert(activityTable).values({
     weddingId: wedding!.id,
@@ -61,7 +61,10 @@ router.patch("/:id", async (req, res): Promise<void> => {
   const id = p(req, "id");
   const body = UpdateWeddingBody.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
-  const [wedding] = await db.update(weddingsTable).set(body.data)
+  const [wedding] = await db.update(weddingsTable).set({
+    ...body.data,
+    totalBudget: body.data.totalBudget === undefined ? undefined : String(body.data.totalBudget),
+  })
     .where(and(eq(weddingsTable.id, id), eq(weddingsTable.ownerId, owner(req)!))).returning();
   if (!wedding) { res.status(404).json({ error: "Not found" }); return; }
   res.json(wedding);
@@ -90,7 +93,7 @@ router.get("/:id/summary", async (req, res): Promise<void> => {
   const confirmedGuests = guests.filter((g) => g.rsvpStatus === "confirmed").length;
 
   const budgetCategories = await db.select().from(budgetCategoriesTable).where(eq(budgetCategoriesTable.weddingId, id));
-  const budgetSpent = budgetCategories.reduce((sum, c) => sum + c.spentCents, 0);
+  const budgetSpent = budgetCategories.reduce((sum, c) => sum + Number(c.spentCents), 0);
 
   const events = await db.select().from(calendarEventsTable).where(eq(calendarEventsTable.weddingId, id));
   const today = now.toISOString().slice(0, 10);
@@ -104,7 +107,7 @@ router.get("/:id/summary", async (req, res): Promise<void> => {
   const payments = await db.select().from(paymentsTable).where(eq(paymentsTable.weddingId, id));
   const pendingPaymentsTotal = payments
     .filter((pm) => pm.status === "pending" || pm.status === "overdue")
-    .reduce((sum, pm) => sum + pm.amountCents, 0);
+    .reduce((sum, pm) => sum + Number(pm.amountCents), 0);
 
   const tasksTotal = events.length;
   const tasksComplete = events.filter((e) => e.completed).length;

@@ -11,3 +11,4 @@ export * from "./conversations";
 export * from "./messages";
 export * from "./address-book";
 export * from "./notifications";
+export * from "./subscriptions";

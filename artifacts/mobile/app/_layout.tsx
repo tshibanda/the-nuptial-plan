@@ -28,6 +28,7 @@ import { setBaseUrl } from '@workspace/api-client-react';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { OfflineRefreshScreen } from '@/components/OfflineRefreshScreen';
 import { NotificationManager } from '@/components/NotificationManager';
+import { SubscriptionProvider } from '@/lib/subscription';
 
 // Set API base URL at module level so all React Query hooks reach the correct host.
 if (process.env.EXPO_PUBLIC_DOMAIN) {
@@ -95,18 +96,20 @@ export default function RootLayout() {
               client={queryClient}
               persistOptions={{ persister: asyncStoragePersister }}
             >
-              <WeddingProvider>
-                <GestureHandlerRootView style={{ flex: 1 }}>
-                  <KeyboardProvider>
-                    <RootLayoutNav />
-                    {/* Floats above all screens — slides in when offline */}
-                    <OfflineBanner />
-                    <OfflineRefreshScreen />
-                    {/* Invisible — manages push-notification permissions and scheduling */}
-                    <NotificationManager />
-                  </KeyboardProvider>
-                </GestureHandlerRootView>
-              </WeddingProvider>
+                <WeddingProvider>
+                  <SubscriptionProvider>
+                    <GestureHandlerRootView style={{ flex: 1 }}>
+                      <KeyboardProvider>
+                        <RootLayoutNav />
+                        {/* Floats above all screens — slides in when offline */}
+                        <OfflineBanner />
+                        <OfflineRefreshScreen />
+                        {/* Invisible — manages push-notification permissions and scheduling */}
+                        <NotificationManager />
+                      </KeyboardProvider>
+                    </GestureHandlerRootView>
+                  </SubscriptionProvider>
+                </WeddingProvider>
             </PersistQueryClientProvider>
           </ErrorBoundary>
         </SafeAreaProvider>

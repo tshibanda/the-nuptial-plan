@@ -2,6 +2,8 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { db, calendarEventsTable, notificationsTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
+import { runMigrations } from "stripe-replit-sync";
+import { getStripeSync } from "./stripeClient";
 
 const rawPort = process.env["PORT"];
 
@@ -16,6 +18,20 @@ const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
+
+async function initializeStripe() {
+  if (!process.env.DATABASE_URL || !process.env.REPLIT_CONNECTORS_HOSTNAME) {
+    logger.warn("Stripe integration not initialized: database or connector environment is unavailable.");
+    return;
+  }
+  await runMigrations({ databaseUrl: process.env.DATABASE_URL });
+  const sync = await getStripeSync();
+  const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
+  await sync.findOrCreateManagedWebhook(`${baseUrl}/api/stripe/webhook`);
+  void sync.syncBackfill().catch((error) => logger.error({ error }, "Stripe backfill failed"));
+}
+
+await initializeStripe().catch((error) => logger.error({ error }, "Stripe initialization failed"));
 
 app.listen(port, (err) => {
   if (err) {

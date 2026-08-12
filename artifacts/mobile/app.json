@@ -18,7 +18,9 @@
       "bundleIdentifier": "com.thenuptialplan.mobile",
       "buildNumber": "1"
     },
-    "android": {},
+    "android": {
+      "package": "com.thenuptialplan.mobile"
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },

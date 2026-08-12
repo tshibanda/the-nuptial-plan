@@ -18,7 +18,11 @@ router.post("/", async (req, res): Promise<void> => {
   const weddingId = p(req, "weddingId");
   const body = CreatePaymentBody.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
-  const [payment] = await db.insert(paymentsTable).values({ ...body.data, weddingId }).returning();
+  const [payment] = await db.insert(paymentsTable).values({
+    ...body.data,
+    weddingId,
+    amountCents: String(body.data.amountCents),
+  }).returning();
   await db.insert(activityTable).values({
     weddingId,
     description: `Paiement enregistré : ${payment!.vendorName} – ${payment!.description}`,
@@ -33,7 +37,10 @@ router.patch("/:id", async (req, res): Promise<void> => {
   const id = p(req, "id");
   const body = UpdatePaymentBody.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
-  const [payment] = await db.update(paymentsTable).set(body.data).where(and(eq(paymentsTable.id, id), eq(paymentsTable.weddingId, weddingId))).returning();
+  const [payment] = await db.update(paymentsTable).set({
+    ...body.data,
+    amountCents: body.data.amountCents === undefined ? undefined : String(body.data.amountCents),
+  }).where(and(eq(paymentsTable.id, id), eq(paymentsTable.weddingId, weddingId))).returning();
   if (!payment) { res.status(404).json({ error: "Not found" }); return; }
   res.json(payment);
 });

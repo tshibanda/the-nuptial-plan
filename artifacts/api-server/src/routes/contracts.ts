@@ -18,7 +18,12 @@ router.post("/", async (req, res): Promise<void> => {
   const weddingId = p(req, "weddingId");
   const body = CreateContractBody.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
-  const [contract] = await db.insert(contractsTable).values({ ...body.data, weddingId }).returning();
+  const [contract] = await db.insert(contractsTable).values({
+    ...body.data,
+    weddingId,
+    totalAmountCents: String(body.data.totalAmountCents),
+    depositPaidCents: body.data.depositPaidCents === undefined ? undefined : String(body.data.depositPaidCents),
+  }).returning();
   await db.insert(activityTable).values({
     weddingId,
     description: `Contrat créé : ${contract!.vendorName}`,
@@ -33,7 +38,11 @@ router.patch("/:id", async (req, res): Promise<void> => {
   const id = p(req, "id");
   const body = UpdateContractBody.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: "Invalid input" }); return; }
-  const [contract] = await db.update(contractsTable).set(body.data).where(and(eq(contractsTable.id, id), eq(contractsTable.weddingId, weddingId))).returning();
+  const [contract] = await db.update(contractsTable).set({
+    ...body.data,
+    totalAmountCents: body.data.totalAmountCents === undefined ? undefined : String(body.data.totalAmountCents),
+    depositPaidCents: body.data.depositPaidCents === undefined ? undefined : String(body.data.depositPaidCents),
+  }).where(and(eq(contractsTable.id, id), eq(contractsTable.weddingId, weddingId))).returning();
   if (!contract) { res.status(404).json({ error: "Not found" }); return; }
   await db.insert(activityTable).values({
     weddingId,

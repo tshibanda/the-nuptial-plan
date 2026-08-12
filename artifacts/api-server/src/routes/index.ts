@@ -17,6 +17,7 @@ import openaiConversationsRouter from "./openai/conversations";
 import addressBookRouter from "./address-book";
 import publicRsvpRouter from "./public-rsvp";
 import notificationsRouter from "./notifications";
+import subscriptionRouter from "./subscription";
 
 const router: IRouter = Router();
 
@@ -30,6 +31,7 @@ router.use(storageRouter);
 router.use("/openai/conversations", openaiConversationsRouter);
 router.use(addressBookRouter);
 router.use("/notifications", notificationsRouter);
+router.use("/subscription", subscriptionRouter);
 router.use(dashboardRouter);
 router.use("/weddings", weddingsRouter);
 router.use("/weddings/:weddingId/vendors", requireWeddingOwnership, vendorsRouter);
