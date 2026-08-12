@@ -40,7 +40,7 @@ const TAB_META: Record<string, { sf: string; feather: string; label: string }> =
 };
 
 // Five primary tabs visible in the bar. The selection is persisted locally.
-const DEFAULT_PRIMARY = ['index', 'evenements', 'invites', 'budget', 'prestataires'];
+const DEFAULT_PRIMARY = ['index', 'evenements', 'budget', 'invites', 'profil'];
 const PRIMARY_TABS_STORAGE_KEY = '@nuptial-plan/primary-tabs';
 
 // All tabs shown in the burger sheet (full list for quick access)
