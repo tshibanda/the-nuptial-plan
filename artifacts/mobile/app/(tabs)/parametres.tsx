@@ -120,7 +120,7 @@ export default function ParametresScreen() {
 
   const openReview = () => {
     const url = Platform.OS === 'android'
-      ? 'market://details?id=com.thenuptialplan.mobile'
+      ? 'market://details?id=app.thenuptialplan.com'
       : 'https://apps.apple.com/fr/search?term=The%20Nuptial%20Plan';
     void Linking.openURL(url).catch(() => Linking.openURL('https://apps.apple.com/fr/search?term=The%20Nuptial%20Plan'));
   };
@@ -323,7 +323,7 @@ export default function ParametresScreen() {
               <TouchableOpacity
                 onPress={() => {
                   const url = Platform.OS === 'android'
-                    ? `https://play.google.com/store/account/subscriptions?sku=${subscription.productIdentifier ?? 'tnp_premium_monthly'}&package=com.thenuptialplan.mobile`
+                    ? `https://play.google.com/store/account/subscriptions?sku=${subscription.productIdentifier ?? 'tnp_premium_monthly'}&package=app.thenuptialplan.com`
                     : 'itms-apps://apps.apple.com/account/subscriptions';
                   void Linking.openURL(url);
                 }}

@@ -36,9 +36,9 @@ import {
 // ── Project / app metadata ────────────────────────────────────────────────────
 const PROJECT_NAME = "The Nuptial Plan";
 const APP_STORE_APP_NAME = "The Nuptial Plan iOS";
-const APP_STORE_BUNDLE_ID = "com.thenuptialplan.mobile";
+const APP_STORE_BUNDLE_ID = "app.thenuptialplan.com";
 const PLAY_STORE_APP_NAME = "The Nuptial Plan Android";
-const PLAY_STORE_PACKAGE_NAME = "com.thenuptialplan.mobile";
+const PLAY_STORE_PACKAGE_NAME = "app.thenuptialplan.com";
 
 // ── Entitlement ───────────────────────────────────────────────────────────────
 const ENTITLEMENT_IDENTIFIER = "TNP Premium";

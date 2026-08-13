@@ -15,11 +15,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.thenuptialplan.mobile",
+      "bundleIdentifier": "app.thenuptialplan.com",
       "buildNumber": "1"
     },
     "android": {
-      "package": "com.thenuptialplan.mobile"
+      "package": "app.thenuptialplan.com"
     },
     "web": {
       "favicon": "./assets/images/icon.png"
