@@ -1,5 +1,5 @@
 import { Router, type Request } from "express";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull, or } from "drizzle-orm";
 import { db, subscriptionsTable } from "@workspace/db";
 import { getUncachableStripeClient } from "../stripeClient";
 import { getUncachableRevenueCatClient } from "../revenueCatClient";
@@ -71,7 +71,16 @@ router.get("/status", async (req, res) => {
     return;
   }
   const [subscription] = await db.select().from(subscriptionsTable)
-    .where(eq(subscriptionsTable.ownerId, owner(req)))
+    .where(and(
+      eq(subscriptionsTable.ownerId, owner(req)),
+      or(
+        eq(subscriptionsTable.provider, "revenuecat"),
+        and(
+          eq(subscriptionsTable.provider, "stripe"),
+          isNotNull(subscriptionsTable.providerSubscriptionId),
+        ),
+      ),
+    ))
     .orderBy(desc(subscriptionsTable.updatedAt))
     .limit(1);
   res.json({ subscription: subscription ?? null });
@@ -104,18 +113,10 @@ router.post("/checkout", async (req, res) => {
     subscription_data: { trial_end: nextMonthTimestamp(), metadata: { ownerId, plan: planFromLookupKey(lookupKey) } },
     metadata: { ownerId, plan: planFromLookupKey(lookupKey) },
   });
-  await db.insert(subscriptionsTable).values({
-    id: `stripe_${ownerId}`,
-    ownerId,
-    provider: "stripe",
-    status: "trialing",
-    plan: planFromLookupKey(lookupKey),
-    trialEndsAt: new Date(nextMonthTimestamp() * 1000),
-    providerCustomerId: customer,
-  }).onConflictDoUpdate({
-    target: subscriptionsTable.id,
-    set: { plan: planFromLookupKey(lookupKey), status: "trialing", providerCustomerId: customer, updatedAt: new Date() },
-  });
+
+  // Do not grant access here. Opening checkout is not a purchase: the user may
+  // cancel or go back before Stripe creates a subscription. The Stripe webhook
+  // is the source of truth and will create/update this row after confirmation.
   res.json({ url: session.url });
 });
 

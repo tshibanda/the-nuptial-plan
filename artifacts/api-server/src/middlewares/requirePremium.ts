@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, or } from "drizzle-orm";
 import type { Request, Response, NextFunction } from "express";
 import { db, subscriptionsTable } from "@workspace/db";
 import { hasPremiumEmailAccess } from "../lib/premium-access";
@@ -54,6 +54,13 @@ export async function requirePremium(
       and(
         eq(subscriptionsTable.ownerId, userId),
         inArray(subscriptionsTable.status, [...ACTIVE_STATUSES]),
+        or(
+          eq(subscriptionsTable.provider, "revenuecat"),
+          and(
+            eq(subscriptionsTable.provider, "stripe"),
+            isNotNull(subscriptionsTable.providerSubscriptionId),
+          ),
+        ),
       ),
     )
     .orderBy(desc(subscriptionsTable.updatedAt))
