@@ -16,6 +16,8 @@ import { formatCents } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { TourSheet } from '@/components/TourSheet';
 import { ProfileEditSheet } from '@/components/ProfileEditSheet';
+import { PaywallModal } from '@/components/PaywallModal';
+import { useSubscription } from '@/lib/subscription';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
 
 const TOUR_STEPS = [
@@ -81,6 +83,8 @@ export default function ProfilScreen() {
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:profil');
+  const subscription = useSubscription();
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   // Derive display values from Clerk user
   const displayName = user?.fullName
@@ -134,6 +138,14 @@ export default function ProfilScreen() {
 
   const showWebOnly = (feature: string) =>
     Alert.alert(feature, 'Gérez vos ' + feature.toLowerCase() + ' depuis l\'application web.', [{ text: 'OK' }]);
+
+  const openSubscription = () => {
+    if (subscription.isActive) {
+      router.push('/(tabs)/parametres');
+    } else {
+      setPaywallVisible(true);
+    }
+  };
 
   const fabBottom = Platform.OS === 'web' ? 94 : insets.bottom + 84;
 
@@ -270,6 +282,24 @@ export default function ProfilScreen() {
           />
         </View>
 
+        {/* Abonnement */}
+        <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>ABONNEMENT</Text>
+        <View style={[ss.group, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
+          <RowItem
+            icon="star"
+            label="The Nuptial Plan Premium"
+            value={
+              subscription.isActive
+                ? (subscription.isTrialing ? 'Essai actif' : 'Actif')
+                : 'Voir les formules'
+            }
+            variant="gold"
+            colors={colors}
+            onPress={openSubscription}
+          />
+        </View>
+
         {/* Compte */}
         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>COMPTE</Text>
         <View style={[ss.group, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -301,6 +331,11 @@ export default function ProfilScreen() {
 
     <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
     <ProfileEditSheet visible={editVisible} onClose={() => setEditVisible(false)} />
+    <PaywallModal
+      visible={paywallVisible}
+      onClose={() => setPaywallVisible(false)}
+      featureLabel="l'abonnement Premium"
+    />
     </>
   );
 }
