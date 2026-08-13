@@ -41,8 +41,8 @@ const PLAY_STORE_APP_NAME = "The Nuptial Plan Android";
 const PLAY_STORE_PACKAGE_NAME = "com.thenuptialplan.mobile";
 
 // ── Entitlement ───────────────────────────────────────────────────────────────
-const ENTITLEMENT_IDENTIFIER = "premium";
-const ENTITLEMENT_DISPLAY_NAME = "Premium Access";
+const ENTITLEMENT_IDENTIFIER = "TNP Premium";
+const ENTITLEMENT_DISPLAY_NAME = "TNP Premium";
 
 // ── Offering ──────────────────────────────────────────────────────────────────
 const OFFERING_IDENTIFIER = "default";
@@ -52,7 +52,8 @@ const OFFERING_DISPLAY_NAME = "Default Offering";
 const PRODUCTS = [
   {
     // iOS / Test Store identifier
-    storeIdentifier: "tnp_premium_monthly",
+    storeIdentifier: "monthly",
+    appStoreIdentifier: "app.thenuptialplan.com.monthly",
     // Android base-plan format: {subscriptionId}:{basePlanId}
     playStoreIdentifier: "tnp_premium_monthly:monthly",
     displayName: "Premium Monthly",
@@ -66,7 +67,8 @@ const PRODUCTS = [
     ],
   },
   {
-    storeIdentifier: "tnp_premium_annual",
+    storeIdentifier: "yearly",
+    appStoreIdentifier: "app.thenuptialplan.com.yearly",
     playStoreIdentifier: "tnp_premium_annual:annual",
     displayName: "Premium Annual",
     userFacingTitle: "Premium Annual",
@@ -235,7 +237,7 @@ async function seed() {
 
     const appStoreProduct = await ensureProduct(
       client, project.id, existingProducts, appStoreApp,
-      `App Store / ${prod.displayName}`, prod.storeIdentifier, false,
+      `App Store / ${prod.displayName}`, prod.appStoreIdentifier, false,
     );
 
     const playStoreProduct = await ensureProduct(

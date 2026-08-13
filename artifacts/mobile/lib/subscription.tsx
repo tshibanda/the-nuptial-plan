@@ -104,7 +104,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   }, [getToken]);
 
   useEffect(() => {
-    if (!available || Platform.OS === "web" || isExpoGo) return;
+    if (!available || Platform.OS === "web") return;
     try {
       Purchases.configure({ apiKey: getApiKey()!, appUserID: user?.id });
     } catch {
