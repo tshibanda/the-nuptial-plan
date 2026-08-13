@@ -30,15 +30,26 @@ const SubscriptionContext = createContext<SubscriptionContextValue>({
   restore: async () => undefined,
 });
 
+// Expo Go cannot load the native App Store / Google Play billing modules.
+// RevenueCat's Preview API mode still supports the Test Store in Expo Go.
+const isExpoGo = Constants.appOwnership === "expo";
+
 function getApiKey() {
-  if (Platform.OS === "ios") return process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY;
-  if (Platform.OS === "android") return process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY;
+  // Expo Go and web previews must use the Test Store key. The native iOS key
+  // is only valid for an App Store-connected RevenueCat app.
+  if (isExpoGo || Platform.OS === "web") {
+    return process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY;
+  }
+  if (Platform.OS === "ios") {
+    return process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY
+      ?? (__DEV__ ? process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY : undefined);
+  }
+  if (Platform.OS === "android") {
+    return process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY
+      ?? (__DEV__ ? process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY : undefined);
+  }
   return process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY;
 }
-
-// Expo Go cannot load the native App Store / Google Play billing modules.
-// RevenueCat remains enabled in development builds and production binaries.
-const isExpoGo = Constants.appOwnership === "expo";
 
 function getPlatform(): string {
   if (Platform.OS === "ios") return "ios";
@@ -61,7 +72,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const [offerings, setOfferings] = useState<any>(null);
   const [customerInfo, setCustomerInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const available = Boolean(getApiKey()) && !isExpoGo;
+  const available = Boolean(getApiKey()) && Platform.OS !== "web";
 
   /**
    * Trigger a server-side entitlement sync.
@@ -104,13 +115,10 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       .then(([nextOfferings, nextInfo]) => {
         setOfferings(nextOfferings);
         setCustomerInfo(nextInfo);
-        // If the SDK already reports an active entitlement (e.g. returning user),
-        // sync to the server so the DB reflects the current subscription state.
-        const entitlement =
-          nextInfo?.entitlements?.active?.[REVENUECAT_ENTITLEMENT_IDENTIFIER];
-        if (entitlement) {
-          void syncToServer();
-        }
+        // Always verify with the server, including when there is no active
+        // entitlement, so an expired or restored account cannot retain stale
+        // Premium access in the shared database.
+        void syncToServer();
       })
       .catch(() => undefined);
   }, [available, user?.id, syncToServer]);
