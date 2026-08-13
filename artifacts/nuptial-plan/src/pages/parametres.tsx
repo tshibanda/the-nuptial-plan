@@ -25,6 +25,7 @@ import {
   RotateCcw,
   BookOpen,
   BriefcaseBusiness,
+  Loader2,
 } from 'lucide-react';
 import { useUser } from '@clerk/react';
 import { useActiveWedding } from '@/lib/wedding-context';
@@ -132,6 +133,7 @@ function SettingsSection({
 }
 
 function SubscriptionSection() {
+  const { toast } = useToast();
   const { data: plans, isLoading: plansLoading } = useQuery({
     queryKey: ['subscription-plans'],
     queryFn: async () => {
@@ -149,6 +151,7 @@ function SubscriptionSection() {
     },
   });
   const [busy, setBusy] = useState<string | null>(null);
+  const [portalBusy, setPortalBusy] = useState(false);
 
   const checkout = async (lookupKey: string) => {
     setBusy(lookupKey);
@@ -168,9 +171,21 @@ function SubscriptionSection() {
   };
 
   const manage = async () => {
-    const response = await fetch('/api/subscription/portal', { method: 'POST', credentials: 'include' });
-    const data = await response.json() as { url?: string };
-    if (data.url) window.location.assign(data.url);
+    setPortalBusy(true);
+    try {
+      const response = await fetch('/api/subscription/portal', { method: 'POST', credentials: 'include' });
+      const data = await response.json() as { url?: string; error?: string };
+      if (!response.ok || !data.url) throw new Error(data.error ?? 'Portail de gestion indisponible');
+      window.location.assign(data.url);
+    } catch (error) {
+      toast({
+        title: 'Gestion de l’abonnement indisponible',
+        description: error instanceof Error ? error.message : 'Réessayez dans quelques instants.',
+        variant: 'destructive',
+      });
+    } finally {
+      setPortalBusy(false);
+    }
   };
 
   return (
@@ -189,7 +204,10 @@ function SubscriptionSection() {
                 Essai jusqu’au {new Date(status.subscription.trialEndsAt).toLocaleDateString('fr-FR')}.
               </p>
             )}
-            <Button variant="outline" className="mt-3" onClick={() => void manage()}>Gérer mon abonnement</Button>
+             <Button variant="outline" className="mt-3 gap-2" disabled={portalBusy} onClick={() => void manage()}>
+               {portalBusy && <Loader2 size={14} className="animate-spin" />}
+               Gérer mon abonnement
+             </Button>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">

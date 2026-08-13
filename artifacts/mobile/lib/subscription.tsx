@@ -4,7 +4,8 @@ import Constants from "expo-constants";
 import Purchases from "react-native-purchases";
 import { useUser, useAuth } from "@clerk/expo";
 
-export const REVENUECAT_ENTITLEMENT_IDENTIFIER = "premium";
+export const REVENUECAT_ENTITLEMENT_IDENTIFIER = "TNP Premium";
+const PREMIUM_EMAIL_ALLOWLIST = new Set(["e.tshibanda78@gmail.com"]);
 
 type SubscriptionContextValue = {
   available: boolean;
@@ -48,6 +49,10 @@ function getPlatform(): string {
 function getApiBase(): string {
   const domain = process.env.EXPO_PUBLIC_DOMAIN;
   return domain ? `https://${domain}` : "";
+}
+
+function hasPremiumEmailAccess(email: string | null | undefined): boolean {
+  return Boolean(email && PREMIUM_EMAIL_ALLOWLIST.has(email.trim().toLowerCase()));
 }
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
@@ -114,7 +119,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     const entitlement = customerInfo?.entitlements?.active?.[REVENUECAT_ENTITLEMENT_IDENTIFIER];
     return {
       available,
-      isActive: Boolean(entitlement),
+      isActive: Boolean(entitlement) || hasPremiumEmailAccess(user?.primaryEmailAddress?.emailAddress),
       isTrialing: entitlement?.periodType === "TRIAL",
       productIdentifier: entitlement?.productIdentifier ?? null,
       offerings,

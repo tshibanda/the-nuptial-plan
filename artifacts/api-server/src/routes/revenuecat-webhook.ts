@@ -37,7 +37,7 @@ import { logger } from "../lib/logger";
 
 const router = Router();
 
-const ENTITLEMENT_IDENTIFIER = "premium";
+const ENTITLEMENT_IDENTIFIER = "TNP Premium";
 
 // Mounted at /api/revenuecat/webhook — path here is just "/"
 router.post("/", async (req, res) => {

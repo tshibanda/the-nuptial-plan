@@ -1,4 +1,4 @@
-import { getAuth } from '@clerk/express';
+import { clerkClient, getAuth } from '@clerk/express';
 import type { Request, Response, NextFunction } from 'express';
 
 /**
@@ -6,7 +6,7 @@ import type { Request, Response, NextFunction } from 'express';
  * Attaches `req.userId` for use in downstream handlers.
  * Returns 401 if no authenticated session is found.
  */
-export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const auth = getAuth(req);
   const userId = auth?.userId;
 
@@ -17,5 +17,15 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 
   // Attach for downstream use if needed
   (req as any).userId = userId;
+  // The primary email is read from Clerk's verified user record so downstream
+  // Premium checks can safely apply account-level access grants.
+  try {
+    const user = await clerkClient.users.getUser(userId);
+    (req as any).userEmail = user.primaryEmailAddress?.emailAddress ?? null;
+  } catch {
+    // Authentication remains valid even if the profile lookup is temporarily
+    // unavailable; email-based grants simply won't apply for this request.
+    (req as any).userEmail = null;
+  }
   next();
 }

@@ -4,15 +4,20 @@ import { db, subscriptionsTable } from "@workspace/db";
 import { getUncachableStripeClient } from "../stripeClient";
 import { getUncachableRevenueCatClient } from "../revenueCatClient";
 import { listCustomerActiveEntitlements } from "@replit/revenuecat-sdk";
+import { hasPremiumEmailAccess } from "../lib/premium-access";
 
 const router = Router();
 const MONTHLY_LOOKUP_KEY = "tnp_monthly_eur";
 const ANNUAL_LOOKUP_KEY = "tnp_annual_eur";
-const ENTITLEMENT_IDENTIFIER = "premium";
+const ENTITLEMENT_IDENTIFIER = "TNP Premium";
 const RC_PROJECT_ID = process.env.REVENUECAT_PROJECT_ID ?? "";
 
 function owner(req: Request): string {
   return (req as Request & { userId?: string }).userId ?? "";
+}
+
+function userEmail(req: Request): string | null | undefined {
+  return (req as Request & { userEmail?: string | null }).userEmail;
 }
 
 function nextMonthTimestamp(): number {
@@ -51,6 +56,20 @@ router.get("/plans", async (_req, res) => {
 });
 
 router.get("/status", async (req, res) => {
+  if (hasPremiumEmailAccess(userEmail(req))) {
+    res.json({
+      subscription: {
+        id: "admin_premium_access",
+        ownerId: owner(req),
+        provider: "admin",
+        status: "active",
+        plan: "annual",
+        currentPeriodEnd: null,
+        trialEndsAt: null,
+      },
+    });
+    return;
+  }
   const [subscription] = await db.select().from(subscriptionsTable)
     .where(eq(subscriptionsTable.ownerId, owner(req)))
     .orderBy(desc(subscriptionsTable.updatedAt))

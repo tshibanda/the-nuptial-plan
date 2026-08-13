@@ -1,6 +1,7 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import type { Request, Response, NextFunction } from "express";
 import { db, subscriptionsTable } from "@workspace/db";
+import { hasPremiumEmailAccess } from "../lib/premium-access";
 
 const ACTIVE_STATUSES = ["active", "trialing"] as const;
 
@@ -31,6 +32,12 @@ export async function requirePremium(
 
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const userEmail = (req as Request & { userEmail?: string | null }).userEmail;
+  if (hasPremiumEmailAccess(userEmail)) {
+    next();
     return;
   }
 
