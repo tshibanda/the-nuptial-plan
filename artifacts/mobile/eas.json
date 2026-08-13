@@ -29,8 +29,8 @@
     "production": {
       "ios": {
         "appleId": "contact@thenuptialplan.com",
-        "ascAppId": "FILL_IN_FROM_APP_STORE_CONNECT",
-        "appleTeamId": "FILL_IN_FROM_APPLE_DEVELOPER"
+        "ascAppId": "6799479925",
+        "appleTeamId": "64WRGLMF42"
       },
       "android": {
         "serviceAccountKeyPath": "./google-play-key.json",
