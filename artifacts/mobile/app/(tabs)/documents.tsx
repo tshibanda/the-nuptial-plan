@@ -167,6 +167,12 @@ export default function DocumentsScreen() {
       keyExtractor={(section) => section.title}
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={styles.list}
+      // iOS otherwise adjusts the list offset automatically when the tab
+      // becomes active, which makes the Documents page appear to scroll on
+      // its own.
+      contentInsetAdjustmentBehavior="never"
+      automaticallyAdjustContentInsets={false}
+      scrollsToTop={false}
       refreshing={loading}
       onRefresh={() => void loadDocuments()}
       ListHeaderComponent={
