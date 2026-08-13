@@ -132,7 +132,7 @@ function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocat
                 cy={95}
                 innerRadius={52}
                 outerRadius={86}
-                paddingAngle={2}
+                paddingAngle={0}
                 dataKey="value"
                 onClick={handleClick}
                 style={{ cursor: 'pointer' }}
@@ -142,8 +142,6 @@ function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocat
                     key={entry.id}
                     fill={entry.color}
                     opacity={selectedId !== null && selectedId !== entry.id ? 0.3 : 1}
-                    stroke={selectedId === entry.id ? entry.color : 'transparent'}
-                    strokeWidth={selectedId === entry.id ? 2 : 0}
                   />
                 ))}
               </Pie>

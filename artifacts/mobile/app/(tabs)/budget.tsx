@@ -89,7 +89,9 @@ const CY = CHART_SIZE / 2;
 const OUTER_R = 86;
 const INNER_R = 52;
 const SEL_OUTER_R = 93;
-const GAP_DEG = 2.5;
+// Keep slices contiguous: category colors should flow into one another
+// without separator gaps or outlines.
+const GAP_DEG = 0;
 
 function polarToCartesian(cx: number, cy: number, r: number, deg: number) {
   const rad = ((deg - 90) * Math.PI) / 180;
