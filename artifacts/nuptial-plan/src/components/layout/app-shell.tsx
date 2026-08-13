@@ -64,6 +64,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { LegalFooter } from '@/components/legal-footer';
+import { usePremiumStatus } from '@/components/premium-page-gate';
 
 const navItems = [
   { label: 'Aperçu', icon: Home, path: '/' },
@@ -301,6 +302,7 @@ function CreateWeddingDialog({
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { isPremium } = usePremiumStatus();
   const [location, navigate] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -916,7 +918,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   >
                     <Icon size={13} strokeWidth={isActive ? 2.1 : 1.6} />
                     {label}
-                    {premium && <Crown size={10} className="text-[#A8893E]" />}
+                    {premium && !isPremium && <Crown size={10} className="text-[#A8893E]" />}
                   </Link>
                 );
               })}

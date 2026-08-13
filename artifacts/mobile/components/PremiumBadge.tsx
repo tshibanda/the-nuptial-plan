@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { SANS_SEMIBOLD } from '@/constants/fonts';
 import { useColors } from '@/hooks/useColors';
+import { useSubscription } from '@/lib/subscription';
 
 interface PremiumBadgeProps {
   /** When true (subscriber), renders nothing. */
@@ -17,8 +18,9 @@ interface PremiumBadgeProps {
  */
 export function PremiumBadge({ hidden = false, variant = 'badge' }: PremiumBadgeProps) {
   const colors = useColors();
+  const { isActive } = useSubscription();
 
-  if (hidden) return null;
+  if (hidden || isActive) return null;
 
   if (variant === 'icon') {
     return (
