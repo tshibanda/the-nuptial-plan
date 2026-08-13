@@ -64,6 +64,8 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
       <Stack.Screen name="bug-report" options={{ headerShown: false }} />
+      <Stack.Screen name="legal/privacy" options={{ headerShown: false }} />
+      <Stack.Screen name="legal/policy" options={{ headerShown: false }} />
     </Stack>
   );
 }
