@@ -19,7 +19,6 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow, accentShadow } from '@/utils/shadow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSubscription } from '@/lib/subscription';
-import { formatSubscriptionPrice } from '@/lib/format-subscription-price';
 
 // ── Row item ─────────────────────────────────────────────────────────────────
 function RowItem({ icon, label, value, iconBg, iconColor, onPress, rightElement, colors, destructive = false }: {
@@ -309,7 +308,7 @@ export default function ParametresScreen() {
                     {pkg.packageType === 'ANNUAL' ? 'Annuel' : 'Mensuel'}
                   </Text>
                   <Text style={[ps.subscriptionPrice, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                    {formatSubscriptionPrice(pkg.product)}
+                    {pkg.product.priceString}
                   </Text>
                 </View>
                 <Feather name="chevron-right" size={14} color={colors.goldDim} />

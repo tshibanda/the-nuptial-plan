@@ -7,7 +7,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSubscription } from '@/lib/subscription';
-import { formatSubscriptionPrice } from '@/lib/format-subscription-price';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow, accentShadow } from '@/utils/shadow';
@@ -155,7 +154,7 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
                           {isAnnual ? 'Annuel' : 'Mensuel'}
                         </Text>
                         <Text style={[pw.packagePrice, { fontFamily: SERIF, color: isAnnual ? colors.plum : colors.foreground }]}>
-                          {formatSubscriptionPrice(pkg.product)}
+                          {pkg.product.priceString}
                         </Text>
                         {isAnnual && (
                           <Text style={[pw.packageNote, { fontFamily: SANS, color: colors.mutedForeground }]}>
