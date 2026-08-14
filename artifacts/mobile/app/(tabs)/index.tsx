@@ -160,7 +160,19 @@ export default function DashboardScreen() {
   if (!activeWedding) {
     return (
       <View style={[ss.center, { backgroundColor: colors.background, paddingTop: topPad }]}>
-        <EmptyState icon="heart" title="Aucun mariage" subtitle="Créez votre premier mariage depuis l'application web." />
+        <EmptyState
+          icon="heart"
+          title="Aucun mariage pour le moment"
+          subtitle="Pour commencer, ouvrez l’onglet « Vos mariages » puis appuyez sur « Nouveau mariage »."
+        />
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/mariages')}
+          activeOpacity={0.82}
+          style={[ss.emptyAction, { backgroundColor: colors.plum }]}
+        >
+          <Feather name="plus" size={16} color="#FBF5FB" />
+          <Text style={[ss.emptyActionText, { fontFamily: SANS_SEMIBOLD }]}>Créer un mariage</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -338,6 +350,8 @@ export default function DashboardScreen() {
 
 const ss = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyAction: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 11, paddingHorizontal: 17, paddingVertical: 12, marginTop: -14 },
+  emptyActionText: { fontSize: 12, color: '#FBF5FB' },
   hero: { paddingHorizontal: 20, paddingBottom: 28, overflow: 'hidden' },
   heroSheen: { ...StyleSheet.absoluteFillObject, height: 120 },
   goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
