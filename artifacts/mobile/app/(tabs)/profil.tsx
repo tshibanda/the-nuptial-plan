@@ -197,8 +197,14 @@ export default function ProfilScreen() {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setEditVisible(true)} activeOpacity={0.75}>
+        <TouchableOpacity
+          onPress={() => setEditVisible(true)}
+          activeOpacity={0.75}
+          style={ss.nameEdit}
+          accessibilityLabel="Modifier le nom"
+        >
           <Text style={[ss.name, { fontFamily: SERIF }]}>{displayName}</Text>
+          <Feather name="edit-2" size={14} color={colors.gold} />
         </TouchableOpacity>
         {userEmail ? (
           <Text style={[ss.role, { fontFamily: SANS_MEDIUM }]}>{userEmail}</Text>
@@ -356,6 +362,7 @@ const ss = StyleSheet.create({
   avatarImage: { width: 80, height: 80, borderRadius: 40 },
   avatarText: { fontSize: 34, color: '#C8A96E', lineHeight: 36 },
   name: { fontSize: 30, color: '#f8f3ea', marginBottom: 4 },
+  nameEdit: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   role: { fontSize: 12, color: '#C8A96E', letterSpacing: 0.5, marginBottom: 2 },
   brand: { fontSize: 10, color: '#8eacaa', letterSpacing: 0.3 },
   rim: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },

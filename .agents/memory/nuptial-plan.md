@@ -32,6 +32,7 @@ description: Premium French wedding planner web app — architecture decisions, 
 - All tables live in `lib/db/src/schema/` — one file per entity
 - After adding schema files, run `pnpm run typecheck:libs` to regenerate declarations before checking api-server typecheck
 - Push: `pnpm --filter @workspace/db run push` — requires TTY; if it fails, create tables via `executeSql` in CodeExecution instead
+- Production database writes are not available through the database tool in this environment; use an explicit, reviewed deployment-side seed command rather than silently targeting development data.
 
 ## Nuptia AI chatbot
 - Routes: `artifacts/api-server/src/routes/openai/conversations.ts`, mounted at `/openai/conversations`

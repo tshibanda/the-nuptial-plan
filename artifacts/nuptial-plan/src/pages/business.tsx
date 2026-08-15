@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { PageTour } from '@/components/ui/page-tour';
 import { PremiumBadge } from '@/components/premium-badge';
 import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
+import { useUser } from '@clerk/react';
 
 type Entry = { id: string; month: string; type: 'income' | 'expense'; label: string; amount: number };
 type BusinessData = {
@@ -19,12 +20,37 @@ type BusinessData = {
 };
 const storageKey = 'tnp-business';
 const defaults: BusinessData = { hourlyRate: 45, annualRevenue: 0, fixedCosts: 0, microThreshold: 77700, packagePrice: 3500, projectHours: 80, insurance: false, entries: [] };
+const reviewOwnerId = 'user_3HyOEsScTvQuzvLFDB5bbaGbDoq';
+const reviewBusinessData: BusinessData = {
+  hourlyRate: 68, annualRevenue: 48600, fixedCosts: 740, microThreshold: 77700,
+  packagePrice: 4200, projectHours: 72, insurance: true,
+  entries: [
+    { id: 'review-1', month: '2026-01', type: 'income', label: 'Acompte Camille & Thomas', amount: 2100 },
+    { id: 'review-2', month: '2026-02', type: 'expense', label: 'Abonnement outils agence', amount: 189 },
+    { id: 'review-3', month: '2026-03', type: 'income', label: 'Coordination Inès & Julien', amount: 2800 },
+    { id: 'review-4', month: '2026-04', type: 'expense', label: 'Shooting portfolio printemps', amount: 620 },
+    { id: 'review-5', month: '2026-05', type: 'income', label: 'Acompte Louise & Adrien', amount: 1350 },
+  ],
+};
 
 export default function Business() {
+  const { user } = useUser();
   const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const [data, setData] = useState<BusinessData>(defaults);
   const [entry, setEntry] = useState({ month: new Date().toISOString().slice(0, 7), type: 'income' as Entry['type'], label: '', amount: '' });
-  useEffect(() => { try { setData({ ...defaults, ...JSON.parse(localStorage.getItem(storageKey) || '{}') }); } catch { setData(defaults); } }, []);
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (!stored && user?.id === reviewOwnerId) {
+        setData(reviewBusinessData);
+        localStorage.setItem(storageKey, JSON.stringify(reviewBusinessData));
+      } else {
+        setData({ ...defaults, ...JSON.parse(stored || '{}') });
+      }
+    } catch {
+      setData(defaults);
+    }
+  }, [user?.id]);
   const persist = (next: BusinessData) => { setData(next); localStorage.setItem(storageKey, JSON.stringify(next)); };
   const totals = useMemo(() => data.entries.reduce((acc, item) => ({ income: acc.income + (item.type === 'income' ? item.amount : 0), expense: acc.expense + (item.type === 'expense' ? item.amount : 0) }), { income: 0, expense: 0 }), [data.entries]);
   const addEntry = () => { const amount = Number(entry.amount); if (!entry.label || !amount) return; persist({ ...data, entries: [...data.entries, { ...entry, id: `${Date.now()}`, amount }] }); setEntry({ ...entry, label: '', amount: '' }); };

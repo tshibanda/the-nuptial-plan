@@ -7,6 +7,7 @@
     "hello": "tsx ./src/hello.ts",
     "seed:subscriptions": "tsx ./src/seed-subscription-products.ts",
     "seed:revenuecat": "tsx ./src/seedRevenueCat.ts",
+    "seed:apple-review": "tsx ./src/seedAppleReviewData.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
@@ -16,6 +17,8 @@
   "dependencies": {
     "@replit/connectors-sdk": "latest",
     "@replit/revenuecat-sdk": "latest",
+    "@types/pg": "^8.20.0",
+    "pg": "^8.22.0",
     "stripe": "^22.5.0"
   }
 }

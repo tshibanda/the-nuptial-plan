@@ -26,6 +26,7 @@ import {
   BookOpen,
   BriefcaseBusiness,
   Loader2,
+  Pencil,
 } from 'lucide-react';
 import { useUser } from '@clerk/react';
 import { useActiveWedding } from '@/lib/wedding-context';
@@ -255,6 +256,37 @@ export default function Parametres() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [tourTrigger, setTourTrigger] = useState(0);
+  const [profileEditOpen, setProfileEditOpen] = useState(false);
+  const [profileFirstName, setProfileFirstName] = useState('');
+  const [profileLastName, setProfileLastName] = useState('');
+  const [profileSaving, setProfileSaving] = useState(false);
+
+  const openProfileEditor = () => {
+    setProfileFirstName(user?.firstName ?? '');
+    setProfileLastName(user?.lastName ?? '');
+    setProfileEditOpen(true);
+  };
+
+  const saveProfile = async () => {
+    if (!user) return;
+    const firstName = profileFirstName.trim();
+    const lastName = profileLastName.trim();
+    if (!firstName) {
+      toast({ title: 'Prénom requis', description: 'Veuillez saisir votre prénom.', variant: 'destructive' });
+      return;
+    }
+    setProfileSaving(true);
+    try {
+      await user.update({ firstName, lastName: lastName || undefined });
+      await user.reload();
+      setProfileEditOpen(false);
+      toast({ title: 'Profil mis à jour', description: [firstName, lastName].filter(Boolean).join(' ') });
+    } catch {
+      toast({ title: 'Erreur', description: 'Impossible de mettre à jour votre nom.', variant: 'destructive' });
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   const replayTour = (tourKey: string, route: string) => {
     localStorage.removeItem(STORAGE_PREFIX + tourKey);
@@ -403,6 +435,38 @@ export default function Parametres() {
             >
               {deleting ? 'Suppression…' : 'Supprimer définitivement'}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={profileEditOpen} onOpenChange={setProfileEditOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-xl text-foreground">Modifier votre nom</DialogTitle>
+            <DialogDescription>
+              Ce nom sera utilisé dans votre profil, l’en-tête et la barre latérale.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label htmlFor="profile-first-name" className="text-[11px] font-semibold text-muted-foreground">Prénom</label>
+                <Input id="profile-first-name" value={profileFirstName} onChange={(event) => setProfileFirstName(event.target.value)} autoFocus />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="profile-last-name" className="text-[11px] font-semibold text-muted-foreground">Nom</label>
+                <Input id="profile-last-name" value={profileLastName} onChange={(event) => setProfileLastName(event.target.value)} />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button type="button" variant="outline" className="flex-1" onClick={() => setProfileEditOpen(false)}>
+                Annuler
+              </Button>
+              <Button type="button" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => void saveProfile()} disabled={profileSaving}>
+                {profileSaving ? <Loader2 size={14} className="mr-2 animate-spin" /> : <Pencil size={14} className="mr-2" />}
+                {profileSaving ? 'Enregistrement…' : 'Enregistrer'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -619,12 +683,22 @@ export default function Parametres() {
                     </span>
                   )}
                   <div>
-                    <p className="text-[14px] font-semibold text-foreground">{fullName}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[14px] font-semibold text-foreground">{fullName}</p>
+                      <button
+                        type="button"
+                        onClick={openProfileEditor}
+                        className="rounded-md p-1 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                        aria-label="Modifier le nom"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    </div>
                     {email && (
                       <p className="text-[11px] text-muted-foreground">{email}</p>
                     )}
                     <p className="mt-1 text-[10px] text-muted-foreground/60">
-                      Pour modifier votre profil, rendez-vous sur votre compte Clerk.
+                      Utilisez le crayon pour modifier votre nom.
                     </p>
                   </div>
                 </div>
