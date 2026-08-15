@@ -4,6 +4,7 @@ import { db, calendarEventsTable, notificationsTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { runMigrations } from "stripe-replit-sync";
 import { getStripeSync } from "./stripeClient";
+import { seedAppleReview } from "./lib/seedAppleReview";
 
 const rawPort = process.env["PORT"];
 
@@ -32,6 +33,8 @@ async function initializeStripe() {
 }
 
 await initializeStripe().catch((error) => logger.error({ error }, "Stripe initialization failed"));
+
+await seedAppleReview().catch((error) => logger.error({ error }, "Apple Review seed failed"));
 
 app.listen(port, (err) => {
   if (err) {

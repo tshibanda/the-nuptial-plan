@@ -1,7 +1,9 @@
-import pg from "pg";
-
-const { Pool } = pg;
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+/**
+ * Idempotent seed for the Apple App Review demo account.
+ * Runs once on server startup; the DEMO_MARKER prevents duplicate inserts.
+ */
+import { pool } from "@workspace/db";
+import { logger } from "./logger";
 
 const OWNER_ID = "user_3HyOEsScTvQuzvLFDB5bbaGbDoq";
 const DEMO_MARKER = "[APPLE_REVIEW_DEMO]";
@@ -83,17 +85,18 @@ function isoDate(offsetDays: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-async function main() {
+export async function seedAppleReview(): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+
     const existing = await client.query(
       "SELECT id FROM weddings WHERE owner_id = $1 AND notes LIKE $2 LIMIT 1",
       [OWNER_ID, `%${DEMO_MARKER}%`],
     );
     if (existing.rowCount) {
       await client.query("ROLLBACK");
-      console.log("Apple Review demo data already exists; nothing changed.");
+      logger.info("Apple Review demo data already exists; skipping seed.");
       return;
     }
 
@@ -106,11 +109,11 @@ async function main() {
          RETURNING id`,
         [OWNER_ID, wedding.names, wedding.partner1, wedding.partner2, wedding.date, wedding.venue, wedding.budget * 100, wedding.guests, wedding.notes],
       );
-      weddingIds.push(result.rows[0].id);
+      weddingIds.push(result.rows[0].id as number);
     }
 
     for (const [weddingIndex, weddingId] of weddingIds.entries()) {
-      const names = guestNames[weddingIndex];
+      const names = guestNames[weddingIndex]!;
       for (const [index, name] of names.entries()) {
         const status = weddingIndex === 2 ? "confirmed" : index % 5 === 0 ? "declined" : index % 3 === 0 ? "pending" : "confirmed";
         await client.query(
@@ -126,9 +129,9 @@ async function main() {
         const vendor = await client.query(
           `INSERT INTO vendors (wedding_id,name,category,status,total_amount,deposit_amount,contact_name,contact_email,contact_phone,notes)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
-          [weddingId, name, category, status, Math.round(amount * multiplier) * 100, Math.round(amount * multiplier * 0.3) * 100, contactName, `${contactName.toLowerCase().replaceAll(" ", ".")}@example.test`, "06 12 34 56 78", index === 0 ? "Contrat et dégustation suivis" : "Contact principal du dossier"],
+          [weddingId, name, category, status, Math.round(amount * multiplier) * 100, Math.round(amount * multiplier * 0.3) * 100, contactName, `${contactName!.toLowerCase().replaceAll(" ", ".")}@example.test`, "06 12 34 56 78", index === 0 ? "Contrat et dégustation suivis" : "Contact principal du dossier"],
         );
-        const vendorId = vendor.rows[0].id;
+        const vendorId: number = vendor.rows[0].id as number;
         await client.query(
           `INSERT INTO contracts (wedding_id,vendor_id,vendor_name,status,total_amount,deposit_amount,signed_at,notes)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
@@ -142,7 +145,7 @@ async function main() {
       }
 
       for (const [index, category] of categories.entries()) {
-        const allocated = Math.round(weddings[weddingIndex].budget * 100 * (0.12 + (index % 3) * 0.04));
+        const allocated = Math.round(weddings[weddingIndex]!.budget * 100 * (0.12 + (index % 3) * 0.04));
         await client.query(
           `INSERT INTO budget_categories (wedding_id,name,allocated_cents,spent_cents,notes)
            VALUES ($1,$2,$3,$4,$5)`,
@@ -151,8 +154,8 @@ async function main() {
       }
 
       const events: Array<[string, string, number, string, string, string, boolean]> = [
-        ["Point d’avancement client", "Revue des décisions et arbitrages", 10, "10:00", "Visioconférence", "Planner + couple", false],
-        ["Visite technique du lieu", "Repérage accès, plan B et implantation", 35, "14:30", weddingIndex === 1 ? "Château de Vaux-le-Vicomte" : weddings[weddingIndex].venue, "Planner + lieu", weddingIndex === 2],
+        ["Point d'avancement client", "Revue des décisions et arbitrages", 10, "10:00", "Visioconférence", "Planner + couple", false],
+        ["Visite technique du lieu", "Repérage accès, plan B et implantation", 35, "14:30", weddingIndex === 1 ? "Château de Vaux-le-Vicomte" : weddings[weddingIndex]!.venue, "Planner + lieu", weddingIndex === 2],
         ["Dégustation traiteur", "Validation du menu et des accords", 65, "12:00", "Maison Lune", "Couple + traiteur", weddingIndex === 2],
         ["Brief équipe Jour J", "Répartition des rôles et déroulé minute par minute", 95, "18:00", "Bureau de la planner", "Équipe production", false],
       ];
@@ -168,7 +171,7 @@ async function main() {
         await client.query(
           `INSERT INTO milestones (wedding_id,title,detail,due_date,completed)
            VALUES ($1,$2,$3,$4,$5)`,
-          [weddingId, title, "Jalon de production suivi dans le rétroplanning de l’agence.", isoDate(-180 + index * 45 + weddingIndex * 15), weddingIndex === 2 || index < 2],
+          [weddingId, title, "Jalon de production suivi dans le rétroplanning de l'agence.", isoDate(-180 + index * 45 + weddingIndex * 15), weddingIndex === 2 || index < 2],
         );
       }
 
@@ -188,8 +191,8 @@ async function main() {
 
       await client.query(
         `INSERT INTO documents (wedding_id,entity_type,name,object_path,content_type,size)
-         VALUES ($1,'wedding','Brief client — ${weddingIndex + 1}.pdf',$2,'application/pdf',248000)`,
-        [weddingId, `/objects/apple-review-demo/brief-${weddingIndex + 1}.pdf`],
+         VALUES ($1,'wedding',$2,$3,'application/pdf',248000)`,
+        [weddingId, `Brief client — ${weddingIndex + 1}.pdf`, `/objects/apple-review-demo/brief-${weddingIndex + 1}.pdf`],
       );
     }
 
@@ -208,7 +211,7 @@ async function main() {
     for (const [name, category, contactName, email, phone, website] of addressBook) {
       await client.query(
         `INSERT INTO address_book_entries (owner_id,name,category,contact_name,contact_email,contact_phone,website,notes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,'Contact favori de l’agence — recommandé pour les mariages élégants.')`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'Contact favori de l''agence — recommandé pour les mariages élégants.')`,
         [OWNER_ID, name, category, contactName, email, phone, website],
       );
     }
@@ -220,14 +223,17 @@ async function main() {
     for (const [role, content] of [
       ["user", "Préparer le brief de la saison et prioriser les dossiers actifs."],
       ["assistant", "Les dossiers Camille & Thomas et Inès & Julien sont prioritaires. Le prochain point de production concerne les prestataires et les échéances budget."],
-      ["user", "Ajouter une note de suivi pour l’équipe."],
-      ["assistant", "Note ajoutée au suivi de l’agence : vérifier les acomptes et partager le déroulé Jour J avant chaque réunion finale."],
-    ]) {
-      await client.query(`INSERT INTO messages (conversation_id,role,content) VALUES ($1,$2,$3)`, [conversation.rows[0].id, role, content]);
+      ["user", "Ajouter une note de suivi pour l'équipe."],
+      ["assistant", "Note ajoutée au suivi de l'agence : vérifier les acomptes et partager le déroulé Jour J avant chaque réunion finale."],
+    ] as const) {
+      await client.query(
+        `INSERT INTO messages (conversation_id,role,content) VALUES ($1,$2,$3)`,
+        [conversation.rows[0].id, role, content],
+      );
     }
 
     await client.query("COMMIT");
-    console.log(`Seeded ${weddingIds.length} weddings, guests/vendors/budgets/events/contracts/payments/documents and agency contacts for ${OWNER_ID}.`);
+    logger.info({ weddingCount: weddingIds.length, ownerId: OWNER_ID }, "Apple Review demo data seeded successfully.");
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
@@ -235,8 +241,3 @@ async function main() {
     client.release();
   }
 }
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
