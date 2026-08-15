@@ -84,49 +84,49 @@ function phone(screen, x, y, w = 690, h = 1280) {
 const appShots = [
   {
     file: "appstore-01-dashboard",
-    title: "Toute votre\ncélébration,\nau même endroit",
-    kicker: "Une vision claire",
+    title: "Pilotez chaque\nmariage avec\nune vue claire",
+    kicker: "Votre activité en un coup d'œil",
     body: dashboardMock(170, 790, 950, 690),
   },
   {
     file: "appstore-02-budget",
-    title: "Un budget\nqui vous\nressemble",
+    title: "Le budget de\nvos clients,\nmaîtrisé",
     kicker: "Gardez le cap",
     body: `${phone("#FDF9FD", 195, 760, 910, 1440)}${text(250, 880, "Budget", 32, plum, 700, "start", "Georgia")}${text(250, 935, "Votre équilibre, en un coup d'œil", 17, "#716471")}${rect(250, 1010, 800, 220, "#F2E6F2", 24)}${text(300, 1080, "Budget total", 19, plum, 600)}${text(300, 1160, "18 500 €", 52, plum, 700, "start", "Georgia")}${line(300, 1230, 1000, 1230, "#D7CDD7", 14)}${line(300, 1230, 760, 1230, gold, 14)}${text(250, 1340, "Catégories", 21, plum, 700)}${["Lieu & réception", "Traiteur", "Fleurs & décoration", "Photographie"].map((v, i) => `${text(270, 1415 + i * 92, v, 18, plum, 600)}${text(1000, 1415 + i * 92, ["7 200 €", "4 800 €", "1 850 €", "1 200 €"][i], 18, "#716471", 600, "end")}${line(270, 1435 + i * 92, 1000, 1435 + i * 92, "#E8DDE8", 2)}`).join("")}`,
   },
   {
     file: "appstore-03-guests",
-    title: "Vos invités,\norganisés\nsans effort",
+    title: "Les invités,\nsuivis sans\nfriction",
     kicker: "Rassemblez les réponses",
     body: `${phone("#FDF9FD", 195, 760, 910, 1440)}${text(250, 880, "Invités", 32, plum, 700, "start", "Georgia")}${text(250, 935, "86 confirmés · 24 en attente", 17, "#716471")}${rect(250, 1010, 800, 130, "#EBF3EB", 22)}${text(292, 1065, "Taux de réponse", 18, "#4A6A4A", 600)}${text(1000, 1070, "78 %", 30, "#4A6A4A", 700, "end", "Georgia")}${["Camille & Hugo", "Sarah Martin", "Léa Dupont", "Nicolas Bernard"].map((v, i) => `${rect(250, 1220 + i * 120, 58, 58, [rose, sage, gold, plum2][i], 29)}${text(280, 1260 + i * 120, v.slice(0, 1), 22, "#FBF5FB", 700, "middle")}${text(335, 1250 + i * 120, v, 19, plum, 600)}${text(335, 1280 + i * 120, ["Confirmé", "Confirmée", "Confirmée", "En attente"][i], 15, "#716471")}`).join("")}`,
   },
   {
     file: "appstore-04-vendors",
-    title: "Les bons\nprestataires,\nau bon moment",
+    title: "Vos prestataires,\ncoordonnés\nsimplement",
     kicker: "Votre équipe, enfin réunie",
     body: `${phone("#FDF9FD", 195, 760, 910, 1440)}${text(250, 880, "Prestataires", 32, plum, 700, "start", "Georgia")}${text(250, 935, "Tous vos contacts et contrats", 17, "#716471")}${["Domaine des Lumières", "Maison Camille", "Atelier Floral", "Studio Louise"].map((v, i) => `${rect(250, 1020 + i * 180, 800, 140, i % 2 ? "#FAF0F1" : "#F2E6F2", 22)}${rect(280, 1055 + i * 180, 70, 70, [sage, rose, gold, plum2][i], 18)}${text(380, 1100 + i * 180, v, 20, plum, 700)}${text(380, 1132 + i * 180, ["Lieu · Confirmé", "Traiteur · Devis reçu", "Décoration · À contacter", "Photo · Confirmé"][i], 15, "#716471")}`).join("")}`,
   },
   {
     file: "appstore-05-calendar",
-    title: "Chaque étape\nau bon rythme",
+    title: "Chaque mariage,\nau bon rythme",
     kicker: "Votre rétroplanning",
     body: `${phone("#FDF9FD", 195, 760, 910, 1440)}${text(250, 880, "Agenda", 32, plum, 700, "start", "Georgia")}${text(250, 935, "Les prochains jalons en vue", 17, "#716471")}${["Choisir les fleurs", "Déguster le menu", "Envoyer les invitations", "Dernier essayage"].map((v, i) => `${text(270, 1050 + i * 180, ["12", "18", "02", "24"][i], 28, gold, 700, "middle", "Georgia")}${text(330, 1048 + i * 180, ["JUIN", "JUIN", "JUIL", "AOÛT"][i], 12, "#A8893E", 700)}${line(390, 1010 + i * 180, 390, 1120 + i * 180, "#D7CDD7", 3)}${rect(430, 1010 + i * 180, 570, 112, i === 1 ? "#EBF3EB" : "#F2E6F2", 18)}${text(460, 1055 + i * 180, v, 19, plum, 700)}${text(460, 1085 + i * 180, ["À faire", "Confirmé", "À préparer", "À venir"][i], 15, "#716471")}`).join("")}`,
   },
   {
     file: "appstore-06-jour-j",
-    title: "Le jour J,\nsoyez présente\nà votre journée",
+    title: "Le Jour J,\nvous êtes\naux commandes",
     kicker: "Moins de charge mentale",
     body: `${phone("#FDF9FD", 195, 760, 910, 1440)}${text(250, 880, "Jour J", 32, plum, 700, "start", "Georgia")}${text(250, 935, "Tout est prêt. Respirez.", 17, "#716471")}${rect(250, 1010, 800, 210, plum2, 24)}${text(300, 1085, "14:00", 54, "#FBF5FB", 700, "start", "Georgia")}${text(300, 1145, "Cérémonie laïque", 21, "#F8EAF4", 600)}${text(300, 1180, "Jardin des Tuileries", 16, gold)}${["Accueil des invités", "Photos de couple", "Dîner & discours", "Ouverture du bal"].map((v, i) => `${rect(270, 1300 + i * 100, 28, 28, i < 2 ? sage : "#D7CDD7", 14)}${text(325, 1322 + i * 100, v, 19, plum, 600)}`).join("")}`,
   },
 ];
 
 const carousel = [
-  ["Votre mariage mérite mieux qu'une feuille Excel.", "Une expérience pensée pour vous accompagner du premier oui au dernier morceau.", rose],
-  ["1. Tout au même endroit.", "Invités, prestataires, budget, documents et agenda réunis dans une seule application.", gold],
-  ["2. Un budget qui reste lisible.", "Visualisez vos dépenses, vos paiements et ce qu'il vous reste à prévoir.", sage],
-  ["3. Des invités bien suivis.", "Centralisez les réponses, les coordonnées et les informations importantes.", rose],
-  ["4. Un planning qui vous rassure.", "Chaque étape est visible, datée et prête à être partagée.", gold],
-  ["Le jour J, vous profitez.", "The Nuptial Plan transforme la charge mentale en moments à vivre.", sage],
+  ["Votre agence mérite mieux qu'une feuille Excel.", "Pilotez plusieurs mariages avec une vision claire, élégante et professionnelle.", rose],
+  ["1. Chaque mariage au même endroit.", "Budget, invités, prestataires, documents et agenda réunis dans une seule application.", gold],
+  ["2. Le budget de vos clients reste lisible.", "Suivez les dépenses, paiements, contrats et arbitrages sans perdre le fil.", sage],
+  ["3. Des invités bien suivis.", "Centralisez les réponses et retrouvez rapidement les informations utiles à votre équipe.", rose],
+  ["4. Un planning qui sécurise votre production.", "Chaque étape est visible, datée et prête à être partagée avec vos clients.", gold],
+  ["Le Jour J, vous êtes aux commandes.", "The Nuptial Plan transforme votre organisation en expérience client sereine.", sage],
 ];
 
 await mkdir(out, { recursive: true });

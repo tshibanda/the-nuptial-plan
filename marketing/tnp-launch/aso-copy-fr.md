@@ -1,92 +1,100 @@
-# The Nuptial Plan — texte App Store et ASO
+# The Nuptial Plan — fiche App Store et ASO
 
 ## Positionnement
 
-Application mobile de planification de mariage pour réunir le budget, les invités, les prestataires, les documents, l'agenda et le Jour J dans un espace simple et élégant.
+Application mobile de pilotage pour Wedding Planners professionnels : gérez plusieurs mariages, vos clients, les invités, les prestataires, les budgets, les documents, l’agenda et le Jour J depuis un espace élégant et structuré.
 
 ## App Store Connect — français (France)
 
-### Nom de l'app (30 caractères max)
+### Nom de l’app
 
 The Nuptial Plan
 
-### Sous-titre (30 caractères max)
+### Sous-titre — 30 caractères maximum
 
-Organisez votre mariage sereinement
+Pilotez vos mariages sereinement
 
-### Texte promotionnel (170 caractères max)
+### Texte promotionnel — 170 caractères maximum
 
-Tout votre mariage au même endroit : budget, invités, prestataires, agenda et Jour J. Moins de charge mentale, plus de moments à vivre.
+Pilotez chaque mariage avec une vision claire : budget client, invités, prestataires, agenda et Jour J réunis dans une seule application.
 
 ### Description
 
-Votre mariage mérite un espace aussi soigné que la journée que vous imaginez.
+Votre agence mérite un outil aussi professionnel que l’expérience que vous offrez à vos clients.
 
-The Nuptial Plan vous accompagne de la première idée au dernier moment du Jour J. Réunissez vos informations essentielles dans une seule application et avancez avec une vision claire, sans multiplier les tableaux, les messages et les notes éparpillées.
+The Nuptial Plan est l’espace de pilotage mobile conçu pour les Wedding Planners. Gérez plusieurs mariages, centralisez chaque information et gardez une longueur d’avance sur les échéances, sans multiplier les tableurs, les messages et les notes éparpillées.
 
-ORGANISEZ TOUT AU MÊME ENDROIT
-• Votre tableau de bord pour garder le cap.
-• Vos mariages et informations clés accessibles rapidement.
+Passez d’un mariage à l’autre en quelques secondes et retrouvez les informations essentielles au moment où votre équipe, vos clients ou vos prestataires en ont besoin.
+
+**PILOTEZ VOTRE ACTIVITÉ**
+
+• Un tableau de bord pour piloter votre production.
+• Plusieurs mariages et informations clés accessibles rapidement.
 • Votre agenda, vos échéances et votre rétroplanning.
 
-GARDEZ LA MAÎTRISE DU BUDGET
-• Suivez le budget prévu et les dépenses engagées.
-• Organisez vos catégories, paiements et contrats.
-• Visualisez ce qui est déjà prévu et ce qu'il reste à décider.
+**MAÎTRISEZ LE BUDGET DE VOS CLIENTS**
 
-SUIVEZ VOS INVITÉS
-• Centralisez les coordonnées et les réponses.
-• Gardez une vision claire des confirmations.
-• Retrouvez les informations utiles au même endroit.
+• Suivez le budget de chaque client et les dépenses engagées.
+• Organisez les catégories, paiements, devis et contrats.
+• Visualisez les arbitrages à valider et les postes encore ouverts.
 
-COORDONNEZ VOS PRESTATAIRES
-• Réunissez vos contacts, devis, contrats et documents.
+**SUIVEZ LES INVITÉS**
+
+• Centralisez les coordonnées et les réponses de chaque mariage.
+• Gardez une vision claire des confirmations pour vos clients.
+• Retrouvez les informations utiles sans fouiller vos conversations.
+
+**COORDONNEZ VOS PRESTATAIRES**
+
+• Réunissez contacts, devis, contrats et documents.
 • Suivez les étapes importantes avec chaque prestataire.
-• Retrouvez les détails importants quand vous en avez besoin.
+• Partagez les bons éléments au bon moment avec vos clients.
 
-PRÉPAREZ LE JOUR J
+**SÉCURISEZ LE JOUR J**
+
 • Faites avancer chaque étape au bon moment.
-• Gardez votre planning sous la main.
-• Arrivez au Jour J avec moins de charge mentale et plus de sérénité.
+• Gardez le déroulé du Jour J sous la main.
+• Coordonnez votre équipe avec plus de sérénité.
 
-The Nuptial Plan est conçu pour vous aider à organiser une célébration qui vous ressemble, avec une expérience élégante, claire et profondément humaine.
+The Nuptial Plan vous aide à structurer votre production, améliorer votre suivi client et offrir une expérience Wedding Planner plus fluide, claire et professionnelle.
 
-### Mots-clés ASO (100 caractères max, sans espaces après virgules)
+### Mots-clés ASO — 100 caractères maximum
 
-mariage,planning,budget,mariée,invités,prestataires,rétroplanning,organisation,agenda,jourJ
+`weddingplanner,agence,mariage,planning,budget,clients,prestataires,invités,rétroplanning,jourJ`
 
-### Catégorie recommandée
+Les mots « mariage », « planning », « budget », « prestataires », « invités » et « rétroplanning » sont couverts sans répéter inutilement le nom de l’application ou le sous-titre.
 
-Principale : Productivité
-Secondaire : Style de vie
+### Catégories recommandées
 
-### URL de support
+- Principale : Productivité
+- Secondaire : Style de vie
 
-À compléter avec l'URL publique de support de The Nuptial Plan avant soumission.
+### Hooks vidéos
 
-### Notes de conformité
-
-Ne pas promettre d'économies garanties, de coordination professionnelle ou de résultats financiers. La promesse porte sur l'organisation, la visibilité et la réduction de la charge mentale.
-
-## Hooks vidéos
-
-1. « Votre mariage mérite mieux qu'une feuille Excel. »
-2. « Tout au même endroit. Enfin. »
-3. « Chaque euro. Chaque invité. Chaque échéance. »
-4. « Le jour J, le plan prend le relais. »
-5. « Moins de messages à retrouver. Plus de moments à vivre. »
+1. « Votre agence mérite mieux qu’une feuille Excel. »
+2. « Chaque mariage. Une seule vision. »
+3. « Le budget de vos clients, enfin lisible. »
+4. « Le Jour J, vous êtes aux commandes. »
+5. « Moins de messages à retrouver. Plus de temps pour vos clients. »
 
 ## Légendes Instagram
 
 ### Lancement
-Votre mariage mérite mieux qu'une feuille Excel. The Nuptial Plan rassemble votre budget, vos invités, vos prestataires et votre planning dans une seule application. Enregistrez ce post pour garder votre organisation sous contrôle.
+
+Votre agence mérite mieux qu’une feuille Excel. The Nuptial Plan rassemble vos mariages, budgets clients, invités, prestataires et plannings dans une seule application. Enregistrez ce post pour garder votre production sous contrôle.
 
 ### Budget
-Un budget lisible, ce n'est pas seulement une question de chiffres : c'est une question de sérénité. Suivez ce qui est prévu, engagé et encore à décider, au même endroit.
+
+Un budget client lisible, c’est une production plus sereine. Suivez ce qui est prévu, engagé et encore à arbitrer pour chaque mariage, au même endroit.
 
 ### Jour J
-Le Jour J n'est pas une liste de tâches. C'est votre journée. Préparez chaque étape en amont pour pouvoir vivre pleinement les moments qui comptent.
 
-## Hashtags de lancement
+Le Jour J est le résultat de votre préparation. Centralisez le déroulé, les prestataires et les horaires pour coordonner votre équipe avec précision.
 
-#TheNuptialPlan #OrganisationMariage #PlanningMariage #Mariage2026 #FutureMariée #BudgetMariage #PrestatairesMariage #JourJ #WeddingPlanning #MairieEtMariage
+## Hashtags
+
+#TheNuptialPlan #WeddingPlanner #WeddingPlannerFrance #AgenceMariage #OrganisationMariage #PlanningMariage #BudgetMariage #PrestatairesMariage #JourJ #WeddingBusiness
+
+## Note de conformité
+
+Ne pas promettre d’économies garanties, de coordination professionnelle automatique ou de résultats financiers. La promesse porte sur le pilotage, la visibilité, le suivi client et l’organisation de l’agence.
