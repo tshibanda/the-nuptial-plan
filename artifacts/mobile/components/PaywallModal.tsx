@@ -6,7 +6,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSubscription } from '@/lib/subscription';
+import { getLocalizedPackagePrice, isNativeStorePricingAvailable, useSubscription } from '@/lib/subscription';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow, accentShadow } from '@/utils/shadow';
@@ -154,7 +154,7 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
                           {isAnnual ? 'Annuel' : 'Mensuel'}
                         </Text>
                         <Text style={[pw.packagePrice, { fontFamily: SERIF, color: isAnnual ? colors.plum : colors.foreground }]}>
-                          {pkg.product.priceString}
+                          {getLocalizedPackagePrice(pkg) ?? 'Prix selon votre boutique'}
                         </Text>
                         {isAnnual && (
                           <Text style={[pw.packageNote, { fontFamily: SANS, color: colors.mutedForeground }]}>
@@ -186,6 +186,12 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
                 Les achats seront disponibles après la configuration App Store et Google Play.
               </Text>
             </View>
+          )}
+
+          {!isNativeStorePricingAvailable && packages.length > 0 && (
+            <Text style={[pw.storePricingNote, { fontFamily: SANS, color: colors.mutedForeground }]}>
+              Le prix final sera affiché selon la devise de votre App Store dans la version iOS native.
+            </Text>
           )}
 
           {/* ── Restore ──────────────────────────────────────────────────── */}
@@ -319,4 +325,5 @@ const pw = StyleSheet.create({
 
   /* Legal */
   legalText: { fontSize: 10, lineHeight: 14, textAlign: 'center', paddingHorizontal: 8, marginTop: 4, opacity: 0.75 },
+  storePricingNote: { fontSize: 10, lineHeight: 14, textAlign: 'center', paddingHorizontal: 16, marginTop: 2 },
 });

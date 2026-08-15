@@ -18,7 +18,7 @@ import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow, accentShadow } from '@/utils/shadow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useSubscription } from '@/lib/subscription';
+import { getLocalizedPackagePrice, isNativeStorePricingAvailable, useSubscription } from '@/lib/subscription';
 
 // ── Row item ─────────────────────────────────────────────────────────────────
 function RowItem({ icon, label, value, iconBg, iconColor, onPress, rightElement, colors, destructive = false }: {
@@ -308,7 +308,7 @@ export default function ParametresScreen() {
                     {pkg.packageType === 'ANNUAL' ? 'Annuel' : 'Mensuel'}
                   </Text>
                   <Text style={[ps.subscriptionPrice, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                    {pkg.product.priceString}
+                    {getLocalizedPackagePrice(pkg) ?? 'Prix selon votre boutique'}
                   </Text>
                 </View>
                 <Feather name="chevron-right" size={14} color={colors.goldDim} />
@@ -317,6 +317,11 @@ export default function ParametresScreen() {
             {!subscription.available && (
               <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>
                 Les achats intégrés seront disponibles après la configuration App Store et Google Play.
+              </Text>
+            )}
+            {!isNativeStorePricingAvailable && subscription.available && (
+              <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>
+                Le prix final sera affiché selon la devise de votre App Store dans la version iOS native.
               </Text>
             )}
             {subscription.isActive && (

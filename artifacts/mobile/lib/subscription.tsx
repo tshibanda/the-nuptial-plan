@@ -34,6 +34,18 @@ const SubscriptionContext = createContext<SubscriptionContextValue>({
 // RevenueCat's Preview API mode still supports the Test Store in Expo Go.
 const isExpoGo = Constants.appOwnership === "expo";
 
+/**
+ * Apple/Google provide the localized storefront price only from a native
+ * store-connected build. Expo Go uses RevenueCat's Test Store instead, whose
+ * currency is not the user's App Store currency.
+ */
+export const isNativeStorePricingAvailable = Platform.OS !== "web" && !isExpoGo;
+
+export function getLocalizedPackagePrice(pkg: any): string | null {
+  if (!isNativeStorePricingAvailable) return null;
+  return typeof pkg?.product?.priceString === "string" ? pkg.product.priceString : null;
+}
+
 function getApiKey() {
   // Expo Go and web previews must use the Test Store key. The native iOS key
   // is only valid for an App Store-connected RevenueCat app.
