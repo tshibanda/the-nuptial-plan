@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3C1A3C"/><stop offset="1" stop-color="#5D2D5D"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#CC8C94" stop-opacity=".45"/><stop offset="1" stop-color="#CC8C94" stop-opacity="0"/></radialGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#120612" flood-opacity=".35"/></filter>
+  </defs>
+  <rect x="0" y="0" width="1080" height="1080" rx="0" fill="url(#bg)" stroke="none" stroke-width="0"/>
+  <circle cx="1020" cy="120" r="240" fill="url(#glow)"/>
+  <circle cx="20" cy="940" r="170" fill="#649064" opacity=".15"/>
+  <line x1="70" y1="92" x2="180" y2="92" stroke="#C8A96E" stroke-width="4"/>
+  <text x="70" y="155" fill="#C8A96E" font-family="Arial" font-size="26px" font-weight="700" text-anchor="start">THE NUPTIAL PLAN</text>
+  <text x="70" y="250" fill="#C8A96E" font-family="Arial" font-size="24px" font-weight="700" text-anchor="start">CARROUSEL INSTAGRAM</text>
+  <text x="70" y="340" fill="#F8F3EE" font-family="Georgia" font-size="66px" font-weight="700" text-anchor="start"><tspan x="70" dy="0">4. Un planning qui</tspan><tspan x="70" dy="73.92">vous rassure.</tspan></text>
+  <rect x="90" y="700" width="900" height="7" rx="3" fill="#C8A96E" stroke="none" stroke-width="0"/><text x="90" y="900" fill="#F8F3EE" font-family="Georgia" font-size="62px" font-weight="700" text-anchor="start"><tspan x="90" dy="0">4. Un planning qui</tspan><tspan x="90" dy="69.44000000000001">vous rassure.</tspan></text><text x="90" y="1160" fill="#F8EAF4" font-family="Arial" font-size="30px" font-weight="400" text-anchor="start"><tspan x="90" dy="0">Chaque étape est visible, datée et prête à</tspan><tspan x="90" dy="33.6">être partagée.</tspan></text><rect x="90" y="1700" width="900" height="350" rx="30" fill="#FDF9FD" stroke="none" stroke-width="0"/><text x="140" y="1790" fill="#3C1A3C" font-family="Arial" font-size="27px" font-weight="700" text-anchor="start">The Nuptial Plan</text><text x="140" y="1870" fill="#3C1A3C" font-family="Georgia" font-size="43px" font-weight="700" text-anchor="start"><tspan x="140" dy="0">Planning en vue</tspan></text><line x1="140" y1="1980" x2="760" y2="1980" stroke="#C8A96E" stroke-width="5"/><text x="140" y="2050" fill="#716471" font-family="Arial" font-size="20px" font-weight="600" text-anchor="start">Jardin Parisien · application mobile</text>
+  <text x="540" y="1000" fill="#C8A96E" font-family="Arial" font-size="22px" font-weight="700" text-anchor="middle">05  /  06</text>
+  </svg>

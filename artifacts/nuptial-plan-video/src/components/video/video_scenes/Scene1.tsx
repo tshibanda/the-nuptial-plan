@@ -1,88 +1,81 @@
 import { motion } from 'framer-motion';
-import { getAssetUrl } from '../VideoTemplate';
+import { CalendarDays, ClipboardList, UsersRound, WalletCards } from 'lucide-react';
+import { asset, FilmOrb, SceneExit, SceneKicker, WordReveal } from './shared';
 
-const CHAOS_TEXTS = [
-  { text: "200 invités", x: "15%", y: "20%", delay: 0.2, scale: 1.2 },
-  { text: "14 prestataires", x: "60%", y: "15%", delay: 0.4, scale: 1 },
-  { text: "Budget: 45 000 €", x: "25%", y: "60%", delay: 0.6, scale: 1.5 },
-  { text: "J-87", x: "70%", y: "50%", delay: 0.8, scale: 2 },
-  { text: "Plan de table", x: "10%", y: "80%", delay: 1.0, scale: 1.1 },
-  { text: "Contrats signés?", x: "55%", y: "85%", delay: 1.2, scale: 1.3 },
-  { text: "Allergies", x: "45%", y: "35%", delay: 1.4, scale: 0.9 },
+const STACK = [
+  { label: 'Invités', icon: UsersRound, tone: 'text-rose-300', angle: -8 },
+  { label: 'Prestataires', icon: ClipboardList, tone: 'text-sage-500', angle: 5 },
+  { label: 'Budget', icon: WalletCards, tone: 'text-gold-400', angle: -3 },
+  { label: 'Calendrier', icon: CalendarDays, tone: 'text-cream-100', angle: 7 },
 ];
 
 export function Scene1() {
   return (
-    <motion.div 
-      className="absolute inset-0 overflow-hidden bg-plum-900/40"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 1.1 }}
-      transition={{ duration: 1 }}
-    >
-      {/* Background Image (Planner Notebook Flatlay) */}
+    <SceneExit className="video-root">
+      <FilmOrb className="w-[80vw] h-[80vw] -right-[35vw] top-[15vh]" color="sage" />
       <motion.div
-        className="absolute inset-0 flex items-center justify-center opacity-30 mix-blend-luminosity"
-        initial={{ scale: 1.2, opacity: 0 }}
-        animate={{ scale: 1.05, opacity: 0.3 }}
-        exit={{ scale: 1, opacity: 0 }}
-        transition={{ duration: 6, ease: 'easeOut' }}
-      >
-        <img 
-          src={getAssetUrl('/images/planner-notebook.png')} 
-          alt="Planner" 
-          className="w-full h-full object-cover object-center"
-        />
-      </motion.div>
+        className="absolute inset-x-0 bottom-0 h-[48vh] opacity-45"
+        style={{ backgroundImage: `url(${asset('images/bokeh-flowers.jpg')})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        initial={{ scale: 1.15, opacity: 0 }}
+        animate={{ scale: 1, opacity: 0.45 }}
+        transition={{ duration: 4, ease: 'easeOut' }}
+      />
 
-      {/* Chaotic Typographic Swarm */}
-      <div className="absolute inset-0 z-10">
-        {CHAOS_TEXTS.map((item, i) => (
-          <motion.div
-            key={i}
-            className="absolute text-cream-100 font-display italic whitespace-nowrap"
-            style={{ 
-              left: item.x, 
-              top: item.y,
-              fontSize: `${2 * item.scale}rem`
-            }}
-            initial={{ opacity: 0, scale: 0.5, filter: 'blur(20px)', zIndex: i }}
-            animate={{ 
-              opacity: [0, 0.9, 0.4], 
-              scale: [0.5, item.scale, item.scale * 1.1],
-              filter: ['blur(20px)', 'blur(0px)', 'blur(4px)'],
-              x: [0, (i % 2 === 0 ? 30 : -30)],
-              y: [0, (i % 3 === 0 ? -20 : 20)]
-            }}
-            transition={{ 
-              duration: 4, 
-              delay: item.delay, 
-              ease: [0.16, 1, 0.3, 1],
-            }}
-          >
-            {item.text}
-          </motion.div>
-        ))}
-      </div>
-      
-      {/* Central narrative text */}
-      <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+      <div className="video-safe">
+        <SceneKicker>Concept 01 / Le plan central</SceneKicker>
+        <div className="mt-[5vh]">
+          <WordReveal delay={0.15} className="text-[13vw] leading-[0.86]">
+            Tout
+          </WordReveal>
+          <WordReveal delay={0.28} className="text-[13vw] leading-[0.86] text-gold-400">
+            au même
+          </WordReveal>
+          <WordReveal delay={0.41} className="text-[13vw] leading-[0.86] italic text-rose-300">
+            endroit.
+          </WordReveal>
+        </div>
+
         <motion.div
-          className="bg-plum-950/80 backdrop-blur-md px-12 py-8 rounded-3xl border border-rose-300/20"
-          initial={{ opacity: 0, y: 50, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 1.2, delay: 2.5, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute top-[43vh] left-[9vw] w-[68vw] h-[35vh] glass-panel rounded-[2.2rem] p-[5vw] rotate-[-4deg]"
+          initial={{ y: '45vh', rotate: 8, opacity: 0 }}
+          animate={{ y: 0, rotate: -4, opacity: 1 }}
+          transition={{ delay: 0.85, duration: 1.1, type: 'spring', stiffness: 90, damping: 18 }}
         >
-          <motion.h2 
-            className="text-gold-400 font-display text-5xl text-center"
-            initial={{ opacity: 0, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, filter: 'blur(0px)' }}
-            transition={{ duration: 1, delay: 3 }}
-          >
-            Le chaos de la perfection
-          </motion.h2>
+          <div className="flex items-center justify-between mb-[5vh]">
+            <div>
+              <div className="font-display text-[7vw] leading-none text-cream-100">Élise &amp; Thomas</div>
+              <div className="font-sans text-[2.2vw] tracking-editorial uppercase text-rose-300 mt-[1.4vh]">12 octobre / Chantilly</div>
+            </div>
+            <div className="w-[9vw] h-[9vw] rounded-full bg-gold-400/15 flex items-center justify-center text-gold-400">
+              <CalendarDays size="5vw" strokeWidth={1.2} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-[2vw]">
+            {STACK.map(({ label, icon: Icon, tone, angle }, index) => (
+              <motion.div
+                key={label}
+                className="flex items-center gap-[2vw] border-t border-cream-100/12 pt-[1.6vh]"
+                initial={{ opacity: 0, x: index % 2 ? 18 : -18 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1.25 + index * 0.14, duration: 0.5 }}
+                style={{ rotate: angle * 0.12 }}
+              >
+                <Icon className={tone} size="4.4vw" strokeWidth={1.2} />
+                <span className="font-sans text-[3.1vw] text-cream-100/78">{label}</span>
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
+
+        <motion.p
+          className="absolute bottom-[1vh] left-0 font-sans text-[3.2vw] text-cream-100/65"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.7, duration: 0.8 }}
+        >
+          Vos idées, vos équipes, vos échéances — enfin réunies.
+        </motion.p>
       </div>
-    </motion.div>
+    </SceneExit>
   );
 }

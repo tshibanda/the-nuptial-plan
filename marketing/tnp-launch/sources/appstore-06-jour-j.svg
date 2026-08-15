@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1290" height="2796" viewBox="0 0 1290 2796">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3C1A3C"/><stop offset="1" stop-color="#5D2D5D"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#CC8C94" stop-opacity=".45"/><stop offset="1" stop-color="#CC8C94" stop-opacity="0"/></radialGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#120612" flood-opacity=".35"/></filter>
+  </defs>
+  <rect x="0" y="0" width="1290" height="2796" rx="0" fill="url(#bg)" stroke="none" stroke-width="0"/>
+  <circle cx="1230" cy="120" r="240" fill="url(#glow)"/>
+  <circle cx="20" cy="2656" r="170" fill="#649064" opacity=".15"/>
+  <line x1="70" y1="92" x2="180" y2="92" stroke="#C8A96E" stroke-width="4"/>
+  <text x="70" y="155" fill="#C8A96E" font-family="Arial" font-size="26px" font-weight="700" text-anchor="start">THE NUPTIAL PLAN</text>
+  <text x="70" y="250" fill="#C8A96E" font-family="Arial" font-size="24px" font-weight="700" text-anchor="start">MOINS DE CHARGE MENTALE</text>
+  <text x="70" y="340" fill="#F8F3EE" font-family="Georgia" font-size="66px" font-weight="700" text-anchor="start"><tspan x="70" dy="0">Le jour J,</tspan><tspan x="70" dy="73.92">soyez présente</tspan><tspan x="70" dy="73.92">à votre journée</tspan></text>
+  <rect x="195" y="760" width="910" height="1440" rx="54" fill="#160A16" stroke="#9A6A9A" stroke-width="3"/>
+    <rect x="213" y="778" width="874" height="1404" rx="40" fill="#FDF9FD" stroke="none" stroke-width="0"/><text x="250" y="880" fill="#3C1A3C" font-family="Georgia" font-size="32px" font-weight="700" text-anchor="start">Jour J</text><text x="250" y="935" fill="#716471" font-family="Arial" font-size="17px" font-weight="400" text-anchor="start">Tout est prêt. Respirez.</text><rect x="250" y="1010" width="800" height="210" rx="24" fill="#5D2D5D" stroke="none" stroke-width="0"/><text x="300" y="1085" fill="#FBF5FB" font-family="Georgia" font-size="54px" font-weight="700" text-anchor="start">14:00</text><text x="300" y="1145" fill="#F8EAF4" font-family="Arial" font-size="21px" font-weight="600" text-anchor="start">Cérémonie laïque</text><text x="300" y="1180" fill="#C8A96E" font-family="Arial" font-size="16px" font-weight="400" text-anchor="start">Jardin des Tuileries</text><rect x="270" y="1300" width="28" height="28" rx="14" fill="#649064" stroke="none" stroke-width="0"/><text x="325" y="1322" fill="#3C1A3C" font-family="Arial" font-size="19px" font-weight="600" text-anchor="start">Accueil des invités</text><rect x="270" y="1400" width="28" height="28" rx="14" fill="#649064" stroke="none" stroke-width="0"/><text x="325" y="1422" fill="#3C1A3C" font-family="Arial" font-size="19px" font-weight="600" text-anchor="start">Photos de couple</text><rect x="270" y="1500" width="28" height="28" rx="14" fill="#D7CDD7" stroke="none" stroke-width="0"/><text x="325" y="1522" fill="#3C1A3C" font-family="Arial" font-size="19px" font-weight="600" text-anchor="start">Dîner &amp; discours</text><rect x="270" y="1600" width="28" height="28" rx="14" fill="#D7CDD7" stroke="none" stroke-width="0"/><text x="325" y="1622" fill="#3C1A3C" font-family="Arial" font-size="19px" font-weight="600" text-anchor="start">Ouverture du bal</text>
+  <text x="645" y="2716" fill="#C8A96E" font-family="Arial" font-size="22px" font-weight="700" text-anchor="middle">06  /  06</text>
+  </svg>

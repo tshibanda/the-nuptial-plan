@@ -7,3 +7,10 @@ uri = "file://artifacts/nuptial-plan-video/public/audio/bg_music.mp3"
 type = "audio"
 title = "background music"
 description = "Generated music: Cinematic minimal piano and soft strings, 72 BPM, elegant and intimate, wedding planner French luxury mood. Delicate piano arpeggios, subtle cello undertones, warm and refined. Patie…"
+
+[[outputs]]
+id = "jgHqyLXWeakBeS_w7DsuV"
+uri = "file://marketing/tnp-launch-kit.zip"
+type = "unspecified"
+title = "The Nuptial Plan — kit de lancement"
+description = "Archive complète avec les 6 visuels App Store, le carrousel Instagram 1080×1080, les sources SVG, les textes ASO français, les légendes, les hooks vidéo et le guide de publication."

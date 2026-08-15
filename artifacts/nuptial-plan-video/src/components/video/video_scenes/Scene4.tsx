@@ -1,69 +1,68 @@
 import { motion } from 'framer-motion';
+import { asset, FilmOrb, SceneExit, SceneKicker, WordReveal } from './shared';
 
 export function Scene4() {
   return (
-    <motion.div 
-      className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden"
-      // The background color transition to cream is handled in VideoTemplate for smooth cross-scene fade
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: 'blur(20px)' }} // Exit to loop back to Scene0
-      transition={{ duration: 1 }}
-    >
-      
-      {/* Monogram moving to corner */}
+    <SceneExit className="video-root bg-cream-100" background="bg-cream-100">
       <motion.div
-        className="absolute text-gold-400 font-display opacity-30"
-        initial={{ top: '50%', left: '50%', x: '-50%', y: '-50%', scale: 3, opacity: 0 }}
-        animate={{ top: '40px', left: '40px', x: '0%', y: '0%', scale: 1, opacity: 1 }}
-        transition={{ duration: 2, ease: [0.16, 1, 0.3, 1] }}
-        style={{ fontSize: '4rem', lineHeight: 1 }}
+        className="absolute -right-[30vw] top-[8vh] w-[100vw] h-[100vw] opacity-55"
+        animate={{ rotate: [0, 4, 0], scale: [1, 1.04, 1] }}
+        transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
       >
-        N
-      </motion.div>
-
-      {/* Finale Text */}
-      <div className="relative z-10 flex flex-col items-center text-center">
-        <div className="overflow-hidden mb-2">
-          <motion.h2 
-            className="text-plum-900 font-display text-7xl font-medium tracking-wide"
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: '0%', opacity: 1 }}
-            transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          >
-            Orchestrez le mariage parfait
-          </motion.h2>
-        </div>
-        
-        <div className="overflow-hidden mt-4">
-          <motion.h3
-            className="text-gold-400 font-display italic text-6xl"
-            initial={{ y: '-100%', opacity: 0 }}
-            animate={{ y: '0%', opacity: 1 }}
-            transition={{ duration: 1.2, delay: 1, ease: [0.16, 1, 0.3, 1] }}
-          >
-            avec excellence.
-          </motion.h3>
-        </div>
-
-        {/* Small line */}
-        <motion.div 
-          className="w-px h-16 bg-plum-900/30 mt-12"
-          initial={{ scaleY: 0, originY: 0 }}
-          animate={{ scaleY: 1 }}
-          transition={{ duration: 1, delay: 1.5, ease: 'easeOut' }}
+        <img
+          src={asset('images/botanical-texture.png')}
+          alt=""
+          className="w-full h-full object-cover mix-blend-multiply opacity-25"
         />
-        
-        <motion.p
-          className="mt-6 text-plum-900/60 font-sans tracking-[0.3em] text-sm uppercase"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 2 }}
-        >
-          The Nuptial Plan
-        </motion.p>
-      </div>
+      </motion.div>
+      <FilmOrb className="w-[64vw] h-[64vw] -left-[32vw] bottom-[2vh]" color="rose" />
 
-    </motion.div>
+      <div className="video-safe">
+        <div className="flex items-start justify-between">
+          <SceneKicker light>La suite / pour respirer</SceneKicker>
+          <motion.img
+            src={asset('tnp-gold-logo.png')}
+            alt="The Nuptial Plan"
+            className="w-[17vw] h-[17vw] object-contain"
+            initial={{ opacity: 0, scale: 0.7, rotate: -18 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ delay: 0.2, duration: 0.8, type: 'spring', stiffness: 160, damping: 16 }}
+          />
+        </div>
+
+        <div className="absolute top-[26vh] left-0 right-0">
+          <motion.div
+            className="w-[18vw] hairline mb-[4vh] bg-gradient-to-r from-plum-900/70 to-transparent"
+            initial={{ width: 0 }}
+            animate={{ width: '18vw' }}
+            transition={{ delay: 0.45, duration: 0.7 }}
+          />
+          <WordReveal delay={0.4} light className="text-[13.2vw] leading-[0.82]">
+            Respirez.
+          </WordReveal>
+          <WordReveal delay={0.58} light className="text-[13.2vw] leading-[0.82] italic text-plum-700">
+            Le reste est
+          </WordReveal>
+          <WordReveal delay={0.76} light className="text-[13.2vw] leading-[0.82]">
+            orchestré.
+          </WordReveal>
+        </div>
+
+        <motion.div
+          className="absolute bottom-[4vh] left-0 right-0 border-t border-plum-900/15 pt-[2.4vh] flex items-end justify-between"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.45, duration: 0.8 }}
+        >
+          <div>
+            <div className="font-display text-[6vw] leading-none text-plum-900">The Nuptial Plan</div>
+            <div className="font-sans text-[2.3vw] tracking-editorial uppercase text-plum-900/55 mt-[1.3vh]">
+              Planifiez avec plus de calme.
+            </div>
+          </div>
+          <div className="font-mono text-[2.4vw] text-plum-900/45">tnp / jardin parisien</div>
+        </motion.div>
+      </div>
+    </SceneExit>
   );
 }

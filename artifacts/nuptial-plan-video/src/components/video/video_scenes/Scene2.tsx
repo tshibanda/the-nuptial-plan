@@ -1,106 +1,89 @@
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Check, ChevronUp, Users, Wallet } from 'lucide-react';
+import { asset, FilmOrb, SceneExit, SceneKicker, WordReveal } from './shared';
 
 export function Scene2() {
-  const [phase, setPhase] = useState(0);
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 1000); // UI Base appears
-    const t2 = setTimeout(() => setPhase(2), 2000); // Data resolves
-    const t3 = setTimeout(() => setPhase(3), 3500); // Light sweep
-    
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, []);
-
-  const metrics = [
-    { label: "Jours Restants", value: "87", sub: "12 Octobre 2024", delay: 0 },
-    { label: "Invités", value: "184/200", sub: "92% Confirmés", delay: 0.2 },
-    { label: "Budget", value: "45k €", sub: "Enveloppe globale", delay: 0.4 },
-    { label: "Tâches", value: "24/36", sub: "Phase 3 en cours", delay: 0.6 }
+  const cards = [
+    { label: 'Budget suivi', value: '42 680 €', note: 'sur 45 000 €', color: 'text-gold-400', icon: Wallet },
+    { label: 'Invités confirmés', value: '186', note: 'sur 200 personnes', color: 'text-rose-300', icon: Users },
   ];
 
   return (
-    <motion.div 
-      className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 1 }}
-    >
-      
-      {/* UI Dashboard Mockup */}
+    <SceneExit className="video-root">
       <motion.div
-        className="relative w-[70vw] max-w-5xl h-[60vh] bg-cream-100/10 backdrop-blur-2xl rounded-3xl border border-cream-100/20 shadow-2xl overflow-hidden flex flex-col"
-        initial={{ y: '100%', rotateX: 20, opacity: 0 }}
-        animate={{ y: '0%', rotateX: 0, opacity: 1 }}
-        transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-        style={{ transformPerspective: 1200 }}
-      >
-        {/* Light Sweep Reflection */}
-        {phase >= 3 && (
-          <motion.div 
-            className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-cream-100/20 to-transparent skew-x-[-45deg] z-50 pointer-events-none"
-            initial={{ x: '-100%' }}
-            animate={{ x: '100%' }}
-            transition={{ duration: 2, ease: 'easeInOut' }}
-          />
-        )}
+        className="absolute inset-0 opacity-30"
+        style={{ backgroundImage: `url(${asset('images/botanical-texture.png')})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        animate={{ scale: [1, 1.08, 1], rotate: [0, 2, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <FilmOrb className="w-[70vw] h-[70vw] -left-[28vw] bottom-[8vh]" color="gold" />
+      <FilmOrb className="w-[48vw] h-[48vw] -right-[18vw] top-[4vh]" color="rose" delay={2} />
 
-        {/* Top Header */}
-        <div className="h-20 border-b border-cream-100/10 flex items-center px-8 justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-gold-400/20 flex items-center justify-center text-gold-400 font-display">
-              EC
-            </div>
-            <div>
-              <h3 className="font-display text-xl text-cream-100">Élise & Thomas</h3>
-              <p className="text-xs font-sans text-rose-300 opacity-80 uppercase tracking-widest">Mariage Château de Chantilly</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <div className="w-2 h-2 rounded-full bg-sage-500" />
-            <div className="w-2 h-2 rounded-full bg-cream-100/20" />
-            <div className="w-2 h-2 rounded-full bg-cream-100/20" />
-          </div>
+      <div className="video-safe">
+        <SceneKicker>Concept 02 / Les chiffres qui rassurent</SceneKicker>
+        <div className="mt-[4vh]">
+          <WordReveal delay={0.12} className="text-[11.5vw] leading-[0.86]">
+            Chaque euro.
+          </WordReveal>
+          <WordReveal delay={0.28} className="text-[11.5vw] leading-[0.86] text-gold-400 italic">
+            Chaque invité.
+          </WordReveal>
+          <motion.p
+            className="mt-[3vh] max-w-[72vw] font-sans text-[3.4vw] leading-tight text-cream-100/70"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.7 }}
+          >
+            Une information fiable au moment où vous en avez besoin.
+          </motion.p>
         </div>
 
-        {/* Dashboard Grid */}
-        <div className="flex-1 p-8 grid grid-cols-2 lg:grid-cols-4 gap-6">
-          {metrics.map((m, i) => (
-            <motion.div
-              key={i}
-              className="bg-plum-900/40 rounded-2xl p-6 border border-plum-400/20 flex flex-col justify-between relative overflow-hidden"
-              initial={{ opacity: 0, y: 20, scale: 0.9 }}
-              animate={phase >= 1 ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 20, scale: 0.9 }}
-              transition={{ duration: 0.8, delay: m.delay + 0.5, ease: [0.16, 1, 0.3, 1] }}
+        <motion.div
+          className="absolute top-[50vh] left-[2vw] right-[2vw] rounded-[2rem] border border-cream-100/16 bg-plum-950/55 p-[4vw] backdrop-blur-xl"
+          initial={{ y: '36vh', opacity: 0, scale: 0.94 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          transition={{ delay: 0.86, duration: 1, type: 'spring', stiffness: 110, damping: 18 }}
+        >
+          <div className="flex items-center justify-between mb-[3vh]">
+            <span className="font-sans text-[2.2vw] tracking-editorial uppercase text-cream-100/50">Vue d’ensemble / aujourd’hui</span>
+            <motion.span
+              className="font-mono text-[2.3vw] text-sage-500"
+              animate={{ opacity: [0.45, 1, 0.45] }}
+              transition={{ duration: 2.2, repeat: Infinity }}
             >
-              {/* Subtle background glow per card */}
-              <div className="absolute -right-10 -top-10 w-32 h-32 bg-gold-400/5 rounded-full blur-2xl" />
-              
-              <h4 className="font-sans text-sm text-cream-100/60 uppercase tracking-wider">{m.label}</h4>
-              <div className="mt-4">
-                <motion.div 
-                  className="font-display text-5xl text-gold-400 mb-1"
-                  initial={{ filter: 'blur(10px)', opacity: 0 }}
-                  animate={phase >= 2 ? { filter: 'blur(0px)', opacity: 1 } : { filter: 'blur(10px)', opacity: 0 }}
-                  transition={{ duration: 1, delay: m.delay + 1 }}
-                >
-                  {phase >= 2 ? m.value : "---"}
-                </motion.div>
-                <motion.p 
-                  className="font-sans text-xs text-rose-300"
-                  initial={{ opacity: 0 }}
-                  animate={phase >= 2 ? { opacity: 1 } : { opacity: 0 }}
-                  transition={{ duration: 1, delay: m.delay + 1.2 }}
-                >
-                  {m.sub}
-                </motion.p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-    </motion.div>
+              ● à jour
+            </motion.span>
+          </div>
+          <div className="grid grid-cols-2 gap-[2vw]">
+            {cards.map(({ label, value, note, color, icon: Icon }, index) => (
+              <motion.div
+                key={label}
+                className="glass-panel rounded-[1.2rem] p-[3vw] min-h-[18vh]"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.15 + index * 0.18, duration: 0.55 }}
+              >
+                <Icon className={`${color} mb-[2vh]`} size="5vw" strokeWidth={1.25} />
+                <div className="font-sans text-[2.3vw] uppercase tracking-[0.12em] text-cream-100/48">{label}</div>
+                <div className={`font-display text-[8vw] leading-none mt-[1vh] ${color}`}>{value}</div>
+                <div className="font-sans text-[2.6vw] text-cream-100/58 mt-[1vh]">{note}</div>
+              </motion.div>
+            ))}
+          </div>
+          <div className="mt-[3vh] flex items-center gap-[2vw]">
+            <div className="h-[1.3vh] flex-1 rounded-full bg-cream-100/10 overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-rose-300 via-gold-400 to-sage-500"
+                initial={{ width: 0 }}
+                animate={{ width: '76%' }}
+                transition={{ delay: 1.5, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+              />
+            </div>
+            <ChevronUp className="text-sage-500" size="4.5vw" />
+            <Check className="text-gold-400" size="4.5vw" />
+          </div>
+        </motion.div>
+      </div>
+    </SceneExit>
   );
 }

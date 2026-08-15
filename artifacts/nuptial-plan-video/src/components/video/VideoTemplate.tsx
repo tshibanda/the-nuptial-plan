@@ -8,11 +8,11 @@ import { Scene3 } from './video_scenes/Scene3';
 import { Scene4 } from './video_scenes/Scene4';
 
 export const SCENE_DURATIONS: Record<string, number> = {
-  opening:  6000,
-  chaos:    6000,
-  solution: 8000,
-  features: 6000,
-  finale:   4000,
+  opening:  4200,
+  chaos:    5200,
+  solution: 6400,
+  features: 6200,
+  finale:   4800,
 };
 
 const SCENE_COMPONENTS: Record<string, React.ComponentType> = {
@@ -89,7 +89,7 @@ export default function VideoTemplate({
 
   return (
     <>
-      <div className="relative w-full h-screen overflow-hidden">
+      <div className="video-root relative w-full h-screen overflow-hidden">
 
         {/* ── PERSISTENT BACKGROUND ── */}
         <motion.div
