@@ -91,7 +91,7 @@ export default function BugReportScreen() {
             <View style={[ss.formCard, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[ss.infoCard, { backgroundColor: colors.goldLight, borderColor: colors.gold + '45' }]}>
               <Feather name="mail" size={15} color={colors.goldDim} />
-              <Text style={[ss.infoText, { color: colors.plum, fontFamily: SANS }]}>Votre rapport sera préparé dans un e-mail adressé à <Text style={{ fontFamily: SANS_SEMIBOLD }}>{DESTINATION}</Text>.</Text>
+              <Text style={[ss.infoText, { color: colors.foreground, fontFamily: SANS }]}>Votre rapport sera préparé dans un e-mail adressé à <Text style={{ color: colors.foreground, fontFamily: SANS_SEMIBOLD }}>{DESTINATION}</Text>.</Text>
             </View>
 
             <Text style={[ss.label, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>DESCRIPTION DU PROBLÈME *</Text>
