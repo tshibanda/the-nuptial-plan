@@ -22,6 +22,7 @@ import {
   updateOffering,
   listPackages,
   createPackages,
+  getProductsFromPackage,
   attachProductsToPackage,
   type App,
   type Duration,
@@ -363,29 +364,29 @@ async function seed() {
     const appStoreId = allProductIds[i * 3 + 1];
     const playStoreId = allProductIds[i * 3 + 2];
 
-    const { error: attachPkgError } = await attachProductsToPackage({
+    const { data: attachedProducts, error: attachedProductsError } = await getProductsFromPackage({
       client,
       path: { project_id: project.id, package_id: pkg.id },
-      body: {
-        products: [
-          { product_id: testId, eligibility_criteria: "all" },
-          { product_id: appStoreId, eligibility_criteria: "all" },
-          { product_id: playStoreId, eligibility_criteria: "all" },
-        ],
-      },
     });
-    if (attachPkgError) {
-      if (
-        (attachPkgError as any).type === "unprocessable_entity_error" &&
-        (attachPkgError as any).message?.includes("Cannot attach product")
-      ) {
-        console.log("  Skipping: package already has an incompatible product");
-      } else {
-        throw new Error(`Failed to attach products to package: ${JSON.stringify(attachPkgError)}`);
-      }
-    } else {
-      console.log("  Attached products to package");
+    if (attachedProductsError) {
+      throw new Error(`Failed to inspect products attached to package: ${JSON.stringify(attachedProductsError)}`);
     }
+    const attachedProductIds = new Set(
+      (attachedProducts?.items ?? []).map((item) => item.product?.id ?? item.product_id),
+    );
+
+    for (const productId of [testId, appStoreId, playStoreId]) {
+      if (attachedProductIds.has(productId)) continue;
+      const { error: attachProductError } = await attachProductsToPackage({
+        client,
+        path: { project_id: project.id, package_id: pkg.id },
+        body: { products: [{ product_id: productId, eligibility_criteria: "all" }] },
+      });
+      if (attachProductError) {
+        throw new Error(`Failed to attach product ${productId} to package: ${JSON.stringify(attachProductError)}`);
+      }
+    }
+    console.log("  Package products are configured");
   }
 
   // ── Public API keys ─────────────────────────────────────────────────────────

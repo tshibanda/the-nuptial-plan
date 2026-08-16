@@ -8,6 +8,7 @@
     "seed:subscriptions": "tsx ./src/seed-subscription-products.ts",
     "seed:revenuecat": "tsx ./src/seedRevenueCat.ts",
     "seed:apple-review": "tsx ./src/seedAppleReviewData.ts",
+    "ensure:stripe-usd-prices": "tsx ./src/ensureStripeUsdPrices.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
