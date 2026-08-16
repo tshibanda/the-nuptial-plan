@@ -132,12 +132,24 @@ function DonutChart({
   categories, selectedId, onSelect,
   totalSpent, totalAllocated, currency, colors,
 }: DonutChartProps) {
-  const total = categories.reduce((s, c) => s + c.allocatedCents, 0);
-  if (total === 0 || categories.length === 0) return null;
+  if (categories.length === 0) return null;
+
+  // Prefer allocated amounts, but keep the chart useful for newly-created
+  // budgets where every category starts at zero. Falling back to spent amounts
+  // (and finally equal slices) prevents the donut from disappearing entirely.
+  const allocatedTotal = categories.reduce((s, c) => s + Math.max(0, c.allocatedCents), 0);
+  const spentTotal = categories.reduce((s, c) => s + Math.max(0, c.spentCents), 0);
+  const chartTotal = allocatedTotal || spentTotal || categories.length;
+  const valueFor = (category: BudgetCategory) =>
+    allocatedTotal > 0
+      ? Math.max(0, category.allocatedCents)
+      : spentTotal > 0
+        ? Math.max(0, category.spentCents)
+        : 1;
 
   let cursor = 0;
   const slices = categories.map((cat, i) => {
-    const fraction = cat.allocatedCents / total;
+    const fraction = valueFor(cat) / chartTotal;
     const sweep = fraction * 360;
     const startDeg = cursor + GAP_DEG / 2;
     const endDeg = cursor + sweep - GAP_DEG / 2;
