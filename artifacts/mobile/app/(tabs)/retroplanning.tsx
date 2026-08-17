@@ -277,8 +277,8 @@ function InfoChip({
 }) {
   return (
     <View style={styles.infoChip}>
-      <Feather name={icon as any} size={12} color="#6B4C68" />
-      <Text style={[styles.infoChipText, { color: colors.foreground, fontFamily: SANS }]} numberOfLines={1}>
+      <Feather name={icon as any} size={12} color={colors.plumDark} />
+      <Text style={[styles.infoChipText, { color: colors.plumDark, fontFamily: SANS }]} numberOfLines={1}>
         {value}
       </Text>
     </View>
