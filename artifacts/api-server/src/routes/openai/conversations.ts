@@ -1,8 +1,9 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { conversations, messages } from "@workspace/db";
-import { eq, asc } from "drizzle-orm";
+import { conversations, messages, weddingsTable } from "@workspace/db";
+import { eq, asc, and } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { assistantTools, executeAssistantTool } from "./assistant-tools";
 
 const router: IRouter = Router();
 const owner = (req: unknown) => (req as { userId?: string }).userId!;
@@ -17,7 +18,7 @@ Tu réponds toujours en français sauf si l'utilisateur écrit dans une autre la
 
 Si un contexte de mariage t'est fourni (noms, date, lieu, budget), utilise-le pour personnaliser tes conseils.
 
-Tu ne peux pas accéder à Internet ni modifier directement les données de l'application. Tu peux en revanche guider les utilisateurs, répondre à leurs questions, les inspirer et les aider à prendre de meilleures décisions.`;
+Tu peux agir dans les données de l'utilisateur avec l'outil disponible. N'utilise cet outil que lorsque l'utilisateur demande clairement de créer, modifier ou supprimer quelque chose. Après une action, confirme exactement ce qui a été fait. Ne prétends jamais avoir modifié une donnée si l'outil n'a pas réussi.`;
 
 /* ── List conversations ──────────────────────────────────────────────────── */
 router.get("/", async (req, res): Promise<void> => {
@@ -99,18 +100,9 @@ router.post("/:id/messages", async (req, res): Promise<void> => {
   if (!conv) { res.status(404).json({ error: "Not found" }); return; }
   if (conv.ownerId !== owner(req)) { res.status(404).json({ error: "Not found" }); return; }
 
-  const { content, weddingContext } = req.body as {
+  const { content, weddingId } = req.body as {
     content?: string;
-    weddingContext?: {
-      names?: string;
-      weddingDate?: string;
-      venue?: string;
-      daysUntil?: number;
-      budgetTotal?: number;
-      budgetSpent?: number;
-      totalGuests?: number;
-      confirmedGuests?: number;
-    };
+    weddingId?: number;
   };
 
   if (!content || typeof content !== "string" || !content.trim()) {
@@ -134,24 +126,18 @@ router.post("/:id/messages", async (req, res): Promise<void> => {
 
   const lastMessages = history.slice(-20);
 
-  // Build system prompt with optional wedding context
+  // Build context from the server-owned wedding row. Never trust client-sent
+  // wedding details for authorization or personalization.
   let systemContent = SYSTEM_PROMPT;
-  if (weddingContext && Object.keys(weddingContext).length > 0) {
-    const ctx: string[] = [];
-    if (weddingContext.names)       ctx.push(`Mariage : ${weddingContext.names}`);
-    if (weddingContext.weddingDate) ctx.push(`Date : ${new Date(weddingContext.weddingDate).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`);
-    if (weddingContext.venue)       ctx.push(`Lieu : ${weddingContext.venue}`);
-    if (weddingContext.daysUntil !== undefined)
-      ctx.push(weddingContext.daysUntil > 0 ? `Jours restants : ${weddingContext.daysUntil}` : "Le mariage a déjà eu lieu.");
-    if (weddingContext.budgetTotal) {
-      ctx.push(`Budget total : ${(weddingContext.budgetTotal / 100).toLocaleString("fr-FR")} €`);
-      if (weddingContext.budgetSpent)
-        ctx.push(`Dépensé : ${(weddingContext.budgetSpent / 100).toLocaleString("fr-FR")} €`);
+  if (typeof weddingId === "number" && Number.isInteger(weddingId)) {
+    const [wedding] = await db.select().from(weddingsTable).where(
+      and(eq(weddingsTable.id, weddingId), eq(weddingsTable.ownerId, owner(req))),
+    );
+    if (!wedding) {
+      res.status(404).json({ error: "Wedding not found" });
+      return;
     }
-    if (weddingContext.totalGuests) {
-      ctx.push(`Invités : ${weddingContext.confirmedGuests ?? 0}/${weddingContext.totalGuests} confirmés`);
-    }
-    systemContent += `\n\n---\nContexte du mariage :\n${ctx.join("\n")}`;
+    systemContent += `\n\n---\nContexte vérifié du mariage :\nMariage : ${wedding.names}\nDate : ${wedding.weddingDate}\nLieu : ${wedding.venue}\nBudget : ${wedding.totalBudget} ${wedding.currency}`;
   }
 
   // SSE headers
@@ -162,25 +148,53 @@ router.post("/:id/messages", async (req, res): Promise<void> => {
   let fullResponse = "";
 
   try {
-    const stream = await openai.chat.completions.create({
-      model: "gpt-5.6-luna",
-      max_completion_tokens: 8192,
-      messages: [
-        { role: "system", content: systemContent },
-        ...lastMessages.map((m) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        })),
-      ],
-      stream: true,
-    });
+    const modelMessages: any[] = [
+      { role: "system", content: systemContent },
+      ...lastMessages.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      })),
+    ];
 
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content;
-      if (delta) {
-        fullResponse += delta;
-        res.write(`data: ${JSON.stringify({ content: delta })}\n\n`);
+    const decision = await openai.chat.completions.create({
+      model: "gpt-5.6-luna",
+      max_completion_tokens: 4096,
+      messages: modelMessages,
+      tools: assistantTools as any,
+      tool_choice: "auto",
+      stream: false,
+    });
+    const decisionMessage: any = decision.choices[0]?.message;
+    const toolCalls = decisionMessage?.tool_calls ?? [];
+
+    if (toolCalls.length > 0) {
+      modelMessages.push(decisionMessage);
+      for (const toolCall of toolCalls) {
+        if (toolCall.type !== "function" || toolCall.function?.name !== "manage_wedding_data") continue;
+        let result: unknown;
+        try {
+          result = await executeAssistantTool(JSON.parse(toolCall.function.arguments), owner(req));
+        } catch (error) {
+          result = { error: error instanceof Error ? error.message : "Action impossible." };
+        }
+        modelMessages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(result) });
       }
+      const stream = await openai.chat.completions.create({
+        model: "gpt-5.6-luna",
+        max_completion_tokens: 8192,
+        messages: modelMessages,
+        stream: true,
+      });
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta?.content;
+        if (delta) {
+          fullResponse += delta;
+          res.write(`data: ${JSON.stringify({ content: delta })}\n\n`);
+        }
+      }
+    } else if (decisionMessage?.content) {
+      fullResponse = decisionMessage.content;
+      res.write(`data: ${JSON.stringify({ content: fullResponse })}\n\n`);
     }
 
     // Persist assistant response

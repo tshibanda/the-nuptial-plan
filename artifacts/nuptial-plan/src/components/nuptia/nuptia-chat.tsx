@@ -216,7 +216,7 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ content: trimmed, weddingContext: buildWeddingContext() }),
+        body: JSON.stringify({ content: trimmed, weddingId: activeWeddingId, weddingContext: buildWeddingContext() }),
         signal: abortRef.current.signal,
       });
 
@@ -261,7 +261,7 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
     } finally {
       setStreaming(false);
     }
-  }, [convId, streaming, getToken, buildWeddingContext]);
+  }, [convId, streaming, getToken, buildWeddingContext, activeWeddingId]);
 
   /* New conversation */
   const resetConversation = useCallback(async () => {
