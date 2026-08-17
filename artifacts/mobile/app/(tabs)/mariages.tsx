@@ -19,7 +19,7 @@ import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
-import { daysUntil } from '@/utils/format';
+import { daysUntil, initials } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { TourSheet } from '@/components/TourSheet';
@@ -234,11 +234,7 @@ export default function MariagesScreen() {
       renderItem={({ item }) => {
         const isActive = item.id === selectedWeddingId;
         const days = Math.max(0, daysUntil(item.weddingDate));
-        const rawNames = item.names ?? '';
-        const nameParts = rawNames.includes('&')
-          ? rawNames.split('&').map((s: string) => s.trim()).filter(Boolean)
-          : rawNames.split(/\s+/).filter(Boolean);
-        const av = nameParts.map((p: string) => p[0]).join('').toUpperCase().slice(0, 2);
+        const weddingInitials = initials(item.names ?? '');
         const cardShadow = isActive ? accentShadow('lg') : shadow('sm');
 
         return (
@@ -266,13 +262,18 @@ export default function MariagesScreen() {
               )}
 
               <View style={ss.wcardTop}>
-                <View style={[
-                  ss.avatar,
-                  { backgroundColor: isActive ? 'rgba(200,170,112,0.20)' : colors.muted },
-                  shadow('xs'),
-                ]}>
-                  <Text style={[ss.avatarText, { fontFamily: SERIF, color: isActive ? colors.gold : colors.plumDark }]}>{av}</Text>
-                </View>
+                <LinearGradient
+                  colors={isActive
+                    ? [colors.gold, colors.goldDim]
+                    : [colors.plumLight, colors.plum]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[ss.avatar, shadow('xs')]}
+                >
+                  <Text style={[ss.avatarText, { fontFamily: SERIF, color: isActive ? colors.plumDark : '#FBF5FB' }]}>
+                    {weddingInitials || '?'}
+                  </Text>
+                </LinearGradient>
                 <View style={ss.wcardInfo}>
                   <Text style={[ss.wcardNames, { fontFamily: SERIF, color: isActive ? '#FBF5FB' : colors.foreground }]}>
                     {item.names}

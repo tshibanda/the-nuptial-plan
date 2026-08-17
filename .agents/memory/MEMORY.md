@@ -5,6 +5,5 @@
 - [Zod v3 integer spec](zod-v3-integer-spec.md) — OpenAPI `type: integer` makes Orval generate `zod.int()` which doesn't exist in Zod v3; use `type: number` instead.
 - [Hooks in map](hooks-in-map.md) — Never call `useRoute` (or any hook) inside `.map()` — extract to a named component to fix "rendered more hooks" errors.
 - [Planner data isolation](planner-data-isolation.md) — Every wedding and private conversation is scoped to the authenticated Clerk owner; legacy unowned records stay hidden.
-- [Nuptia data actions](nuptia-actions.md) — AI mutations must use owner-scoped server tools, never direct database access or client context.
 - [Expo Launch iOS CocoaPods](expo-launch-ios-cocoapods.md) — Clerk Expo updates can be required when RN 0.81 SPM integration fails during Podfile post-install.
 - [RevenueCat store configuration](revenuecat-store-configuration.md) — Check nested package product IDs before attaching iOS/Android products idempotently.
