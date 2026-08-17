@@ -7,3 +7,4 @@
 - [Planner data isolation](planner-data-isolation.md) — Every wedding and private conversation is scoped to the authenticated Clerk owner; legacy unowned records stay hidden.
 - [Expo Launch iOS CocoaPods](expo-launch-ios-cocoapods.md) — Clerk Expo updates can be required when RN 0.81 SPM integration fails during Podfile post-install.
 - [RevenueCat store configuration](revenuecat-store-configuration.md) — Check nested package product IDs before attaching iOS/Android products idempotently.
+- [Mobile budget performance](mobile-budget-performance.md) — Start the budget query from the persisted wedding ID and never fetch with wedding ID 0.

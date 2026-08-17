@@ -23,6 +23,7 @@ import Svg, { Path, G, Text as SvgText } from 'react-native-svg';
 import {
   useListWeddings,
   useGetBudgetSummary,
+  getGetBudgetSummaryQueryKey,
   useUpdateBudgetCategory,
   useCreateBudgetCategory,
 } from '@workspace/api-client-react';
@@ -624,7 +625,10 @@ export default function BudgetScreen() {
 
   const { data: weddings } = useListWeddings();
   const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
-  const wId = activeWedding?.id ?? 0;
+  // The selected wedding is restored from AsyncStorage before the wedding list
+  // finishes loading. Use that ID immediately so Budget can fetch in parallel
+  // with the list instead of waiting for it, and never request `/weddings/0`.
+  const wId = selectedWeddingId ?? weddings?.[0]?.id ?? null;
   const currency = activeWedding?.currency ?? 'EUR';
 
   const {
@@ -632,7 +636,12 @@ export default function BudgetScreen() {
     isLoading,
     refetch,
     isRefetching,
-  } = useGetBudgetSummary(wId);
+  } = useGetBudgetSummary(wId ?? 0, {
+    query: {
+      queryKey: getGetBudgetSummaryQueryKey(wId ?? 0),
+      enabled: wId !== null,
+    },
+  });
 
   const categories: BudgetCategory[] = budgetSummary?.categories ?? [];
 
@@ -892,7 +901,7 @@ export default function BudgetScreen() {
         visible={sheetMode !== null}
         onClose={closeSheet}
         category={sheetMode === 'edit' ? editTarget : null}
-        weddingId={wId}
+        weddingId={wId ?? 0}
         currency={currency}
         onSaved={refetch}
         colors={colors}
