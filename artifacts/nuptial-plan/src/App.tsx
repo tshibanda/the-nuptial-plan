@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
@@ -37,6 +37,7 @@ const clerkPubKey = publishableKeyFromHost(
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+const IOS_APP_STORE_URL = 'https://apps.apple.com/app/id6799479925';
 
 // Clerk passes full paths; wouter's setLocation prepends base — strip to avoid doubling.
 function stripBase(path: string): string {
@@ -155,6 +156,13 @@ function SignUpPage() {
 
 // ── Landing page (unauthenticated visitors at /) ──────────────────────────────
 function LandingPage() {
+  const [showMobileAppPrompt, setShowMobileAppPrompt] = useState(false);
+
+  useEffect(() => {
+    const mobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent);
+    setShowMobileAppPrompt(mobileDevice);
+  }, []);
+
   return (
     <div className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-6 pb-20 pt-12 text-center">
       {/* Logo */}
@@ -185,6 +193,44 @@ function LandingPage() {
           Créer un compte
         </a>
       </div>
+
+      {showMobileAppPrompt && (
+        <div
+          role="dialog"
+          aria-label="Application mobile The Nuptial Plan"
+          className="mt-8 w-full max-w-sm rounded-2xl border border-[#D7CDD7] bg-white/85 p-4 text-left shadow-[0_12px_35px_rgba(93,45,93,0.12)] backdrop-blur"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-[#3C1A3C]">The Nuptial Plan sur mobile</p>
+              <p className="mt-1 text-xs leading-5 text-[#716471]">
+                Retrouvez votre espace de planification plus facilement dans l’application.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowMobileAppPrompt(false)}
+              aria-label="Fermer la proposition de téléchargement"
+              className="rounded-full px-2 py-1 text-lg leading-none text-[#9B7E9B] transition hover:bg-[#F5EFF5] hover:text-[#5D2D5D]"
+            >
+              ×
+            </button>
+          </div>
+          <a
+            href={IOS_APP_STORE_URL}
+            className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-[#5D2D5D] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#3C1A3C]"
+          >
+            Télécharger l’application
+          </a>
+          <button
+            type="button"
+            onClick={() => setShowMobileAppPrompt(false)}
+            className="mt-2 w-full rounded-lg px-4 py-2 text-xs font-medium text-[#716471] transition hover:bg-[#F5EFF5] hover:text-[#5D2D5D]"
+          >
+            Continuer sur le site
+          </button>
+        </div>
+      )}
 
       <p className="mt-12 text-xs text-[#9B7E9B]">
         Atelier de planification nuptiale · Accès réservé aux planners

@@ -20,6 +20,9 @@ import { shadow, accentShadow } from '@/utils/shadow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocalizedPackagePrice, isNativeStorePricingAvailable, useSubscription } from '@/lib/subscription';
 
+const IOS_APP_STORE_URL = 'https://apps.apple.com/app/id6799479925';
+const IOS_APP_REVIEW_URL = `${IOS_APP_STORE_URL}?action=write-review`;
+
 // ── Row item ─────────────────────────────────────────────────────────────────
 function RowItem({ icon, label, value, iconBg, iconColor, onPress, rightElement, colors, destructive = false }: {
   icon: string;
@@ -121,8 +124,8 @@ export default function ParametresScreen() {
   const openReview = () => {
     const url = Platform.OS === 'android'
       ? 'market://details?id=app.thenuptialplan.com'
-      : 'https://apps.apple.com/fr/search?term=The%20Nuptial%20Plan';
-    void Linking.openURL(url).catch(() => Linking.openURL('https://apps.apple.com/fr/search?term=The%20Nuptial%20Plan'));
+      : IOS_APP_REVIEW_URL;
+    void Linking.openURL(url).catch(() => Linking.openURL(IOS_APP_REVIEW_URL));
   };
 
   const openLegal = (path: 'privacy' | 'policy') => {
