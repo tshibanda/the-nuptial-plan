@@ -31,6 +31,8 @@ export default function Moodboards() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [open, setOpen] = useState(false);
   const form = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { title: '', description: '', imageUrl: '', sourceUrl: '', accent: '#C8A96E' } });
+  const watchedImageUrl = form.watch('imageUrl');
+  const watchedSourceUrl = form.watch('sourceUrl');
   useEffect(() => { try { setBoards(JSON.parse(localStorage.getItem(key) || '[]')); } catch { setBoards([]); } }, []);
   const save = (data: FormData) => {
     const imageUrl = data.imageUrl || (data.sourceUrl ? linkPreviewUrl(data.sourceUrl) : '');
@@ -53,7 +55,7 @@ export default function Moodboards() {
      <Sheet open={open} onOpenChange={setOpen}><SheetContent><SheetHeader><SheetTitle className="font-serif text-2xl">Nouveau moodboard</SheetTitle><SheetDescription>Créez une référence visuelle pour votre activité.</SheetDescription></SheetHeader><Form {...form}><form onSubmit={form.handleSubmit(save)} className="mt-6 space-y-4">
       <FormField control={form.control} name="title" render={({ field }) => <FormItem><FormLabel>Nom</FormLabel><FormControl><Input {...field} placeholder="Romantique botanique" /></FormControl></FormItem>} />
       <FormField control={form.control} name="imageUrl" render={({ field }) => <FormItem><FormLabel>URL de l’image</FormLabel><FormControl><Input {...field} placeholder="https://…" /></FormControl></FormItem>} />
-        <FormField control={form.control} name="sourceUrl" render={({ field }) => <FormItem><FormLabel>Lien Pinterest, Instagram ou Canva</FormLabel><FormControl><Input {...field} placeholder="https://pinterest.com/..., https://instagram.com/... ou https://canva.com/..." /></FormControl></FormItem>} />
+         <FormField control={form.control} name="sourceUrl" render={({ field }) => <FormItem><FormLabel>Lien Pinterest, Instagram ou Canva</FormLabel><FormControl><Input {...field} placeholder="https://pinterest.com/..., https://instagram.com/... ou https://canva.com/..." /></FormControl>{watchedSourceUrl && !watchedImageUrl ? <div className="overflow-hidden rounded-lg border border-border bg-muted"><img src={linkPreviewUrl(watchedSourceUrl)} alt="Aperçu du lien" className="h-40 w-full object-cover" /><p className="px-3 py-2 text-[10px] text-muted-foreground">L’aperçu du lien sera utilisé automatiquement comme image du moodboard.</p></div> : null}</FormItem>} />
       <FormField control={form.control} name="description" render={({ field }) => <FormItem><FormLabel>Intention</FormLabel><FormControl><Textarea {...field} placeholder="Textures, lumière, palette, émotion…" /></FormControl></FormItem>} />
       <Button type="submit" className="w-full">Enregistrer le moodboard</Button>
     </form></Form></SheetContent></Sheet>

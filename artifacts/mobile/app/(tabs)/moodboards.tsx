@@ -34,6 +34,7 @@ export default function MoodboardsScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUri, setImageUri] = useState('');
+  const [imageIsLinkPreview, setImageIsLinkPreview] = useState(false);
   const [sourceUrl, setSourceUrl] = useState('');
   const [accent, setAccent] = useState(accents[0]);
 
@@ -58,7 +59,19 @@ export default function MoodboardsScreen() {
       quality: 0.86,
       aspect: [4, 3],
     });
-    if (!result.canceled && result.assets[0]) setImageUri(result.assets[0].uri);
+    if (!result.canceled && result.assets[0]) {
+      setImageUri(result.assets[0].uri);
+      setImageIsLinkPreview(false);
+    }
+  };
+
+  const handleSourceUrlChange = (value: string) => {
+    setSourceUrl(value);
+    const trimmed = value.trim();
+    if (imageIsLinkPreview || !imageUri) {
+      setImageUri(trimmed ? linkPreviewUri(trimmed) : '');
+      setImageIsLinkPreview(Boolean(trimmed));
+    }
   };
 
   const save = () => {
@@ -68,7 +81,7 @@ export default function MoodboardsScreen() {
     }
     const savedSourceUrl = sourceUrl.trim();
     persist([{ id: `${Date.now()}`, title: title.trim(), description: description.trim(), imageUri: imageUri || (savedSourceUrl ? linkPreviewUri(savedSourceUrl) : ''), sourceUrl: savedSourceUrl, accent }, ...boards]);
-    setTitle(''); setDescription(''); setImageUri(''); setSourceUrl(''); setAccent(accents[0]); setAdding(false);
+    setTitle(''); setDescription(''); setImageUri(''); setImageIsLinkPreview(false); setSourceUrl(''); setAccent(accents[0]); setAdding(false);
   };
 
   const empty = useMemo(() => boards.length === 0, [boards.length]);
@@ -111,7 +124,15 @@ export default function MoodboardsScreen() {
               <TouchableOpacity onPress={chooseImage} style={[styles.imagePicker, { borderColor: colors.border, backgroundColor: colors.background }]}>
                 {imageUri ? <Image source={{ uri: imageUri }} style={styles.preview} /> : <><Feather name="image" size={24} color={colors.plum} /><Text style={[styles.pickerText, { color: colors.mutedForeground, fontFamily: SANS }]}>Choisir une image</Text></>}
               </TouchableOpacity>
-              <TextInput value={sourceUrl} onChangeText={setSourceUrl} placeholder="Lien Pinterest, Instagram ou Canva (https://…)" placeholderTextColor={colors.mutedForeground} autoCapitalize="none" keyboardType="url" style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
+              <TextInput value={sourceUrl} onChangeText={handleSourceUrlChange} placeholder="Lien Pinterest, Instagram ou Canva (https://…)" placeholderTextColor={colors.mutedForeground} autoCapitalize="none" keyboardType="url" style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
+              {imageIsLinkPreview && imageUri ? (
+                <View style={[styles.linkPreview, { borderColor: colors.border, backgroundColor: colors.background }]}>
+                  <Image source={{ uri: imageUri }} style={styles.linkPreviewImage} />
+                  <Text style={[styles.linkPreviewLabel, { color: colors.mutedForeground, fontFamily: SANS }]}>
+                    Aperçu du lien utilisé automatiquement
+                  </Text>
+                </View>
+              ) : null}
               {sourceUrl ? <Text style={[styles.linkHint, { color: colors.mutedForeground, fontFamily: SANS }]}>Le lien sera conservé avec l’inspiration et ouvert au toucher.</Text> : null}
               <TextInput value={title} onChangeText={setTitle} placeholder="Nom de l’univers *" placeholderTextColor={colors.mutedForeground} style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
               <TextInput value={description} onChangeText={setDescription} placeholder="Intention, couleurs, notes…" placeholderTextColor={colors.mutedForeground} multiline style={[styles.input, styles.textarea, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
@@ -159,6 +180,9 @@ const styles = StyleSheet.create({
   saveButton: { minHeight: 44, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   saveText: { color: '#fff', fontSize: 11 },
   linkHint: { fontSize: 10, lineHeight: 14 },
+  linkPreview: { borderWidth: 1, borderRadius: 10, overflow: 'hidden' },
+  linkPreviewImage: { width: '100%', height: 120, backgroundColor: '#E9DFE7' },
+  linkPreviewLabel: { paddingHorizontal: 10, paddingVertical: 7, fontSize: 10 },
   empty: { marginHorizontal: 16, marginTop: 10, padding: 32, borderWidth: 1, borderRadius: 16, alignItems: 'center' },
   emptyTitle: { fontSize: 24, marginTop: 12 },
   emptyBody: { fontSize: 11, lineHeight: 18, textAlign: 'center', marginTop: 7, maxWidth: 270 },
