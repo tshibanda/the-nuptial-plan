@@ -142,16 +142,14 @@ export default function RetroplanningScreen() {
     query: {
       enabled: !!weddingId,
       queryKey: getGetWeddingQueryKey(weddingId),
-      staleTime: 0,
-      refetchOnMount: 'always',
+      staleTime: 30_000,
     },
   });
   const { data: vendors = [], isLoading: vendorsLoading } = useListVendors(weddingId, {
     query: {
       enabled: !!weddingId,
       queryKey: getListVendorsQueryKey(weddingId),
-      staleTime: 0,
-      refetchOnMount: 'always',
+      staleTime: 30_000,
     },
   });
 

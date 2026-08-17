@@ -739,7 +739,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listVendors>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listVendors>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListVendorsQueryResult = NonNullable<Awaited<ReturnType<typeof listVendors>>>
@@ -892,7 +892,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVendor>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0 && id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVendor>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type GetVendorQueryResult = NonNullable<Awaited<ReturnType<typeof getVendor>>>
@@ -1481,7 +1481,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listGuests>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listGuests>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListGuestsQueryResult = NonNullable<Awaited<ReturnType<typeof listGuests>>>
@@ -1850,7 +1850,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGuestStats>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGuestStats>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type GetGuestStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getGuestStats>>>
@@ -2303,7 +2303,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBudgetCategories>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBudgetCategories>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListBudgetCategoriesQueryResult = NonNullable<Awaited<ReturnType<typeof listBudgetCategories>>>
@@ -2599,7 +2599,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBudgetSummary>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBudgetSummary>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type GetBudgetSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getBudgetSummary>>>
@@ -2676,7 +2676,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listEvents>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listEvents>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListEventsQueryResult = NonNullable<Awaited<ReturnType<typeof listEvents>>>
@@ -2972,7 +2972,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listContracts>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listContracts>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListContractsQueryResult = NonNullable<Awaited<ReturnType<typeof listContracts>>>
@@ -3268,7 +3268,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPayments>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPayments>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListPaymentsQueryResult = NonNullable<Awaited<ReturnType<typeof listPayments>>>
