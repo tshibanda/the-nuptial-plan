@@ -8,10 +8,17 @@ const router: IRouter = Router({ mergeParams: true });
 
 const p = (req: { params: Record<string, string> }, key: string) => Number(req.params[key]);
 
+function serializePayment(payment: any) {
+  return {
+    ...payment,
+    amountCents: Number(payment.amountCents ?? 0),
+  };
+}
+
 router.get("/", async (req, res): Promise<void> => {
   const weddingId = p(req, "weddingId");
   const payments = await db.select().from(paymentsTable).where(eq(paymentsTable.weddingId, weddingId)).orderBy(paymentsTable.dueDate);
-  res.json(payments);
+  res.json(payments.map(serializePayment));
 });
 
 router.post("/", async (req, res): Promise<void> => {
@@ -29,7 +36,7 @@ router.post("/", async (req, res): Promise<void> => {
     entityType: "payment",
     initials: payment!.vendorName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
   });
-  res.status(201).json(payment);
+  res.status(201).json(serializePayment(payment));
 });
 
 router.patch("/:id", async (req, res): Promise<void> => {
@@ -42,7 +49,7 @@ router.patch("/:id", async (req, res): Promise<void> => {
     amountCents: body.data.amountCents === undefined ? undefined : String(body.data.amountCents),
   }).where(and(eq(paymentsTable.id, id), eq(paymentsTable.weddingId, weddingId))).returning();
   if (!payment) { res.status(404).json({ error: "Not found" }); return; }
-  res.json(payment);
+  res.json(serializePayment(payment));
 });
 
 router.delete("/:id", async (req, res): Promise<void> => {

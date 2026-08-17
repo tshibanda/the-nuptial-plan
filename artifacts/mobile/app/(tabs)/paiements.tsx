@@ -160,8 +160,8 @@ interface SummaryCardProps {
 }
 
 function SummaryCard({ payments, currency, colors }: SummaryCardProps) {
-  const total     = payments.reduce((s, p) => s + p.amountCents, 0);
-  const paid      = payments.filter(p => p.status === 'paid').reduce((s, p) => s + p.amountCents, 0);
+  const total     = payments.reduce((s, p) => s + Number(p.amountCents ?? 0), 0);
+  const paid      = payments.filter(p => p.status === 'paid').reduce((s, p) => s + Number(p.amountCents ?? 0), 0);
   const pending   = total - paid;
   const overdueCnt = payments.filter(p => p.status === 'overdue').length;
   const paidPct   = total > 0 ? Math.round((paid / total) * 100) : 0;

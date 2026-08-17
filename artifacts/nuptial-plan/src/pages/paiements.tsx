@@ -173,7 +173,7 @@ export default function Paiements() {
 
   const pendingTotal = payments
     .filter((p) => p.status === 'pending' || p.status === 'overdue')
-    .reduce((sum, p) => sum + p.amountCents, 0);
+    .reduce((sum, p) => sum + Number(p.amountCents ?? 0), 0);
 
   if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="le suivi des paiements" />;
   return (
