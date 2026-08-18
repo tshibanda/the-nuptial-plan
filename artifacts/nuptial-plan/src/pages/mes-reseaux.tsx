@@ -1,0 +1,1 @@
+export { SocialsPage as default } from './studio';

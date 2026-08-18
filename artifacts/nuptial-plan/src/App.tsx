@@ -26,6 +26,9 @@ import Retroplanning from '@/pages/retroplanning';
 import Moodboards from '@/pages/moodboards';
 import Business from '@/pages/business';
 import PublicRsvp from '@/pages/public-rsvp';
+import MesReseaux from '@/pages/mes-reseaux';
+import MesReservations from '@/pages/mes-reservations';
+import MesRendezVous from '@/pages/mes-rendez-vous';
 
 // ── Clerk key & proxy ─────────────────────────────────────────────────────────
 // REQUIRED — copy verbatim. Resolves from hostname so one build serves multiple domains.
@@ -253,6 +256,9 @@ function AuthenticatedApp() {
             <Route path="/retroplanning" component={Retroplanning} />
             <Route path="/moodboards" component={Moodboards} />
             <Route path="/business" component={Business} />
+            <Route path="/mes-reseaux" component={MesReseaux} />
+            <Route path="/mes-reservations" component={MesReservations} />
+            <Route path="/mes-rendez-vous" component={MesRendezVous} />
             <Route path="/invites" component={Invites} />
             <Route path="/budget" component={Budget} />
             <Route path="/calendrier" component={Calendrier} />

@@ -27,6 +27,9 @@ import {
   Sparkles,
   BookOpen,
   BriefcaseBusiness,
+  Share2,
+  ClipboardCheck,
+  CalendarClock,
 } from 'lucide-react';
 import {
   useListWeddings,
@@ -79,6 +82,9 @@ const navItems = [
   { label: 'Documents', icon: Paperclip, path: '/documents', premium: true },
   { label: 'Moodboards', icon: Sparkles, path: '/moodboards', premium: true },
   { label: 'Business', icon: BriefcaseBusiness, path: '/business', premium: true },
+  { label: 'Mes réseaux', icon: Share2, path: '/mes-reseaux', premium: true },
+  { label: 'Mes réservations', icon: ClipboardCheck, path: '/mes-reservations', premium: true },
+  { label: 'Mes rendez-vous', icon: CalendarClock, path: '/mes-rendez-vous', premium: true },
   { label: 'Jour J', icon: Heart, path: '/jour-j', premium: true },
   { label: 'Paramètres', icon: Settings, path: '/parametres' },
 ];
@@ -696,6 +702,24 @@ export function AppShell({ children }: { children: ReactNode }) {
                   >
                     <BriefcaseBusiness size={13} className="text-sidebar-foreground/40" /> Mon business
                   </button>
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-reseaux'); }}
+                  >
+                    <Share2 size={13} className="text-sidebar-foreground/40" /> Mes réseaux
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-reservations'); }}
+                  >
+                    <ClipboardCheck size={13} className="text-sidebar-foreground/40" /> Mes réservations
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-rendez-vous'); }}
+                  >
+                    <CalendarClock size={13} className="text-sidebar-foreground/40" /> Mes rendez-vous
+                  </button>
                   <div className="my-1 h-px bg-sidebar-foreground/10" />
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-rose-300/80 transition hover:bg-white/[0.08]"
@@ -886,6 +910,24 @@ export function AppShell({ children }: { children: ReactNode }) {
                     >
                       <BriefcaseBusiness size={13} className="text-muted-foreground" /> Mon business
                     </button>
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      onClick={() => { setMenuOpen(false); navigate('/mes-reseaux'); }}
+                    >
+                      <Share2 size={13} className="text-muted-foreground" /> Mes réseaux
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      onClick={() => { setMenuOpen(false); navigate('/mes-reservations'); }}
+                    >
+                      <ClipboardCheck size={13} className="text-muted-foreground" /> Mes réservations
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      onClick={() => { setMenuOpen(false); navigate('/mes-rendez-vous'); }}
+                    >
+                      <CalendarClock size={13} className="text-muted-foreground" /> Mes rendez-vous
+                    </button>
                     <div className="my-1 h-px bg-border/40" />
                     <button
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-destructive/80 transition hover:bg-destructive/6"
@@ -928,7 +970,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {/* Page content — ambient gradient background */}
           <div className="content-bg flex-1 overflow-y-auto overscroll-contain">
             <div className="mx-auto flex min-h-full max-w-[1390px] flex-col px-5 pt-9 pb-28 sm:px-9 lg:px-12 lg:pt-12 lg:pb-32">
-              {!isLoading && !activeWeddingId && !['/parametres', '/carnet-adresse', '/moodboards', '/business'].includes(location) ? (
+              {!isLoading && !activeWeddingId && !['/parametres', '/carnet-adresse', '/moodboards', '/business', '/mes-reseaux', '/mes-reservations', '/mes-rendez-vous'].includes(location) ? (
                 <div className="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
                   {noWeddingTour && (
                     <PageTour

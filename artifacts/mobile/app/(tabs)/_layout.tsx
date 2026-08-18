@@ -37,6 +37,9 @@ const TAB_META: Record<string, { sf: string; feather: string; label: string }> =
   moodboards:   { sf: 'square.grid.2x2',    feather: 'image',         label: 'Moodboards' },
   business:     { sf: 'briefcase',          feather: 'briefcase',      label: 'Business' },
   'carnet-adresse': { sf: 'person.2',       feather: 'book-open',      label: 'Carnet d’adresses' },
+  'mes-reseaux': { sf: 'network',            feather: 'share-2',         label: 'Mes réseaux' },
+  'mes-reservations': { sf: 'checkmark.circle', feather: 'clipboard',  label: 'Mes réservations' },
+  'mes-rendez-vous': { sf: 'calendar.badge.clock', feather: 'clock',   label: 'Mes rendez-vous' },
   retroplanning:{ sf: 'calendar.badge.clock', feather: 'clock',       label: 'Rétro-planning' },
   'jour-j':      { sf: 'sun.max',             feather: 'sun',          label: 'Jour-J' },
 };
@@ -50,11 +53,13 @@ const ALL_TABS = [
   'index', 'mariages', 'evenements', 'prestataires',
   'invites', 'budget', 'paiements', 'contrats', 'documents',
   'parametres', 'profil', 'moodboards', 'business', 'carnet-adresse', 'retroplanning', 'jour-j',
+  'mes-reseaux', 'mes-reservations', 'mes-rendez-vous',
 ];
 
 const PREMIUM_TABS = new Set([
   'prestataires', 'invites', 'contrats', 'paiements', 'documents',
   'moodboards', 'business', 'carnet-adresse', 'jour-j',
+  'mes-reseaux', 'mes-reservations', 'mes-rendez-vous',
 ]);
 
 // ── Icon helper ────────────────────────────────────────────────────────────────
@@ -554,6 +559,9 @@ function ClassicTabLayout() {
       <Tabs.Screen name="carnet-adresse" />
       <Tabs.Screen name="retroplanning" />
       <Tabs.Screen name="jour-j" />
+      <Tabs.Screen name="mes-reseaux" />
+      <Tabs.Screen name="mes-reservations" />
+      <Tabs.Screen name="mes-rendez-vous" />
     </Tabs>
   );
 }

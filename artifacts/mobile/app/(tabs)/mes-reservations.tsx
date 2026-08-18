@@ -1,0 +1,1 @@
+export { ReservationsScreen as default } from '@/components/StudioScreens';

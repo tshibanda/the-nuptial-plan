@@ -1,0 +1,1 @@
+export { SocialsScreen as default } from '@/components/StudioScreens';
