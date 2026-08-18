@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUser } from '@clerk/react';
 import { useListWeddings } from '@workspace/api-client-react';
 import { CalendarDays, Check, ChevronRight, Clock3, Copy, Facebook, Instagram, Link2, Plus, Send, Share2, TrendingUp, Video } from 'lucide-react';
@@ -42,7 +42,7 @@ function useStudioData<T>(key: string, demo: T, enabled: boolean) {
       else localStorage.setItem(storageKey, JSON.stringify(demo));
     } catch { /* Keep the deterministic demo state when storage is unavailable. */ }
   }, [enabled, storageKey]);
-  const persist = (next: T) => { setValue(next); localStorage.setItem(storageKey, JSON.stringify(next)); };
+  const persist = useCallback((next: T) => { setValue(next); localStorage.setItem(storageKey, JSON.stringify(next)); }, [storageKey]);
   return [value, persist] as const;
 }
 
@@ -61,7 +61,42 @@ export function SocialsPage() {
   const [selected, setSelected] = useState<Platform>('instagram');
   const [postTitle, setPostTitle] = useState('');
   const account = socials.find((item) => item.platform === selected)!;
-  const connect = () => toast({ title: `Connexion ${platformNames[selected]}`, description: 'L’autorisation OAuth sera activée dès que les identifiants de l’application seront configurés.' });
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const facebookResult = params.get('facebook');
+    if (facebookResult === 'connected') {
+      toast({ title: 'Facebook connecté', description: 'Les permissions Pages ont été enregistrées.' });
+      window.history.replaceState({}, '', '/mes-reseaux');
+    } else if (facebookResult === 'error') {
+      toast({ title: 'Connexion Facebook échouée', description: 'Vérifiez l’URL de redirection et les permissions Pages dans Meta.' });
+      window.history.replaceState({}, '', '/mes-reseaux');
+    }
+    void fetch('/api/social/facebook/status', { credentials: 'include' })
+      .then(async (response) => response.ok ? await response.json() as { connected: boolean; account?: { handle?: string | null } } : null)
+      .then((result) => {
+        if (!result?.connected) return;
+        persist(socials.map((item) => item.platform === 'facebook' ? {
+          ...item,
+          status: 'connected',
+          handle: result.account?.handle ?? item.handle,
+        } : item));
+      })
+      .catch(() => undefined);
+  }, [persist, toast]);
+  const connect = async () => {
+    if (selected !== 'facebook') {
+      toast({ title: `Connexion ${platformNames[selected]}`, description: 'Le parcours OAuth de cette plateforme sera ajouté après Facebook.' });
+      return;
+    }
+    try {
+      const response = await fetch('/api/social/facebook/start?returnTo=%2Fmes-reseaux', { credentials: 'include' });
+      const data = await response.json() as { url?: string; error?: string };
+      if (!response.ok || !data.url) throw new Error(data.error ?? 'Impossible de démarrer la connexion Facebook');
+      window.location.assign(data.url);
+    } catch (error) {
+      toast({ title: 'Connexion Facebook impossible', description: error instanceof Error ? error.message : 'Réessayez dans quelques instants.' });
+    }
+  };
   const publish = () => { if (!postTitle.trim()) return; toast({ title: 'Publication planifiée', description: `${platformNames[selected]} · ${postTitle.trim()}` }); setPostTitle(''); };
   return <><Header eyebrow="MON STUDIO" title="Mes réseaux" description="Pilotez la visibilité de votre agence, suivez vos contenus et préparez vos prochaines prises de parole." />
     <div className="mb-6 grid gap-4 md:grid-cols-3">{socials.map((item) => <button key={item.platform} onClick={() => setSelected(item.platform)} className={`rounded-2xl border p-4 text-left transition ${selected === item.platform ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/40'}`}><div className="flex items-center justify-between"><span className="flex items-center gap-2 font-medium text-foreground"><SocialIcon platform={item.platform} />{platformNames[item.platform]}</span><span className={`rounded-full px-2 py-1 text-[10px] ${item.status === 'connected' ? 'bg-[#E5F1E6] text-[#4B754D]' : item.status === 'needs_reauth' ? 'bg-[#F7EEDB] text-[#9A7530]' : 'bg-muted text-muted-foreground'}`}>{item.status === 'connected' ? 'Connecté' : item.status === 'needs_reauth' ? 'À reconnecter' : 'Non connecté'}</span></div><p className="mt-4 text-sm text-muted-foreground">{item.handle || 'Connectez un compte professionnel'}</p></button>)}</div>

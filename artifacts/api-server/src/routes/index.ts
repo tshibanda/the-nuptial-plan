@@ -18,12 +18,14 @@ import addressBookRouter from "./address-book";
 import publicRsvpRouter from "./public-rsvp";
 import notificationsRouter from "./notifications";
 import subscriptionRouter from "./subscription";
+import socialRouter from "./social";
 
 const router: IRouter = Router();
 
 // Public — no auth required
 router.use(healthRouter);
 router.use("/public/rsvp", publicRsvpRouter);
+router.use("/social", socialRouter);
 
 // Auth-gated — all routes below require a valid Clerk session
 router.use(requireAuth);
