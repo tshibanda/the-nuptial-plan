@@ -26,6 +26,10 @@ import {
   Heart,
   Sparkles,
   BookOpen,
+  BriefcaseBusiness,
+  Share2,
+  ClipboardCheck,
+  CalendarClock,
 } from 'lucide-react';
 import {
   useListWeddings,
@@ -687,6 +691,34 @@ export function AppShell({ children }: { children: ReactNode }) {
                   >
                     <BookOpen size={13} className="text-sidebar-foreground/40" /> Mon carnet d’adresses
                   </button>
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    data-testid="button-sidebar-business"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/business'); }}
+                  >
+                    <BriefcaseBusiness size={13} className="text-sidebar-foreground/40" /> Mon business
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    data-testid="button-sidebar-social-networks"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-reseaux'); }}
+                  >
+                    <Share2 size={13} className="text-sidebar-foreground/40" /> Mes réseaux
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    data-testid="button-sidebar-reservations"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-reservations'); }}
+                  >
+                    <ClipboardCheck size={13} className="text-sidebar-foreground/40" /> Mes réservations
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    data-testid="button-sidebar-appointments"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-rendez-vous'); }}
+                  >
+                    <CalendarClock size={13} className="text-sidebar-foreground/40" /> Mes rendez-vous
+                  </button>
                   <div className="my-1 h-px bg-sidebar-foreground/10" />
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-rose-300/80 transition hover:bg-white/[0.08]"
@@ -855,7 +887,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               {menuOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                  <div className="absolute right-6 top-[68px] z-50 w-44 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 p-1.5 shadow-[0_8px_32px_rgba(93,45,93,0.18)] backdrop-blur-md">
+                   <div className="absolute right-6 top-[68px] z-50 w-56 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 p-1.5 shadow-[0_8px_32px_rgba(93,45,93,0.18)] backdrop-blur-md">
                     <button
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
                       data-testid="button-settings"
@@ -869,6 +901,34 @@ export function AppShell({ children }: { children: ReactNode }) {
                       onClick={() => { setMenuOpen(false); navigate('/carnet-adresse'); }}
                     >
                       <BookOpen size={13} className="text-muted-foreground" /> Mon carnet d’adresses
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      data-testid="button-header-business"
+                      onClick={() => { setMenuOpen(false); navigate('/business'); }}
+                    >
+                      <BriefcaseBusiness size={13} className="text-muted-foreground" /> Mon business
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      data-testid="button-header-social-networks"
+                      onClick={() => { setMenuOpen(false); navigate('/mes-reseaux'); }}
+                    >
+                      <Share2 size={13} className="text-muted-foreground" /> Mes réseaux
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      data-testid="button-header-reservations"
+                      onClick={() => { setMenuOpen(false); navigate('/mes-reservations'); }}
+                    >
+                      <ClipboardCheck size={13} className="text-muted-foreground" /> Mes réservations
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      data-testid="button-header-appointments"
+                      onClick={() => { setMenuOpen(false); navigate('/mes-rendez-vous'); }}
+                    >
+                      <CalendarClock size={13} className="text-muted-foreground" /> Mes rendez-vous
                     </button>
                     <div className="my-1 h-px bg-border/40" />
                     <button
