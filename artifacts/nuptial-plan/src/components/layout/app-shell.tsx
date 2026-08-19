@@ -679,13 +679,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div className="mt-1 overflow-hidden rounded-2xl border border-sidebar-border/30 bg-white/[0.06] p-1">
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
-                    data-testid="button-sidebar-settings"
-                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/parametres'); }}
-                  >
-                    <Settings size={13} className="text-sidebar-foreground/40" /> Paramètres
-                  </button>
-                  <button
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
                     data-testid="button-sidebar-address-book"
                     onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/carnet-adresse'); }}
                   >
@@ -718,6 +711,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                     onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-rendez-vous'); }}
                   >
                     <CalendarClock size={13} className="text-sidebar-foreground/40" /> Mes rendez-vous
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    data-testid="button-sidebar-settings"
+                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/parametres'); }}
+                  >
+                    <Settings size={13} className="text-sidebar-foreground/40" /> Paramètres
                   </button>
                   <div className="my-1 h-px bg-sidebar-foreground/10" />
                   <button
@@ -890,13 +890,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                    <div className="absolute right-6 top-[68px] z-50 w-56 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 p-1.5 shadow-[0_8px_32px_rgba(93,45,93,0.18)] backdrop-blur-md">
                     <button
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
-                      data-testid="button-settings"
-                      onClick={() => { setMenuOpen(false); navigate('/parametres'); }}
-                    >
-                      <Settings size={13} className="text-muted-foreground" /> Paramètres
-                    </button>
-                    <button
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
                       data-testid="button-header-address-book"
                       onClick={() => { setMenuOpen(false); navigate('/carnet-adresse'); }}
                     >
@@ -929,6 +922,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                       onClick={() => { setMenuOpen(false); navigate('/mes-rendez-vous'); }}
                     >
                       <CalendarClock size={13} className="text-muted-foreground" /> Mes rendez-vous
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      data-testid="button-settings"
+                      onClick={() => { setMenuOpen(false); navigate('/parametres'); }}
+                    >
+                      <Settings size={13} className="text-muted-foreground" /> Paramètres
                     </button>
                     <div className="my-1 h-px bg-border/40" />
                     <button
