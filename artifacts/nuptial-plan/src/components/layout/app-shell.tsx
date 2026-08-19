@@ -26,10 +26,6 @@ import {
   Heart,
   Sparkles,
   BookOpen,
-  BriefcaseBusiness,
-  Share2,
-  ClipboardCheck,
-  CalendarClock,
 } from 'lucide-react';
 import {
   useListWeddings,
@@ -81,10 +77,6 @@ const navItems = [
   { label: 'Paiements', icon: CreditCard, path: '/paiements', premium: true },
   { label: 'Documents', icon: Paperclip, path: '/documents', premium: true },
   { label: 'Moodboards', icon: Sparkles, path: '/moodboards', premium: true },
-  { label: 'Business', icon: BriefcaseBusiness, path: '/business', premium: true },
-  { label: 'Mes réseaux', icon: Share2, path: '/mes-reseaux', premium: true },
-  { label: 'Mes réservations', icon: ClipboardCheck, path: '/mes-reservations', premium: true },
-  { label: 'Mes rendez-vous', icon: CalendarClock, path: '/mes-rendez-vous', premium: true },
   { label: 'Jour J', icon: Heart, path: '/jour-j', premium: true },
   { label: 'Paramètres', icon: Settings, path: '/parametres' },
 ];
@@ -695,31 +687,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                   >
                     <BookOpen size={13} className="text-sidebar-foreground/40" /> Mon carnet d’adresses
                   </button>
-                  <button
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
-                    data-testid="button-sidebar-business"
-                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/business'); }}
-                  >
-                    <BriefcaseBusiness size={13} className="text-sidebar-foreground/40" /> Mon business
-                  </button>
-                  <button
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
-                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-reseaux'); }}
-                  >
-                    <Share2 size={13} className="text-sidebar-foreground/40" /> Mes réseaux
-                  </button>
-                  <button
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
-                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-reservations'); }}
-                  >
-                    <ClipboardCheck size={13} className="text-sidebar-foreground/40" /> Mes réservations
-                  </button>
-                  <button
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
-                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-rendez-vous'); }}
-                  >
-                    <CalendarClock size={13} className="text-sidebar-foreground/40" /> Mes rendez-vous
-                  </button>
                   <div className="my-1 h-px bg-sidebar-foreground/10" />
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-rose-300/80 transition hover:bg-white/[0.08]"
@@ -902,31 +869,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                       onClick={() => { setMenuOpen(false); navigate('/carnet-adresse'); }}
                     >
                       <BookOpen size={13} className="text-muted-foreground" /> Mon carnet d’adresses
-                    </button>
-                    <button
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
-                      data-testid="button-header-business"
-                      onClick={() => { setMenuOpen(false); navigate('/business'); }}
-                    >
-                      <BriefcaseBusiness size={13} className="text-muted-foreground" /> Mon business
-                    </button>
-                    <button
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
-                      onClick={() => { setMenuOpen(false); navigate('/mes-reseaux'); }}
-                    >
-                      <Share2 size={13} className="text-muted-foreground" /> Mes réseaux
-                    </button>
-                    <button
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
-                      onClick={() => { setMenuOpen(false); navigate('/mes-reservations'); }}
-                    >
-                      <ClipboardCheck size={13} className="text-muted-foreground" /> Mes réservations
-                    </button>
-                    <button
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
-                      onClick={() => { setMenuOpen(false); navigate('/mes-rendez-vous'); }}
-                    >
-                      <CalendarClock size={13} className="text-muted-foreground" /> Mes rendez-vous
                     </button>
                     <div className="my-1 h-px bg-border/40" />
                     <button

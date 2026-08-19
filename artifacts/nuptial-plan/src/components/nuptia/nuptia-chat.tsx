@@ -311,7 +311,9 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
         data-testid="button-nuptia-open"
       >
         <Sparkles size={22} color="#C8A96E" />
-        <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#E2B93B] text-[9px] font-bold text-[#3C1A3C]">★</span>
+        {!premiumLoading && !isPremium && (
+          <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#E2B93B] text-[9px] font-bold text-[#3C1A3C]">★</span>
+        )}
       </button>
 
       {premiumPrompt && (

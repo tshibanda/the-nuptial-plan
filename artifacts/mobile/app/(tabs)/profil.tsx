@@ -266,6 +266,18 @@ export default function ProfilScreen() {
              icon="trending-up" label="Mon business" colors={colors}
              onPress={() => router.push('/(tabs)/business')}
           />
+          <RowItem
+            icon="share-2" label="Mes réseaux" colors={colors}
+            onPress={() => router.push('/(tabs)/mes-reseaux')}
+          />
+          <RowItem
+            icon="clipboard" label="Mes réservations" colors={colors}
+            onPress={() => router.push('/(tabs)/mes-reservations')}
+          />
+          <RowItem
+            icon="clock" label="Mes rendez-vous" colors={colors}
+            onPress={() => router.push('/(tabs)/mes-rendez-vous')}
+          />
         </View>
 
         {/* Application */}
