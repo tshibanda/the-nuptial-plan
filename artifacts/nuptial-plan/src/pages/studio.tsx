@@ -3,6 +3,7 @@ import { useUser } from '@clerk/react';
 import { useListWeddings } from '@workspace/api-client-react';
 import { CalendarDays, Check, ChevronRight, Clock3, Copy, Facebook, Instagram, Link2, Plus, Send, Share2, TrendingUp, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 
 const DEMO_OWNER_ID = 'user_3HyOEsScTvQuzvLFDB5bbaGbDoq';
 const DEMO_EMAIL = 'thenuptialplan@yopmail.com';
@@ -56,11 +57,13 @@ function SocialIcon({ platform }: { platform: Platform }) { return platform === 
 export function SocialsPage() {
   const { user } = useUser();
   const { toast } = useToast();
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const demo = user?.id === DEMO_OWNER_ID || user?.primaryEmailAddress?.emailAddress === DEMO_EMAIL;
   const [socials, persist] = useStudioData('socials', demoSocials, demo);
   const [selected, setSelected] = useState<Platform>('instagram');
   const [postTitle, setPostTitle] = useState('');
   const account = socials.find((item) => item.platform === selected)!;
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="votre espace Réseaux" />;
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const facebookResult = params.get('facebook');
@@ -109,8 +112,10 @@ export function SocialsPage() {
 const statuses: Record<ReservationStatus, string> = { new: 'Nouveau', replied: 'Répondu', meeting: 'RDV à venir', booked: 'Réservé', declined: 'Refusé' };
 export function ReservationsPage() {
   const { user } = useUser(); const { toast } = useToast(); const demo = user?.id === DEMO_OWNER_ID || user?.primaryEmailAddress?.emailAddress === DEMO_EMAIL;
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const [items, persist] = useStudioData('reservations', demoReservations, demo); const [filter, setFilter] = useState<ReservationStatus | 'all'>('all'); const [adding, setAdding] = useState(false); const [form, setForm] = useState({ client: '', email: '', weddingDate: '', venue: '', service: 'Organisation complète', budget: '' });
   const filtered = filter === 'all' ? items : items.filter((item) => item.status === filter);
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="votre espace Réservations" />;
   const add = () => { if (!form.client.trim() || !form.email.trim()) return; const slug = form.client.toLowerCase().replace(/[^a-z0-9]+/g, '-'); persist([{ id: `res-${Date.now()}`, client: form.client.trim(), email: form.email.trim(), weddingDate: form.weddingDate, venue: form.venue, service: form.service, budget: Number(form.budget) || 0, status: 'new', source: 'Ajout manuel', received: new Date().toISOString().slice(0, 10), notes: '', link: `https://thenuptialplan.app/r/${slug}` }, ...items]); setForm({ client: '', email: '', weddingDate: '', venue: '', service: 'Organisation complète', budget: '' }); setAdding(false); };
   const copyLink = (link: string) => { void navigator.clipboard?.writeText(link); toast({ title: 'Lien client copié', description: 'Vous pouvez l’envoyer au couple.' }); };
   return <><Header eyebrow="MON STUDIO" title="Mes réservations" description="Centralisez les demandes de devis, gardez le fil des échanges et partagez un lien de suivi avec vos futurs clients." /><div className="mb-6 flex flex-wrap items-center justify-between gap-3"><div className="flex flex-wrap gap-2">{(['all', 'new', 'meeting', 'booked'] as const).map((value) => <button key={value} onClick={() => setFilter(value)} className={`rounded-full px-3 py-1.5 text-xs ${filter === value ? 'bg-primary text-primary-foreground' : 'border border-border text-muted-foreground'}`}>{value === 'all' ? 'Toutes' : statuses[value]}</button>)}</div><button onClick={() => setAdding(!adding)} className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"><Plus size={14} />Nouvelle demande</button></div>{adding && <ShellCard className="mb-6"><div className="grid gap-3 md:grid-cols-3">{(['client', 'email', 'weddingDate', 'venue', 'budget'] as const).map((key) => <input key={key} value={form[key]} onChange={(event) => setForm({ ...form, [key]: event.target.value })} placeholder={{ client: 'Nom du couple *', email: 'Email *', weddingDate: 'Date du mariage', venue: 'Lieu', budget: 'Budget €' }[key]} className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />)}<select value={form.service} onChange={(event) => setForm({ ...form, service: event.target.value })} className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm"><option>Organisation complète</option><option>Coordination Jour J</option><option>Conception & décoration</option></select></div><button onClick={add} className="mt-4 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">Enregistrer la demande</button></ShellCard>}<div className="space-y-3">{filtered.map((item) => <ShellCard key={item.id} className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex items-center gap-3"><h2 className="font-serif text-xl text-foreground">{item.client}</h2><span className="rounded-full bg-[#F5EFF5] px-2 py-1 text-[10px] text-primary">{statuses[item.status]}</span></div><p className="mt-1 text-xs text-muted-foreground">{item.service} · {item.source} · reçue le {item.received}</p></div><select value={item.status} onChange={(event) => persist(items.map((entry) => entry.id === item.id ? { ...entry, status: event.target.value as ReservationStatus } : entry))} className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs"><option value="new">Nouveau</option><option value="replied">Répondu</option><option value="meeting">RDV à venir</option><option value="booked">Réservé</option><option value="declined">Refusé</option></select></div><div className="mt-5 grid gap-3 text-sm md:grid-cols-3"><div><span className="block text-[10px] uppercase tracking-wide text-muted-foreground">Mariage</span>{item.weddingDate || 'À préciser'} · {item.venue || 'Lieu à préciser'}</div><div><span className="block text-[10px] uppercase tracking-wide text-muted-foreground">Budget annoncé</span>{item.budget ? `${item.budget.toLocaleString('fr-FR')} €` : 'À préciser'}</div><div><span className="block text-[10px] uppercase tracking-wide text-muted-foreground">Contact</span>{item.email}</div></div><p className="mt-4 rounded-xl bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">{item.notes || 'Aucune note de suivi.'}</p><button onClick={() => copyLink(item.link)} className="mt-4 flex items-center gap-2 text-xs font-medium text-primary"><Copy size={13} />Copier le lien client <ChevronRight size={13} /></button></ShellCard>)}</div></>;
@@ -118,6 +123,8 @@ export function ReservationsPage() {
 
 export function AppointmentsPage() {
   const { user } = useUser(); const { data: weddings = [] } = useListWeddings(); const demo = user?.id === DEMO_OWNER_ID || user?.primaryEmailAddress?.emailAddress === DEMO_EMAIL; const [items, persist] = useStudioData('appointments', demoAppointments, demo);
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="votre espace Rendez-vous" />;
   const weddingEvents = useMemo(() => weddings.slice(0, 4).map((wedding, index) => ({ id: `wedding-${wedding.id}`, title: `Point d’avancement ${wedding.names}`, date: wedding.weddingDate, time: '10:00', venue: wedding.venue, wedding: wedding.names, type: 'Échéance mariage', reminder: true })), [weddings]);
   const all = [...items, ...weddingEvents.filter((event) => !items.some((item) => item.id === event.id))].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
   const toggleReminder = (id: string) => persist(items.map((item) => item.id === id ? { ...item, reminder: !item.reminder } : item));
