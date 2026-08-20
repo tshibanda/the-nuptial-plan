@@ -116,7 +116,9 @@ function providerOauthUrl(platform: Platform, userId: string, client: OAuthClien
   const oauthUrl = new URL("https://www.tiktok.com/v2/auth/authorize/");
   oauthUrl.searchParams.set("client_key", clientKey);
   oauthUrl.searchParams.set("redirect_uri", callbackUri);
-  oauthUrl.searchParams.set("scope", "user.info.basic,user.info.stats,video.list,video.publish");
+  // The current studio reads profile/video metrics and prepares publications
+  // in the editorial calendar; it does not publish directly to TikTok yet.
+  oauthUrl.searchParams.set("scope", "user.info.basic,user.info.stats,video.list");
   oauthUrl.searchParams.set("state", state);
   oauthUrl.searchParams.set("response_type", "code");
   return oauthUrl.toString();
