@@ -18,14 +18,16 @@ import addressBookRouter from "./address-book";
 import publicRsvpRouter from "./public-rsvp";
 import notificationsRouter from "./notifications";
 import subscriptionRouter from "./subscription";
-import socialRouter from "./social";
+import socialRouter, { oauthCallbackHandler } from "./social";
 
 const router: IRouter = Router();
 
 // Public — no auth required
 router.use(healthRouter);
 router.use("/public/rsvp", publicRsvpRouter);
-router.use("/social", socialRouter);
+// OAuth callback arrives from external providers with no Clerk session — must be public.
+router.get("/social/oauth/callback", oauthCallbackHandler);
+router.get("/social/oauth/callback/:platform", oauthCallbackHandler);
 
 // Auth-gated — all routes below require a valid Clerk session
 router.use(requireAuth);
@@ -34,6 +36,7 @@ router.use("/openai/conversations", openaiConversationsRouter);
 router.use(addressBookRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/subscription", subscriptionRouter);
+router.use("/social", socialRouter);
 router.use(dashboardRouter);
 router.use("/weddings", weddingsRouter);
 router.use("/weddings/:weddingId/vendors", requireWeddingOwnership, vendorsRouter);

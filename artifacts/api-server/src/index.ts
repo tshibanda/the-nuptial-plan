@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { runMigrations } from "stripe-replit-sync";
 import { getStripeSync } from "./stripeClient";
 import { seedAppleReview } from "./lib/seedAppleReview";
+import { ensureSocialSchema } from "./lib/socialSchema";
 
 const rawPort = process.env["PORT"];
 
@@ -33,6 +34,11 @@ async function initializeStripe() {
 }
 
 await initializeStripe().catch((error) => logger.error({ error }, "Stripe initialization failed"));
+
+await ensureSocialSchema().catch((error) => {
+  logger.error({ error }, "Social account schema initialization failed");
+  throw error;
+});
 
 await seedAppleReview().catch((error) => logger.error({ error }, "Apple Review seed failed"));
 
