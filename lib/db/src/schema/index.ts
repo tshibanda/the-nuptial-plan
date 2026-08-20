@@ -14,3 +14,4 @@ export * from "./notifications";
 export * from "./subscriptions";
 export * from "./milestones";
 export * from "./social-accounts";
+export * from "./editorial-posts";

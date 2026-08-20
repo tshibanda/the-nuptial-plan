@@ -19,6 +19,7 @@ import publicRsvpRouter from "./public-rsvp";
 import notificationsRouter from "./notifications";
 import subscriptionRouter from "./subscription";
 import socialRouter, { oauthCallbackHandler } from "./social";
+import editorialPostsRouter from "./editorial-posts";
 
 const router: IRouter = Router();
 
@@ -37,6 +38,7 @@ router.use(addressBookRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/subscription", subscriptionRouter);
 router.use("/social", socialRouter);
+router.use("/editorial-posts", editorialPostsRouter);
 router.use(dashboardRouter);
 router.use("/weddings", weddingsRouter);
 router.use("/weddings/:weddingId/vendors", requireWeddingOwnership, vendorsRouter);
