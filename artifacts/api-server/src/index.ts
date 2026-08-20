@@ -1,11 +1,12 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { db, calendarEventsTable, notificationsTable } from "@workspace/db";
+import { db, calendarEventsTable, notificationsTable, socialAccountsTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { runMigrations } from "stripe-replit-sync";
 import { getStripeSync } from "./stripeClient";
 import { seedAppleReview } from "./lib/seedAppleReview";
 import { ensureSocialSchema } from "./lib/socialSchema";
+import { refreshSocialAccountStats } from "./routes/social";
 
 const rawPort = process.env["PORT"];
 
@@ -75,7 +76,55 @@ async function createTaskDueNotifications() {
   }
 }
 
+const SOCIAL_STATS_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
+let socialStatsRefreshInFlight = false;
+
+/**
+ * Refresh every connected account without requiring a planner session.
+ * Each account is isolated so a failed provider request cannot prevent the
+ * remaining accounts from being refreshed. The shared sync function only
+ * writes a new cache after a successful stats response.
+ */
+async function refreshConnectedSocialStats() {
+  if (socialStatsRefreshInFlight) {
+    logger.info("Skipping social stats refresh because the previous run is still in progress");
+    return;
+  }
+  socialStatsRefreshInFlight = true;
+  try {
+    const accounts = await db.select().from(socialAccountsTable)
+      .where(eq(socialAccountsTable.status, "connected"));
+    let refreshed = 0;
+    let failed = 0;
+    for (const account of accounts) {
+      try {
+        const stats = await refreshSocialAccountStats(account);
+        if (stats) refreshed += 1;
+      } catch (error) {
+        failed += 1;
+        logger.warn(
+          { error, accountId: account.id, ownerId: account.ownerId, platform: account.platform },
+          "Scheduled social stats refresh failed",
+        );
+      }
+    }
+    logger.info({ accounts: accounts.length, refreshed, failed }, "Scheduled social stats refresh completed");
+  } catch (error) {
+    logger.error({ error }, "Unable to load accounts for scheduled social stats refresh");
+  } finally {
+    socialStatsRefreshInFlight = false;
+  }
+}
+
 void createTaskDueNotifications().catch((error) => logger.error({ error }, "Unable to create task notifications"));
 setInterval(() => {
   void createTaskDueNotifications().catch((error) => logger.error({ error }, "Unable to create task notifications"));
 }, 60 * 60 * 1000);
+
+// Run once after startup and then on a predictable six-hour cadence. The
+// initial call is intentionally non-blocking so API startup is not delayed by
+// provider latency.
+void refreshConnectedSocialStats();
+setInterval(() => {
+  void refreshConnectedSocialStats();
+}, SOCIAL_STATS_REFRESH_INTERVAL_MS);

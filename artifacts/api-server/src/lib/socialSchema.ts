@@ -26,6 +26,32 @@ export async function ensureSocialSchema(): Promise<void> {
     );
     CREATE UNIQUE INDEX IF NOT EXISTS social_accounts_owner_platform_idx
       ON social_accounts (owner_id, platform);
+
+    -- Upgrade the first-generation social account table in place. The old
+    -- table used an integer id and encrypted_access_token; keeping the
+    -- additive migration here avoids losing connected accounts on deploy.
+    ALTER TABLE social_accounts ALTER COLUMN id TYPE text USING id::text;
+    ALTER TABLE social_accounts ADD COLUMN IF NOT EXISTS access_token text;
+    ALTER TABLE social_accounts ADD COLUMN IF NOT EXISTS refresh_token text;
+    ALTER TABLE social_accounts ADD COLUMN IF NOT EXISTS page_id text;
+    ALTER TABLE social_accounts ADD COLUMN IF NOT EXISTS scopes text;
+    ALTER TABLE social_accounts ADD COLUMN IF NOT EXISTS status text;
+    ALTER TABLE social_accounts ADD COLUMN IF NOT EXISTS stats_cache jsonb;
+    ALTER TABLE social_accounts ADD COLUMN IF NOT EXISTS stats_updated_at timestamptz;
+    ALTER TABLE social_accounts ADD COLUMN IF NOT EXISTS encrypted_access_token text;
+    UPDATE social_accounts
+      SET access_token = COALESCE(access_token, encrypted_access_token),
+          handle = COALESCE(handle, ''),
+          scopes = COALESCE(scopes, ''),
+          status = COALESCE(status, 'connected')
+      WHERE access_token IS NULL OR handle IS NULL OR scopes IS NULL OR status IS NULL;
+    ALTER TABLE social_accounts ALTER COLUMN access_token SET NOT NULL;
+    ALTER TABLE social_accounts ALTER COLUMN handle SET DEFAULT '';
+    ALTER TABLE social_accounts ALTER COLUMN handle SET NOT NULL;
+    ALTER TABLE social_accounts ALTER COLUMN scopes SET DEFAULT '';
+    ALTER TABLE social_accounts ALTER COLUMN scopes SET NOT NULL;
+    ALTER TABLE social_accounts ALTER COLUMN status SET DEFAULT 'connected';
+    ALTER TABLE social_accounts ALTER COLUMN status SET NOT NULL;
   `);
 
   // Upgrade credentials created before storage encryption was introduced.

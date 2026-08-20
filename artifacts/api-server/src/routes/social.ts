@@ -13,7 +13,7 @@
 
 import crypto from "crypto";
 import { Router, type Request, type Response, type IRouter } from "express";
-import { db, socialAccountsTable } from "@workspace/db";
+import { db, socialAccountsTable, type SocialAccount } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { decryptToken, encryptToken } from "../lib/socialCrypto";
@@ -23,6 +23,13 @@ const router: IRouter = Router();
 type Platform = "facebook" | "instagram" | "tiktok";
 const PLATFORMS: Platform[] = ["facebook", "instagram", "tiktok"];
 type OAuthClient = "web" | "mobile";
+
+export class SocialSyncError extends Error {
+  constructor(message: string, public readonly statusCode = 403) {
+    super(message);
+    this.name = "SocialSyncError";
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -575,6 +582,119 @@ router.delete("/accounts/:platform", async (req: Request, res: Response): Promis
   res.json({ ok: true });
 });
 
+/**
+ * Refresh one account's metrics. This is intentionally independent of an HTTP
+ * request so scheduled refreshes and manual Sync buttons use the same code.
+ *
+ * A provider response of null is treated as a failed refresh: the existing
+ * statsCache and statsUpdatedAt are left untouched.
+ */
+export async function refreshSocialAccountStats(account: SocialAccount): Promise<SocialAccount["statsCache"]> {
+  const userId = account.ownerId;
+  const platform = account.platform as Platform;
+
+  // Decrypt only inside this server process. Tokens are re-encrypted before
+  // any credential update and are never returned to a client.
+  account.accessToken = decryptToken(account.accessToken);
+  account.refreshToken = account.refreshToken ? decryptToken(account.refreshToken) : null;
+
+  if (account.tokenExpiresAt && account.tokenExpiresAt <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)) {
+    if ((platform === "facebook" || platform === "instagram") && account.refreshToken) {
+      try {
+        const renewed = await refreshMetaAccount(platform, account.refreshToken);
+        await db.update(socialAccountsTable)
+          .set({
+            ...renewed,
+            accessToken: encryptToken(renewed.accessToken),
+            refreshToken: encryptToken(renewed.refreshToken),
+            status: "connected",
+            updatedAt: new Date(),
+          })
+          .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
+        account.accessToken = renewed.accessToken;
+        account.refreshToken = renewed.refreshToken;
+        account.tokenExpiresAt = renewed.tokenExpiresAt;
+        account.pageId = renewed.pageId;
+      } catch (error) {
+        logger.warn({ error, platform, userId }, "Meta token refresh failed");
+        await db.update(socialAccountsTable)
+          .set({ status: "needs_reauth", updatedAt: new Date() })
+          .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
+        throw new SocialSyncError("Token expired — please reconnect");
+      }
+    } else if (platform !== "tiktok") {
+      await db.update(socialAccountsTable)
+        .set({ status: "needs_reauth", updatedAt: new Date() })
+        .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
+      throw new SocialSyncError("Token expired — please reconnect");
+    }
+  }
+
+  let statsCache: SocialAccount["statsCache"] = null;
+  try {
+    if (platform === "facebook" && account.pageId) {
+      statsCache = await fetchFacebookStats(account.accessToken, account.pageId);
+    } else if (platform === "instagram" && account.pageId) {
+      statsCache = await fetchInstagramStats(account.accessToken, account.pageId);
+    } else if (platform === "tiktok") {
+      const clientKey = process.env.TIKTOK_CLIENT_KEY;
+      const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
+      if (clientKey && clientSecret && account.refreshToken) {
+        try {
+          const refreshRes = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_key: clientKey,
+              client_secret: clientSecret,
+              grant_type: "refresh_token",
+              refresh_token: account.refreshToken,
+            }),
+          });
+          const refreshJson = await refreshRes.json() as { access_token?: string; refresh_token?: string; expires_in?: number };
+          if (!refreshRes.ok || !refreshJson.access_token) throw new Error("TikTok refresh token was rejected");
+          const expiresAt = new Date(Date.now() + (refreshJson.expires_in ?? 86400) * 1000);
+          await db.update(socialAccountsTable)
+            .set({
+              accessToken: encryptToken(refreshJson.access_token),
+              refreshToken: encryptToken(refreshJson.refresh_token ?? account.refreshToken),
+              tokenExpiresAt: expiresAt,
+            })
+            .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
+          account.accessToken = refreshJson.access_token;
+          account.refreshToken = refreshJson.refresh_token ?? account.refreshToken;
+          account.tokenExpiresAt = expiresAt;
+          statsCache = await fetchTikTokStats(refreshJson.access_token);
+        } catch (error) {
+          logger.warn({ error, platform, userId }, "TikTok token refresh failed");
+          await db.update(socialAccountsTable)
+            .set({ status: "needs_reauth", updatedAt: new Date() })
+            .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
+          throw new SocialSyncError("TikTok token is no longer valid — please reconnect");
+        }
+      } else {
+        if (account.tokenExpiresAt && account.tokenExpiresAt <= new Date()) {
+          await db.update(socialAccountsTable)
+            .set({ status: "needs_reauth", updatedAt: new Date() })
+            .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
+          throw new SocialSyncError("TikTok token expired — please reconnect");
+        }
+        statsCache = await fetchTikTokStats(account.accessToken);
+      }
+    }
+  } catch (error) {
+    if (error instanceof SocialSyncError) throw error;
+    logger.warn({ error, platform, userId }, "Stats sync failed");
+  }
+
+  if (statsCache) {
+    await db.update(socialAccountsTable)
+      .set({ statsCache, statsUpdatedAt: new Date(), status: "connected", updatedAt: new Date() })
+      .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
+  }
+  return statsCache;
+}
+
 // ---------------------------------------------------------------------------
 // POST /social/accounts/:platform/sync — refresh stats from the API
 // ---------------------------------------------------------------------------
@@ -596,112 +716,17 @@ router.post("/accounts/:platform/sync", async (req: Request, res: Response): Pro
     return;
   }
 
-  // Decrypt only inside this server request. Values are never returned in API
-  // responses and are re-encrypted before any database update.
-  account.accessToken = decryptToken(account.accessToken);
-  account.refreshToken = account.refreshToken ? decryptToken(account.refreshToken) : null;
-
-  // Renew expiring Meta tokens on the server. TikTok refreshes below in its
-  // provider-specific sync block. No token ever travels to a browser/client.
-  if (account.tokenExpiresAt && account.tokenExpiresAt <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)) {
-    if ((platform === "facebook" || platform === "instagram") && account.refreshToken) {
-      try {
-        const renewed = await refreshMetaAccount(platform, account.refreshToken);
-        await db.update(socialAccountsTable)
-          .set({
-            ...renewed,
-            accessToken: encryptToken(renewed.accessToken),
-            refreshToken: encryptToken(renewed.refreshToken),
-            status: "connected",
-            updatedAt: new Date(),
-          })
-          .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
-        account.accessToken = renewed.accessToken;
-        account.refreshToken = renewed.refreshToken;
-        account.tokenExpiresAt = renewed.tokenExpiresAt;
-        account.pageId = renewed.pageId;
-      } catch (error) {
-        logger.warn({ error, platform }, "Meta token refresh failed");
-        await db.update(socialAccountsTable)
-          .set({ status: "needs_reauth", updatedAt: new Date() })
-          .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
-        res.status(403).json({ error: "Token expired — please reconnect" });
-        return;
-      }
-    } else if (platform !== "tiktok") {
-      await db.update(socialAccountsTable)
-        .set({ status: "needs_reauth", updatedAt: new Date() })
-        .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
-      res.status(403).json({ error: "Token expired — please reconnect" });
+  try {
+    const statsCache = await refreshSocialAccountStats(account);
+    res.json({ ok: true, statsCache });
+  } catch (error) {
+    if (error instanceof SocialSyncError) {
+      res.status(error.statusCode).json({ error: error.message });
       return;
     }
+    logger.error({ error, platform, userId }, "Manual social stats sync failed");
+    res.status(500).json({ error: "Unable to sync social account" });
   }
-
-  let statsCache = null;
-  try {
-    if (platform === "facebook" && account.pageId) {
-      statsCache = await fetchFacebookStats(account.accessToken, account.pageId);
-    } else if (platform === "instagram" && account.pageId) {
-      statsCache = await fetchInstagramStats(account.accessToken, account.pageId);
-    } else if (platform === "tiktok") {
-      // Attempt token refresh if refresh_token available
-      const clientKey = process.env.TIKTOK_CLIENT_KEY;
-      const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
-      if (clientKey && clientSecret && account.refreshToken) {
-        try {
-          const refreshRes = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-              client_key: clientKey,
-              client_secret: clientSecret,
-              grant_type: "refresh_token",
-              refresh_token: account.refreshToken,
-            }),
-          });
-          const refreshJson = await refreshRes.json() as { access_token?: string; refresh_token?: string; expires_in?: number };
-          if (!refreshRes.ok || !refreshJson.access_token) {
-            throw new Error("TikTok refresh token was rejected");
-          }
-          const expiresAt = new Date(Date.now() + (refreshJson.expires_in ?? 86400) * 1000);
-          await db.update(socialAccountsTable)
-            .set({
-              accessToken: encryptToken(refreshJson.access_token),
-              refreshToken: encryptToken(refreshJson.refresh_token ?? account.refreshToken),
-              tokenExpiresAt: expiresAt,
-            })
-            .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
-          statsCache = await fetchTikTokStats(refreshJson.access_token);
-        } catch (error) {
-          logger.warn({ error, platform }, "TikTok token refresh failed");
-          await db.update(socialAccountsTable)
-            .set({ status: "needs_reauth", updatedAt: new Date() })
-            .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
-          res.status(403).json({ error: "TikTok token is no longer valid — please reconnect" });
-          return;
-        }
-      } else {
-        if (account.tokenExpiresAt && account.tokenExpiresAt <= new Date()) {
-          await db.update(socialAccountsTable)
-            .set({ status: "needs_reauth", updatedAt: new Date() })
-            .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
-          res.status(403).json({ error: "TikTok token expired — please reconnect" });
-          return;
-        }
-        statsCache = await fetchTikTokStats(account.accessToken);
-      }
-    }
-  } catch (err) {
-    logger.warn({ err, platform }, "Stats sync failed");
-  }
-
-  if (statsCache) {
-    await db.update(socialAccountsTable)
-      .set({ statsCache, statsUpdatedAt: new Date(), status: "connected", updatedAt: new Date() })
-      .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
-  }
-
-  res.json({ ok: true, statsCache });
 });
 
 export default router;
