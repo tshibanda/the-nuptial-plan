@@ -28,6 +28,11 @@ const demoSocials: Social[] = [
   { platform: 'facebook', handle: 'Atelier Claire Wedding Planner', status: 'needs_reauth', followers: 3180, reach: 9400, engagement: 4.1, posts: 9, lastPost: '2026-08-12' },
   { platform: 'tiktok', handle: '', status: 'disconnected', followers: 0, reach: 0, engagement: 0, posts: 0, lastPost: '' },
 ];
+const disconnectedSocials: Social[] = [
+  { platform: 'instagram', handle: '', status: 'disconnected', followers: 0, reach: 0, engagement: 0, posts: 0, lastPost: '' },
+  { platform: 'facebook', handle: '', status: 'disconnected', followers: 0, reach: 0, engagement: 0, posts: 0, lastPost: '' },
+  { platform: 'tiktok', handle: '', status: 'disconnected', followers: 0, reach: 0, engagement: 0, posts: 0, lastPost: '' },
+];
 const demoReservations: Reservation[] = [
   { id: 'res-1', client: 'Élodie & Marc', email: 'elodie.marc@example.test', weddingDate: '2027-06-12', venue: 'Domaine des Lumières', service: 'Organisation complète', budget: 48000, status: 'new', source: 'Instagram', received: '2026-08-18', notes: 'Souhaitent une ambiance jardin méditerranéen.', link: 'https://thenuptialplan.app/r/atelier-elodie-marc' },
   { id: 'res-2', client: 'Nora & Yanis', email: 'nora.yanis@example.test', weddingDate: '2027-09-04', venue: 'Château de Vaux-le-Vicomte', service: 'Coordination Jour J', budget: 32000, status: 'meeting', source: 'Recommandation', received: '2026-08-10', notes: 'Visio prévue vendredi à 15h.', link: 'https://thenuptialplan.app/r/atelier-nora-yanis' },
@@ -57,12 +62,7 @@ function useStudioData<T>(key: string, demo: T, enabled: boolean) {
 
 /** Merge remote social accounts into the local Social[] shape. */
 function mergeRemoteAccounts(remote: RemoteSocialAccount[]): Social[] {
-  const base: Social[] = [
-    { platform: 'instagram', handle: '', status: 'disconnected', followers: 0, reach: 0, engagement: 0, posts: 0, lastPost: '' },
-    { platform: 'facebook', handle: '', status: 'disconnected', followers: 0, reach: 0, engagement: 0, posts: 0, lastPost: '' },
-    { platform: 'tiktok', handle: '', status: 'disconnected', followers: 0, reach: 0, engagement: 0, posts: 0, lastPost: '' },
-  ];
-  return base.map((b) => {
+  return disconnectedSocials.map((b) => {
     const r = remote.find((a) => a.platform === b.platform);
     if (!r) return b;
     const s = r.statsCache ?? {};
@@ -110,13 +110,14 @@ export function SocialsPage() {
   const isDemo = user?.id === DEMO_OWNER_ID || user?.primaryEmailAddress?.emailAddress === DEMO_EMAIL;
   const [demoSocialsState] = useStudioData('socials', demoSocials, isDemo);
   const [selected, setSelected] = useState<Platform>('instagram');
-  const [socials, setSocials] = useState<Social[]>([]);
+  const [socials, setSocials] = useState<Social[]>(disconnectedSocials);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [postTitle, setPostTitle] = useState('');
 
   const displaySocials = isDemo ? demoSocialsState : socials;
-  const account = displaySocials.find((item) => item.platform === selected) ?? displaySocials[0]!;
+  const account = displaySocials.find((item) => item.platform === selected)
+    ?? disconnectedSocials.find((item) => item.platform === selected)!;
 
   const loadAccounts = useCallback(async () => {
     if (isDemo) return;
