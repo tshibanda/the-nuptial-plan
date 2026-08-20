@@ -411,6 +411,8 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
         const handle = page?.handle ?? "Page Facebook";
         const pageToken = page?.pageToken ?? accessToken;
         const pageId = page?.pageId;
+        const encryptedPageToken = encryptToken(pageToken);
+        const encryptedRefreshToken = encryptToken(accessToken);
 
         const statsCache = page ? await fetchFacebookStats(pageToken, page.pageId) : null;
 
@@ -421,8 +423,9 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
             platform: "facebook",
             handle,
             pageId,
-            accessToken: encryptToken(page?.pageToken ?? accessToken),
-            refreshToken: encryptToken(accessToken),
+            accessToken: encryptedPageToken,
+            encryptedAccessToken: encryptedPageToken,
+            refreshToken: encryptedRefreshToken,
             tokenExpiresAt: expiresAt,
             scopes: "pages_show_list,pages_read_engagement,pages_manage_posts,read_insights",
             status: "connected",
@@ -434,8 +437,9 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
             set: {
               handle,
               pageId,
-              accessToken: encryptToken(page?.pageToken ?? accessToken),
-              refreshToken: encryptToken(accessToken),
+              accessToken: encryptedPageToken,
+              encryptedAccessToken: encryptedPageToken,
+              refreshToken: encryptedRefreshToken,
               tokenExpiresAt: expiresAt,
               status: "connected",
               statsCache,
@@ -452,6 +456,8 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
         if (!ig) throw new Error("No Instagram Business account linked to this Facebook Page");
 
         const statsCache = await fetchInstagramStats(page.pageToken, ig.igId);
+        const encryptedPageToken = encryptToken(page.pageToken);
+        const encryptedRefreshToken = encryptToken(accessToken);
 
         await db.insert(socialAccountsTable)
           .values({
@@ -460,8 +466,9 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
             platform: "instagram",
             handle: `@${ig.username}`,
             pageId: ig.igId,
-            accessToken: encryptToken(page.pageToken), // use page token for IG Graph API calls
-            refreshToken: encryptToken(accessToken),
+            accessToken: encryptedPageToken, // use page token for IG Graph API calls
+            encryptedAccessToken: encryptedPageToken,
+            refreshToken: encryptedRefreshToken,
             tokenExpiresAt: expiresAt,
             scopes: "instagram_basic,instagram_manage_insights,instagram_content_publish,pages_manage_posts",
             status: "connected",
@@ -473,8 +480,9 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
             set: {
               handle: `@${ig.username}`,
               pageId: ig.igId,
-              accessToken: encryptToken(page.pageToken),
-              refreshToken: encryptToken(accessToken),
+              accessToken: encryptedPageToken,
+              encryptedAccessToken: encryptedPageToken,
+              refreshToken: encryptedRefreshToken,
               tokenExpiresAt: expiresAt,
               status: "connected",
               statsCache,
@@ -523,6 +531,8 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
       });
       const userJson = await userRes.json() as { data?: { user?: { display_name?: string } } };
       const handle = userJson.data?.user?.display_name ?? "Compte TikTok";
+      const encryptedAccessToken = encryptToken(tokenJson.access_token);
+      const encryptedRefreshToken = tokenJson.refresh_token ? encryptToken(tokenJson.refresh_token) : null;
 
       await db.insert(socialAccountsTable)
         .values({
@@ -531,8 +541,9 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
           platform: "tiktok",
           handle,
           pageId: tokenJson.open_id,
-          accessToken: encryptToken(tokenJson.access_token),
-          refreshToken: tokenJson.refresh_token ? encryptToken(tokenJson.refresh_token) : null,
+          accessToken: encryptedAccessToken,
+          encryptedAccessToken,
+          refreshToken: encryptedRefreshToken,
           tokenExpiresAt: expiresAt,
           scopes: "user.info.basic,user.info.stats,video.list,video.publish",
           status: "connected",
@@ -544,8 +555,9 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
           set: {
             handle,
             pageId: tokenJson.open_id,
-            accessToken: encryptToken(tokenJson.access_token),
-            refreshToken: tokenJson.refresh_token ? encryptToken(tokenJson.refresh_token) : null,
+            accessToken: encryptedAccessToken,
+            encryptedAccessToken,
+            refreshToken: encryptedRefreshToken,
             tokenExpiresAt: expiresAt,
             status: "connected",
             statsCache,
@@ -557,9 +569,15 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
 
     res.redirect(clientRedirect(`connected=${platform}`));
   } catch (err) {
-    logger.error({ err, platform, userId }, "OAuth callback error");
-    const message = err instanceof Error ? err.message : "OAuth error";
-    res.redirect(clientRedirect(`error=${encodeURIComponent(message)}`));
+    const cause = err instanceof Error && typeof err.cause === "object" && err.cause
+      ? err.cause as { code?: unknown }
+      : null;
+    logger.error({
+      platform,
+      userId,
+      databaseCode: typeof cause?.code === "string" ? cause.code : undefined,
+    }, "OAuth callback error");
+    res.redirect(clientRedirect("error=connection_failed"));
   }
 }
 
@@ -602,11 +620,14 @@ export async function refreshSocialAccountStats(account: SocialAccount): Promise
     if ((platform === "facebook" || platform === "instagram") && account.refreshToken) {
       try {
         const renewed = await refreshMetaAccount(platform, account.refreshToken);
+        const encryptedAccessToken = encryptToken(renewed.accessToken);
+        const encryptedRefreshToken = encryptToken(renewed.refreshToken);
         await db.update(socialAccountsTable)
           .set({
             ...renewed,
-            accessToken: encryptToken(renewed.accessToken),
-            refreshToken: encryptToken(renewed.refreshToken),
+            accessToken: encryptedAccessToken,
+            encryptedAccessToken,
+            refreshToken: encryptedRefreshToken,
             status: "connected",
             updatedAt: new Date(),
           })
@@ -654,10 +675,13 @@ export async function refreshSocialAccountStats(account: SocialAccount): Promise
           const refreshJson = await refreshRes.json() as { access_token?: string; refresh_token?: string; expires_in?: number };
           if (!refreshRes.ok || !refreshJson.access_token) throw new Error("TikTok refresh token was rejected");
           const expiresAt = new Date(Date.now() + (refreshJson.expires_in ?? 86400) * 1000);
+          const encryptedAccessToken = encryptToken(refreshJson.access_token);
+          const encryptedRefreshToken = encryptToken(refreshJson.refresh_token ?? account.refreshToken);
           await db.update(socialAccountsTable)
             .set({
-              accessToken: encryptToken(refreshJson.access_token),
-              refreshToken: encryptToken(refreshJson.refresh_token ?? account.refreshToken),
+              accessToken: encryptedAccessToken,
+              encryptedAccessToken,
+              refreshToken: encryptedRefreshToken,
               tokenExpiresAt: expiresAt,
             })
             .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));

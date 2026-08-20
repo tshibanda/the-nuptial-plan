@@ -17,6 +17,9 @@ export const socialAccountsTable = pgTable(
     handle: text("handle").notNull().default(""),
     pageId: text("page_id"), // Meta Page or IG Business account ID
     accessToken: text("access_token").notNull(),
+    // Kept alongside accessToken while older production databases still require
+    // this legacy column. Both fields always contain the same encrypted value.
+    encryptedAccessToken: text("encrypted_access_token").notNull(),
     refreshToken: text("refresh_token"),
     tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
     scopes: text("scopes").notNull().default(""),

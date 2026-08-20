@@ -145,7 +145,16 @@ export function SocialsPage() {
       window.history.replaceState({}, '', url.toString());
     }
     if (error) {
-      toast({ title: 'Connexion échouée', description: decodeURIComponent(error), variant: 'destructive' });
+      const errorMessages: Record<string, string> = {
+        connection_failed: 'La connexion n’a pas pu être finalisée. Réessayez dans un instant.',
+        invalid_callback: 'La réponse du réseau social est incomplète. Relancez la connexion.',
+        invalid_state: 'La session de connexion a expiré. Relancez la connexion.',
+      };
+      toast({
+        title: 'Connexion échouée',
+        description: errorMessages[error] ?? 'La connexion n’a pas pu être finalisée. Réessayez dans un instant.',
+        variant: 'destructive',
+      });
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
       window.history.replaceState({}, '', url.toString());

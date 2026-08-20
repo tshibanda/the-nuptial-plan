@@ -26,3 +26,11 @@ The database may contain an earlier social-account record shape. Preserve existi
 **Why:** Replacing a table would lose previously connected accounts, while startup-time migration can block the API from becoming healthy.
 
 **How to apply:** Keep compatibility changes additive in the schema source of truth and review the generated production schema diff before publishing.
+
+## Legacy encrypted-token column
+
+The legacy `encrypted_access_token` column remains required alongside the current encrypted `access_token` column. Social account creates and access-token renewals must dual-write the same ciphertext to both fields until a deliberate, data-preserving migration removes the legacy constraint.
+
+**Why:** Existing development and production tables enforce a non-null constraint on the legacy column; omitting it makes an otherwise valid OAuth callback fail at insert time.
+
+**How to apply:** Treat both columns as server-only encrypted credentials. Never return either column to a client, and do not log database query parameters when a social OAuth write fails.
