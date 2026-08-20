@@ -9,7 +9,7 @@ OAuth callbacks originate outside the authenticated app session. Identify the pl
 
 **Why:** Browser cookies do not transfer from an Expo app into a provider authorization flow, and an unsigned callback parameter could connect a provider account to the wrong planner.
 
-**How to apply:** Keep all provider tokens server-only and encrypted at rest. When introducing or changing the credential table, ensure production startup can safely create/upgrade the table before any social route is served; do not depend on a developer-only schema push.
+**How to apply:** Keep all provider tokens server-only and encrypted at rest. When introducing or changing the credential table, declare the change in the database schema and use Replit’s publish-time production migration flow; do not run schema DDL from the API process.
 
 ## Scheduled metrics refresh
 
@@ -21,8 +21,8 @@ The social metrics job runs inside the API process on startup and every six hour
 
 ## Legacy table compatibility
 
-The database may contain an earlier `social_accounts` shape with an integer id and `encrypted_access_token`. Startup schema initialization must add the current columns and migrate that credential before reading rows.
+The database may contain an earlier social-account record shape. Preserve existing credentials through additive, publish-time schema changes and resolve any rename confirmation in the Publish UI.
 
-**Why:** `CREATE TABLE IF NOT EXISTS` does not upgrade an existing table, so deployments can fail before the API begins serving requests.
+**Why:** Replacing a table would lose previously connected accounts, while startup-time migration can block the API from becoming healthy.
 
-**How to apply:** Make social schema changes additive and idempotent in the API startup migration; preserve legacy credentials rather than replacing the table.
+**How to apply:** Keep compatibility changes additive in the schema source of truth and review the generated production schema diff before publishing.
