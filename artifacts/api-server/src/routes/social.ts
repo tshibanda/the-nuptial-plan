@@ -110,15 +110,23 @@ function providerOauthUrl(platform: Platform, userId: string, client: OAuthClien
   const state = signState(`${userId}:${platform}:${Date.now()}:${client}`);
   const callbackUri = redirectUri(platform);
 
-  if (platform === "facebook" || platform === "instagram") {
-    const { appId } = metaCredentials(platform);
-    const scope = platform === "instagram"
-      ? "pages_show_list,pages_read_engagement,instagram_basic,instagram_manage_insights,instagram_content_publish"
-      : "pages_show_list,pages_read_engagement,pages_manage_posts,read_insights";
+  if (platform === "instagram") {
+    const { appId } = metaCredentials("instagram");
+    const oauthUrl = new URL("https://www.instagram.com/oauth/authorize");
+    oauthUrl.searchParams.set("client_id", appId);
+    oauthUrl.searchParams.set("redirect_uri", callbackUri);
+    oauthUrl.searchParams.set("scope", "instagram_business_basic,instagram_business_manage_insights,instagram_business_content_publish");
+    oauthUrl.searchParams.set("state", state);
+    oauthUrl.searchParams.set("response_type", "code");
+    return oauthUrl.toString();
+  }
+
+  if (platform === "facebook") {
+    const { appId } = metaCredentials("facebook");
     const oauthUrl = new URL("https://www.facebook.com/v26.0/dialog/oauth");
     oauthUrl.searchParams.set("client_id", appId);
     oauthUrl.searchParams.set("redirect_uri", callbackUri);
-    oauthUrl.searchParams.set("scope", scope);
+    oauthUrl.searchParams.set("scope", "pages_show_list,pages_read_engagement,pages_manage_posts,read_insights");
     oauthUrl.searchParams.set("state", state);
     oauthUrl.searchParams.set("response_type", "code");
     return oauthUrl.toString();
@@ -180,6 +188,25 @@ async function fetchInstagramAccount(pageToken: string, pageId: string): Promise
   return { igId: ig.id, username: ig.username };
 }
 
+/** Fetch the profile returned by Instagram Login (does not require Facebook). */
+async function fetchInstagramLoginProfile(accessToken: string): Promise<{ igId: string; username: string }> {
+  const url = new URL("https://graph.instagram.com/v26.0/me");
+  url.searchParams.set("fields", "id,user_id,username");
+  url.searchParams.set("access_token", accessToken);
+  const res = await fetch(url);
+  const json = await res.json() as {
+    id?: string;
+    user_id?: string;
+    username?: string;
+    error?: { message?: string };
+  };
+  const igId = json.id ?? json.user_id;
+  if (!res.ok || !igId || !json.username) {
+    throw new Error(json.error?.message ?? "Unable to load the Instagram professional account");
+  }
+  return { igId, username: json.username };
+}
+
 /** Fetch Facebook Page insights (followers, reach, posts). */
 async function fetchFacebookStats(pageToken: string, pageId: string) {
   try {
@@ -212,12 +239,12 @@ async function fetchFacebookStats(pageToken: string, pageId: string) {
 async function fetchInstagramStats(pageToken: string, igId: string) {
   try {
     const since = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000);
-    const url = `https://graph.facebook.com/v26.0/${igId}?fields=followers_count&access_token=${pageToken}`;
+    const url = `https://graph.instagram.com/v26.0/${igId}?fields=followers_count&access_token=${pageToken}`;
     const res = await fetch(url);
     const json = await res.json() as { followers_count?: number };
 
-    const insightsUrl = `https://graph.facebook.com/v26.0/${igId}/insights?metric=reach&period=days_28&access_token=${pageToken}`;
-    const mediaUrl = `https://graph.facebook.com/v26.0/${igId}/media?fields=id,timestamp,like_count,comments_count&limit=100&access_token=${pageToken}`;
+    const insightsUrl = `https://graph.instagram.com/v26.0/${igId}/insights?metric=reach&period=days_28&access_token=${pageToken}`;
+    const mediaUrl = `https://graph.instagram.com/v26.0/${igId}/media?fields=id,timestamp,like_count,comments_count&limit=100&access_token=${pageToken}`;
     const [insRes, mediaRes] = await Promise.all([fetch(insightsUrl), fetch(mediaUrl)]);
     const [insJson, mediaJson] = await Promise.all([
       insRes.json() as Promise<{ data?: Array<{ name: string; values: Array<{ value: number }> }> }>,
@@ -265,6 +292,23 @@ async function refreshMetaAccount(platform: "facebook" | "instagram", refreshTok
     tokenExpiresAt: expiresAt,
     pageId: instagram.igId,
     handle: `@${instagram.username}`,
+  };
+}
+
+/** Refresh an Instagram Login long-lived token (~60 days). */
+async function refreshInstagramLoginToken(accessToken: string) {
+  const url = new URL("https://graph.instagram.com/refresh_access_token");
+  url.searchParams.set("grant_type", "ig_refresh_token");
+  url.searchParams.set("access_token", accessToken);
+  const res = await fetch(url);
+  const json = await res.json() as { access_token?: string; expires_in?: number; error?: { message?: string } };
+  if (!res.ok || !json.access_token) {
+    throw new Error(json.error?.message ?? "Unable to refresh Instagram token");
+  }
+  return {
+    accessToken: json.access_token,
+    refreshToken: json.access_token,
+    tokenExpiresAt: new Date(Date.now() + (json.expires_in ?? 5_184_000) * 1000),
   };
 }
 
@@ -401,8 +445,81 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
   const callbackUri = redirectUri(platform as Platform);
 
   try {
-    if (platform === "facebook" || platform === "instagram") {
-      const { appId, appSecret } = metaCredentials(platform);
+    if (platform === "instagram") {
+      const { appId, appSecret } = metaCredentials("instagram");
+      const tokenRes = await fetch("https://api.instagram.com/oauth/access_token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: appId,
+          client_secret: appSecret,
+          grant_type: "authorization_code",
+          redirect_uri: callbackUri,
+          code,
+        }),
+      });
+      const tokenJson = await tokenRes.json() as {
+        access_token?: string;
+        error_type?: string;
+        error_message?: string;
+      };
+      if (!tokenRes.ok || !tokenJson.access_token) {
+        throw new Error(tokenJson.error_message ?? tokenJson.error_type ?? "Instagram token exchange failed");
+      }
+
+      const longLivedUrl = new URL("https://graph.instagram.com/access_token");
+      longLivedUrl.searchParams.set("grant_type", "ig_exchange_token");
+      longLivedUrl.searchParams.set("client_secret", appSecret);
+      longLivedUrl.searchParams.set("access_token", tokenJson.access_token);
+      const longLivedRes = await fetch(longLivedUrl);
+      const longLivedJson = await longLivedRes.json() as {
+        access_token?: string;
+        expires_in?: number;
+        error?: { message?: string };
+      };
+      if (!longLivedRes.ok || !longLivedJson.access_token) {
+        throw new Error(longLivedJson.error?.message ?? "Unable to extend the Instagram token");
+      }
+
+      const profile = await fetchInstagramLoginProfile(longLivedJson.access_token);
+      const expiresAt = new Date(Date.now() + (longLivedJson.expires_in ?? 5_184_000) * 1000);
+      const statsCache = await fetchInstagramStats(longLivedJson.access_token, profile.igId);
+      const encryptedToken = encryptToken(longLivedJson.access_token);
+
+      await db.insert(socialAccountsTable)
+        .values({
+          id: shortId(),
+          ownerId: userId,
+          platform: "instagram",
+          handle: `@${profile.username}`,
+          pageId: profile.igId,
+          accessToken: encryptedToken,
+          encryptedAccessToken: encryptedToken,
+          refreshToken: encryptedToken,
+          tokenExpiresAt: expiresAt,
+          scopes: "instagram_business_basic,instagram_business_manage_insights,instagram_business_content_publish",
+          status: "connected",
+          statsCache,
+          statsUpdatedAt: statsCache ? new Date() : null,
+        })
+        .onConflictDoUpdate({
+          target: [socialAccountsTable.ownerId, socialAccountsTable.platform],
+          set: {
+            handle: `@${profile.username}`,
+            pageId: profile.igId,
+            accessToken: encryptedToken,
+            encryptedAccessToken: encryptedToken,
+            refreshToken: encryptedToken,
+            tokenExpiresAt: expiresAt,
+            status: "connected",
+            statsCache,
+            statsUpdatedAt: statsCache ? new Date() : null,
+            updatedAt: new Date(),
+          },
+        });
+
+    } else if (platform === "facebook") {
+      const { appId, appSecret } = metaCredentials("facebook");
 
       // Exchange code for short-lived token
       const tokenUrl = new URL("https://graph.facebook.com/v26.0/oauth/access_token");
@@ -462,48 +579,6 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
             },
           });
 
-      } else {
-        // Instagram — need the page token to access IG
-        if (!page) throw new Error("No linked Facebook Page found — connect Facebook first");
-
-        const ig = await fetchInstagramAccount(page.pageToken, page.pageId);
-        if (!ig) throw new Error("No Instagram Business account linked to this Facebook Page");
-
-        const statsCache = await fetchInstagramStats(page.pageToken, ig.igId);
-        const encryptedPageToken = encryptToken(page.pageToken);
-        const encryptedRefreshToken = encryptToken(accessToken);
-
-        await db.insert(socialAccountsTable)
-          .values({
-            id: shortId(),
-            ownerId: userId,
-            platform: "instagram",
-            handle: `@${ig.username}`,
-            pageId: ig.igId,
-            accessToken: encryptedPageToken, // use page token for IG Graph API calls
-            encryptedAccessToken: encryptedPageToken,
-            refreshToken: encryptedRefreshToken,
-            tokenExpiresAt: expiresAt,
-            scopes: "pages_show_list,pages_read_engagement,instagram_basic,instagram_manage_insights,instagram_content_publish",
-            status: "connected",
-            statsCache,
-            statsUpdatedAt: statsCache ? new Date() : null,
-          })
-          .onConflictDoUpdate({
-            target: [socialAccountsTable.ownerId, socialAccountsTable.platform],
-            set: {
-              handle: `@${ig.username}`,
-              pageId: ig.igId,
-              accessToken: encryptedPageToken,
-              encryptedAccessToken: encryptedPageToken,
-              refreshToken: encryptedRefreshToken,
-              tokenExpiresAt: expiresAt,
-              status: "connected",
-              statsCache,
-              statsUpdatedAt: statsCache ? new Date() : null,
-              updatedAt: new Date(),
-            },
-          });
       }
 
     } else if (platform === "tiktok") {
@@ -636,7 +711,7 @@ export async function refreshSocialAccountStats(account: SocialAccount): Promise
   account.refreshToken = account.refreshToken ? decryptToken(account.refreshToken) : null;
 
   if (account.tokenExpiresAt && account.tokenExpiresAt <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)) {
-    if ((platform === "facebook" || platform === "instagram") && account.refreshToken) {
+    if (platform === "facebook" && account.refreshToken) {
       try {
         const renewed = await refreshMetaAccount(platform, account.refreshToken);
         const encryptedAccessToken = encryptToken(renewed.accessToken);
@@ -657,6 +732,31 @@ export async function refreshSocialAccountStats(account: SocialAccount): Promise
         account.pageId = renewed.pageId;
       } catch (error) {
         logger.warn({ error, platform, userId }, "Meta token refresh failed");
+        await db.update(socialAccountsTable)
+          .set({ status: "needs_reauth", updatedAt: new Date() })
+          .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
+        throw new SocialSyncError("Token expired — please reconnect");
+      }
+    } else if (platform === "instagram" && account.refreshToken) {
+      try {
+        const renewed = await refreshInstagramLoginToken(account.refreshToken);
+        const encryptedAccessToken = encryptToken(renewed.accessToken);
+        const encryptedRefreshToken = encryptToken(renewed.refreshToken);
+        await db.update(socialAccountsTable)
+          .set({
+            ...renewed,
+            accessToken: encryptedAccessToken,
+            encryptedAccessToken,
+            refreshToken: encryptedRefreshToken,
+            status: "connected",
+            updatedAt: new Date(),
+          })
+          .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
+        account.accessToken = renewed.accessToken;
+        account.refreshToken = renewed.refreshToken;
+        account.tokenExpiresAt = renewed.tokenExpiresAt;
+      } catch (error) {
+        logger.warn({ error, platform, userId }, "Instagram token refresh failed");
         await db.update(socialAccountsTable)
           .set({ status: "needs_reauth", updatedAt: new Date() })
           .where(and(eq(socialAccountsTable.ownerId, userId), eq(socialAccountsTable.platform, platform)));
