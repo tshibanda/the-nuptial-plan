@@ -148,7 +148,6 @@ export function SocialsPage() {
     if (error) {
       const errorMessages: Record<string, string> = {
         connection_failed: 'La connexion n’a pas pu être finalisée. Réessayez dans un instant.',
-        instagram_requires_facebook: 'Connectez d’abord Facebook et vérifiez qu’une Page Facebook est liée à votre compte Instagram professionnel.',
         invalid_callback: 'La réponse du réseau social est incomplète. Relancez la connexion.',
         invalid_state: 'La session de connexion a expiré. Relancez la connexion.',
       };

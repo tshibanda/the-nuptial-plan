@@ -148,7 +148,7 @@ function providerOauthUrl(platform: Platform, userId: string, client: OAuthClien
 /** Exchange a short-lived Facebook user token for a 60-day long-lived token. */
 async function facebookLongLivedToken(
   shortToken: string,
-  platform: "facebook" | "instagram",
+  platform: "facebook",
 ): Promise<{ accessToken: string; expiresAt: Date }> {
   const { appId, appSecret } = metaCredentials(platform);
 
@@ -176,16 +176,6 @@ async function fetchFacebookPage(accessToken: string): Promise<{ pageId: string;
   const page = json.data?.[0];
   if (!page) return null;
   return { pageId: page.id, handle: page.name, pageToken: page.access_token };
-}
-
-/** Fetch Instagram Business account linked to a Facebook Page. */
-async function fetchInstagramAccount(pageToken: string, pageId: string): Promise<{ igId: string; username: string } | null> {
-  const url = `https://graph.facebook.com/v26.0/${pageId}?fields=instagram_business_account{id,username}&access_token=${pageToken}`;
-  const res = await fetch(url);
-  const json = await res.json() as { instagram_business_account?: { id: string; username: string } };
-  const ig = json.instagram_business_account;
-  if (!ig) return null;
-  return { igId: ig.id, username: ig.username };
 }
 
 /** Fetch the profile returned by Instagram Login (does not require Facebook). */
@@ -269,29 +259,17 @@ async function fetchInstagramStats(pageToken: string, igId: string) {
   }
 }
 
-/** Renew a Meta user token and return the Page/Instagram credentials needed
- * for subsequent Graph requests. Page tokens are refreshed along with it. */
-async function refreshMetaAccount(platform: "facebook" | "instagram", refreshToken: string) {
-  const { accessToken: userToken, expiresAt } = await facebookLongLivedToken(refreshToken, platform);
+/** Renew a Facebook user token and its Page credentials. */
+async function refreshMetaAccount(refreshToken: string) {
+  const { accessToken: userToken, expiresAt } = await facebookLongLivedToken(refreshToken, "facebook");
   const page = await fetchFacebookPage(userToken);
   if (!page) throw new Error("No linked Facebook Page found");
-  if (platform === "facebook") {
-    return {
-      accessToken: page.pageToken,
-      refreshToken: userToken,
-      tokenExpiresAt: expiresAt,
-      pageId: page.pageId,
-      handle: page.handle,
-    };
-  }
-  const instagram = await fetchInstagramAccount(page.pageToken, page.pageId);
-  if (!instagram) throw new Error("No Instagram Business account linked to this Facebook Page");
   return {
     accessToken: page.pageToken,
     refreshToken: userToken,
     tokenExpiresAt: expiresAt,
-    pageId: instagram.igId,
-    handle: `@${instagram.username}`,
+    pageId: page.pageId,
+    handle: page.handle,
   };
 }
 
@@ -668,10 +646,7 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
       error: errorMessage,
       databaseCode: typeof cause?.code === "string" ? cause.code : undefined,
     }, "OAuth callback error");
-    const errorCode = platform === "instagram" && errorMessage === "No linked Facebook Page found — connect Facebook first"
-      ? "instagram_requires_facebook"
-      : "connection_failed";
-    res.redirect(clientRedirect(`error=${errorCode}`));
+    res.redirect(clientRedirect("error=connection_failed"));
   }
 }
 
@@ -713,7 +688,7 @@ export async function refreshSocialAccountStats(account: SocialAccount): Promise
   if (account.tokenExpiresAt && account.tokenExpiresAt <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)) {
     if (platform === "facebook" && account.refreshToken) {
       try {
-        const renewed = await refreshMetaAccount(platform, account.refreshToken);
+        const renewed = await refreshMetaAccount(account.refreshToken);
         const encryptedAccessToken = encryptToken(renewed.accessToken);
         const encryptedRefreshToken = encryptToken(renewed.refreshToken);
         await db.update(socialAccountsTable)
