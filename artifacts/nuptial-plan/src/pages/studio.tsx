@@ -148,6 +148,7 @@ export function SocialsPage() {
     if (error) {
       const errorMessages: Record<string, string> = {
         connection_failed: 'La connexion n’a pas pu être finalisée. Réessayez dans un instant.',
+        instagram_requires_facebook: 'Connectez d’abord Facebook et vérifiez qu’une Page Facebook est liée à votre compte Instagram professionnel.',
         invalid_callback: 'La réponse du réseau social est incomplète. Relancez la connexion.',
         invalid_state: 'La session de connexion a expiré. Relancez la connexion.',
       };
@@ -165,6 +166,14 @@ export function SocialsPage() {
   const connect = () => {
     if (isDemo) {
       toast({ title: `Connexion ${platformNames[selected]}`, description: 'Disponible sur votre compte personnel.' });
+      return;
+    }
+    if (selected === 'instagram' && !socials.some((item) => item.platform === 'facebook' && item.status === 'connected')) {
+      setSelected('facebook');
+      toast({
+        title: 'Connectez d’abord Facebook',
+        description: 'Instagram utilise la connexion Meta avec une Page Facebook liée à votre compte professionnel.',
+      });
       return;
     }
     // Full-page redirect to the server OAuth start — the server redirects to the provider.

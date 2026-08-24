@@ -584,12 +584,17 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
     const cause = err instanceof Error && typeof err.cause === "object" && err.cause
       ? err.cause as { code?: unknown }
       : null;
+    const errorMessage = err instanceof Error ? err.message : "Unknown OAuth callback error";
     logger.error({
       platform,
       userId,
+      error: errorMessage,
       databaseCode: typeof cause?.code === "string" ? cause.code : undefined,
     }, "OAuth callback error");
-    res.redirect(clientRedirect("error=connection_failed"));
+    const errorCode = platform === "instagram" && errorMessage === "No linked Facebook Page found — connect Facebook first"
+      ? "instagram_requires_facebook"
+      : "connection_failed";
+    res.redirect(clientRedirect(`error=${errorCode}`));
   }
 }
 
