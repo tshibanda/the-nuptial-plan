@@ -168,14 +168,6 @@ export function SocialsPage() {
       toast({ title: `Connexion ${platformNames[selected]}`, description: 'Disponible sur votre compte personnel.' });
       return;
     }
-    if (selected === 'instagram' && !socials.some((item) => item.platform === 'facebook' && item.status === 'connected')) {
-      setSelected('facebook');
-      toast({
-        title: 'Connectez d’abord Facebook',
-        description: 'Instagram utilise la connexion Meta avec une Page Facebook liée à votre compte professionnel.',
-      });
-      return;
-    }
     // Full-page redirect to the server OAuth start — the server redirects to the provider.
     window.location.href = `/api/social/oauth/start?platform=${selected}`;
   };
