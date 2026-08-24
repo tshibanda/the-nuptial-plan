@@ -345,6 +345,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const markNotificationRead = useMarkNotificationRead();
   const deleteWedding = useDeleteWedding();
   const queryClient = useQueryClient();
+  const closeHeaderMenus = () => {
+    setMenuOpen(false);
+    setNotifOpen(false);
+  };
 
   const handleDeleteWedding = () => {
     if (!deleteWeddingId) return;
@@ -777,7 +781,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <button
                   className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border/50 bg-white/60 text-muted-foreground transition hover:bg-white/80"
                   data-testid="button-notifications"
-                  onClick={() => setNotifOpen(!notifOpen)}
+                   onClick={() => {
+                     setNotifOpen((open) => !open);
+                     setMenuOpen(false);
+                   }}
                   style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.80)' }}
                 >
                   <Bell size={16} />
@@ -795,7 +802,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {notifOpen && (
                   <>
                     {/* Invisible backdrop to close on outside click */}
-                    <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                     <div className="fixed inset-0 z-40" onClick={closeHeaderMenus} />
 
                     {/* Panel */}
                     <div className="absolute right-0 top-[44px] z-50 w-80 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 shadow-[0_8px_40px_rgba(93,45,93,0.20)] backdrop-blur-md">
@@ -859,7 +866,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               {/* Avatar menu */}
               <button
                 className="flex items-center gap-2.5 rounded-full border border-border/50 bg-white/60 py-1.5 pl-1.5 pr-3.5 text-[11px] font-semibold text-foreground/75 transition hover:bg-white/80"
-                onClick={() => setMenuOpen(!menuOpen)}
+                 onClick={() => {
+                   setMenuOpen((open) => !open);
+                   setNotifOpen(false);
+                 }}
                 data-testid="button-header-menu"
                 style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.80)' }}
               >
@@ -886,7 +896,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
               {menuOpen && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                   <div className="fixed inset-0 z-40" onClick={closeHeaderMenus} />
                    <div className="absolute right-6 top-[68px] z-50 w-56 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 p-1.5 shadow-[0_8px_32px_rgba(93,45,93,0.18)] backdrop-blur-md">
                     <button
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
