@@ -111,7 +111,7 @@ function providerOauthUrl(platform: Platform, userId: string, client: OAuthClien
   if (platform === "facebook" || platform === "instagram") {
     const { appId } = metaCredentials(platform);
     const scope = platform === "instagram"
-      ? "pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_manage_insights,instagram_content_publish"
+      ? "pages_show_list,pages_read_engagement,instagram_basic,instagram_content_publish"
       : "pages_show_list,pages_read_engagement,pages_manage_posts,read_insights";
     const oauthUrl = new URL("https://www.facebook.com/v26.0/dialog/oauth");
     oauthUrl.searchParams.set("client_id", appId);
@@ -482,7 +482,7 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
             encryptedAccessToken: encryptedPageToken,
             refreshToken: encryptedRefreshToken,
             tokenExpiresAt: expiresAt,
-            scopes: "instagram_basic,instagram_manage_insights,instagram_content_publish,pages_manage_posts",
+            scopes: "pages_show_list,pages_read_engagement,instagram_basic,instagram_content_publish",
             status: "connected",
             statsCache,
             statsUpdatedAt: statsCache ? new Date() : null,
