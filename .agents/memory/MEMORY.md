@@ -9,4 +9,5 @@
 - [RevenueCat store configuration](revenuecat-store-configuration.md) — Check nested package product IDs before attaching iOS/Android products idempotently.
 - [Mobile budget performance](mobile-budget-performance.md) — Start the budget query from the persisted wedding ID and never fetch with wedding ID 0.
 - [Social OAuth security](social-oauth-security.md) — Social credentials require signed cross-client callbacks, server-side encryption, and publish-time schema migration.
+- [Instagram direct login](instagram-direct-login.md) — Instagram uses its own OAuth/token lifecycle and must not depend on Facebook Pages.
 - [Production schema publishing](production-schema-publishing.md) — Social-schema DDL must run through the Publish flow, never during API startup.
