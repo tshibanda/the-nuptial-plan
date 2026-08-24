@@ -6,6 +6,8 @@
  * Required environment variables:
  *   FACEBOOK_APP_ID      – Meta developer app ID (public value, non-secret)
  *   FACEBOOK_APP_SECRET  – Meta developer app secret (secret)
+ *   INSTAGRAM_APP_ID     – Instagram/Meta developer app ID (public value, non-secret)
+ *   INSTAGRAM_APP_SECRET – Instagram/Meta developer app secret (secret)
  *   TIKTOK_CLIENT_KEY    – TikTok developer client key (public value, non-secret)
  *   TIKTOK_CLIENT_SECRET – TikTok developer client secret (secret)
  *   SESSION_SECRET       – Used to sign OAuth state parameters
@@ -57,6 +59,16 @@ function redirectUri(platform: Platform): string {
   return `${apiBaseUrl()}/api/social/oauth/callback/${platform}`;
 }
 
+function metaCredentials(platform: "facebook" | "instagram"): { appId: string; appSecret: string } {
+  const appId = process.env[platform === "instagram" ? "INSTAGRAM_APP_ID" : "FACEBOOK_APP_ID"];
+  const appSecret = process.env[platform === "instagram" ? "INSTAGRAM_APP_SECRET" : "FACEBOOK_APP_SECRET"];
+  if (!appId || !appSecret) {
+    const provider = platform === "instagram" ? "Instagram" : "Facebook";
+    throw new Error(`${provider} credentials not configured`);
+  }
+  return { appId, appSecret };
+}
+
 /** Sign a state token so callbacks cannot be forged. */
 function signState(payload: string): string {
   const secret = process.env.SESSION_SECRET;
@@ -97,8 +109,7 @@ function providerOauthUrl(platform: Platform, userId: string, client: OAuthClien
   const callbackUri = redirectUri(platform);
 
   if (platform === "facebook" || platform === "instagram") {
-    const appId = process.env.FACEBOOK_APP_ID;
-    if (!appId) throw new Error("Facebook credentials not configured. Please set FACEBOOK_APP_ID.");
+    const { appId } = metaCredentials(platform);
     const scope = platform === "instagram"
       ? "pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_manage_insights,instagram_content_publish"
       : "pages_show_list,pages_read_engagement,pages_manage_posts,read_insights";
@@ -125,10 +136,11 @@ function providerOauthUrl(platform: Platform, userId: string, client: OAuthClien
 }
 
 /** Exchange a short-lived Facebook user token for a 60-day long-lived token. */
-async function facebookLongLivedToken(shortToken: string): Promise<{ accessToken: string; expiresAt: Date }> {
-  const appId = process.env.FACEBOOK_APP_ID;
-  const appSecret = process.env.FACEBOOK_APP_SECRET;
-  if (!appId || !appSecret) throw new Error("Facebook credentials not configured");
+async function facebookLongLivedToken(
+  shortToken: string,
+  platform: "facebook" | "instagram",
+): Promise<{ accessToken: string; expiresAt: Date }> {
+  const { appId, appSecret } = metaCredentials(platform);
 
   const url = new URL("https://graph.facebook.com/v26.0/oauth/access_token");
   url.searchParams.set("grant_type", "fb_exchange_token");
@@ -231,7 +243,7 @@ async function fetchInstagramStats(pageToken: string, igId: string) {
 /** Renew a Meta user token and return the Page/Instagram credentials needed
  * for subsequent Graph requests. Page tokens are refreshed along with it. */
 async function refreshMetaAccount(platform: "facebook" | "instagram", refreshToken: string) {
-  const { accessToken: userToken, expiresAt } = await facebookLongLivedToken(refreshToken);
+  const { accessToken: userToken, expiresAt } = await facebookLongLivedToken(refreshToken, platform);
   const page = await fetchFacebookPage(userToken);
   if (!page) throw new Error("No linked Facebook Page found");
   if (platform === "facebook") {
@@ -388,9 +400,7 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
 
   try {
     if (platform === "facebook" || platform === "instagram") {
-      const appId = process.env.FACEBOOK_APP_ID;
-      const appSecret = process.env.FACEBOOK_APP_SECRET;
-      if (!appId || !appSecret) throw new Error("Facebook credentials not configured");
+      const { appId, appSecret } = metaCredentials(platform);
 
       // Exchange code for short-lived token
       const tokenUrl = new URL("https://graph.facebook.com/v26.0/oauth/access_token");
@@ -404,7 +414,7 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
       if (!tokenJson.access_token) throw new Error(tokenJson.error?.message ?? "Token exchange failed");
 
       // Upgrade to long-lived token (~60 days)
-      const { accessToken, expiresAt } = await facebookLongLivedToken(tokenJson.access_token);
+      const { accessToken, expiresAt } = await facebookLongLivedToken(tokenJson.access_token, platform);
 
       // Get the Facebook Page linked to this user
       const page = await fetchFacebookPage(accessToken);
