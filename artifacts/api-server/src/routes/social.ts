@@ -60,8 +60,10 @@ function redirectUri(platform: Platform): string {
 }
 
 function metaCredentials(platform: "facebook" | "instagram"): { appId: string; appSecret: string } {
-  const appId = process.env[platform === "instagram" ? "INSTAGRAM_APP_ID" : "FACEBOOK_APP_ID"];
-  const appSecret = process.env[platform === "instagram" ? "INSTAGRAM_APP_SECRET" : "FACEBOOK_APP_SECRET"];
+  // Secrets copied from Meta can contain an accidental trailing newline or
+  // spaces. Normalize them before sending the OAuth exchange request.
+  const appId = process.env[platform === "instagram" ? "INSTAGRAM_APP_ID" : "FACEBOOK_APP_ID"]?.trim();
+  const appSecret = process.env[platform === "instagram" ? "INSTAGRAM_APP_SECRET" : "FACEBOOK_APP_SECRET"]?.trim();
   if (!appId || !appSecret) {
     const provider = platform === "instagram" ? "Instagram" : "Facebook";
     throw new Error(`${provider} credentials not configured`);
