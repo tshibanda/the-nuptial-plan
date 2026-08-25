@@ -440,7 +440,7 @@ export default function EvenementsScreen() {
 
   const queryClient = useQueryClient();
   const wId = weddingId ?? 0;
-  const { data: events, isLoading, refetch, isRefetching } = useListEvents(wId, { query: { queryKey: getListEventsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: events, isLoading, refetch, isRefetching } = useListEvents(wId, { query: { queryKey: getListEventsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
   const EVENTS_QUERY_KEY = getListEventsQueryKey(wId);
 
   const { mutate: updateEvent } = useUpdateEvent({

@@ -81,7 +81,9 @@ async function schedulePaymentAlert(payment: Payment, currency: string, locale: 
  */
 export function usePaymentNotifications(weddingId: number | null, currency = 'EUR'): void {
   // Pass 0 when weddingId is null — the query is disabled and returns no data.
-  const { data: payments } = useListPayments(weddingId ?? 0);
+  const { data: payments } = useListPayments(weddingId ?? 0, {
+    query: { enabled: weddingId !== null },
+  });
   const { language, locale } = useLocalization();
 
   useEffect(() => {

@@ -10,13 +10,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import type { CalendarEvent } from '@workspace/api-client-react';
 import {
-  getGetWeddingQueryKey,
   getListVendorsQueryKey,
-  useGetWedding,
   useListVendors,
 } from '@workspace/api-client-react';
-import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
+import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalization } from '@/context/LocalizationContext';
@@ -143,20 +141,18 @@ export default function RetroplanningScreen() {
   const copy = getCopy(language);
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { selectedWeddingId } = useWedding();
-  const weddingId = selectedWeddingId ?? 0;
-  const { data: wedding, isLoading: weddingLoading } = useGetWedding(weddingId, {
+  // Reuse the persisted active wedding and its shared cache instead of waiting
+  // for a second wedding-details request before rendering the timeline.
+  const {
+    activeWedding: wedding,
+    weddingId,
+    isLoading: weddingsLoading,
+  } = useActiveWedding();
+  const { data: vendors = [], isLoading: vendorsLoading } = useListVendors(weddingId ?? 0, {
     query: {
-      enabled: !!weddingId,
-      queryKey: getGetWeddingQueryKey(weddingId),
-      staleTime: 30_000,
-    },
-  });
-  const { data: vendors = [], isLoading: vendorsLoading } = useListVendors(weddingId, {
-    query: {
-      enabled: !!weddingId,
-      queryKey: getListVendorsQueryKey(weddingId),
-      staleTime: 30_000,
+      enabled: weddingId !== null,
+      queryKey: getListVendorsQueryKey(weddingId ?? 0),
+      staleTime: MOBILE_TAB_STALE_TIME,
     },
   });
 
@@ -181,7 +177,7 @@ export default function RetroplanningScreen() {
   const today = startOfDay(new Date());
   const completedCount = milestones.filter((milestone) => milestone.date.getTime() < today).length;
   const progress = milestones.length ? Math.round((completedCount / milestones.length) * 100) : 0;
-  const isLoading = weddingLoading || vendorsLoading;
+  const isLoading = weddingsLoading || vendorsLoading;
 
   if (isLoading) {
     return (

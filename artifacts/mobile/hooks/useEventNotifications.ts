@@ -58,7 +58,9 @@ async function scheduleEventAlert(event: CalendarEvent, locale: string, language
  * Fires 48 h before the event; if already inside the window, fires in 5 s.
  */
 export function useEventNotifications(weddingId: number | null): void {
-  const { data: events } = useListEvents(weddingId ?? 0);
+  const { data: events } = useListEvents(weddingId ?? 0, {
+    query: { enabled: weddingId !== null },
+  });
   const { language, locale } = useLocalization();
 
   useEffect(() => {

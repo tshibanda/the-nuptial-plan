@@ -89,7 +89,7 @@ export default function PrestatairesScreen() {
   const queryClient = useQueryClient();
 
   const wId = weddingId ?? 0;
-  const { data: vendors, isLoading, refetch, isRefetching } = useListVendors(wId, { query: { queryKey: getListVendorsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: vendors, isLoading, refetch, isRefetching } = useListVendors(wId, { query: { queryKey: getListVendorsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
   const createVendor = useCreateVendor();
   const { data: addressBookEntries = [], isLoading: addressBookLoading } = useListAddressBookEntries();
   const addAddressBookEntry = useAddAddressBookEntryToWedding();

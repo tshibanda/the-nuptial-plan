@@ -156,8 +156,8 @@ export default function InvitesScreen() {
   const [importing, setImporting] = useState(false);
 
   const wId = weddingId ?? 0;
-  const { data: guests, isLoading, refetch, isRefetching } = useListGuests(wId, { query: { queryKey: getListGuestsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
-  const { data: stats } = useGetGuestStats(wId, { query: { queryKey: getGetGuestStatsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: guests, isLoading, refetch, isRefetching } = useListGuests(wId, { query: { queryKey: getListGuestsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: stats } = useGetGuestStats(wId, { query: { queryKey: getGetGuestStatsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
   const importGuestsMutation = useImportGuests();
   const createGuestMutation = useCreateGuest();
   const updateGuestMutation = useUpdateGuest();

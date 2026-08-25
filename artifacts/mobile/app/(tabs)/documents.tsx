@@ -89,8 +89,8 @@ export default function DocumentsScreen() {
   const { isPremium } = usePremiumGate();
   const { getToken } = useAuth();
   const { weddingId } = useActiveWedding();
-  const { data: vendors = [] } = useListVendors(weddingId ?? 0, { query: { queryKey: getListVendorsQueryKey(weddingId ?? 0), staleTime: MOBILE_TAB_STALE_TIME } });
-  const { data: contracts = [] } = useListContracts(weddingId ?? 0, { query: { queryKey: getListContractsQueryKey(weddingId ?? 0), staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: vendors = [] } = useListVendors(weddingId ?? 0, { query: { queryKey: getListVendorsQueryKey(weddingId ?? 0), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: contracts = [] } = useListContracts(weddingId ?? 0, { query: { queryKey: getListContractsQueryKey(weddingId ?? 0), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
   const [documents, setDocuments] = useState<WeddingDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);

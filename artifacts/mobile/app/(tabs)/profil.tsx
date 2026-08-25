@@ -7,9 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth, useClerk, useUser } from '@clerk/expo';
-import { useListWeddings, useGetWeddingSummary } from '@workspace/api-client-react';
-import { useWedding } from '@/context/WeddingContext';
+import { useGetWeddingSummary } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
+import { useActiveWedding } from '@/hooks/useActiveWedding';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
@@ -96,7 +96,6 @@ export default function ProfilScreen() {
   const { getToken } = useAuth();
   const { user } = useUser();
   const canUseSocials = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() === SOCIALS_ACCESS_EMAIL;
-  const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:profil');
   const subscription = useSubscription();
@@ -167,11 +166,10 @@ export default function ProfilScreen() {
     );
   };
 
-  const { data: weddings } = useListWeddings();
-  const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
-  const wId = activeWedding?.id ?? 0;
+  const { weddings, activeWedding, weddingId } = useActiveWedding();
+  const wId = weddingId ?? 0;
 
-  const { data: summary } = useGetWeddingSummary(wId);
+  const { data: summary } = useGetWeddingSummary(wId, { query: { enabled: weddingId !== null } });
 
   const showComingSoon = (feature: string) =>
      Alert.alert(feature, copy.comingSoon, [{ text: 'OK' }]);

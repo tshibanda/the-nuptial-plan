@@ -10,11 +10,11 @@ import * as Sharing from 'expo-sharing';
 import type { CalendarEvent, Vendor } from '@workspace/api-client-react';
 import {
   getListEventsQueryKey, useDeleteEvent, useListEvents, useListVendors,
-  useListWeddings, useUpdateEvent,
+  useUpdateEvent,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
+import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { EventAddSheet } from '@/components/EventAddSheet';
 import { PremiumBadge } from '@/components/PremiumBadge';
@@ -84,18 +84,26 @@ export default function JourJScreen() {
   };
   const { isActive: isPremium } = useSubscription();
   const colors = useColors();
-  const { selectedWeddingId } = useWedding();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('runsheet');
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  const { data: weddings } = useListWeddings();
-  const wedding = weddings?.find((item) => item.id === selectedWeddingId) ?? weddings?.[0];
-  const weddingId = wedding?.id ?? 0;
-  const eventsQuery = useListEvents(weddingId);
-  const vendorsQuery = useListVendors(weddingId);
+  const { activeWedding: wedding, weddingId } = useActiveWedding();
+  const eventsQuery = useListEvents(weddingId ?? 0, {
+    query: {
+      queryKey: getListEventsQueryKey(weddingId ?? 0),
+      enabled: weddingId !== null,
+      staleTime: MOBILE_TAB_STALE_TIME,
+    },
+  });
+  const vendorsQuery = useListVendors(weddingId ?? 0, {
+    query: {
+      enabled: weddingId !== null,
+      staleTime: MOBILE_TAB_STALE_TIME,
+    },
+  });
   const events = useMemo(() => sortEvents(eventsQuery.data ?? []), [eventsQuery.data]);
   const vendors = vendorsQuery.data ?? [];
   const completedCount = events.filter((event) => event.completed).length;

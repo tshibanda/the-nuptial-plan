@@ -249,7 +249,7 @@ export default function PaiementsScreen() {
   const wId = weddingId ?? 0;
   const currency = activeWedding?.currency ?? 'EUR';
 
-  const { data: payments, isLoading, refetch, isRefetching } = useListPayments(wId, { query: { queryKey: getListPaymentsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: payments, isLoading, refetch, isRefetching } = useListPayments(wId, { query: { queryKey: getListPaymentsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
   const createPayment = useCreatePayment();
 
   const sorted: Payment[] = [...(payments ?? [])].sort((a, b) => {

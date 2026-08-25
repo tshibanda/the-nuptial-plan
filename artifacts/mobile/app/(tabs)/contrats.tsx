@@ -94,7 +94,7 @@ export default function ContratsScreen() {
   const createContract = useCreateContract();
 
   const wId = weddingId ?? 0;
-  const { data: contracts, isLoading, refetch, isRefetching } = useListContracts(wId, { query: { queryKey: getListContractsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: contracts, isLoading, refetch, isRefetching } = useListContracts(wId, { query: { queryKey: getListContractsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
 
   const filtered = (contracts ?? []).filter((c) =>
     c.vendorName.toLowerCase().includes(search.toLowerCase()),
