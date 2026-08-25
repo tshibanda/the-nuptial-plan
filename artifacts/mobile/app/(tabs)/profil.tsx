@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useClerk, useUser } from '@clerk/expo';
+import { useAuth, useClerk, useUser } from '@clerk/expo';
 import { useListWeddings, useGetWeddingSummary } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
@@ -18,6 +18,7 @@ import { TourSheet } from '@/components/TourSheet';
 import { ProfileEditSheet } from '@/components/ProfileEditSheet';
 import { PaywallModal } from '@/components/PaywallModal';
 import { useSubscription } from '@/lib/subscription';
+import { getApiUrl } from '@/lib/apiUrl';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
 
 const SOCIALS_ACCESS_EMAIL = 'e.tshibanda78@gmail.com';
@@ -83,6 +84,7 @@ export default function ProfilScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signOut } = useClerk();
+  const { getToken } = useAuth();
   const { user } = useUser();
   const canUseSocials = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() === SOCIALS_ACCESS_EMAIL;
   const { selectedWeddingId } = useWedding();
@@ -90,6 +92,31 @@ export default function ProfilScreen() {
   const { tourVisible, openTour, closeTour } = useTour('tour:profil');
   const subscription = useSubscription();
   const [paywallVisible, setPaywallVisible] = useState(false);
+
+  const deleteAccount = () => {
+    Alert.alert(
+      'Supprimer le compte',
+      'Cette action efface définitivement vos données et résilie les abonnements web actifs. Pour un achat Apple ou Google, pensez à le résilier dans votre boutique avant de continuer.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer définitivement',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await getToken();
+              const response = await fetch(getApiUrl('account'), { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} });
+              if (!response.ok) throw new Error();
+              await signOut();
+              router.replace('/(auth)/sign-in');
+            } catch {
+              Alert.alert('Suppression impossible', 'Nous n’avons pas pu supprimer le compte. Réessayez dans quelques instants.');
+            }
+          },
+        },
+      ],
+    );
+  };
 
   // Derive display values from Clerk user
   const displayName = user?.fullName
@@ -337,6 +364,17 @@ export default function ProfilScreen() {
               <Feather name="log-out" size={15} color={colors.roseDark} />
             </View>
             <Text style={[ss.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>Se déconnecter</Text>
+            <Feather name="chevron-right" size={14} color={colors.roseDark + '88'} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={deleteAccount}
+            style={[ss.row, { borderBottomColor: 'transparent' }]}
+          >
+            <View style={[ss.rowIcon, { backgroundColor: colors.roseBg }]}>
+              <Feather name="trash-2" size={15} color={colors.roseDark} />
+            </View>
+            <Text style={[ss.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>Supprimer le compte</Text>
             <Feather name="chevron-right" size={14} color={colors.roseDark + '88'} />
           </TouchableOpacity>
         </View>

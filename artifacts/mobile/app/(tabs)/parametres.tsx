@@ -19,6 +19,8 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow, accentShadow } from '@/utils/shadow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocalizedPackagePrice, isNativeStorePricingAvailable, useSubscription } from '@/lib/subscription';
+import { useAuth, useClerk } from '@clerk/expo';
+import { getApiUrl } from '@/lib/apiUrl';
 
 const IOS_APP_STORE_URL = 'https://apps.apple.com/app/id6799479925';
 const IOS_APP_REVIEW_URL = `${IOS_APP_STORE_URL}?action=write-review`;
@@ -81,6 +83,8 @@ export default function ParametresScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { getToken } = useAuth();
+  const { signOut } = useClerk();
   const topPad = Platform.OS === 'web' ? 67 : 0;
 
   const { selectedWeddingId, selectWedding } = useWedding();
@@ -92,6 +96,31 @@ export default function ParametresScreen() {
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const subscription = useSubscription();
+
+  const deleteAccount = () => {
+    Alert.alert(
+      'Supprimer le compte',
+      'Cette action efface définitivement vos données et résilie les abonnements web actifs. Pour un achat Apple ou Google, pensez à le résilier dans votre boutique avant de continuer.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer définitivement',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await getToken();
+              const response = await fetch(getApiUrl('account'), { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} });
+              if (!response.ok) throw new Error();
+              await signOut();
+              router.replace('/(auth)/sign-in');
+            } catch {
+              Alert.alert('Suppression impossible', 'Nous n’avons pas pu supprimer le compte. Réessayez dans quelques instants.');
+            }
+          },
+        },
+      ],
+    );
+  };
 
   React.useEffect(() => {
     const key = '@nuptial-plan/first-opened-at';
@@ -370,6 +399,17 @@ export default function ParametresScreen() {
                 <Text style={[ps.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>
                   {deleteWedding.isPending ? 'Suppression…' : 'Supprimer ce dossier'}
                 </Text>
+                <Feather name="chevron-right" size={14} color={colors.roseDark + '88'} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.72}
+                onPress={deleteAccount}
+                style={[ps.row, { borderBottomColor: 'transparent' }]}
+              >
+                <View style={[ps.rowIcon, { backgroundColor: colors.roseBg }]}>
+                  <Feather name="trash-2" size={15} color={colors.roseDark} />
+                </View>
+                <Text style={[ps.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>Supprimer le compte</Text>
                 <Feather name="chevron-right" size={14} color={colors.roseDark + '88'} />
               </TouchableOpacity>
             </Group>

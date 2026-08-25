@@ -20,6 +20,7 @@ import notificationsRouter from "./notifications";
 import subscriptionRouter from "./subscription";
 import socialRouter, { oauthCallbackHandler } from "./social";
 import editorialPostsRouter from "./editorial-posts";
+import accountRouter from "./account";
 
 const router: IRouter = Router();
 
@@ -32,6 +33,7 @@ router.get("/social/oauth/callback/:platform", oauthCallbackHandler);
 
 // Auth-gated — all routes below require a valid Clerk session
 router.use(requireAuth);
+router.use(accountRouter);
 router.use(storageRouter);
 router.use("/openai/conversations", openaiConversationsRouter);
 router.use(addressBookRouter);

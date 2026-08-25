@@ -28,7 +28,7 @@ import {
   Loader2,
   Pencil,
 } from 'lucide-react';
-import { useUser } from '@clerk/react';
+import { useClerk, useUser } from '@clerk/react';
 import { useActiveWedding } from '@/lib/wedding-context';
 import {
   useGetWedding,
@@ -240,6 +240,7 @@ function SubscriptionSection() {
 /* ── Main page ── */
 export default function Parametres() {
   const { user } = useUser();
+  const { signOut } = useClerk();
   const { activeWeddingId, setActiveWeddingId } = useActiveWedding();
   const [, navigate] = useLocation();
   const { data: wedding, isLoading } = useGetWedding(activeWeddingId ?? 0, {
@@ -260,6 +261,21 @@ export default function Parametres() {
   const [profileFirstName, setProfileFirstName] = useState('');
   const [profileLastName, setProfileLastName] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
+  const [accountDeleteOpen, setAccountDeleteOpen] = useState(false);
+  const [accountDeleting, setAccountDeleting] = useState(false);
+
+  const deleteAccount = async () => {
+    setAccountDeleting(true);
+    try {
+      const response = await fetch('/api/account', { method: 'DELETE', credentials: 'include' });
+      const data = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? 'Impossible de supprimer le compte.');
+      await signOut({ redirectUrl: '/' });
+    } catch (error) {
+      setAccountDeleting(false);
+      toast({ title: 'Suppression impossible', description: error instanceof Error ? error.message : 'Réessayez dans quelques instants.', variant: 'destructive' });
+    }
+  };
 
   const openProfileEditor = () => {
     setProfileFirstName(user?.firstName ?? '');
@@ -467,6 +483,24 @@ export default function Parametres() {
                 {profileSaving ? 'Enregistrement…' : 'Enregistrer'}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={accountDeleteOpen} onOpenChange={setAccountDeleteOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-serif text-xl text-destructive">
+              <AlertTriangle size={18} /> Supprimer le compte
+            </DialogTitle>
+            <DialogDescription>
+              Cette action résilie immédiatement les abonnements Stripe, efface définitivement vos mariages, fichiers, réseaux sociaux et données de compte, puis vous déconnecte. Elle est irréversible.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setAccountDeleteOpen(false)} disabled={accountDeleting}>Annuler</Button>
+            <Button variant="destructive" className="flex-1" onClick={() => void deleteAccount()} disabled={accountDeleting}>
+              {accountDeleting ? 'Suppression…' : 'Supprimer définitivement'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -775,6 +809,16 @@ export default function Parametres() {
           </div>
         </form>
       </Form>
+      <div className="mt-8 border-t border-destructive/20 pt-6">
+        <p className="eyebrow text-destructive/70">Zone danger</p>
+        <h2 className="mt-1 font-serif text-2xl text-foreground">Supprimer mon compte</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          Supprimez définitivement votre compte, toutes vos données et vos abonnements web actifs.
+        </p>
+        <Button type="button" variant="destructive" className="mt-4 gap-2" onClick={() => setAccountDeleteOpen(true)}>
+          <Trash2 size={15} /> Supprimer le compte
+        </Button>
+      </div>
     </>
   );
 }

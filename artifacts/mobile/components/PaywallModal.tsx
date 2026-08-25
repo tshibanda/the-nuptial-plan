@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Modal, View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Platform, ScrollView,
+  ActivityIndicator, Linking, Platform, ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -19,6 +19,14 @@ const PREMIUM_FEATURES = [
   { icon: 'star', label: 'Moodboards & inspirations illimitées' },
   { icon: 'zap', label: 'Accès prioritaire aux nouvelles fonctionnalités' },
 ];
+const LEGAL_BASE_URL = 'https://thenuptialplan.app';
+
+function annualMonthlyPrice(pkg: any): string | null {
+  const amount = pkg?.product?.price;
+  const currency = pkg?.product?.currencyCode ?? pkg?.product?.currency;
+  if (typeof amount !== 'number' || !currency) return null;
+  return `${new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(amount / 12)} / mois`;
+}
 
 interface PaywallModalProps {
   visible: boolean;
@@ -79,8 +87,8 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
               </LinearGradient>
             </View>
 
-            <Text style={[pw.heroEye, { fontFamily: SANS_MEDIUM }]}>THE NUPTIAL PLAN</Text>
-            <Text style={[pw.heroTitle, { fontFamily: SERIF }]}>Premium</Text>
+            <Text style={[pw.heroEye, { fontFamily: SANS_MEDIUM }]}>ABONNEMENT</Text>
+            <Text style={[pw.heroTitle, { fontFamily: SERIF }]}>The Nuptial Plan Premium</Text>
             {featureLabel ? (
               <Text style={[pw.heroSub, { fontFamily: SANS }]}>
                 {featureLabel} est une fonctionnalité Premium
@@ -91,6 +99,36 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
               </Text>
             )}
           </LinearGradient>
+
+          {/* Required purchase details stay above the fold, before benefits. */}
+          <View style={[pw.complianceCard, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
+            {packages.map((pkg: any) => {
+              const annual = pkg.packageType === 'ANNUAL';
+              return (
+                <TouchableOpacity key={`summary-${pkg.identifier}`} onPress={() => void subscription.purchase(pkg)} disabled={subscription.loading} style={[pw.summaryPlan, { borderColor: colors.border }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[pw.summaryTitle, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>The Nuptial Plan Premium</Text>
+                    <Text style={[pw.summaryDetail, { fontFamily: SANS, color: colors.mutedForeground }]}>
+                      {annual ? 'Abonnement annuel · 12 mois' : 'Abonnement mensuel · 1 mois'}
+                    </Text>
+                    <Text style={[pw.summaryPrice, { fontFamily: SERIF, color: colors.plum }]}>{getLocalizedPackagePrice(pkg) ?? 'Prix selon votre boutique'}</Text>
+                    {annual && annualMonthlyPrice(pkg) && <Text style={[pw.summaryDetail, { fontFamily: SANS, color: colors.mutedForeground }]}>{annualMonthlyPrice(pkg)}</Text>}
+                  </View>
+                  <Text style={[pw.chooseText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>Choisir</Text>
+                </TouchableOpacity>
+              );
+            })}
+            <View style={pw.complianceActions}>
+              <TouchableOpacity onPress={() => void subscription.restore()} disabled={subscription.loading} style={pw.restoreBtn}>
+                <Text style={[pw.restoreText, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Restaurer les achats</Text>
+              </TouchableOpacity>
+              <View style={pw.legalLinks}>
+                <Text onPress={() => void Linking.openURL(`${LEGAL_BASE_URL}/privacy`)} style={[pw.legalLink, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Politique de confidentialité</Text>
+                <Text style={[pw.legalSeparator, { color: colors.mutedForeground }]}>·</Text>
+                <Text onPress={() => void Linking.openURL(`${LEGAL_BASE_URL}/policy`)} style={[pw.legalLink, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Conditions d’utilisation</Text>
+              </View>
+            </View>
+          </View>
 
           {/* ── Feature list ─────────────────────────────────────────────── */}
           <View style={[pw.featuresCard, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -194,17 +232,6 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
             </Text>
           )}
 
-          {/* ── Restore ──────────────────────────────────────────────────── */}
-          <TouchableOpacity
-            onPress={() => void subscription.restore()}
-            disabled={subscription.loading}
-            style={pw.restoreBtn}
-          >
-            <Text style={[pw.restoreText, { fontFamily: SANS_MEDIUM, color: colors.mutedForeground }]}>
-              Restaurer mes achats
-            </Text>
-          </TouchableOpacity>
-
           <Text style={[pw.legalText, { fontFamily: SANS, color: colors.mutedForeground }]}>
             L'abonnement est renouvelé automatiquement. Résiliable à tout moment depuis les réglages de votre appareil.
           </Text>
@@ -242,7 +269,7 @@ const pw = StyleSheet.create({
   crownWrap: { marginBottom: 14 },
   crownGrad: { width: 68, height: 68, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   heroEye: { fontSize: 9, letterSpacing: 2, color: '#C8A96E', marginBottom: 6 },
-  heroTitle: { fontSize: 36, color: '#FBF5FB', lineHeight: 38, marginBottom: 6 },
+  heroTitle: { fontSize: 30, color: '#FBF5FB', lineHeight: 34, marginBottom: 6, textAlign: 'center' },
   heroSub: { fontSize: 12, color: '#DEC0DE', textAlign: 'center', lineHeight: 17, paddingHorizontal: 10 },
 
   /* Features card */
@@ -306,6 +333,13 @@ const pw = StyleSheet.create({
     alignItems: 'center',
   },
   packageCtaText: { fontSize: 13 },
+  complianceCard: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', marginBottom: 12 },
+  summaryPlan: { flexDirection: 'row', gap: 10, padding: 13, borderBottomWidth: StyleSheet.hairlineWidth },
+  summaryTitle: { fontSize: 12 },
+  summaryDetail: { fontSize: 10, marginTop: 2 },
+  summaryPrice: { fontSize: 19, marginTop: 4 },
+  chooseText: { alignSelf: 'center', fontSize: 11 },
+  complianceActions: { padding: 11, gap: 8 },
 
   /* Unavailable fallback */
   unavailableCard: {
@@ -320,8 +354,11 @@ const pw = StyleSheet.create({
   unavailableText: { flex: 1, fontSize: 12, lineHeight: 17 },
 
   /* Restore */
-  restoreBtn: { alignItems: 'center', paddingVertical: 10 },
+  restoreBtn: { alignItems: 'center', paddingVertical: 4 },
   restoreText: { fontSize: 12 },
+  legalLinks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, flexWrap: 'wrap' },
+  legalLink: { fontSize: 10, textDecorationLine: 'underline' },
+  legalSeparator: { fontSize: 10 },
 
   /* Legal */
   legalText: { fontSize: 10, lineHeight: 14, textAlign: 'center', paddingHorizontal: 8, marginTop: 4, opacity: 0.75 },

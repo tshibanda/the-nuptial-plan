@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Award, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type SubscriptionStatus = { subscription: { status: string; trialEndsAt: string | null } | null };
-type PlansResponse = { data: Array<{ lookupKey: string; plan: 'monthly' | 'annual'; amount: number | null }> };
+type PlansResponse = { data: Array<{ lookupKey: string; plan: 'monthly' | 'annual'; amount: number | null; currency?: string }> };
 
 export function usePremiumStatus() {
   const { data, isLoading } = useQuery({
@@ -28,6 +28,7 @@ export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
     },
   });
   const [busy, setBusy] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const checkout = async (lookupKey: string) => {
     setBusy(lookupKey);
@@ -45,6 +46,18 @@ export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
       setBusy(null);
     }
   };
+  const restore = async () => {
+    setBusy('restore');
+    try {
+      await queryClient.invalidateQueries({ queryKey: ['subscription-status'] });
+      await queryClient.invalidateQueries({ queryKey: ['subscription-plans'] });
+    } finally {
+      setBusy(null);
+    }
+  };
+  const price = (amount: number | null, currency = 'EUR') => amount == null
+    ? 'Prix indisponible'
+    : new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(amount / 100);
 
   return (
     <div className="rounded-2xl border border-[#C8A96E]/45 bg-[#F7EEDB]/55 p-6 shadow-sm">
@@ -52,22 +65,35 @@ export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
         <div className="rounded-xl bg-[#5D2D5D] p-3 text-[#E2B93B]"><Lock size={19} /></div>
         <div className="min-w-0 flex-1">
           <p className="eyebrow text-[10px] text-[#a8893e]">FONCTIONNALITÉ PREMIUM</p>
-          <h2 className="mt-1 font-serif text-2xl text-foreground">Débloquez {featureLabel}</h2>
+          <h2 className="mt-1 font-serif text-2xl text-foreground">The Nuptial Plan Premium</h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
             Abonnez-vous à Premium pour accéder à cet onglet et utiliser toutes ses fonctionnalités.
           </p>
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {(plans?.data ?? []).map((plan) => (
               <Button
                 key={plan.lookupKey}
                 disabled={isLoading || busy !== null}
                 onClick={() => void checkout(plan.lookupKey)}
-                className="gap-2 border-[#C8A96E] bg-[#E2B93B] text-white hover:bg-[#F0CC55] hover:text-white"
+                className="h-auto justify-start border-[#C8A96E] bg-[#E2B93B] px-4 py-3 text-left text-white hover:bg-[#F0CC55] hover:text-white"
               >
                 <Award size={15} />
-                {plan.plan === 'annual' ? 'Passer à Premium annuel' : 'Passer à Premium mensuel'}
+                <span>
+                  <span className="block">The Nuptial Plan Premium</span>
+                  <span className="block text-xs font-normal opacity-90">
+                    {plan.plan === 'annual' ? 'Abonnement annuel · 12 mois' : 'Abonnement mensuel · 1 mois'} · {price(plan.amount, plan.currency)}
+                    {plan.plan === 'annual' && plan.amount != null ? ` · ${price(Math.round(plan.amount / 12), plan.currency)} / mois` : ''}
+                  </span>
+                </span>
               </Button>
             ))}
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+            <button type="button" onClick={() => void restore()} disabled={busy !== null} className="font-semibold text-primary underline underline-offset-4">
+              Restaurer les achats
+            </button>
+            <a href="/privacy" className="text-primary underline underline-offset-4">Politique de confidentialité</a>
+            <a href="/policy" className="text-primary underline underline-offset-4">Conditions d’utilisation</a>
           </div>
           {!isLoading && !plans?.data?.length && (
             <p className="mt-4 text-xs text-muted-foreground">Les formules Premium seront bientôt disponibles.</p>
