@@ -13,8 +13,8 @@ export function LanguageSelector({ compact = false }: { compact?: boolean }) {
         className="rounded-lg border border-border/60 bg-white/70 px-2 py-1.5 text-xs font-medium text-foreground outline-none transition focus:border-primary"
         data-testid="select-language"
       >
-        <option value="en">{t('language.english')}</option>
-        <option value="fr">{t('language.french')}</option>
+        <option value="en">🇺🇸 {t('language.english')}</option>
+        <option value="fr">🇫🇷 {t('language.french')}</option>
       </select>
     </label>
   );
