@@ -21,16 +21,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Path, G, Text as SvgText } from 'react-native-svg';
 import {
-  useListWeddings,
   useGetBudgetSummary,
   getGetBudgetSummaryQueryKey,
   useUpdateBudgetCategory,
   useCreateBudgetCategory,
 } from '@workspace/api-client-react';
 import type { BudgetCategory } from '@workspace/api-client-react';
-import { useWedding } from '@/context/WeddingContext';
 import { useLocalization } from '@/context/LocalizationContext';
 import { useColors } from '@/hooks/useColors';
+import { useActiveWedding } from '@/hooks/useActiveWedding';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
@@ -623,7 +622,6 @@ export default function BudgetScreen() {
   const colors = useColors();
   const { language, locale } = useLocalization();
   const insets = useSafeAreaInsets();
-  const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
 
   const { tourVisible, openTour, closeTour } = useTour('tour:budget');
@@ -634,12 +632,9 @@ export default function BudgetScreen() {
   // Chart selection state (from task #47)
   const [selectedCatId, setSelectedCatId] = useState<number | null>(null);
 
-  const { data: weddings } = useListWeddings();
-  const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
-  // The selected wedding is restored from AsyncStorage before the wedding list
-  // finishes loading. Use that ID immediately so Budget can fetch in parallel
-  // with the list instead of waiting for it, and never request `/weddings/0`.
-  const wId = selectedWeddingId ?? weddings?.[0]?.id ?? null;
+  // useActiveWedding keeps the persisted selection available while the wedding
+  // list is loading, so the budget request can start without waiting for it.
+  const { activeWedding, weddingId: wId } = useActiveWedding();
   const currency = activeWedding?.currency ?? 'EUR';
 
   const {
