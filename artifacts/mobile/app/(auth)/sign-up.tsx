@@ -9,6 +9,7 @@ import { useSignUp, useSSO } from '@clerk/expo';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { Feather } from '@expo/vector-icons';
+import { AppleLogo } from '@/components/AppleLogo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
@@ -171,7 +172,7 @@ export default function SignUpScreen() {
               >
                 {oauthLoading === 'apple'
                   ? <ActivityIndicator color="#fff" size="small" />
-                  : <Feather name="smartphone" size={17} color="#fff" />}
+                   : <AppleLogo size={17} color="#fff" />}
                 <Text style={[ss.applBtnText, { fontFamily: SANS_MEDIUM }]}>Continuer avec Apple</Text>
               </TouchableOpacity>
             )}
