@@ -6,7 +6,6 @@
  */
 const PREMIUM_EMAIL_ALLOWLIST = new Set([
   "e.tshibanda78@gmail.com",
-  "thenuptialplan@yopmail.com",
 ]);
 
 export function hasPremiumEmailAccess(email: string | null | undefined): boolean {

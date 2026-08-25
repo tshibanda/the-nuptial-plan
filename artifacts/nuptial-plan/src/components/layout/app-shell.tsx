@@ -68,6 +68,7 @@ import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { LegalFooter } from '@/components/legal-footer';
 import { usePremiumStatus } from '@/components/premium-page-gate';
+import { canAccessSocials } from '@/lib/social-access';
 
 const navItems = [
   { label: 'Aperçu', icon: Home, path: '/' },
@@ -326,6 +327,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     ? ([user.firstName?.[0], user.lastName?.[0]].filter(Boolean).join('') || userFullName.slice(0, 2)).toUpperCase()
     : '?';
   const userImageUrl = user?.imageUrl ?? null;
+  const canUseSocials = canAccessSocials(user?.primaryEmailAddress?.emailAddress);
 
   const getToken = () => session?.getToken() ?? Promise.resolve<string | null>(null);
   const handleSignOut = (opts?: { redirectUrl?: string }) => signOut(opts);
@@ -682,7 +684,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               {sidebarUserMenuOpen && (
                 <div className="mt-1 overflow-hidden rounded-2xl border border-sidebar-border/30 bg-white/[0.06] p-1">
                   <button
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
+                    disabled={!canUseSocials}
+                    title={!canUseSocials ? 'Cette page est en développement' : undefined}
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition ${canUseSocials ? 'hover:bg-white/[0.08]' : 'cursor-not-allowed opacity-40'}`}
                     data-testid="button-sidebar-address-book"
                     onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/carnet-adresse'); }}
                   >
@@ -698,7 +702,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
                     data-testid="button-sidebar-social-networks"
-                    onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-reseaux'); }}
+                    onClick={() => { if (!canUseSocials) return; setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-reseaux'); }}
                   >
                     <Share2 size={13} className="text-sidebar-foreground/40" /> Mes réseaux
                   </button>
@@ -899,7 +903,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                    <div className="fixed inset-0 z-40" onClick={closeHeaderMenus} />
                    <div className="absolute right-6 top-[68px] z-50 w-56 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 p-1.5 shadow-[0_8px_32px_rgba(93,45,93,0.18)] backdrop-blur-md">
                     <button
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
+                      disabled={!canUseSocials}
+                      title={!canUseSocials ? 'Cette page est en développement' : undefined}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition ${canUseSocials ? 'hover:bg-primary/6' : 'cursor-not-allowed opacity-40'}`}
                       data-testid="button-header-address-book"
                       onClick={() => { setMenuOpen(false); navigate('/carnet-adresse'); }}
                     >
@@ -915,7 +921,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <button
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
                       data-testid="button-header-social-networks"
-                      onClick={() => { setMenuOpen(false); navigate('/mes-reseaux'); }}
+                      onClick={() => { if (!canUseSocials) return; setMenuOpen(false); navigate('/mes-reseaux'); }}
                     >
                       <Share2 size={13} className="text-muted-foreground" /> Mes réseaux
                     </button>

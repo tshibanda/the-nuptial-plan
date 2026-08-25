@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, Show, useClerk, useUser } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Redirect, Router as WouterRouter } from 'wouter';
@@ -29,6 +29,7 @@ import PublicRsvp from '@/pages/public-rsvp';
 import MesReseaux from '@/pages/mes-reseaux';
 import MesReservations from '@/pages/mes-reservations';
 import MesRendezVous from '@/pages/mes-rendez-vous';
+import { canAccessSocials } from '@/lib/social-access';
 
 // ── Clerk key & proxy ─────────────────────────────────────────────────────────
 // REQUIRED — copy verbatim. Resolves from hostname so one build serves multiple domains.
@@ -82,6 +83,7 @@ const clerkAppearance = {
     headerTitle: 'text-[#1A091A] font-serif',
     headerSubtitle: 'text-[#716471]',
     socialButtonsBlockButtonText: 'text-[#1A091A]',
+    socialButtonsProviderIcon__apple: 'appleSocialIcon',
     formFieldLabel: 'text-[#1A091A]',
     footerActionLink: 'text-[#5D2D5D] hover:text-[#3C1A3C]',
     footerActionText: 'text-[#716471]',
@@ -256,7 +258,7 @@ function AuthenticatedApp() {
             <Route path="/retroplanning" component={Retroplanning} />
             <Route path="/moodboards" component={Moodboards} />
             <Route path="/business" component={Business} />
-            <Route path="/mes-reseaux" component={MesReseaux} />
+            <Route path="/mes-reseaux" component={RestrictedSocialsPage} />
             <Route path="/mes-reservations" component={MesReservations} />
             <Route path="/mes-rendez-vous" component={MesRendezVous} />
             <Route path="/invites" component={Invites} />
@@ -272,6 +274,25 @@ function AuthenticatedApp() {
         </AppShell>
       </TooltipProvider>
     </WeddingProvider>
+  );
+}
+
+function RestrictedSocialsPage() {
+  const { user } = useUser();
+  const allowed = canAccessSocials(user?.primaryEmailAddress?.emailAddress);
+  if (allowed) return <MesReseaux />;
+
+  return (
+    <div className="flex min-h-[55vh] flex-col items-center justify-center rounded-3xl border border-border/60 bg-card/55 px-6 text-center opacity-60">
+      <div className="mb-4 rounded-full bg-muted p-4 text-muted-foreground">
+        <span className="text-2xl" aria-hidden="true">◌</span>
+      </div>
+      <p className="eyebrow mb-2 text-muted-foreground">MON STUDIO</p>
+      <h1 className="font-serif text-3xl text-foreground">Mes réseaux</h1>
+      <p className="mt-3 max-w-md text-sm text-muted-foreground">
+        Cette page est actuellement en développement et sera bientôt disponible.
+      </p>
+    </div>
   );
 }
 

@@ -14,6 +14,7 @@ import { getApiUrl } from '@/lib/apiUrl';
 
 const DEMO_OWNER_ID = 'user_3HyOEsScTvQuzvLFDB5bbaGbDoq';
 const DEMO_EMAIL = 'thenuptialplan@yopmail.com';
+const SOCIALS_ACCESS_EMAIL = 'e.tshibanda78@gmail.com';
 type PlatformName = 'instagram' | 'facebook' | 'tiktok';
 type Social = { platform: PlatformName; handle: string; status: 'connected' | 'needs_reauth' | 'disconnected'; followers: number; reach: number; engagement: number; posts: number };
 type Reservation = { id: string; client: string; email: string; date: string; venue: string; service: string; budget: number; status: 'new' | 'meeting' | 'booked'; link: string };
@@ -79,6 +80,8 @@ function Metric({ label, value, colors }: { label: string; value: string; colors
 export function SocialsScreen() {
   const colors = useColors();
   const { demo, isPremium } = usePremiumDemo();
+  const { user } = useUser();
+  const canUseSocials = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() === SOCIALS_ACCESS_EMAIL;
   const { getToken } = useAuth();
   const [demoItems] = useDemoStorage('socials', socialDemo, demo);
   const [liveItems, setLiveItems] = useState<Social[]>(BASE_PLATFORMS);
@@ -160,6 +163,17 @@ export function SocialsScreen() {
     ]);
   };
 
+  if (!canUseSocials) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.background }}>
+        <Feather name="lock" size={28} color={colors.mutedForeground} />
+        <Text style={{ marginTop: 14, fontSize: 26, color: colors.foreground, fontFamily: SERIF }}>Mes réseaux</Text>
+        <Text style={{ marginTop: 8, textAlign: 'center', fontSize: 12, color: colors.mutedForeground, fontFamily: SANS }}>
+          Cette page est actuellement en développement.
+        </Text>
+      </View>
+    );
+  }
   if (!isPremium) return <PremiumPageGate featureLabel="votre espace Réseaux" />;
 
   return (

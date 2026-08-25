@@ -9,7 +9,7 @@ import { Feather } from '@expo/vector-icons';
 import { SymbolView } from 'expo-symbols';
 import type { SFSymbol } from 'expo-symbols';
 import { Redirect, Tabs, usePathname } from 'expo-router';
-import { useAuth } from '@clerk/expo';
+import { useAuth, useUser } from '@clerk/expo';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,6 +47,7 @@ const TAB_META: Record<string, { sf: string; feather: string; label: string }> =
 // Five primary tabs visible in the bar. The selection is persisted locally.
 const DEFAULT_PRIMARY = ['index', 'evenements', 'budget', 'invites', 'profil'];
 const PRIMARY_TABS_STORAGE_KEY = '@nuptial-plan/primary-tabs';
+const SOCIALS_ACCESS_EMAIL = 'e.tshibanda78@gmail.com';
 
 // All tabs shown in the burger sheet (full list for quick access)
 const ALL_TABS = [
@@ -84,6 +85,8 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const isIOS = Platform.OS === 'ios';
+  const { user } = useUser();
+  const canUseSocials = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() === SOCIALS_ACCESS_EMAIL;
   const [burgerOpen, setBurgerOpen] = useState(false);
   const [primaryTabs, setPrimaryTabs] = useState(DEFAULT_PRIMARY);
 
@@ -152,14 +155,15 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
           {primaryTabs.map((tabName) => {
             const meta = TAB_META[tabName]!;
             const focused = currentRoute === tabName;
+            const socialsLocked = tabName === 'mes-reseaux' && !canUseSocials;
             return (
               <Pressable
                 key={tabName}
-                onPress={() => navigateTo(tabName)}
-                style={({ pressed }) => [bar.tabBtn, { opacity: pressed ? 0.7 : 1 }]}
+                onPress={() => { if (!socialsLocked) navigateTo(tabName); }}
+                style={({ pressed }) => [bar.tabBtn, { opacity: socialsLocked ? 0.38 : pressed ? 0.7 : 1 }]}
                 accessibilityRole="tab"
                 accessibilityLabel={meta.label}
-                accessibilityState={{ selected: focused }}
+                accessibilityState={{ selected: focused, disabled: socialsLocked }}
               >
                 <View style={bar.tabInner}>
                   {/* Active dot / pill */}
@@ -234,6 +238,7 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
         onPrimaryTabsChange={updatePrimaryTabs}
         colors={colors}
         isDark={isDark}
+        canUseSocials={canUseSocials}
       />
     </>
   );
@@ -252,7 +257,7 @@ const bar = StyleSheet.create({
 
 // ── Burger sheet modal ─────────────────────────────────────────────────────────
 function BurgerSheet({
-  visible, onClose, currentRoute, onNavigate, primaryTabs, onPrimaryTabsChange, colors, isDark,
+  visible, onClose, currentRoute, onNavigate, primaryTabs, onPrimaryTabsChange, colors, isDark, canUseSocials,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -262,6 +267,7 @@ function BurgerSheet({
   onPrimaryTabsChange: (tabs: string[]) => void;
   colors: ReturnType<typeof useColors>;
   isDark: boolean;
+  canUseSocials: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const [customizing, setCustomizing] = useState(false);
@@ -432,15 +438,18 @@ function BurgerSheet({
             const meta = TAB_META[tabName]!;
             const isActive = currentRoute === tabName;
             const isPrimary = primaryTabs.includes(tabName);
+            const socialsLocked = tabName === 'mes-reseaux' && !canUseSocials;
 
             return (
               <TouchableOpacity
                 key={tabName}
-                onPress={() => onNavigate(tabName)}
+                onPress={() => { if (!socialsLocked) onNavigate(tabName); }}
                 activeOpacity={0.75}
+                disabled={socialsLocked}
                 style={[
                   bs.gridItem,
                   {
+                    opacity: socialsLocked ? 0.38 : 1,
                     backgroundColor: isActive
                       ? colors.plum + '15'
                       : isDark ? colors.background : '#F5F0F5',

@@ -20,6 +20,8 @@ import { PaywallModal } from '@/components/PaywallModal';
 import { useSubscription } from '@/lib/subscription';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
 
+const SOCIALS_ACCESS_EMAIL = 'e.tshibanda78@gmail.com';
+
 const TOUR_STEPS = [
   {
     icon: 'user',
@@ -43,11 +45,12 @@ const TOUR_STEPS = [
   },
 ];
 
-function RowItem({ icon, label, value, variant = 'default', colors, onPress }: {
+function RowItem({ icon, label, value, variant = 'default', colors, onPress, disabled = false }: {
   icon: string; label: string; value?: string;
   variant?: 'default' | 'gold' | 'sage' | 'rose';
   colors: ReturnType<typeof useColors>;
   onPress?: () => void;
+  disabled?: boolean;
 }) {
   const iconBg = variant === 'gold' ? colors.goldLight
     : variant === 'sage' ? colors.sageBg
@@ -60,16 +63,17 @@ function RowItem({ icon, label, value, variant = 'default', colors, onPress }: {
 
   return (
     <TouchableOpacity
-      activeOpacity={onPress ? 0.7 : 1}
-      onPress={onPress}
-      style={[ss.row, { borderBottomColor: colors.border }]}
+      activeOpacity={disabled ? 1 : onPress ? 0.7 : 1}
+      onPress={disabled ? undefined : onPress}
+      disabled={disabled}
+      style={[ss.row, { borderBottomColor: colors.border, opacity: disabled ? 0.38 : 1 }]}
     >
       <View style={[ss.rowIcon, { backgroundColor: iconBg }]}>
         <Feather name={icon as any} size={15} color={iconColor} />
       </View>
       <Text style={[ss.rowLabel, { fontFamily: SANS, color: colors.foreground }]}>{label}</Text>
       {value ? <Text style={[ss.rowValue, { fontFamily: SANS_MEDIUM, color: colors.mutedForeground }]}>{value}</Text> : null}
-      <Feather name="chevron-right" size={14} color={onPress ? colors.goldDim : colors.border} />
+      <Feather name="chevron-right" size={14} color={disabled ? colors.border : onPress ? colors.goldDim : colors.border} />
     </TouchableOpacity>
   );
 }
@@ -80,6 +84,7 @@ export default function ProfilScreen() {
   const router = useRouter();
   const { signOut } = useClerk();
   const { user } = useUser();
+  const canUseSocials = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() === SOCIALS_ACCESS_EMAIL;
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:profil');
@@ -268,6 +273,7 @@ export default function ProfilScreen() {
           />
           <RowItem
             icon="share-2" label="Mes réseaux" colors={colors}
+            disabled={!canUseSocials}
             onPress={() => router.push('/(tabs)/mes-reseaux')}
           />
           <RowItem
