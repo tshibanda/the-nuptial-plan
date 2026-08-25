@@ -11,6 +11,7 @@ import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { useSubscription } from '@/lib/subscription';
 import { getApiUrl } from '@/lib/apiUrl';
+import { useLocalization } from '@/context/LocalizationContext';
 
 const DEMO_OWNER_ID = 'user_3HyOEsScTvQuzvLFDB5bbaGbDoq';
 const DEMO_EMAIL = 'thenuptialplan@yopmail.com';
@@ -49,6 +50,39 @@ const BASE_PLATFORMS: Social[] = [
   { platform: 'tiktok', handle: '', status: 'disconnected', followers: 0, reach: 0, engagement: 0, posts: 0 },
 ];
 
+const studioCopy = {
+  fr: {
+    studio: 'MON STUDIO', networks: 'Mes réseaux', networksBody: 'Analysez votre visibilité et préparez votre communication depuis un seul espace.',
+    developing: 'Cette page est actuellement en développement.', networksGate: 'votre espace Réseaux',
+    connectAccount: 'Compte à connecter', syncedStats: 'Statistiques synchronisées', renewAuthorization: 'Autorisation à renouveler', noAuthorizedAccount: 'Aucun compte autorisé',
+    connect: 'Connecter', reconnect: 'Reconnecter', sync: 'Sync', remove: 'Retirer', preparePost: 'Préparer une publication…', postScheduled: 'Publication planifiée',
+    addToEditorialCalendar: 'Ajouter au calendrier éditorial', connectUnavailable: 'Disponible sur votre compte personnel.', connectionUnavailable: 'Connexion indisponible',
+    connectionImpossible: 'Connexion impossible', cannotOpenBrowser: "Impossible d'ouvrir le navigateur", disconnectAccount: 'Déconnecter {platform}', removeAccountQuestion: 'Voulez-vous retirer ce compte ?',
+    followers: 'Abonnés', recentViews: 'Vues récentes', reach28Days: 'Portée 28 jours', engagement: 'Engagement', recentVideos: 'Vidéos récentes', posts28Days: 'Posts 28 jours',
+    reservations: 'Mes réservations', reservationsBody: 'Suivez les demandes de devis et partagez un lien clair avec chaque couple.', reservationsGate: 'votre espace Réservations',
+    close: 'Fermer', add: 'Ajouter', coupleName: 'Nom du couple *', createRequest: 'Créer la demande', completePlanning: 'Organisation complète',
+    new: 'Nouveau', upcomingMeeting: 'RDV à venir', booked: 'Réservé', emailToProvide: 'Email à renseigner', dateToSpecify: 'Date à préciser', venueToSpecify: 'Lieu à préciser', budgetToSpecify: 'Budget à préciser',
+    clientLink: 'Lien client', shareTrackingLink: 'Partager le lien de suivi',
+    appointments: 'Mes rendez-vous', appointmentsBody: 'Retrouvez les rendez-vous commerciaux et les échéances de tous vos dossiers au même endroit.', appointmentsGate: 'votre espace Rendez-vous',
+    trackedAppointments: 'Rendez-vous suivis', reminders24h: 'Rappels 24 h', upcomingDeadlines: 'Prochaines échéances', synchronized: 'Synchronisé', progressUpdate: "Point d'avancement",
+  },
+  en: {
+    studio: 'MY STUDIO', networks: 'My networks', networksBody: 'Analyze your visibility and plan your communications from one place.',
+    developing: 'This page is currently under development.', networksGate: 'your Networks space',
+    connectAccount: 'Account to connect', syncedStats: 'Statistics synchronized', renewAuthorization: 'Authorization needs renewal', noAuthorizedAccount: 'No authorized account',
+    connect: 'Connect', reconnect: 'Reconnect', sync: 'Sync', remove: 'Remove', preparePost: 'Prepare a post…', postScheduled: 'Post scheduled',
+    addToEditorialCalendar: 'Add to editorial calendar', connectUnavailable: 'Available on your personal account.', connectionUnavailable: 'Connection unavailable',
+    connectionImpossible: 'Unable to connect', cannotOpenBrowser: 'Unable to open browser', disconnectAccount: 'Disconnect {platform}', removeAccountQuestion: 'Do you want to remove this account?',
+    followers: 'Followers', recentViews: 'Recent views', reach28Days: '28-day reach', engagement: 'Engagement', recentVideos: 'Recent videos', posts28Days: '28-day posts',
+    reservations: 'My reservations', reservationsBody: 'Track quote requests and share a clear link with each couple.', reservationsGate: 'your Reservations space',
+    close: 'Close', add: 'Add', coupleName: 'Couple name *', createRequest: 'Create request', completePlanning: 'Full planning',
+    new: 'New', upcomingMeeting: 'Upcoming meeting', booked: 'Booked', emailToProvide: 'Email to provide', dateToSpecify: 'Date to specify', venueToSpecify: 'Venue to specify', budgetToSpecify: 'Budget to specify',
+    clientLink: 'Client link', shareTrackingLink: 'Share tracking link',
+    appointments: 'My appointments', appointmentsBody: 'Find sales meetings and deadlines for all your files in one place.', appointmentsGate: 'your Appointments space',
+    trackedAppointments: 'Tracked appointments', reminders24h: '24-hour reminders', upcomingDeadlines: 'Upcoming deadlines', synchronized: 'Synchronized', progressUpdate: 'Progress update',
+  },
+} as const;
+
 function mergeRemoteAccounts(remote: RemoteSocialAccount[]): Social[] {
   return BASE_PLATFORMS.map((b) => {
     const r = remote.find((a) => a.platform === b.platform);
@@ -79,6 +113,8 @@ function Metric({ label, value, colors }: { label: string; value: string; colors
 
 export function SocialsScreen() {
   const colors = useColors();
+  const { language, locale } = useLocalization();
+  const copy = studioCopy[language];
   const { demo, isPremium } = usePremiumDemo();
   const { user } = useUser();
   const canUseSocials = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() === SOCIALS_ACCESS_EMAIL;
@@ -113,7 +149,7 @@ export function SocialsScreen() {
 
   const connect = async () => {
     if (demo) {
-      Alert.alert(`Connecter ${selected}`, 'Disponible sur votre compte personnel.');
+      Alert.alert(`${copy.connect} ${selected}`, copy.connectUnavailable);
       return;
     }
     // Create a signed provider URL with the Clerk bearer token before opening
@@ -125,8 +161,8 @@ export function SocialsScreen() {
       body: JSON.stringify({ platform: selected }),
     });
     if (!start.ok) {
-      const body = await start.json().catch(() => ({ error: 'Connexion indisponible' })) as { error?: string };
-      Alert.alert('Connexion impossible', body.error ?? 'Connexion indisponible');
+      const body = await start.json().catch(() => ({ error: copy.connectionUnavailable })) as { error?: string };
+      Alert.alert(copy.connectionImpossible, body.error ?? copy.connectionUnavailable);
       return;
     }
     const { url: oauthUrl } = await start.json() as { url: string };
@@ -137,7 +173,7 @@ export function SocialsScreen() {
       const sub = Linking.addEventListener('url', () => { void loadAccounts(); sub.remove(); });
       await Linking.openURL(oauthUrl);
     } else {
-      Alert.alert("Impossible d'ouvrir le navigateur");
+      Alert.alert(copy.cannotOpenBrowser);
     }
   };
 
@@ -152,10 +188,10 @@ export function SocialsScreen() {
   };
 
   const handleDisconnect = () => {
-    Alert.alert(`Déconnecter ${selected}`, 'Voulez-vous retirer ce compte ?', [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(copy.disconnectAccount.replace('{platform}', selected), copy.removeAccountQuestion, [
+      { text: language === 'fr' ? 'Annuler' : 'Cancel', style: 'cancel' },
       {
-        text: 'Déconnecter', style: 'destructive', onPress: async () => {
+        text: copy.remove, style: 'destructive', onPress: async () => {
           await request(`social/accounts/${selected}`, { method: 'DELETE' });
           await loadAccounts();
         },
@@ -167,18 +203,18 @@ export function SocialsScreen() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.background }}>
         <Feather name="lock" size={28} color={colors.mutedForeground} />
-        <Text style={{ marginTop: 14, fontSize: 26, color: colors.foreground, fontFamily: SERIF }}>Mes réseaux</Text>
+        <Text style={{ marginTop: 14, fontSize: 26, color: colors.foreground, fontFamily: SERIF }}>{copy.networks}</Text>
         <Text style={{ marginTop: 8, textAlign: 'center', fontSize: 12, color: colors.mutedForeground, fontFamily: SANS }}>
-          Cette page est actuellement en développement.
+          {copy.developing}
         </Text>
       </View>
     );
   }
-  if (!isPremium) return <PremiumPageGate featureLabel="votre espace Réseaux" />;
+  if (!isPremium) return <PremiumPageGate featureLabel={copy.networksGate} />;
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.content}>
-      <Hero eyebrow="MON STUDIO" title="Mes réseaux" body="Analysez votre visibilité et préparez votre communication depuis un seul espace." />
+      <Hero eyebrow={copy.studio} title={copy.networks} body={copy.networksBody} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
         {items.map((item) => (
           <TouchableOpacity key={item.platform} onPress={() => setSelected(item.platform)} style={[styles.pill, { borderColor: selected === item.platform ? colors.plum : colors.border, backgroundColor: selected === item.platform ? colors.plum + '12' : colors.card }]}>
@@ -189,38 +225,38 @@ export function SocialsScreen() {
         ))}
       </ScrollView>
       <View style={styles.metrics}>
-        <Metric label="Abonnés" value={account.followers.toLocaleString('fr-FR')} colors={colors} />
-        <Metric label={selected === 'tiktok' ? 'Vues récentes' : 'Portée 28 jours'} value={account.reach.toLocaleString('fr-FR')} colors={colors} />
-        <Metric label="Engagement" value={`${account.engagement.toFixed(1)} %`} colors={colors} />
-        <Metric label={selected === 'tiktok' ? 'Vidéos récentes' : 'Posts 28 jours'} value={String(account.posts)} colors={colors} />
+        <Metric label={copy.followers} value={account.followers.toLocaleString(locale)} colors={colors} />
+        <Metric label={selected === 'tiktok' ? copy.recentViews : copy.reach28Days} value={account.reach.toLocaleString(locale)} colors={colors} />
+        <Metric label={copy.engagement} value={`${account.engagement.toFixed(1)} %`} colors={colors} />
+        <Metric label={selected === 'tiktok' ? copy.recentVideos : copy.posts28Days} value={String(account.posts)} colors={colors} />
       </View>
       <Card>
         <View style={styles.sectionHeader}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground, fontFamily: SERIF }]}>{account.handle || 'Compte à connecter'}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.foreground, fontFamily: SERIF }]}>{account.handle || copy.connectAccount}</Text>
             <Text style={[styles.small, { color: colors.mutedForeground, fontFamily: SANS }]}>
-              {account.status === 'connected' ? 'Statistiques synchronisées' : account.status === 'needs_reauth' ? 'Autorisation à renouveler' : 'Aucun compte autorisé'}
+              {account.status === 'connected' ? copy.syncedStats : account.status === 'needs_reauth' ? copy.renewAuthorization : copy.noAuthorizedAccount}
             </Text>
           </View>
           {account.status !== 'connected' ? (
             <TouchableOpacity onPress={connect} style={[styles.button, { backgroundColor: colors.plum }]}>
-              <Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD }]}>{account.status === 'needs_reauth' ? 'Reconnecter' : 'Connecter'}</Text>
+              <Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD }]}>{account.status === 'needs_reauth' ? copy.reconnect : copy.connect}</Text>
             </TouchableOpacity>
           ) : !demo ? (
             <View style={{ gap: 8 }}>
               <TouchableOpacity onPress={handleSync} disabled={syncing} style={[styles.button, { backgroundColor: colors.plum + '20', borderWidth: 1, borderColor: colors.plum }]}>
-                <Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>{syncing ? '…' : 'Sync'}</Text>
+                <Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>{syncing ? '…' : copy.sync}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleDisconnect} style={[styles.button, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border }]}>
-                <Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>Retirer</Text>
+                <Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{copy.remove}</Text>
               </TouchableOpacity>
             </View>
           ) : null}
         </View>
-        <TextInput value={draft} onChangeText={setDraft} placeholder="Préparer une publication…" placeholderTextColor={colors.mutedForeground} style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} />
-        <TouchableOpacity onPress={() => { if (draft.trim()) { Alert.alert('Publication planifiée', draft.trim()); setDraft(''); } }} style={[styles.buttonWide, { backgroundColor: colors.plum }]}>
+        <TextInput value={draft} onChangeText={setDraft} placeholder={copy.preparePost} placeholderTextColor={colors.mutedForeground} style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} />
+        <TouchableOpacity onPress={() => { if (draft.trim()) { Alert.alert(copy.postScheduled, draft.trim()); setDraft(''); } }} style={[styles.buttonWide, { backgroundColor: colors.plum }]}>
           <Feather name="send" size={14} color="#fff" />
-          <Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter au calendrier éditorial</Text>
+          <Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD }]}>{copy.addToEditorialCalendar}</Text>
         </TouchableOpacity>
       </Card>
     </ScrollView>
@@ -228,15 +264,15 @@ export function SocialsScreen() {
 }
 
 export function ReservationsScreen() {
-  const colors = useColors(); const { demo, isPremium } = usePremiumDemo(); const [items, persist] = useDemoStorage('reservations', reservationDemo, demo); const [adding, setAdding] = useState(false); const [client, setClient] = useState(''); const statuses = { new: 'Nouveau', meeting: 'RDV à venir', booked: 'Réservé' };
-  if (!isPremium) return <PremiumPageGate featureLabel="votre espace Réservations" />;
- return <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.content}><Hero eyebrow="MON STUDIO" title="Mes réservations" body="Suivez les demandes de devis et partagez un lien clair avec chaque couple." action={<TouchableOpacity onPress={() => setAdding(!adding)} style={styles.heroAction}><Feather name={adding ? 'x' : 'plus'} size={15} color="#fff" /><Text style={[styles.heroActionText, { fontFamily: SANS_SEMIBOLD }]}>{adding ? 'Fermer' : 'Ajouter'}</Text></TouchableOpacity>} />{adding && <Card><TextInput value={client} onChangeText={setClient} placeholder="Nom du couple *" placeholderTextColor={colors.mutedForeground} style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} /><TouchableOpacity onPress={() => { if (!client.trim()) return; const slug = client.toLowerCase().replace(/[^a-z0-9]+/g, '-'); persist([{ id: String(Date.now()), client: client.trim(), email: '', date: '', venue: '', service: 'Organisation complète', budget: 0, status: 'new', link: `https://thenuptialplan.app/r/${slug}` }, ...items]); setClient(''); setAdding(false); }} style={[styles.buttonWide, { backgroundColor: colors.plum }]}><Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD }]}>Créer la demande</Text></TouchableOpacity></Card>}<View style={{ gap: 10 }}>{items.map((item) => <Card key={item.id}><View style={styles.sectionHeader}><View style={{ flex: 1 }}><Text style={[styles.sectionTitle, { color: colors.foreground, fontFamily: SERIF }]}>{item.client}</Text><Text style={[styles.small, { color: colors.mutedForeground, fontFamily: SANS }]}>{item.service} · {item.email || 'Email à renseigner'}</Text></View><TouchableOpacity onPress={() => persist(items.map((entry) => entry.id === item.id ? { ...entry, status: entry.status === 'new' ? 'meeting' : entry.status === 'meeting' ? 'booked' : 'new' } : entry))} style={[styles.status, { backgroundColor: colors.plum + '14' }]}><Text style={[styles.small, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{statuses[item.status]}</Text></TouchableOpacity></View><Text style={[styles.detail, { color: colors.mutedForeground, fontFamily: SANS }]}>{item.date || 'Date à préciser'} · {item.venue || 'Lieu à préciser'} · {item.budget ? `${item.budget.toLocaleString('fr-FR')} €` : 'Budget à préciser'}</Text><TouchableOpacity onPress={() => Alert.alert('Lien client', item.link)} style={styles.linkButton}><Feather name="link-2" size={13} color={colors.plum} /><Text style={[styles.small, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>Partager le lien de suivi</Text></TouchableOpacity></Card>)}</View></ScrollView>;
+  const colors = useColors(); const { language, locale } = useLocalization(); const copy = studioCopy[language]; const { demo, isPremium } = usePremiumDemo(); const [items, persist] = useDemoStorage('reservations', reservationDemo, demo); const [adding, setAdding] = useState(false); const [client, setClient] = useState(''); const statuses = { new: copy.new, meeting: copy.upcomingMeeting, booked: copy.booked };
+  if (!isPremium) return <PremiumPageGate featureLabel={copy.reservationsGate} />;
+ return <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.content}><Hero eyebrow={copy.studio} title={copy.reservations} body={copy.reservationsBody} action={<TouchableOpacity onPress={() => setAdding(!adding)} style={styles.heroAction}><Feather name={adding ? 'x' : 'plus'} size={15} color="#fff" /><Text style={[styles.heroActionText, { fontFamily: SANS_SEMIBOLD }]}>{adding ? copy.close : copy.add}</Text></TouchableOpacity>} />{adding && <Card><TextInput value={client} onChangeText={setClient} placeholder={copy.coupleName} placeholderTextColor={colors.mutedForeground} style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} /><TouchableOpacity onPress={() => { if (!client.trim()) return; const slug = client.toLowerCase().replace(/[^a-z0-9]+/g, '-'); persist([{ id: String(Date.now()), client: client.trim(), email: '', date: '', venue: '', service: copy.completePlanning, budget: 0, status: 'new', link: `https://thenuptialplan.app/r/${slug}` }, ...items]); setClient(''); setAdding(false); }} style={[styles.buttonWide, { backgroundColor: colors.plum }]}><Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD }]}>{copy.createRequest}</Text></TouchableOpacity></Card>}<View style={{ gap: 10 }}>{items.map((item) => <Card key={item.id}><View style={styles.sectionHeader}><View style={{ flex: 1 }}><Text style={[styles.sectionTitle, { color: colors.foreground, fontFamily: SERIF }]}>{item.client}</Text><Text style={[styles.small, { color: colors.mutedForeground, fontFamily: SANS }]}>{item.service} · {item.email || copy.emailToProvide}</Text></View><TouchableOpacity onPress={() => persist(items.map((entry) => entry.id === item.id ? { ...entry, status: entry.status === 'new' ? 'meeting' : entry.status === 'meeting' ? 'booked' : 'new' } : entry))} style={[styles.status, { backgroundColor: colors.plum + '14' }]}><Text style={[styles.small, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{statuses[item.status]}</Text></TouchableOpacity></View><Text style={[styles.detail, { color: colors.mutedForeground, fontFamily: SANS }]}>{item.date || copy.dateToSpecify} · {item.venue || copy.venueToSpecify} · {item.budget ? `${item.budget.toLocaleString(locale)} €` : copy.budgetToSpecify}</Text><TouchableOpacity onPress={() => Alert.alert(copy.clientLink, item.link)} style={styles.linkButton}><Feather name="link-2" size={13} color={colors.plum} /><Text style={[styles.small, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{copy.shareTrackingLink}</Text></TouchableOpacity></Card>)}</View></ScrollView>;
 }
 
 export function AppointmentsScreen() {
-  const colors = useColors(); const { demo, isPremium } = usePremiumDemo(); const { data: weddings = [] } = useListWeddings(); const [items, persist] = useDemoStorage('appointments', appointmentDemo, demo); if (!isPremium) return <PremiumPageGate featureLabel="votre espace Rendez-vous" />;
-  const linked = weddings.slice(0, 4).map((wedding) => ({ id: `wedding-${wedding.id}`, title: `Point d'avancement ${wedding.names}`, date: wedding.weddingDate, time: '10:00', venue: wedding.venue, wedding: wedding.names, reminder: true })); const all = [...items, ...linked.filter((event) => !items.some((item) => item.id === event.id))].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
-  return <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.content}><Hero eyebrow="MON STUDIO" title="Mes rendez-vous" body="Retrouvez les rendez-vous commerciaux et les échéances de tous vos dossiers au même endroit." /><View style={styles.metrics}><Metric label="Rendez-vous suivis" value={String(all.length)} colors={colors} /><Metric label="Rappels 24 h" value={String(all.filter((item) => item.reminder).length)} colors={colors} /></View><Card><View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: colors.foreground, fontFamily: SERIF }]}>Prochaines échéances</Text><View style={[styles.status, { backgroundColor: '#E5F1E6' }]}><Text style={[styles.small, { color: '#4B754D', fontFamily: SANS_SEMIBOLD }]}>Synchronisé</Text></View></View>{all.map((item) => <View key={item.id} style={[styles.appointment, { borderBottomColor: colors.border }]}><View style={[styles.dateBadge, { backgroundColor: colors.plum + '12' }]}><Text style={[styles.small, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{item.date.slice(5)}</Text><Text style={[styles.time, { color: colors.foreground, fontFamily: SERIF }]}>{item.time}</Text></View><View style={{ flex: 1 }}><Text style={[styles.detailTitle, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]}>{item.title}</Text><Text style={[styles.small, { color: colors.mutedForeground, fontFamily: SANS }]}>{item.venue}{item.wedding ? ` · ${item.wedding}` : ''}</Text></View><TouchableOpacity onPress={() => persist(items.map((entry) => entry.id === item.id ? { ...entry, reminder: !entry.reminder } : entry))} style={[styles.reminder, { backgroundColor: item.reminder ? '#F7EEDB' : colors.background }]}><Feather name="clock" size={12} color={item.reminder ? '#9A7530' : colors.mutedForeground} /></TouchableOpacity></View>)}</Card></ScrollView>;
+  const colors = useColors(); const { language } = useLocalization(); const copy = studioCopy[language]; const { demo, isPremium } = usePremiumDemo(); const { data: weddings = [] } = useListWeddings(); const [items, persist] = useDemoStorage('appointments', appointmentDemo, demo); if (!isPremium) return <PremiumPageGate featureLabel={copy.appointmentsGate} />;
+  const linked = weddings.slice(0, 4).map((wedding) => ({ id: `wedding-${wedding.id}`, title: `${copy.progressUpdate} ${wedding.names}`, date: wedding.weddingDate, time: '10:00', venue: wedding.venue, wedding: wedding.names, reminder: true })); const all = [...items, ...linked.filter((event) => !items.some((item) => item.id === event.id))].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+  return <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.content}><Hero eyebrow={copy.studio} title={copy.appointments} body={copy.appointmentsBody} /><View style={styles.metrics}><Metric label={copy.trackedAppointments} value={String(all.length)} colors={colors} /><Metric label={copy.reminders24h} value={String(all.filter((item) => item.reminder).length)} colors={colors} /></View><Card><View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: colors.foreground, fontFamily: SERIF }]}>{copy.upcomingDeadlines}</Text><View style={[styles.status, { backgroundColor: '#E5F1E6' }]}><Text style={[styles.small, { color: '#4B754D', fontFamily: SANS_SEMIBOLD }]}>{copy.synchronized}</Text></View></View>{all.map((item) => <View key={item.id} style={[styles.appointment, { borderBottomColor: colors.border }]}><View style={[styles.dateBadge, { backgroundColor: colors.plum + '12' }]}><Text style={[styles.small, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{item.date.slice(5)}</Text><Text style={[styles.time, { color: colors.foreground, fontFamily: SERIF }]}>{item.time}</Text></View><View style={{ flex: 1 }}><Text style={[styles.detailTitle, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]}>{item.title}</Text><Text style={[styles.small, { color: colors.mutedForeground, fontFamily: SANS }]}>{item.venue}{item.wedding ? ` · ${item.wedding}` : ''}</Text></View><TouchableOpacity onPress={() => persist(items.map((entry) => entry.id === item.id ? { ...entry, reminder: !entry.reminder } : entry))} style={[styles.reminder, { backgroundColor: item.reminder ? '#F7EEDB' : colors.background }]}><Feather name="clock" size={12} color={item.reminder ? '#9A7530' : colors.mutedForeground} /></TouchableOpacity></View>)}</Card></ScrollView>;
 }
 
 const styles = StyleSheet.create({ content: { paddingBottom: 150, gap: 14 }, hero: { padding: 24, paddingTop: Platform.OS === 'web' ? 86 : 30, paddingBottom: 28, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }, heroRow: { flexDirection: 'row', alignItems: 'center', gap: 12 }, heroAction: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.14)' }, heroActionText: { color: '#fff', fontSize: 10 }, eyebrow: { fontSize: 9, letterSpacing: 1.6, marginBottom: 7 }, title: { fontSize: 34, lineHeight: 39 }, body: { marginTop: 12, fontSize: 13, lineHeight: 20 }, pills: { gap: 9, paddingHorizontal: 16 }, pill: { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 20, paddingHorizontal: 13, paddingVertical: 9 }, statusDot: { width: 7, height: 7, borderRadius: 4 }, metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16 }, metric: { width: '47%', minHeight: 80, borderLeftWidth: 3, borderRadius: 12, padding: 13 }, metricValue: { marginTop: 5, fontSize: 23 }, card: { marginHorizontal: 16, padding: 16, borderWidth: 1, borderRadius: 16 }, sectionHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 }, sectionTitle: { fontSize: 23 }, small: { fontSize: 11, lineHeight: 17 }, input: { minHeight: 44, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 12, marginTop: 13 }, button: { paddingHorizontal: 11, paddingVertical: 9, borderRadius: 8 }, buttonWide: { minHeight: 42, marginTop: 12, borderRadius: 9, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7 }, buttonText: { color: '#fff', fontSize: 11 }, status: { paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }, detail: { marginTop: 14, fontSize: 11, lineHeight: 18 }, linkButton: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 13 }, appointment: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 13, borderBottomWidth: StyleSheet.hairlineWidth }, dateBadge: { width: 59, borderRadius: 10, padding: 7, alignItems: 'center' }, time: { fontSize: 16, marginTop: 2 }, detailTitle: { fontSize: 12, marginBottom: 3 }, reminder: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' } });

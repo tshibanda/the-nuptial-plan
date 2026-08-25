@@ -11,8 +11,8 @@ import { useLocalization } from '@/context/LocalizationContext';
 export function LegalDocumentScreen({ document }: { document: LegalDocumentKey }) {
   const colors = useColors();
   const router = useRouter();
-  const content = LEGAL_DOCUMENTS[document];
   const { language, locale } = useLocalization();
+  const content = LEGAL_DOCUMENTS[language][document];
   const en = language === 'en';
 
   return (

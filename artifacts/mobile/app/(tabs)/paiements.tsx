@@ -264,6 +264,7 @@ export default function PaiementsScreen() {
         weddingNames: activeWedding?.names ?? 'Paiements',
         weddingDate: activeWedding?.weddingDate ?? null,
         currency,
+        language,
         payments: sorted.map(p => ({
           id: p.id,
           vendorName: p.vendorName,
@@ -275,7 +276,7 @@ export default function PaiementsScreen() {
     } finally {
       setIsExporting(false);
     }
-  }, [payments, activeWedding, currency, sorted, isExporting]);
+  }, [payments, activeWedding, currency, language, sorted, isExporting]);
 
   const fabBottom = Platform.OS === 'web' ? 94 : insets.bottom + 84;
 

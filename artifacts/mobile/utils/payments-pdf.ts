@@ -37,12 +37,46 @@ export interface PaymentsPDFData {
   weddingDate?: string | null;
   currency: string;
   payments: PDFPayment[];
+  /** Pass the active persisted app language when exporting on native. */
+  language?: 'fr' | 'en';
 }
 
 // ── Formatters ────────────────────────────────────────────────────────────────
-function fmtCents(cents: number, currency: string): string {
+type PDFLanguage = 'fr' | 'en';
+
+const LANGUAGE_STORAGE_KEY = '@nuptial-plan/language';
+
+/**
+ * PDF HTML must be built synchronously. On web, the app language is persisted
+ * in localStorage; native callers provide the already-resolved active language.
+ * The locale fallback keeps exports usable before localization has loaded.
+ */
+function resolveLanguage(language?: PDFLanguage): PDFLanguage {
+  if (language === 'fr' || language === 'en') return language;
+
   try {
-    return new Intl.NumberFormat('fr-FR', {
+    if (Platform.OS === 'web' && typeof globalThis.localStorage !== 'undefined') {
+      const saved = globalThis.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (saved === 'fr' || saved === 'en') return saved;
+    }
+  } catch {
+    // Storage can be unavailable in private browsing contexts.
+  }
+
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().locale.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+  } catch {
+    return 'en';
+  }
+}
+
+function localeFor(language: PDFLanguage): string {
+  return language === 'fr' ? 'fr-FR' : 'en-US';
+}
+
+function fmtCents(cents: number, currency: string, locale: string): string {
+  try {
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency,
       minimumFractionDigits: 0,
@@ -50,43 +84,47 @@ function fmtCents(cents: number, currency: string): string {
     }).format(cents / 100);
   } catch {
     const sym = currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency;
-    return `${Math.round(cents / 100).toLocaleString('fr-FR')} ${sym}`;
+    return `${Math.round(cents / 100).toLocaleString(locale)} ${sym}`;
   }
 }
 
-function fmtDate(iso: string): string {
+function fmtDate(iso: string, locale: string): string {
   try {
-    return new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR', {
+    const date = new Date(iso + 'T00:00:00');
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleDateString(locale, {
       day: 'numeric', month: 'long', year: 'numeric',
     });
   } catch { return iso; }
 }
 
-function fmtDateShort(iso: string): string {
+function fmtDateShort(iso: string, locale: string): string {
   try {
-    return new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR', {
+    const date = new Date(iso + 'T00:00:00');
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleDateString(locale, {
       day: 'numeric', month: 'short', year: 'numeric',
     });
   } catch { return iso; }
 }
 
-function today(): string {
-  return new Date().toLocaleDateString('fr-FR', {
+function today(locale: string): string {
+  return new Date().toLocaleDateString(locale, {
     day: 'numeric', month: 'long', year: 'numeric',
   });
 }
 
 // ── Status helpers ────────────────────────────────────────────────────────────
-function statusInfo(status: string): { label: string; color: string; bg: string; dot: string } {
+function statusInfo(status: string, language: PDFLanguage): { label: string; color: string; bg: string; dot: string } {
   switch (status) {
     case 'paid':
-      return { label: 'Réglé', color: SUCCESS_C, bg: SUCCESS_BG, dot: SAGE };
+      return { label: language === 'fr' ? 'Réglé' : 'Paid', color: SUCCESS_C, bg: SUCCESS_BG, dot: SAGE };
     case 'overdue':
-      return { label: 'En retard', color: '#9d3a3a', bg: ERROR_BG, dot: DESTRUCTIVE };
+      return { label: language === 'fr' ? 'En retard' : 'Overdue', color: '#9d3a3a', bg: ERROR_BG, dot: DESTRUCTIVE };
     case 'scheduled':
-      return { label: 'Programmé', color: GREY, bg: '#f0eef0', dot: '#9B89C4' };
+      return { label: language === 'fr' ? 'Programmé' : 'Scheduled', color: GREY, bg: '#f0eef0', dot: '#9B89C4' };
     default: // pending
-      return { label: 'À régler', color: WARNING_C, bg: WARNING_BG, dot: GOLD };
+      return { label: language === 'fr' ? 'À régler' : 'Due', color: WARNING_C, bg: WARNING_BG, dot: GOLD };
   }
 }
 
@@ -101,7 +139,7 @@ function statusSortOrder(status: string): number {
 }
 
 // ── Payment rows HTML ─────────────────────────────────────────────────────────
-function buildPaymentRows(payments: PDFPayment[], currency: string): string {
+function buildPaymentRows(payments: PDFPayment[], currency: string, locale: string, language: PDFLanguage): string {
   const sorted = [...payments].sort((a, b) => {
     const sA = statusSortOrder(a.status);
     const sB = statusSortOrder(b.status);
@@ -110,7 +148,7 @@ function buildPaymentRows(payments: PDFPayment[], currency: string): string {
   });
 
   return sorted.map((p) => {
-    const { label, color, bg, dot } = statusInfo(p.status);
+    const { label, color, bg, dot } = statusInfo(p.status, language);
     const rowBg = p.status === 'overdue' ? '#fff8f8' : '#fff';
     const initials = p.vendorName.slice(0, 2).toUpperCase();
 
@@ -128,10 +166,10 @@ function buildPaymentRows(payments: PDFPayment[], currency: string): string {
     </div>
   </td>
   <td style="padding:10px 14px;text-align:right;white-space:nowrap;vertical-align:middle;">
-    <span style="font-size:13px;font-weight:bold;color:${PLUM2};">${fmtCents(p.amountCents, currency)}</span>
+    <span style="font-size:13px;font-weight:bold;color:${PLUM2};">${fmtCents(p.amountCents, currency, locale)}</span>
   </td>
   <td style="padding:10px 14px;text-align:center;white-space:nowrap;vertical-align:middle;">
-    <span style="font-size:10px;color:${GREY};">${fmtDateShort(p.dueDate)}</span>
+    <span style="font-size:10px;color:${GREY};">${fmtDateShort(p.dueDate, locale)}</span>
   </td>
   <td style="padding:10px 14px;text-align:center;vertical-align:middle;">
     <span style="display:inline-block;padding:3px 8px;border-radius:20px;background:${bg};font-size:8px;font-weight:bold;color:${color};">${label}</span>
@@ -143,6 +181,8 @@ function buildPaymentRows(payments: PDFPayment[], currency: string): string {
 // ── HTML template ─────────────────────────────────────────────────────────────
 function buildHTML(data: PaymentsPDFData): string {
   const { weddingNames, weddingDate, currency, payments } = data;
+  const language = resolveLanguage(data.language);
+  const locale = localeFor(language);
 
   const totalCents   = payments.reduce((s, p) => s + p.amountCents, 0);
   const paidCents    = payments.filter(p => p.status === 'paid').reduce((s, p) => s + p.amountCents, 0);
@@ -150,8 +190,8 @@ function buildHTML(data: PaymentsPDFData): string {
   const overdueCnt   = payments.filter(p => p.status === 'overdue').length;
 
   const paidPct    = totalCents > 0 ? Math.round((paidCents / totalCents) * 100) : 0;
-  const dateStr    = weddingDate ? fmtDate(weddingDate) : '';
-  const paymentRows = buildPaymentRows(payments, currency);
+  const dateStr    = weddingDate ? fmtDate(weddingDate, locale) : '';
+  const paymentRows = buildPaymentRows(payments, currency, locale, language);
 
   return `<!DOCTYPE html>
 <html>
@@ -180,7 +220,7 @@ function buildHTML(data: PaymentsPDFData): string {
   <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:${GOLD}22;pointer-events:none;"></div>
   <div style="position:absolute;top:0;left:0;right:0;height:1.5px;background:${GOLD};opacity:0.4;"></div>
   <div style="font-size:7.5px;letter-spacing:3px;text-transform:uppercase;color:${GOLD};margin-bottom:8px;font-family:'DM Sans',Arial,sans-serif;">
-    THE NUPTIAL PLAN · PAIEMENTS
+     THE NUPTIAL PLAN · ${language === 'fr' ? 'PAIEMENTS' : 'PAYMENTS'}
   </div>
   <div style="font-size:28px;color:${WHITE};font-weight:bold;line-height:1.1;margin-bottom:4px;">
     ${weddingNames}
@@ -193,18 +233,18 @@ function buildHTML(data: PaymentsPDFData): string {
 <div style="background:${LIGHT};padding:16px 40px;border-bottom:1px solid rgba(200,180,200,0.25);">
   <div style="display:flex;align-items:stretch;justify-content:space-between;gap:16px;">
     <div style="text-align:center;flex:1;">
-      <div style="font-size:18px;font-weight:bold;color:#1a091a;">${fmtCents(totalCents, currency)}</div>
+       <div style="font-size:18px;font-weight:bold;color:#1a091a;">${fmtCents(totalCents, currency, locale)}</div>
       <div style="font-size:8px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">TOTAL</div>
     </div>
     <div style="width:1px;background:rgba(200,180,200,0.35);"></div>
     <div style="text-align:center;flex:1;">
-      <div style="font-size:18px;font-weight:bold;color:${SUCCESS_C};">${fmtCents(paidCents, currency)}</div>
-      <div style="font-size:8px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">RÉGLÉ · ${paidPct}%</div>
+       <div style="font-size:18px;font-weight:bold;color:${SUCCESS_C};">${fmtCents(paidCents, currency, locale)}</div>
+       <div style="font-size:8px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">${language === 'fr' ? 'RÉGLÉ' : 'PAID'} · ${paidPct}%</div>
     </div>
     <div style="width:1px;background:rgba(200,180,200,0.35);"></div>
     <div style="text-align:center;flex:1;">
-      <div style="font-size:18px;font-weight:bold;color:${overdueCnt > 0 ? DESTRUCTIVE : WARNING_C};">${fmtCents(pendingCents, currency)}</div>
-      <div style="font-size:8px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">RESTANT${overdueCnt > 0 ? ` · ${overdueCnt} EN RETARD` : ''}</div>
+       <div style="font-size:18px;font-weight:bold;color:${overdueCnt > 0 ? DESTRUCTIVE : WARNING_C};">${fmtCents(pendingCents, currency, locale)}</div>
+       <div style="font-size:8px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">${language === 'fr' ? 'RESTANT' : 'REMAINING'}${overdueCnt > 0 ? ` · ${overdueCnt} ${language === 'fr' ? 'EN RETARD' : 'OVERDUE'}` : ''}</div>
     </div>
   </div>
   <!-- progress bar -->
@@ -217,15 +257,15 @@ function buildHTML(data: PaymentsPDFData): string {
 ${payments.length > 0 ? `
 <div style="padding:20px 40px;">
   <div style="font-size:7.5px;letter-spacing:2.5px;text-transform:uppercase;color:${GOLD_DIM};font-family:'DM Sans',Arial,sans-serif;margin-bottom:12px;">
-    DÉTAIL DES PAIEMENTS · ${payments.length} paiement${payments.length !== 1 ? 's' : ''}
+     ${language === 'fr' ? 'DÉTAIL DES PAIEMENTS' : 'PAYMENT DETAILS'} · ${payments.length} ${language === 'fr' ? `paiement${payments.length !== 1 ? 's' : ''}` : `payment${payments.length !== 1 ? 's' : ''}`}
   </div>
   <table style="width:100%;border-collapse:collapse;">
     <thead>
       <tr style="border-bottom:1.5px solid rgba(200,180,200,0.50);">
-        <th style="padding:6px 14px;text-align:left;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Prestataire</th>
-        <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Montant</th>
-        <th style="padding:6px 14px;text-align:center;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Échéance</th>
-        <th style="padding:6px 14px;text-align:center;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Statut</th>
+         <th style="padding:6px 14px;text-align:left;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">${language === 'fr' ? 'Prestataire' : 'Vendor'}</th>
+         <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">${language === 'fr' ? 'Montant' : 'Amount'}</th>
+         <th style="padding:6px 14px;text-align:center;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">${language === 'fr' ? 'Échéance' : 'Due date'}</th>
+         <th style="padding:6px 14px;text-align:center;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">${language === 'fr' ? 'Statut' : 'Status'}</th>
       </tr>
     </thead>
     <tbody>
@@ -235,15 +275,15 @@ ${payments.length > 0 ? `
 </div>
 ` : `
 <div style="padding:40px;text-align:center;">
-  <div style="font-size:11px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;">Aucun paiement enregistré</div>
+   <div style="font-size:11px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;">${language === 'fr' ? 'Aucun paiement enregistré' : 'No payments recorded'}</div>
 </div>
 `}
 
 <!-- ── FOOTER ── -->
 <div style="padding:16px 40px;border-top:1px solid rgba(200,180,200,0.25);display:flex;justify-content:space-between;align-items:center;">
-  <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:'DM Sans',Arial,sans-serif;">Exporté le ${today()}</span>
+   <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:'DM Sans',Arial,sans-serif;">${language === 'fr' ? 'Exporté le' : 'Exported on'} ${today(locale)}</span>
   <span style="font-size:8px;color:${GOLD};font-family:'DM Sans',Arial,sans-serif;font-weight:bold;letter-spacing:1.5px;">THE NUPTIAL PLAN</span>
-  <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:'DM Sans',Arial,sans-serif;">${payments.length} paiement${payments.length !== 1 ? 's' : ''}</span>
+   <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:'DM Sans',Arial,sans-serif;">${payments.length} ${language === 'fr' ? `paiement${payments.length !== 1 ? 's' : ''}` : `payment${payments.length !== 1 ? 's' : ''}`}</span>
 </div>
 
 </body>
@@ -252,6 +292,7 @@ ${payments.length > 0 ? `
 
 // ── Main export function ───────────────────────────────────────────────────────
 export async function exportPaymentsPDF(data: PaymentsPDFData): Promise<void> {
+  const language = resolveLanguage(data.language);
   try {
     const html = buildHTML(data);
 
@@ -272,7 +313,7 @@ export async function exportPaymentsPDF(data: PaymentsPDFData): Promise<void> {
     if (canShare) {
       await Sharing.shareAsync(uri, {
         mimeType: 'application/pdf',
-        dialogTitle: 'Partager les paiements',
+        dialogTitle: language === 'fr' ? 'Partager les paiements' : 'Share payments',
         UTI: 'com.adobe.pdf',
       });
     } else {
@@ -281,8 +322,8 @@ export async function exportPaymentsPDF(data: PaymentsPDFData): Promise<void> {
   } catch (err: any) {
     console.error('[payments-pdf] export failed', err);
     Alert.alert(
-      "Erreur d'export",
-      'Impossible de générer le PDF. Veuillez réessayer.',
+      language === 'fr' ? "Erreur d'export" : 'Export error',
+      language === 'fr' ? 'Impossible de générer le PDF. Veuillez réessayer.' : 'Unable to generate the PDF. Please try again.',
     );
   }
 }

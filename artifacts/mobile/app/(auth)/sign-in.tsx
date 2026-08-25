@@ -193,7 +193,7 @@ export default function SignInScreen() {
             style={[ss.input, { fontFamily: SANS }]}
             value={email}
             onChangeText={setEmail}
-            placeholder="vous@exemple.fr"
+            placeholder={t('auth.emailPlaceholder')}
             placeholderTextColor={MUTED}
             autoCapitalize="none"
             keyboardType="email-address"
@@ -246,7 +246,7 @@ export default function SignInScreen() {
           </View>
           <View style={ss.legalFooter}>
             <Text style={[ss.legalText, { fontFamily: SANS }]}>{t('auth.continuingTerms')}</Text>
-            <Link href="/legal/policy" asChild><TouchableOpacity><Text style={[ss.legalLink, { fontFamily: SANS_SEMIBOLD }]}>CGU</Text></TouchableOpacity></Link>
+            <Link href="/legal/policy" asChild><TouchableOpacity><Text style={[ss.legalLink, { fontFamily: SANS_SEMIBOLD }]}>{t('auth.termsShort')}</Text></TouchableOpacity></Link>
             <Text style={[ss.legalText, { fontFamily: SANS }]}>{t('auth.andPrivacy')}</Text>
             <Link href="/legal/privacy" asChild><TouchableOpacity><Text style={[ss.legalLink, { fontFamily: SANS_SEMIBOLD }]}>{t('auth.privacy')}</Text></TouchableOpacity></Link>
           </View>
