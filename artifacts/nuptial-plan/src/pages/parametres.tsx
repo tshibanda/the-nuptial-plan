@@ -242,6 +242,7 @@ function SubscriptionSection() {
 /* ── Main page ── */
 export default function Parametres() {
   const { language } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const { user } = useUser();
   const { signOut } = useClerk();
   const { activeWeddingId, setActiveWeddingId } = useActiveWedding();
@@ -272,11 +273,11 @@ export default function Parametres() {
     try {
       const response = await fetch('/api/account', { method: 'DELETE', credentials: 'include' });
       const data = await response.json().catch(() => ({})) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? 'Impossible de supprimer le compte.');
+      if (!response.ok) throw new Error(data.error ?? tr('Impossible de supprimer le compte.', 'Unable to delete your account.'));
       await signOut({ redirectUrl: '/' });
     } catch (error) {
       setAccountDeleting(false);
-      toast({ title: 'Suppression impossible', description: error instanceof Error ? error.message : 'Réessayez dans quelques instants.', variant: 'destructive' });
+      toast({ title: tr('Suppression impossible', 'Deletion failed'), description: error instanceof Error ? error.message : tr('Réessayez dans quelques instants.', 'Please try again in a moment.'), variant: 'destructive' });
     }
   };
 
@@ -291,7 +292,7 @@ export default function Parametres() {
     const firstName = profileFirstName.trim();
     const lastName = profileLastName.trim();
     if (!firstName) {
-      toast({ title: 'Prénom requis', description: 'Veuillez saisir votre prénom.', variant: 'destructive' });
+      toast({ title: tr('Prénom requis', 'First name required'), description: tr('Veuillez saisir votre prénom.', 'Please enter your first name.'), variant: 'destructive' });
       return;
     }
     setProfileSaving(true);
@@ -299,9 +300,9 @@ export default function Parametres() {
       await user.update({ firstName, lastName: lastName || undefined });
       await user.reload();
       setProfileEditOpen(false);
-      toast({ title: 'Profil mis à jour', description: [firstName, lastName].filter(Boolean).join(' ') });
+      toast({ title: tr('Profil mis à jour', 'Profile updated'), description: [firstName, lastName].filter(Boolean).join(' ') });
     } catch {
-      toast({ title: 'Erreur', description: 'Impossible de mettre à jour votre nom.', variant: 'destructive' });
+      toast({ title: tr('Erreur', 'Error'), description: tr('Impossible de mettre à jour votre nom.', 'Unable to update your name.'), variant: 'destructive' });
     } finally {
       setProfileSaving(false);
     }
@@ -320,8 +321,8 @@ export default function Parametres() {
   const resetAllTours = () => {
     TOUR_PAGES.forEach(({ key }) => localStorage.removeItem(STORAGE_PREFIX + key));
     toast({
-      title: 'Guides réinitialisés',
-      description: 'Chaque guide s\'affichera à nouveau à votre prochaine visite.',
+      title: tr('Guides réinitialisés', 'Guides reset'),
+      description: tr('Chaque guide s\'affichera à nouveau à votre prochaine visite.', 'Each guide will appear again the next time you visit.'),
     });
   };
 
@@ -376,10 +377,10 @@ export default function Parametres() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetWeddingQueryKey(activeWeddingId) });
-          toast({ title: 'Paramètres sauvegardés', description: names });
+          toast({ title: tr('Paramètres sauvegardés', 'Settings saved'), description: names });
         },
         onError: () => {
-          toast({ title: 'Erreur', description: 'Impossible de sauvegarder.', variant: 'destructive' });
+          toast({ title: tr('Erreur', 'Error'), description: tr('Impossible de savegarder.', 'Unable to save your changes.'), variant: 'destructive' });
         },
       }
     );
@@ -396,11 +397,11 @@ export default function Parametres() {
           const remaining = weddings.filter((w) => w.id !== activeWeddingId);
           setActiveWeddingId(remaining.length > 0 ? remaining[0].id : null);
           setDeleteOpen(false);
-          toast({ title: 'Dossier supprimé' });
+          toast({ title: tr('Dossier supprimé', 'Wedding file deleted') });
         },
         onError: () => {
           setDeleting(false);
-          toast({ title: 'Erreur', description: 'Impossible de supprimer.', variant: 'destructive' });
+          toast({ title: tr('Erreur', 'Error'), description: tr('Impossible de supprimer.', 'Unable to delete.'), variant: 'destructive' });
         },
       }
     );
@@ -421,7 +422,7 @@ export default function Parametres() {
     <>
       <PageTour
         tourKey="parametres"
-        pageTitle="Paramètres"
+         pageTitle={tr('Paramètres', 'Settings')}
         pageIcon={Building2}
         forceOpen={tourTrigger}
         steps={[
@@ -436,15 +437,15 @@ export default function Parametres() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-serif text-xl text-destructive">
-              <AlertTriangle size={18} /> Supprimer le dossier
+               <AlertTriangle size={18} /> {tr('Supprimer le dossier', 'Delete wedding file')}
             </DialogTitle>
             <DialogDescription>
-              Cette action est irréversible. Toutes les données liées à ce mariage (prestataires, invités, budget, documents…) seront définitivement supprimées.
+               {tr('Cette action est irréversible. Toutes les données liées à ce mariage (prestataires, invités, budget, documents…) seront définitivement supprimées.', 'This action cannot be undone. All data for this wedding (vendors, guests, budget, documents…) will be permanently deleted.')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 pt-2">
             <Button variant="outline" className="flex-1" onClick={() => setDeleteOpen(false)}>
-              Annuler
+               {tr('Annuler', 'Cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -452,7 +453,7 @@ export default function Parametres() {
               onClick={handleDelete}
               disabled={deleting}
             >
-              {deleting ? 'Suppression…' : 'Supprimer définitivement'}
+               {deleting ? tr('Suppression…', 'Deleting…') : tr('Supprimer définitivement', 'Delete permanently')}
             </Button>
           </div>
         </DialogContent>
@@ -461,29 +462,29 @@ export default function Parametres() {
       <Dialog open={profileEditOpen} onOpenChange={setProfileEditOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-serif text-xl text-foreground">Modifier votre nom</DialogTitle>
+             <DialogTitle className="font-serif text-xl text-foreground">{tr('Modifier votre nom', 'Edit your name')}</DialogTitle>
             <DialogDescription>
-              Ce nom sera utilisé dans votre profil, l’en-tête et la barre latérale.
+               {tr('Ce nom sera utilisé dans votre profil, l’en-tête et la barre latérale.', 'This name will be used in your profile, header, and sidebar.')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label htmlFor="profile-first-name" className="text-[11px] font-semibold text-muted-foreground">Prénom</label>
+                 <label htmlFor="profile-first-name" className="text-[11px] font-semibold text-muted-foreground">{tr('Prénom', 'First name')}</label>
                 <Input id="profile-first-name" value={profileFirstName} onChange={(event) => setProfileFirstName(event.target.value)} autoFocus />
               </div>
               <div className="space-y-1.5">
-                <label htmlFor="profile-last-name" className="text-[11px] font-semibold text-muted-foreground">Nom</label>
+                 <label htmlFor="profile-last-name" className="text-[11px] font-semibold text-muted-foreground">{tr('Nom', 'Last name')}</label>
                 <Input id="profile-last-name" value={profileLastName} onChange={(event) => setProfileLastName(event.target.value)} />
               </div>
             </div>
             <div className="flex gap-2 pt-1">
               <Button type="button" variant="outline" className="flex-1" onClick={() => setProfileEditOpen(false)}>
-                Annuler
+                 {tr('Annuler', 'Cancel')}
               </Button>
               <Button type="button" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => void saveProfile()} disabled={profileSaving}>
                 {profileSaving ? <Loader2 size={14} className="mr-2 animate-spin" /> : <Pencil size={14} className="mr-2" />}
-                {profileSaving ? 'Enregistrement…' : 'Enregistrer'}
+                 {profileSaving ? tr('Enregistrement…', 'Saving…') : tr('Enregistrer', 'Save')}
               </Button>
             </div>
           </div>
@@ -493,16 +494,16 @@ export default function Parametres() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-serif text-xl text-destructive">
-              <AlertTriangle size={18} /> Supprimer le compte
+               <AlertTriangle size={18} /> {tr('Supprimer le compte', 'Delete account')}
             </DialogTitle>
             <DialogDescription>
-              Cette action résilie immédiatement les abonnements Stripe, efface définitivement vos mariages, fichiers, réseaux sociaux et données de compte, puis vous déconnecte. Elle est irréversible.
+               {tr('Cette action résilie immédiatement les abonnements Stripe, efface définitivement vos mariages, fichiers, réseaux sociaux et données de compte, puis vous déconnecte. Elle est irréversible.', 'This action immediately cancels Stripe subscriptions, permanently deletes your weddings, files, social networks, and account data, then signs you out. It cannot be undone.')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 pt-2">
-            <Button variant="outline" className="flex-1" onClick={() => setAccountDeleteOpen(false)} disabled={accountDeleting}>Annuler</Button>
+             <Button variant="outline" className="flex-1" onClick={() => setAccountDeleteOpen(false)} disabled={accountDeleting}>{tr('Annuler', 'Cancel')}</Button>
             <Button variant="destructive" className="flex-1" onClick={() => void deleteAccount()} disabled={accountDeleting}>
-              {accountDeleting ? 'Suppression…' : 'Supprimer définitivement'}
+               {accountDeleting ? tr('Suppression…', 'Deleting…') : tr('Supprimer définitivement', 'Delete permanently')}
             </Button>
           </div>
         </DialogContent>

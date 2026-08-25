@@ -475,18 +475,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-serif text-xl text-destructive">
-              <Trash2 size={17} /> Supprimer le dossier
+              <Trash2 size={17} /> {copy('Supprimer le dossier', 'Delete wedding file')}
             </DialogTitle>
             <DialogDescription>
-              Cette action est irréversible. Toutes les données liées à ce mariage (prestataires, invités, budget, documents…) seront définitivement supprimées.
+              {copy('Cette action est irréversible. Toutes les données liées à ce mariage (prestataires, invités, budget, documents…) seront définitivement supprimées.', 'This action cannot be undone. All data for this wedding (vendors, guests, budget, documents…) will be permanently deleted.')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 pt-2">
             <Button variant="outline" className="flex-1" onClick={() => setDeleteWeddingId(null)} disabled={deletingWedding}>
-              Annuler
+              {copy('Annuler', 'Cancel')}
             </Button>
             <Button variant="destructive" className="flex-1" onClick={handleDeleteWedding} disabled={deletingWedding}>
-              {deletingWedding ? 'Suppression…' : 'Supprimer définitivement'}
+              {deletingWedding ? copy('Suppression…', 'Deleting…') : copy('Supprimer définitivement', 'Delete permanently')}
             </Button>
           </div>
         </DialogContent>

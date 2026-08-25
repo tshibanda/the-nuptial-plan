@@ -8,7 +8,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import {
-  useListWeddings,
   useListVendors,
   useCreateVendor,
   useListAddressBookEntries,
@@ -16,7 +15,7 @@ import {
   getListVendorsQueryKey,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useWedding } from '@/context/WeddingContext';
+import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
@@ -49,6 +48,11 @@ const TOUR_STEPS = [
     description: 'Appuyez sur un prestataire pour consulter ses coordonnées, ses contrats et ses paiements.',
   },
 ];
+const TOUR_STEPS_EN = [
+  { icon: 'briefcase', title: 'Your creative team', description: 'Find all your vendors here: caterer, photographer, florist, and more.' },
+  { icon: 'search', title: 'Quick search', description: 'Use the search bar to find a vendor by name or category.' },
+  { icon: 'user', title: 'Vendor profile', description: 'Tap a vendor to view their contact details, contracts, and payments.' },
+];
 
 const AVATAR_COLORS = ['#eadfcf', '#dce7df', '#eadfdf', '#e1dceb', '#e0e7dc', '#dce0e7'];
 
@@ -74,7 +78,7 @@ export default function PrestatairesScreen() {
   const { isActive: isPremium } = useSubscription();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { selectedWeddingId } = useWedding();
+  const { activeWedding, weddingId } = useActiveWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:prestataires');
   const [search, setSearch] = useState('');
@@ -84,11 +88,8 @@ export default function PrestatairesScreen() {
   const [form, setForm] = useState({ name: '', category: '', contactName: '', contactEmail: '', amount: '' });
   const queryClient = useQueryClient();
 
-  const { data: weddings } = useListWeddings();
-  const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
-  const wId = activeWedding?.id ?? 0;
-
-  const { data: vendors, isLoading, refetch, isRefetching } = useListVendors(wId);
+  const wId = weddingId ?? 0;
+  const { data: vendors, isLoading, refetch, isRefetching } = useListVendors(wId, { query: { queryKey: getListVendorsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
   const createVendor = useCreateVendor();
   const { data: addressBookEntries = [], isLoading: addressBookLoading } = useListAddressBookEntries();
   const addAddressBookEntry = useAddAddressBookEntryToWedding();
@@ -134,7 +135,7 @@ export default function PrestatairesScreen() {
     );
   };
 
-  if (!isPremium) return <PremiumPageGate featureLabel="votre carnet de prestataires" />;
+  if (!isPremium) return <PremiumPageGate featureLabel={language === 'fr' ? 'votre carnet de prestataires' : 'your vendor directory'} />;
   return (
     <>
       <FlatList
@@ -207,7 +208,7 @@ export default function PrestatairesScreen() {
           )
         }
         renderItem={({ item, index }) => {
-          const { label, tone } = vendorStatusLabel(item.status);
+          const { label, tone } = vendorStatusLabel(item.status, language);
           const av = item.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
           const avatarBg = AVATAR_COLORS[index % AVATAR_COLORS.length];
           return (
@@ -304,7 +305,7 @@ export default function PrestatairesScreen() {
         </ScrollView>
       </BottomSheet>
 
-      <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+      <TourSheet visible={tourVisible} onClose={closeTour} steps={language === 'fr' ? TOUR_STEPS : TOUR_STEPS_EN} />
     </>
   );
 }

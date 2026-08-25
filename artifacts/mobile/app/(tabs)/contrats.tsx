@@ -7,9 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useListContracts, useListWeddings, useCreateContract, getListContractsQueryKey } from '@workspace/api-client-react';
+import { useListContracts, useCreateContract, getListContractsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useWedding } from '@/context/WeddingContext';
+import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
@@ -40,6 +40,11 @@ const TOUR_STEPS = [
     title: 'Statut du contrat',
     description: 'Chaque contrat affiche son statut (Signé, En attente…) et le montant total engagé.',
   },
+];
+const TOUR_STEPS_EN = [
+  { icon: 'file-text', title: 'Your contracts', description: 'Find all your vendor contracts here: caterer, photographer, florist, and more.' },
+  { icon: 'search', title: 'Quick search', description: 'Use the search bar to find a contract by vendor name.' },
+  { icon: 'check-circle', title: 'Contract status', description: 'Every contract shows its status (Signed, Pending…) and the full committed amount.' },
 ];
 
 const STATUS_LABELS: Record<string, string> = {
@@ -77,7 +82,7 @@ export default function ContratsScreen() {
   };
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { selectedWeddingId } = useWedding();
+  const { activeWedding, weddingId } = useActiveWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:contrats');
   const { paywallVisible, closePaywall, requirePremium, isPremium } = usePremiumGate();
@@ -88,25 +93,14 @@ export default function ContratsScreen() {
   const queryClient = useQueryClient();
   const createContract = useCreateContract();
 
-  const { data: weddings } = useListWeddings();
-  const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
-  const wId = activeWedding?.id ?? 0;
-
-  const { data: contracts, isLoading, refetch, isRefetching } = useListContracts(wId);
+  const wId = weddingId ?? 0;
+  const { data: contracts, isLoading, refetch, isRefetching } = useListContracts(wId, { query: { queryKey: getListContractsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
 
   const filtered = (contracts ?? []).filter((c) =>
     c.vendorName.toLowerCase().includes(search.toLowerCase()),
   );
 
   const fabBottom = Platform.OS === 'web' ? 94 : insets.bottom + 84;
-
-  if (isLoading) {
-    return (
-      <View style={[ss.center, { backgroundColor: colors.background, paddingTop: topPad }]}>
-        <ActivityIndicator color={colors.accent} size="large" />
-      </View>
-    );
-  }
 
   if (!isPremium) return <PremiumPageGate featureLabel={tr.gate} />;
   return (
@@ -167,15 +161,9 @@ export default function ContratsScreen() {
             </View>
           </View>
         }
-        ListEmptyComponent={
-          <View style={ss.emptyWrap}>
-            <EmptyState
-              icon="file-text"
-              title={search ? tr.noResults : tr.noContracts}
-              subtitle={search ? tr.editSearch : tr.empty}
-            />
-          </View>
-        }
+        ListEmptyComponent={isLoading
+          ? <View style={ss.center}><ActivityIndicator color={colors.accent} size="large" /></View>
+          : <View style={ss.emptyWrap}><EmptyState icon="file-text" title={search ? tr.noResults : tr.noContracts} subtitle={search ? tr.editSearch : tr.empty} /></View>}
         renderItem={({ item }) => {
           const statusInfo = STATUS_COLORS[item.status] ?? STATUS_COLORS.pending;
           const label = tr.statuses[item.status as keyof typeof tr.statuses] ?? item.status;
@@ -251,7 +239,7 @@ export default function ContratsScreen() {
           }} style={[ss.saveBtn, { backgroundColor: colors.plum }]}><Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{createContract.isPending ? tr.saving : tr.save}</Text></TouchableOpacity>
         </ScrollView>
       </BottomSheet>
-      <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+      <TourSheet visible={tourVisible} onClose={closeTour} steps={language === 'fr' ? TOUR_STEPS : TOUR_STEPS_EN} />
     </>
   );
 }

@@ -10,8 +10,8 @@ import * as Haptics from 'expo-haptics';
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import type { CalendarEvent } from '@workspace/api-client-react';
-import { useListWeddings, useListEvents, useUpdateEvent, getListEventsQueryKey } from '@workspace/api-client-react';
-import { useWedding } from '@/context/WeddingContext';
+import { useListEvents, useUpdateEvent, getListEventsQueryKey } from '@workspace/api-client-react';
+import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
 import { useLocalization } from '@/context/LocalizationContext';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
@@ -420,7 +420,7 @@ const vt = StyleSheet.create({
 export default function EvenementsScreen() {
   const colors = useColors();
   const { language, locale } = useLocalization();
-  const { selectedWeddingId } = useWedding();
+  const { activeWedding, weddingId } = useActiveWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:evenements');
 
@@ -439,10 +439,8 @@ export default function EvenementsScreen() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
-  const { data: weddings } = useListWeddings();
-  const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
-  const wId = activeWedding?.id ?? 0;
-  const { data: events, isLoading, refetch, isRefetching } = useListEvents(wId);
+  const wId = weddingId ?? 0;
+  const { data: events, isLoading, refetch, isRefetching } = useListEvents(wId, { query: { queryKey: getListEventsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
   const EVENTS_QUERY_KEY = getListEventsQueryKey(wId);
 
   const { mutate: updateEvent } = useUpdateEvent({

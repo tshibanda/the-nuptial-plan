@@ -12,11 +12,11 @@ import * as Haptics from 'expo-haptics';
 import { Feather } from '@expo/vector-icons';
 import type { Guest } from '@workspace/api-client-react';
 import {
-  useListWeddings, useListGuests, useGetGuestStats,
+  useListGuests, useGetGuestStats,
   useImportGuests, useCreateGuest, useUpdateGuest, getListGuestsQueryKey, getGetGuestStatsQueryKey,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useWedding } from '@/context/WeddingContext';
+import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
@@ -94,14 +94,6 @@ const TOUR_STEPS = [
 ];
 
 type Filter = 'all' | 'confirmed' | 'pending' | 'declined';
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'Tous' },
-  { key: 'confirmed', label: 'Confirmés' },
-  { key: 'pending', label: 'En attente' },
-  { key: 'declined', label: 'Déclinés' },
-];
-
-const RSVP_LABEL: Record<string, string> = { confirmed: 'Confirmé', pending: 'En attente', declined: 'Décliné' };
 const AVATAR_COLORS = ['#ebe2d4', '#dce4e5', '#e2dceb', '#dce8df', '#f0e2cb'];
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -127,10 +119,22 @@ export default function InvitesScreen() {
     imported: 'Import successful', importFailed: 'Import failed. Please try again.', importTitle: 'Import guests',
   };
   const rsvpLabels = { confirmed: tr.confirmed, pending: tr.pending, declined: tr.declined };
+  const tourSteps = language === 'fr' ? TOUR_STEPS : [
+    { icon: 'users', title: 'Guest management', description: 'Manage your complete guest list and track RSVP responses in real time.' },
+    { icon: 'bar-chart-2', title: 'RSVP statistics', description: 'The figures above show your total, confirmed, pending, and declined guests.' },
+    { icon: 'filter', title: 'Filter by status', description: 'Tap a filter — Confirmed, Pending, or Declined — to show only matching guests.' },
+    { icon: 'upload', title: 'Import from Excel', description: 'Tap the Import icon in the header to upload an .xlsx or .csv file from your phone.' },
+  ];
+  const filters: { key: Filter; label: string }[] = [
+    { key: 'all', label: tr.total },
+    { key: 'confirmed', label: tr.confirmed },
+    { key: 'pending', label: tr.pending },
+    { key: 'declined', label: tr.declined },
+  ];
   const { isActive: isPremium } = useSubscription();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { selectedWeddingId } = useWedding();
+  const { activeWedding, weddingId } = useActiveWedding();
   const queryClient = useQueryClient();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:invites');
@@ -151,11 +155,9 @@ export default function InvitesScreen() {
   const [importSkipped, setImportSkipped] = useState(0);
   const [importing, setImporting] = useState(false);
 
-  const { data: weddings } = useListWeddings();
-  const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
-  const wId = activeWedding?.id ?? 0;
-  const { data: guests, isLoading, refetch, isRefetching } = useListGuests(wId);
-  const { data: stats } = useGetGuestStats(wId);
+  const wId = weddingId ?? 0;
+  const { data: guests, isLoading, refetch, isRefetching } = useListGuests(wId, { query: { queryKey: getListGuestsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: stats } = useGetGuestStats(wId, { query: { queryKey: getGetGuestStatsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
   const importGuestsMutation = useImportGuests();
   const createGuestMutation = useCreateGuest();
   const updateGuestMutation = useUpdateGuest();
@@ -321,11 +323,11 @@ export default function InvitesScreen() {
                   </View>
                 </View>
                 <View style={ss.heroActions}>
-                  <TouchableOpacity onPress={handlePickFile} activeOpacity={0.75} style={ss.importBtn} accessibilityLabel="Importer depuis Excel">
+                  <TouchableOpacity onPress={handlePickFile} activeOpacity={0.75} style={ss.importBtn} accessibilityLabel={tr.importTitle}>
                     <Feather name="upload" size={15} color="#C8A96E" />
                      <Text style={[ss.importBtnText, { fontFamily: SANS_SEMIBOLD }]}>{tr.import}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setAddVisible(true)} activeOpacity={0.75} style={ss.addGuestBtn} accessibilityLabel="Ajouter un invité">
+                  <TouchableOpacity onPress={() => setAddVisible(true)} activeOpacity={0.75} style={ss.addGuestBtn} accessibilityLabel={tr.addTitle}>
                     <Feather name="plus" size={16} color="#FBF5FB" />
                      <Text style={[ss.addGuestText, { fontFamily: SANS_SEMIBOLD }]}>{tr.add}</Text>
                   </TouchableOpacity>
@@ -362,7 +364,7 @@ export default function InvitesScreen() {
 
               {/* Filter pills */}
               <View style={ss.filterRow}>
-                {FILTERS.map((f) => {
+                {filters.map((f) => {
                   const isActive = filter === f.key;
                   return (
                     <TouchableOpacity
@@ -398,7 +400,7 @@ export default function InvitesScreen() {
                       {tableGuests.map((guest) => (
                         <TouchableOpacity key={guest.id} onPress={() => openTableEditor(guest)} style={[ss.tableGuest, { borderTopColor: colors.border }]} activeOpacity={0.75}>
                           <Text style={[ss.tableGuestName, { fontFamily: SANS_MEDIUM, color: colors.foreground }]} numberOfLines={1}>{guest.name}</Text>
-                           <StatusBadge label={rsvpLabels[guest.rsvpStatus as keyof typeof rsvpLabels]} tone={rsvpLabel(guest.rsvpStatus).tone} />
+                           <StatusBadge label={rsvpLabels[guest.rsvpStatus as keyof typeof rsvpLabels]} tone={rsvpLabel(guest.rsvpStatus, language).tone} />
                           <Feather name="edit-2" size={13} color={colors.mutedForeground} />
                         </TouchableOpacity>
                       ))}
@@ -421,7 +423,7 @@ export default function InvitesScreen() {
           )
         }
         renderItem={({ item, index }) => {
-          const { label, tone } = rsvpLabel(item.rsvpStatus);
+          const { tone } = rsvpLabel(item.rsvpStatus, language);
           const av = item.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
           return (
             <TouchableOpacity
@@ -436,11 +438,11 @@ export default function InvitesScreen() {
               <View style={ss.guestInfo}>
                 <Text style={[ss.guestName, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]} numberOfLines={1}>{item.name}</Text>
                 <Text style={[ss.guestMeta, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                  {[item.tableNumber ? `Table ${item.tableNumber}` : null, item.dietaryRequirements].filter(Boolean).join(' · ') || '—'}
+                  {[item.tableNumber ? `${tr.table} ${item.tableNumber}` : null, item.dietaryRequirements].filter(Boolean).join(' · ') || '—'}
                 </Text>
               </View>
               <View style={ss.guestRight}>
-                <StatusBadge label={label} tone={tone} />
+                <StatusBadge label={rsvpLabels[item.rsvpStatus as keyof typeof rsvpLabels]} tone={tone} />
                 <View style={{ height: 4 }} />
                 <Feather name="chevron-right" size={13} color={colors.goldDim} />
               </View>
@@ -450,42 +452,42 @@ export default function InvitesScreen() {
       />
 
       <GuestDetailSheet visible={selectedGuest !== null} onClose={() => setSelectedGuest(null)} guest={selectedGuest} weddingId={wId} />
-      <BottomSheet visible={tableGuest !== null} onClose={() => setTableGuest(null)} eyebrow="PLAN DE TABLE" title={tableGuest?.name ?? ''}>
+      <BottomSheet visible={tableGuest !== null} onClose={() => setTableGuest(null)} eyebrow={tr.tables.toUpperCase()} title={tableGuest?.name ?? ''}>
         <View style={ss.tableEditor}>
-          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>NUMÉRO OU NOM DE TABLE</Text>
+          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{tr.tableLabel}</Text>
           <TextInput
             autoFocus
             value={tableInput}
             onChangeText={setTableInput}
-            placeholder="Ex. 5 ou Table des mariés"
+            placeholder={tr.tablePlaceholder}
             placeholderTextColor={colors.mutedForeground}
             style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
           />
-          <Text style={[ss.editorHint, { fontFamily: SANS, color: colors.mutedForeground }]}>Laissez vide pour retirer l’invité de sa table.</Text>
+          <Text style={[ss.editorHint, { fontFamily: SANS, color: colors.mutedForeground }]}>{tr.tableHint}</Text>
           <TouchableOpacity disabled={updateGuestMutation.isPending} onPress={handleAssignTable} style={[ss.saveGuestBtn, { backgroundColor: colors.plum, opacity: updateGuestMutation.isPending ? 0.6 : 1 }]}>
-            {updateGuestMutation.isPending ? <ActivityIndicator color="#FBF5FB" /> : <Text style={[ss.saveGuestText, { fontFamily: SANS_SEMIBOLD }]}>Enregistrer la table</Text>}
+            {updateGuestMutation.isPending ? <ActivityIndicator color="#FBF5FB" /> : <Text style={[ss.saveGuestText, { fontFamily: SANS_SEMIBOLD }]}>{tr.saveTable}</Text>}
           </TouchableOpacity>
         </View>
       </BottomSheet>
       <BottomSheet
         visible={addVisible}
         onClose={() => setAddVisible(false)}
-        eyebrow="INVITÉS"
-        title="Ajouter un invité"
+        eyebrow={tr.sheet}
+        title={tr.addTitle}
       >
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={ss.addForm}>
           <TextInput
             autoFocus
             value={newGuest.name}
             onChangeText={(value) => setNewGuest((current) => ({ ...current, name: value }))}
-            placeholder="Nom complet *"
+            placeholder={tr.fields[0]}
             placeholderTextColor={colors.mutedForeground}
             style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
           />
           <TextInput
             value={newGuest.email}
             onChangeText={(value) => setNewGuest((current) => ({ ...current, email: value }))}
-            placeholder="Adresse e-mail"
+            placeholder={tr.fields[1]}
             keyboardType="email-address"
             autoCapitalize="none"
             placeholderTextColor={colors.mutedForeground}
@@ -495,19 +497,19 @@ export default function InvitesScreen() {
             <TextInput
               value={newGuest.tableNumber}
               onChangeText={(value) => setNewGuest((current) => ({ ...current, tableNumber: value }))}
-              placeholder="Table"
+              placeholder={tr.fields[2]}
               placeholderTextColor={colors.mutedForeground}
               style={[ss.formInput, ss.formHalf, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
             />
             <TextInput
               value={newGuest.dietaryRequirements}
               onChangeText={(value) => setNewGuest((current) => ({ ...current, dietaryRequirements: value }))}
-              placeholder="Régime alimentaire"
+              placeholder={tr.fields[3]}
               placeholderTextColor={colors.mutedForeground}
               style={[ss.formInput, ss.formHalf, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
             />
           </View>
-          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>STATUT RSVP</Text>
+          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{tr.rsvp}</Text>
           <View style={ss.rsvpChoices}>
             {(['pending', 'confirmed', 'declined'] as RsvpStatus[]).map((status) => (
               <TouchableOpacity
@@ -516,7 +518,7 @@ export default function InvitesScreen() {
                 style={[ss.rsvpChoice, { backgroundColor: newGuest.rsvpStatus === status ? colors.plum : colors.muted, borderColor: newGuest.rsvpStatus === status ? colors.plum : colors.border }]}
               >
                 <Text style={[ss.rsvpChoiceText, { color: newGuest.rsvpStatus === status ? '#FBF5FB' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>
-                  {RSVP_LABEL[status]}
+                  {rsvpLabels[status]}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -524,7 +526,7 @@ export default function InvitesScreen() {
           <TextInput
             value={newGuest.notes}
             onChangeText={(value) => setNewGuest((current) => ({ ...current, notes: value }))}
-            placeholder="Notes"
+            placeholder={tr.notes}
             multiline
             placeholderTextColor={colors.mutedForeground}
             style={[ss.formInput, ss.formNotes, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
@@ -534,11 +536,11 @@ export default function InvitesScreen() {
             onPress={handleCreateGuest}
             style={[ss.saveGuestBtn, { backgroundColor: colors.plum, opacity: createGuestMutation.isPending ? 0.6 : 1 }]}
           >
-            {createGuestMutation.isPending ? <ActivityIndicator color="#FBF5FB" /> : <Text style={[ss.saveGuestText, { fontFamily: SANS_SEMIBOLD }]}>Enregistrer l’invité</Text>}
+            {createGuestMutation.isPending ? <ActivityIndicator color="#FBF5FB" /> : <Text style={[ss.saveGuestText, { fontFamily: SANS_SEMIBOLD }]}>{tr.saveGuest}</Text>}
           </TouchableOpacity>
         </ScrollView>
       </BottomSheet>
-      <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+      <TourSheet visible={tourVisible} onClose={closeTour} steps={tourSteps} />
 
       {/* ── Import preview modal ─────────────────────────────────────────────── */}
       <Modal
@@ -551,10 +553,11 @@ export default function InvitesScreen() {
           {/* Modal header */}
           <View style={[ss.modalHeader, { borderBottomColor: colors.border }]}>
             <View>
-              <Text style={[ss.modalTitle, { fontFamily: SERIF, color: colors.foreground }]}>Importer des invités</Text>
+              <Text style={[ss.modalTitle, { fontFamily: SERIF, color: colors.foreground }]}>{tr.importTitle}</Text>
               <Text style={[ss.modalSub, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                {importRows.length} invité{importRows.length > 1 ? 's' : ''} détecté{importRows.length > 1 ? 's' : ''}
-                {importSkipped > 0 ? ` · ${importSkipped} ignoré${importSkipped > 1 ? 's' : ''}` : ''}
+                {language === 'fr'
+                  ? `${importRows.length} invité${importRows.length > 1 ? 's' : ''} détecté${importRows.length > 1 ? 's' : ''}${importSkipped > 0 ? ` · ${importSkipped} ignoré${importSkipped > 1 ? 's' : ''}` : ''}`
+                  : `${importRows.length} guest${importRows.length === 1 ? '' : 's'} found${importSkipped > 0 ? ` · ${importSkipped} skipped` : ''}`}
               </Text>
             </View>
             <TouchableOpacity onPress={() => setImportModalVisible(false)} style={ss.modalClose} activeOpacity={0.7}>
@@ -575,12 +578,12 @@ export default function InvitesScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={[ss.guestName, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]} numberOfLines={1}>{g.name}</Text>
                   <Text style={[ss.guestMeta, { fontFamily: SANS, color: colors.mutedForeground }]} numberOfLines={1}>
-                    {[g.email, g.tableNumber ? `Table ${g.tableNumber}` : null, g.dietaryRequirements].filter(Boolean).join(' · ') || '—'}
+                    {[g.email, g.tableNumber ? `${tr.table} ${g.tableNumber}` : null, g.dietaryRequirements].filter(Boolean).join(' · ') || '—'}
                   </Text>
                 </View>
                 <View style={[ss.rsvpPill, { backgroundColor: g.rsvpStatus === 'confirmed' ? colors.success + '22' : g.rsvpStatus === 'declined' ? '#e5534b22' : colors.warning + '22' }]}>
                   <Text style={[ss.rsvpPillText, { fontFamily: SANS_SEMIBOLD, color: g.rsvpStatus === 'confirmed' ? colors.success : g.rsvpStatus === 'declined' ? '#e5534b' : colors.warning }]}>
-                    {RSVP_LABEL[g.rsvpStatus]}
+                    {rsvpLabels[g.rsvpStatus]}
                   </Text>
                 </View>
               </View>
@@ -602,7 +605,7 @@ export default function InvitesScreen() {
                   <>
                     <Feather name="download" size={16} color="#FBF5FB" />
                     <Text style={[ss.confirmText, { fontFamily: SANS_SEMIBOLD }]}>
-                      Importer {importRows.length} invité{importRows.length > 1 ? 's' : ''}
+                      {language === 'fr' ? `Importer ${importRows.length} invité${importRows.length > 1 ? 's' : ''}` : `Import ${importRows.length} guest${importRows.length === 1 ? '' : 's'}`}
                     </Text>
                   </>
                 )}

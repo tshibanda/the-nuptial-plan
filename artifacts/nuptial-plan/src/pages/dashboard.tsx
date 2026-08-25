@@ -387,7 +387,7 @@ export default function Dashboard() {
               </div>
               {summary && (
                 <p className="mt-3 text-[10px] text-muted-foreground">
-                  {formatCurrency(summary.budgetTotal - summary.budgetSpent)} restant à engager
+                  {formatCurrency(summary.budgetTotal - summary.budgetSpent)} {tr('restant à engager', 'remaining to allocate')}
                 </p>
               )}
             </div>
@@ -395,7 +395,7 @@ export default function Dashboard() {
 
           {/* Activity */}
           <div>
-            <SectionTitle eyebrow="Votre studio" title="Activité récente" />
+            <SectionTitle eyebrow={tr('Votre studio', 'Your studio')} title={tr('Activité récente', 'Recent activity')} />
             <div className="space-y-4">
               {activity.slice(0, 5).map((item, i) => (
                 <div className="flex gap-3" key={item.id}>
@@ -411,13 +411,13 @@ export default function Dashboard() {
                 </div>
               ))}
               {activity.length === 0 && (
-                <p className="text-[12px] text-muted-foreground">Aucune activité récente.</p>
+                <p className="text-[12px] text-muted-foreground">{tr('Aucune activité récente.', 'No recent activity.')}</p>
               )}
             </div>
             {activity.length > 0 && (
               <button className="mt-6 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/55 transition hover:text-primary"
                 data-testid="button-see-all-activity">
-                Voir toute l'activité <ChevronRight size={12} />
+                {tr('Voir toute l’activité', 'See all activity')} <ChevronRight size={12} />
               </button>
             )}
           </div>

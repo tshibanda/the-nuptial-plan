@@ -18,10 +18,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import { useListWeddings, useListPayments, useCreatePayment, getListPaymentsQueryKey } from '@workspace/api-client-react';
+import { useListPayments, useCreatePayment, getListPaymentsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Payment } from '@workspace/api-client-react';
-import { useWedding } from '@/context/WeddingContext';
+import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
@@ -54,6 +54,11 @@ const TOUR_STEPS = [
     description: 'Exportez la liste en PDF pour la partager avec votre partenaire ou votre comptable.',
   },
 ];
+const TOUR_STEPS_EN = [
+  { icon: 'credit-card', title: 'Your payments', description: 'See all your upcoming, paid, and overdue payments at a glance.' },
+  { icon: 'alert-circle', title: 'Priorities', description: 'Overdue payments appear first with a red background. Settle these first.' },
+  { icon: 'share', title: 'Export', description: 'Export the list as a PDF to share with your partner or accountant.' },
+];
 
 // ── Status helpers ────────────────────────────────────────────────────────────
 function statusSortOrder(s: string): number {
@@ -75,7 +80,7 @@ interface PaymentRowProps {
 }
 
 function PaymentRow({ payment, currency, colors, language }: PaymentRowProps) {
-  const { tone } = paymentStatusLabel(payment.status);
+  const { tone } = paymentStatusLabel(payment.status, language);
   const label = language === 'fr'
     ? ({ pending: 'En attente', scheduled: 'Programmé', paid: 'Réglé', overdue: 'En retard' }[payment.status] ?? payment.status)
     : ({ pending: 'Pending', scheduled: 'Scheduled', paid: 'Paid', overdue: 'Overdue' }[payment.status] ?? payment.status);
@@ -136,7 +141,7 @@ function PaymentRow({ payment, currency, colors, language }: PaymentRowProps) {
           <View style={ss.metaRow}>
             <Feather name="calendar" size={10} color={colors.mutedForeground} />
             <Text style={[ss.metaText, { fontFamily: SANS, color: colors.mutedForeground }]}>
-              {formatDateShort(payment.dueDate)}
+               {formatDateShort(payment.dueDate, language)}
             </Text>
           </View>
         </View>
@@ -144,7 +149,7 @@ function PaymentRow({ payment, currency, colors, language }: PaymentRowProps) {
         {/* Right: amount + badge */}
         <View style={ss.cardRight}>
           <Text style={[ss.amount, { fontFamily: SERIF, color: isOverdue ? colors.destructive : colors.plumDark }]}>
-            {formatCents(payment.amountCents, currency)}
+             {formatCents(payment.amountCents, currency, language)}
           </Text>
           <View style={[ss.badge, { backgroundColor: badgeBg }]}>
             <Text style={[ss.badgeText, { fontFamily: SANS_SEMIBOLD, color: accentColor }]}>
@@ -178,21 +183,21 @@ function SummaryCard({ payments, currency, colors, language }: SummaryCardProps)
       <View style={ss.summaryRow}>
         <View style={ss.summaryItem}>
           <Text style={[ss.summaryValue, { fontFamily: SERIF, color: colors.foreground }]}>
-            {formatCents(total, currency)}
+             {formatCents(total, currency, language)}
           </Text>
           <Text style={[ss.summaryLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>{language === 'fr' ? 'total' : 'total'}</Text>
         </View>
         <View style={[ss.divider, { backgroundColor: colors.border }]} />
         <View style={ss.summaryItem}>
           <Text style={[ss.summaryValue, { fontFamily: SERIF, color: colors.sage }]}>
-            {formatCents(paid, currency)}
+             {formatCents(paid, currency, language)}
           </Text>
           <Text style={[ss.summaryLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>{language === 'fr' ? 'réglé' : 'paid'}</Text>
         </View>
         <View style={[ss.divider, { backgroundColor: colors.border }]} />
         <View style={ss.summaryItem}>
           <Text style={[ss.summaryValue, { fontFamily: SERIF, color: overdueCnt > 0 ? colors.destructive : colors.warning }]}>
-            {formatCents(pending, currency)}
+             {formatCents(pending, currency, language)}
           </Text>
           <Text style={[ss.summaryLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>
             {language === 'fr' ? `restant${overdueCnt > 0 ? ` · ${overdueCnt} retard` : ''}` : `remaining${overdueCnt > 0 ? ` · ${overdueCnt} overdue` : ''}`}
@@ -231,7 +236,7 @@ export default function PaiementsScreen() {
   const { isActive: isPremium } = useSubscription();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { selectedWeddingId } = useWedding();
+  const { activeWedding, weddingId } = useActiveWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
 
   const { tourVisible, openTour, closeTour } = useTour('tour:paiements');
@@ -241,12 +246,10 @@ export default function PaiementsScreen() {
   const queryClient = useQueryClient();
   const [isExporting, setIsExporting] = useState(false);
 
-  const { data: weddings } = useListWeddings();
-  const activeWedding = weddings?.find(w => w.id === selectedWeddingId) ?? weddings?.[0];
-  const wId = activeWedding?.id ?? 0;
+  const wId = weddingId ?? 0;
   const currency = activeWedding?.currency ?? 'EUR';
 
-  const { data: payments, isLoading, refetch, isRefetching } = useListPayments(wId);
+  const { data: payments, isLoading, refetch, isRefetching } = useListPayments(wId, { query: { queryKey: getListPaymentsQueryKey(wId), staleTime: MOBILE_TAB_STALE_TIME } });
   const createPayment = useCreatePayment();
 
   const sorted: Payment[] = [...(payments ?? [])].sort((a, b) => {
@@ -465,7 +468,7 @@ export default function PaiementsScreen() {
           </TouchableOpacity>
         </ScrollView>
       </BottomSheet>
-      <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+      <TourSheet visible={tourVisible} onClose={closeTour} steps={language === 'fr' ? TOUR_STEPS : TOUR_STEPS_EN} />
     </>
   );
 }

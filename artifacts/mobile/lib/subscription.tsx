@@ -7,6 +7,7 @@ import { useUser, useAuth } from "@clerk/expo";
 export const REVENUECAT_ENTITLEMENT_IDENTIFIER = "TNP Premium";
 const PREMIUM_EMAIL_ALLOWLIST = new Set([
   "e.tshibanda78@gmail.com",
+  "thenuptialplan2@yopmail.com",
 ]);
 
 type SubscriptionContextValue = {

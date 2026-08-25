@@ -106,8 +106,8 @@ export default function ParametresScreen() {
       t('settings.language'),
       undefined,
       [
-        { text: t('settings.french'), onPress: () => { void setLanguage('fr'); } },
-        { text: t('settings.english'), onPress: () => { void setLanguage('en'); } },
+        { text: `🇫🇷 ${t('settings.french')}`, onPress: () => { void setLanguage('fr'); } },
+        { text: `🇺🇸 ${t('settings.english')}`, onPress: () => { void setLanguage('en'); } },
         { text: t('common.cancel'), style: 'cancel' },
       ],
     );
