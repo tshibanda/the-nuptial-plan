@@ -18,6 +18,7 @@ import {
 import { useWedding } from '@/context/WeddingContext';
 import { useLocalization } from '@/context/LocalizationContext';
 import { useColors } from '@/hooks/useColors';
+import { MOBILE_TAB_STALE_TIME } from '@/hooks/useActiveWedding';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { daysUntil, initials } from '@/utils/format';
@@ -70,7 +71,9 @@ export default function MariagesScreen() {
   const { tourVisible, openTour, closeTour } = useTour('tour:mariages');
 
   const queryClient = useQueryClient();
-  const { data: weddings, isLoading, refetch, isRefetching } = useListWeddings();
+  const { data: weddings, isLoading, refetch, isRefetching } = useListWeddings({
+    query: { queryKey: getListWeddingsQueryKey(), staleTime: MOBILE_TAB_STALE_TIME },
+  });
   const deleteWedding = useDeleteWedding();
   const createWedding = useCreateWedding();
   const [createOpen, setCreateOpen] = useState(false);

@@ -20,9 +20,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '@clerk/expo';
-import { useListWeddings } from '@workspace/api-client-react';
-import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
+import { useActiveWedding } from '@/hooks/useActiveWedding';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow } from '@/utils/shadow';
 import { PremiumBadge } from '@/components/PremiumBadge';
@@ -165,10 +164,7 @@ export function NuptiaSheet() {
   const { getToken } = useAuth();
   const { language } = useLocalization();
   const en = language === 'en';
-  const { selectedWeddingId } = useWedding();
-  const { data: weddings } = useListWeddings();
-  const wedding =
-    weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
+  const { activeWedding: wedding } = useActiveWedding();
 
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>(() => [welcomeMessage(language)]);

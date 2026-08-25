@@ -9,7 +9,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import type { CalendarEvent, Vendor } from '@workspace/api-client-react';
 import {
-  getListEventsQueryKey, useDeleteEvent, useListEvents, useListVendors,
+  getListEventsQueryKey, getListVendorsQueryKey, useDeleteEvent, useListEvents, useListVendors,
   useUpdateEvent,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -91,15 +91,17 @@ export default function JourJScreen() {
   const [exporting, setExporting] = useState(false);
 
   const { activeWedding: wedding, weddingId } = useActiveWedding();
-  const eventsQuery = useListEvents(weddingId ?? 0, {
+  const wId = weddingId ?? 0;
+  const eventsQuery = useListEvents(wId, {
     query: {
-      queryKey: getListEventsQueryKey(weddingId ?? 0),
+      queryKey: getListEventsQueryKey(wId),
       enabled: weddingId !== null,
       staleTime: MOBILE_TAB_STALE_TIME,
     },
   });
-  const vendorsQuery = useListVendors(weddingId ?? 0, {
+  const vendorsQuery = useListVendors(wId, {
     query: {
+      queryKey: getListVendorsQueryKey(wId),
       enabled: weddingId !== null,
       staleTime: MOBILE_TAB_STALE_TIME,
     },
@@ -110,19 +112,19 @@ export default function JourJScreen() {
   const progress = events.length ? Math.round((completedCount / events.length) * 100) : 0;
 
   const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: getListEventsQueryKey(weddingId) });
+    void queryClient.invalidateQueries({ queryKey: getListEventsQueryKey(wId) });
   };
   const updateEvent = useUpdateEvent();
   const deleteEvent = useDeleteEvent();
 
   const toggleEvent = (event: CalendarEvent) => {
-    updateEvent.mutate({ weddingId, id: event.id, data: { completed: !event.completed } }, { onSuccess: invalidate });
+    updateEvent.mutate({ weddingId: wId, id: event.id, data: { completed: !event.completed } }, { onSuccess: invalidate });
   };
 
   const removeEvent = (event: CalendarEvent) => {
     Alert.alert(copy.deleteStep, `"${event.title}" ${copy.deleteBody}`, [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: () => deleteEvent.mutate({ weddingId, id: event.id }, { onSuccess: invalidate }) },
+      { text: t('common.delete'), style: 'destructive', onPress: () => deleteEvent.mutate({ weddingId: wId, id: event.id }, { onSuccess: invalidate }) },
     ]);
   };
 
@@ -255,7 +257,7 @@ export default function JourJScreen() {
            <View style={ss.section}>{timeGroups.every(([, group]) => group.length === 0) ? <Empty icon="check" title={copy.noTasks} text={copy.noTasksText} colors={colors} /> : timeGroups.map(([label, group]) => group.length ? <View key={label} style={ss.checkGroup}><View style={ss.checkHeader}><Text style={[ss.dayLabel, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>{label}</Text><Text style={[ss.count, { color: colors.mutedForeground, fontFamily: SANS }]}>{group.filter((event) => event.completed).length}/{group.length}</Text></View>{group.map((event) => <TouchableOpacity key={event.id} onPress={() => toggleEvent(event)} style={[ss.checkRow, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name={event.completed ? 'check-circle' : 'circle'} size={20} color={event.completed ? colors.sage : colors.mutedForeground} /><Text style={[ss.checkTitle, { color: event.completed ? colors.mutedForeground : colors.foreground, fontFamily: SANS, textDecorationLine: event.completed ? 'line-through' : 'none' }]}>{event.title}</Text>{event.eventTime ? <Text style={[ss.checkTime, { color: colors.mutedForeground, fontFamily: SANS }]}>{event.eventTime.slice(0, 5)}</Text> : null}</TouchableOpacity>)}</View> : null)}</View>
         )}
       </ScrollView>
-      <EventAddSheet visible={editOpen} onClose={() => setEditOpen(false)} weddingId={weddingId} initialEvent={editEvent} onCreated={() => { setEditOpen(false); invalidate(); }} />
+      <EventAddSheet visible={editOpen} onClose={() => setEditOpen(false)} weddingId={wId} initialEvent={editEvent} onCreated={() => { setEditOpen(false); invalidate(); }} />
     </>
   );
 }

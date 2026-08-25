@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { useListPayments } from '@workspace/api-client-react';
+import { getListPaymentsQueryKey, useListPayments } from '@workspace/api-client-react';
 import type { Payment } from '@workspace/api-client-react';
 import { useLocalization } from '@/context/LocalizationContext';
 
@@ -82,7 +82,7 @@ async function schedulePaymentAlert(payment: Payment, currency: string, locale: 
 export function usePaymentNotifications(weddingId: number | null, currency = 'EUR'): void {
   // Pass 0 when weddingId is null — the query is disabled and returns no data.
   const { data: payments } = useListPayments(weddingId ?? 0, {
-    query: { enabled: weddingId !== null },
+    query: { queryKey: getListPaymentsQueryKey(weddingId ?? 0), enabled: weddingId !== null },
   });
   const { language, locale } = useLocalization();
 

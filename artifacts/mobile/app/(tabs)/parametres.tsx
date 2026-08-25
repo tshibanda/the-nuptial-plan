@@ -9,12 +9,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  useListWeddings,
   useDeleteWedding,
   getListWeddingsQueryKey,
 } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
+import { useActiveWedding } from '@/hooks/useActiveWedding';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow, accentShadow } from '@/utils/shadow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -91,8 +91,7 @@ export default function ParametresScreen() {
   const { selectedWeddingId, selectWedding } = useWedding();
   const queryClient = useQueryClient();
 
-  const { data: weddings } = useListWeddings();
-  const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
+  const { weddings, activeWedding } = useActiveWedding();
   const deleteWedding = useDeleteWedding();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);

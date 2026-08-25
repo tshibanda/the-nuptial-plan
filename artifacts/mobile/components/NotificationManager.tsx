@@ -2,11 +2,10 @@ import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useLastNotificationResponse } from 'expo-notifications';
-import { useListWeddings } from '@workspace/api-client-react';
 import { useNotificationSetup } from '@/hooks/useNotificationSetup';
 import { usePaymentNotifications } from '@/hooks/usePaymentNotifications';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
-import { useWedding } from '@/context/WeddingContext';
+import { useActiveWedding } from '@/hooks/useActiveWedding';
 
 /**
  * Invisible manager component that:
@@ -18,19 +17,17 @@ import { useWedding } from '@/context/WeddingContext';
  * the Expo Router instance.
  */
 export function NotificationManager() {
-  const { selectedWeddingId } = useWedding();
   const router = useRouter();
 
-  const { data: weddings } = useListWeddings();
-  const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
+  const { activeWedding, weddingId } = useActiveWedding();
   const currency = activeWedding?.currency ?? 'EUR';
 
   // Permissions + Android channel setup (runs once on mount)
   useNotificationSetup();
 
   // Schedule / cancel payment & event alerts whenever the data changes
-  usePaymentNotifications(selectedWeddingId, currency);
-  useEventNotifications(selectedWeddingId);
+  usePaymentNotifications(weddingId, currency);
+  useEventNotifications(weddingId);
 
   // Deep-link to the relevant tab when the planner taps a notification
   const lastResponse = useLastNotificationResponse();

@@ -9,11 +9,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import {
-  useListWeddings, useGetWeddingSummary, useListEvents, useListVendors,
+  getGetWeddingSummaryQueryKey, getListEventsQueryKey, getListVendorsQueryKey,
+  useGetWeddingSummary, useListEvents, useListVendors,
 } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useLocalization } from '@/context/LocalizationContext';
 import { useColors } from '@/hooks/useColors';
+import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { daysUntil, vendorStatusLabel } from '@/utils/format';
@@ -142,7 +144,12 @@ export default function DashboardScreen() {
     : (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening');
   const greeting = user?.firstName ? `${greetingWord}, ${user.firstName}` : greetingWord;
 
-  const { data: weddings, isLoading: loadingWeddings } = useListWeddings();
+  const {
+    weddings,
+    activeWedding,
+    weddingId,
+    isLoading: loadingWeddings,
+  } = useActiveWedding();
 
   useEffect(() => {
     if (weddings && weddings.length > 0 && !selectedWeddingId) {
@@ -150,12 +157,17 @@ export default function DashboardScreen() {
     }
   }, [weddings, selectedWeddingId, selectWedding]);
 
-  const activeWedding = weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
-  const wId = activeWedding?.id ?? 0;
+  const wId = weddingId ?? 0;
 
-  const { data: summary, refetch: r1, isRefetching: refreshing } = useGetWeddingSummary(wId);
-  const { data: events, refetch: r2 } = useListEvents(wId);
-  const { data: vendors, refetch: r3 } = useListVendors(wId);
+  const { data: summary, refetch: r1, isRefetching: refreshing } = useGetWeddingSummary(wId, {
+    query: { queryKey: getGetWeddingSummaryQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME },
+  });
+  const { data: events, refetch: r2 } = useListEvents(wId, {
+    query: { queryKey: getListEventsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME },
+  });
+  const { data: vendors, refetch: r3 } = useListVendors(wId, {
+    query: { queryKey: getListVendorsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME },
+  });
 
   const onRefresh = () => { r1(); r2(); r3(); };
 

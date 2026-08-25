@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth, useClerk, useUser } from '@clerk/expo';
-import { useGetWeddingSummary } from '@workspace/api-client-react';
+import { getGetWeddingSummaryQueryKey, useGetWeddingSummary } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 import { useActiveWedding } from '@/hooks/useActiveWedding';
 import { useTour } from '@/hooks/useTour';
@@ -169,7 +169,9 @@ export default function ProfilScreen() {
   const { weddings, activeWedding, weddingId } = useActiveWedding();
   const wId = weddingId ?? 0;
 
-  const { data: summary } = useGetWeddingSummary(wId, { query: { enabled: weddingId !== null } });
+  const { data: summary } = useGetWeddingSummary(wId, {
+    query: { queryKey: getGetWeddingSummaryQueryKey(wId), enabled: weddingId !== null },
+  });
 
   const showComingSoon = (feature: string) =>
      Alert.alert(feature, copy.comingSoon, [{ text: 'OK' }]);

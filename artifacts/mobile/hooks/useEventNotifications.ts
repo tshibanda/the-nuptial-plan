@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { useListEvents } from '@workspace/api-client-react';
+import { getListEventsQueryKey, useListEvents } from '@workspace/api-client-react';
 import type { CalendarEvent } from '@workspace/api-client-react';
 import { useLocalization } from '@/context/LocalizationContext';
 
@@ -59,7 +59,7 @@ async function scheduleEventAlert(event: CalendarEvent, locale: string, language
  */
 export function useEventNotifications(weddingId: number | null): void {
   const { data: events } = useListEvents(weddingId ?? 0, {
-    query: { enabled: weddingId !== null },
+    query: { queryKey: getListEventsQueryKey(weddingId ?? 0), enabled: weddingId !== null },
   });
   const { language, locale } = useLocalization();
 
