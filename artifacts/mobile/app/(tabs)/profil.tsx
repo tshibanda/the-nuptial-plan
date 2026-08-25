@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  ScrollView, View, Text, StyleSheet, Platform, TouchableOpacity, Alert, Image,
+  ScrollView, View, Text, StyleSheet, Platform, TouchableOpacity, Alert, Image, Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +17,7 @@ import { shadow, accentShadow } from '@/utils/shadow';
 import { TourSheet } from '@/components/TourSheet';
 import { ProfileEditSheet } from '@/components/ProfileEditSheet';
 import { PaywallModal } from '@/components/PaywallModal';
-import { useSubscription } from '@/lib/subscription';
+import { getLocalizedPackagePrice, isNativeStorePricingAvailable, useSubscription } from '@/lib/subscription';
 import { getApiUrl } from '@/lib/apiUrl';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
 
@@ -172,11 +172,7 @@ export default function ProfilScreen() {
     Alert.alert(feature, 'Gérez vos ' + feature.toLowerCase() + ' depuis l\'application web.', [{ text: 'OK' }]);
 
   const openSubscription = () => {
-    if (subscription.isActive) {
-      router.push('/(tabs)/parametres');
-    } else {
-      setPaywallVisible(true);
-    }
+    setPaywallVisible(true);
   };
 
   const fabBottom = Platform.OS === 'web' ? 94 : insets.bottom + 84;
@@ -337,18 +333,46 @@ export default function ProfilScreen() {
         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>ABONNEMENT</Text>
         <View style={[ss.group, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
-          <RowItem
-            icon="star"
-            label="The Nuptial Plan Premium"
-            value={
-              subscription.isActive
-                ? (subscription.isTrialing ? 'Essai actif' : 'Actif')
-                : 'Voir les formules'
-            }
-            variant="gold"
-            colors={colors}
-            onPress={openSubscription}
-          />
+          <View style={{ padding: 16, gap: 10 }}>
+            <TouchableOpacity onPress={openSubscription} activeOpacity={0.75} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={[ss.rowIcon, { backgroundColor: colors.goldLight }]}>
+                <Feather name="star" size={15} color={colors.goldDim} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[ss.rowLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>The Nuptial Plan Premium</Text>
+                <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>
+                  {subscription.isActive ? (subscription.isTrialing ? 'Votre essai gratuit est actif.' : 'Votre abonnement est actif.') : 'Un mois d’essai gratuit inclus.'}
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={14} color={colors.goldDim} />
+            </TouchableOpacity>
+            {subscription.offerings?.current?.availablePackages?.map((pkg: any) => (
+              <TouchableOpacity key={pkg.identifier} disabled={subscription.loading} onPress={() => void subscription.purchase(pkg)}
+                style={{ minHeight: 52, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', borderColor: colors.border, backgroundColor: colors.background }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[{ fontSize: 12 }, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{pkg.packageType === 'ANNUAL' ? 'Annuel' : 'Mensuel'}</Text>
+                  <Text style={[{ fontSize: 11, marginTop: 2 }, { fontFamily: SANS, color: colors.mutedForeground }]}>{getLocalizedPackagePrice(pkg) ?? 'Prix selon votre boutique'}</Text>
+                </View>
+                <Feather name="chevron-right" size={14} color={colors.goldDim} />
+              </TouchableOpacity>
+            ))}
+            {!subscription.available && <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>Les achats intégrés seront disponibles après la configuration App Store et Google Play.</Text>}
+            {!isNativeStorePricingAvailable && subscription.available && <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>Le prix final sera affiché selon la devise de votre App Store dans la version iOS native.</Text>}
+            {subscription.isActive && (
+              <TouchableOpacity onPress={() => {
+                const url = Platform.OS === 'android'
+                  ? `https://play.google.com/store/account/subscriptions?sku=${subscription.productIdentifier ?? 'tnp_premium_monthly'}&package=app.thenuptialplan.com`
+                  : 'itms-apps://apps.apple.com/account/subscriptions';
+                void Linking.openURL(url);
+              }} style={{ minHeight: 44, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7, backgroundColor: colors.plum + '14', borderColor: colors.plum + '30' }}>
+                <Feather name="external-link" size={13} color={colors.plum} />
+                <Text style={[{ fontSize: 11 }, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>Gérer mon abonnement</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={() => void subscription.restore()} disabled={subscription.loading} style={{ alignItems: 'center', paddingVertical: 4 }}>
+              <Text style={[{ fontSize: 12 }, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>Restaurer mes achats</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Compte */}

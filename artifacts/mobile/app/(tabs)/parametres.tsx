@@ -314,68 +314,6 @@ export default function ParametresScreen() {
           />
         </Group>
 
-        <SectionHeader label="ABONNEMENT" colors={colors} />
-        <Group colors={colors}>
-          <View style={{ padding: 16, gap: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={[ps.rowIcon, { backgroundColor: colors.goldLight }]}>
-                <Feather name="star" size={15} color={colors.goldDim} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[ps.rowLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>The Nuptial Plan Premium</Text>
-                <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                  {subscription.isActive ? (subscription.isTrialing ? 'Votre essai gratuit est actif.' : 'Votre abonnement est actif.') : 'Un mois d’essai gratuit inclus.'}
-                </Text>
-              </View>
-            </View>
-            {subscription.offerings?.current?.availablePackages?.map((pkg: any) => (
-              <TouchableOpacity
-                key={pkg.identifier}
-                disabled={subscription.loading}
-                onPress={() => void subscription.purchase(pkg)}
-                style={[ps.subscriptionOption, { borderColor: colors.border, backgroundColor: colors.background }]}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[ps.subscriptionPlan, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>
-                    {pkg.packageType === 'ANNUAL' ? 'Annuel' : 'Mensuel'}
-                  </Text>
-                  <Text style={[ps.subscriptionPrice, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                    {getLocalizedPackagePrice(pkg) ?? 'Prix selon votre boutique'}
-                  </Text>
-                </View>
-                <Feather name="chevron-right" size={14} color={colors.goldDim} />
-              </TouchableOpacity>
-            ))}
-            {!subscription.available && (
-              <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                Les achats intégrés seront disponibles après la configuration App Store et Google Play.
-              </Text>
-            )}
-            {!isNativeStorePricingAvailable && subscription.available && (
-              <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                Le prix final sera affiché selon la devise de votre App Store dans la version iOS native.
-              </Text>
-            )}
-            {subscription.isActive && (
-              <TouchableOpacity
-                onPress={() => {
-                  const url = Platform.OS === 'android'
-                    ? `https://play.google.com/store/account/subscriptions?sku=${subscription.productIdentifier ?? 'tnp_premium_monthly'}&package=app.thenuptialplan.com`
-                    : 'itms-apps://apps.apple.com/account/subscriptions';
-                  void Linking.openURL(url);
-                }}
-                style={[ps.manageButton, { backgroundColor: colors.plum + '14', borderColor: colors.plum + '30' }]}
-              >
-                <Feather name="external-link" size={13} color={colors.plum} />
-                <Text style={[ps.manageText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>Gérer mon abonnement</Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity onPress={() => void subscription.restore()} disabled={subscription.loading} style={ps.restoreButton}>
-              <Text style={[ps.restoreText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>Restaurer mes achats</Text>
-            </TouchableOpacity>
-          </View>
-        </Group>
-
         <SectionHeader label="INFORMATIONS LÉGALES" colors={colors} />
         <Group colors={colors}>
           <RowItem icon="shield" label="Politique de confidentialité" iconBg={colors.sageBg} iconColor={colors.sageDark} colors={colors} onPress={() => openLegal('privacy')} />
