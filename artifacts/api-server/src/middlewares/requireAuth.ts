@@ -23,11 +23,15 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   try {
     const user = await clerkClient.users.getUser(userId);
     (req as any).userEmail = user.primaryEmailAddress?.emailAddress ?? null;
-    await attachEnglishDemoData(userId, (req as any).userEmail);
   } catch {
     // Authentication remains valid even if the profile lookup is temporarily
     // unavailable; email-based grants simply won't apply for this request.
     (req as any).userEmail = null;
+  }
+  try {
+    await attachEnglishDemoData(userId, (req as any).userEmail);
+  } catch (error) {
+    req.log.error({ error, userId }, "Unable to prepare the Apple Review workspace");
   }
   next();
 }

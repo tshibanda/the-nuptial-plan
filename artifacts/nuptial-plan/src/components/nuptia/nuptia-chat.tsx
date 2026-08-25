@@ -5,7 +5,7 @@
  */
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Sparkles, Send, RotateCcw, ChevronDown } from 'lucide-react';
-import { useListWeddings, useGetWeddingSummary } from '@workspace/api-client-react';
+import { useListWeddings } from '@workspace/api-client-react';
 import { useActiveWedding } from '@/lib/wedding-context';
 import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 import { useLanguage } from '@/lib/i18n';
@@ -132,7 +132,6 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
-  const { data: weddingSummary } = useGetWeddingSummary(activeWeddingId ?? 0);
 
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [welcome(language)]);
@@ -149,6 +148,13 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  /* Keep an untouched welcome message aligned with a language change. */
+  useEffect(() => {
+    setMessages((current) =>
+      current.length === 1 && current[0]?.id === 'welcome' ? [welcome(language)] : current,
+    );
+  }, [language]);
 
   /* Focus input when panel opens */
   useEffect(() => {
@@ -173,21 +179,6 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
       }).catch(() => {});
     }
   }, [open, initialized, getToken]);
-
-  /* Wedding context passed to the API for personalised responses */
-  const buildWeddingContext = useCallback(() => {
-    if (!activeWedding) return undefined;
-    return {
-      names: activeWedding.names,
-      weddingDate: activeWedding.weddingDate,
-      venue: activeWedding.venue ?? undefined,
-      daysUntil: weddingSummary?.daysUntil,
-      budgetTotal: weddingSummary?.budgetTotal,
-      budgetSpent: weddingSummary?.budgetSpent,
-      totalGuests: weddingSummary?.totalGuests,
-      confirmedGuests: weddingSummary?.confirmedGuests,
-    };
-  }, [activeWedding, weddingSummary]);
 
   /* Send a message and stream the response */
   const sendMessage = useCallback(async (text: string) => {
@@ -223,7 +214,7 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ content: trimmed, weddingId: activeWeddingId, weddingContext: buildWeddingContext() }),
+        body: JSON.stringify({ content: trimmed, weddingId: activeWeddingId, language }),
         signal: abortRef.current.signal,
       });
 
@@ -268,7 +259,7 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
     } finally {
       setStreaming(false);
     }
-  }, [convId, streaming, getToken, buildWeddingContext, activeWeddingId, copy]);
+  }, [convId, streaming, getToken, activeWeddingId, copy, language]);
 
   /* New conversation */
   const resetConversation = useCallback(async () => {

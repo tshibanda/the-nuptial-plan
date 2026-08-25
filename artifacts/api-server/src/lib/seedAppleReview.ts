@@ -1,12 +1,14 @@
 /**
  * Idempotent seed for the Apple App Review demo account.
- * Runs once on server startup; the DEMO_MARKER prevents duplicate inserts.
+ * The target review account is populated after its first authenticated request,
+ * so its Clerk user ID is never hard-coded into a development-only seed.
  */
 import { pool } from "@workspace/db";
 import { logger } from "./logger";
+import { ObjectStorageService, objectStorageClient } from "./objectStorage";
 
-const OWNER_ID = "user_3HyOEsScTvQuzvLFDB5bbaGbDoq";
 const DEMO_MARKER = "[APPLE_REVIEW_DEMO]";
+const HISTORICAL_REVIEW_OWNER_ID = "user_3HyOEsScTvQuzvLFDB5bbaGbDoq";
 
 type WeddingSeed = {
   names: string;
@@ -21,82 +23,120 @@ type WeddingSeed = {
 
 const weddings: WeddingSeed[] = [
   {
-    names: "Camille & Thomas",
-    partner1: "Camille",
-    partner2: "Thomas",
-    date: "2026-06-20",
-    venue: "Domaine de la Vallée, Chantilly",
+    names: "Maya & Daniel",
+    partner1: "Maya",
+    partner2: "Daniel",
+    date: "2026-10-24",
+    venue: "The Willow Estate, Oxfordshire",
     budget: 42000,
     guests: 118,
-    notes: `${DEMO_MARKER} Dossier premium — réception champêtre chic, suivi depuis mai 2025.`,
+    notes: `${DEMO_MARKER} Premium planning file — relaxed garden celebration, managed since May 2025.`,
   },
   {
-    names: "Inès & Julien",
-    partner1: "Inès",
-    partner2: "Julien",
-    date: "2026-08-29",
-    venue: "Château de Vaux-le-Vicomte",
+    names: "Harper & Lewis",
+    partner1: "Harper",
+    partner2: "Lewis",
+    date: "2026-12-12",
+    venue: "Pembroke Hall, London",
     budget: 68000,
     guests: 156,
-    notes: `${DEMO_MARKER} Dossier en production — mariage élégant, cérémonie civile à Paris.`,
+    notes: `${DEMO_MARKER} Active production file — elegant city wedding with a civil ceremony.`,
   },
   {
-    names: "Sarah & Mehdi",
-    partner1: "Sarah",
-    partner2: "Mehdi",
+    names: "Sophie & Alex",
+    partner1: "Sophie",
+    partner2: "Alex",
     date: "2025-09-13",
-    venue: "Maison des Oliviers, Aix-en-Provence",
+    venue: "The Olive House, Cotswolds",
     budget: 31500,
     guests: 92,
-    notes: `${DEMO_MARKER} Dossier archivé — mariage livré, bilan client terminé en octobre 2025.`,
+    notes: `${DEMO_MARKER} Archived project — wedding delivered and client debrief completed in October 2025.`,
   },
   {
-    names: "Louise & Adrien",
-    partner1: "Louise",
-    partner2: "Adrien",
+    names: "Olivia & James",
+    partner1: "Olivia",
+    partner2: "James",
     date: "2027-05-15",
-    venue: "La Ferme du Petit Moulin, Normandie",
+    venue: "The Mill Barn, Norfolk",
     budget: 27000,
     guests: 84,
-    notes: `${DEMO_MARKER} Dossier signé — phase conception et recherche de prestataires.`,
+    notes: `${DEMO_MARKER} Signed project — in the design and vendor research phase.`,
   },
 ];
 
 const guestNames = [
-  ["Élodie Martin", "Marc Martin", "Nina Robert", "Paul Robert", "Claire Dubois", "Antoine Bernard", "Maya Lefèvre", "Hugo Petit", "Sophie Laurent", "Émilie Moreau", "Lucas Garnier", "Anaïs Roux"],
-  ["Charlotte Morel", "Baptiste Morel", "Nora Haddad", "Yanis Haddad", "Amandine Girard", "Louis Fontaine", "Mélanie Chevalier", "Romain Perret", "Zoé Marchand", "Thomas Rey", "Lina Benali", "Arthur Colin"],
-  ["Emma Rossi", "Léon Rossi", "Manon Blanc", "Théo Blanc", "Jade Fabre", "Maxime Vidal", "Alice Faure", "Nathan Giraud", "Chloé Reynaud", "Pauline André", "Sacha Michel", "Lola Masson"],
-  ["Agathe Simon", "Gaspard Simon", "Victoire Henry", "Martin Henry", "Jeanne Noël", "Basile Noël", "Rose Fontaine", "Oscar Leroy", "Iris Legrand", "Valentin Roy", "Alix David", "Félix Gautier"],
+  ["Emma Wilson", "Oliver Wilson", "Amelia Carter", "Noah Carter", "Grace Bennett", "Henry Brooks", "Isla Reed", "Theo Walker", "Lily Davies", "George Hall", "Florence Price", "Arthur Green"],
+  ["Charlotte Moore", "Benjamin Moore", "Nora Khan", "Yusuf Khan", "Ava Turner", "Leo Clarke", "Mia Collins", "Jack Perry", "Zoe Morgan", "Thomas Ray", "Layla Shah", "William Cole"],
+  ["Ella Rossi", "Leon Rossi", "Hannah White", "Theo White", "Ruby Ford", "Max Vidal", "Alice Foster", "Nathan Grant", "Chloe Reynolds", "Paige Andrews", "Sam Mitchell", "Lola Mason"],
+  ["Agatha Simon", "Jasper Simon", "Victoria Henry", "Martin Henry", "Jane Noel", "Basil Noel", "Rose Foster", "Oscar Lloyd", "Iris Grant", "Valentine Roy", "Alex Davis", "Felix Taylor"],
 ];
 
 const vendorTemplates: Array<[string, string, string, number, string]> = [
-  ["Maison Lune", "Traiteur", "confirmed", 12800, "Clara Meunier"],
-  ["Atelier Floréal", "Fleurs & décoration", "confirmed", 4600, "Morgane Petit"],
-  ["Studio Alba", "Photographe", "confirmed", 2800, "Alba Rossi"],
-  ["Les Voix de June", "Musique", "awaiting_contract", 2200, "June Bernard"],
-  ["Papier de Saison", "Papeterie", "confirmed", 980, "Élodie Garnier"],
+  ["Harvest & Hearth", "Catering", "confirmed", 12800, "Clara Morgan"],
+  ["Wildflower Atelier", "Flowers & styling", "confirmed", 4600, "Morgan Ellis"],
+  ["Northlight Studio", "Photography", "confirmed", 2800, "Alba Rossi"],
+  ["The June Collective", "Music", "awaiting_contract", 2200, "June Bennett"],
+  ["Paper & Thread", "Stationery", "confirmed", 980, "Eleanor Grant"],
 ];
 
-const categories = ["Lieu & réception", "Traiteur", "Fleurs & décoration", "Photo & vidéo", "Musique & animation", "Papeterie & cadeaux"];
+const categories = ["Venue & reception", "Catering", "Flowers & styling", "Photography & video", "Music & entertainment", "Stationery & gifts"];
 
-function isoDate(offsetDays: number): string {
-  const date = new Date(Date.UTC(2025, 0, 15));
+function dateRelativeToWedding(weddingDate: string, offsetDays: number): string {
+  const date = new Date(`${weddingDate}T00:00:00.000Z`);
   date.setUTCDate(date.getUTCDate() + offsetDays);
   return date.toISOString().slice(0, 10);
 }
 
-export async function seedAppleReview(): Promise<void> {
+async function saveReviewBrief(
+  ownerId: string,
+  projectIndex: number,
+  wedding: WeddingSeed,
+): Promise<{ objectPath: string; size: number }> {
+  const objectPath = `/objects/apple-review-demo/${ownerId}/client-brief-${projectIndex + 1}.txt`;
+  const storage = new ObjectStorageService();
+  const privateDir = storage.getPrivateObjectDir().replace(/\/+$/, "");
+  const fullPath = `${privateDir}${objectPath.slice("/objects".length)}`;
+  const [bucketName, ...objectParts] = fullPath.replace(/^\//, "").split("/");
+  const content = [
+    `CLIENT BRIEF — ${wedding.names.toUpperCase()}`,
+    "",
+    `Wedding date: ${wedding.date}`,
+    `Venue: ${wedding.venue}`,
+    `Working budget: €${wedding.budget.toLocaleString("en-GB")}`,
+    `Guest target: ${wedding.guests}`,
+    "",
+    "Planning focus",
+    "• Keep the guest experience warm, personal and calm.",
+    "• Confirm all supplier handovers before the final coordination meeting.",
+    "• Maintain a clear weather contingency plan with the venue team.",
+  ].join("\n");
+  const contentBytes = Buffer.from(content, "utf8");
+
+  await objectStorageClient
+    .bucket(bucketName!)
+    .file(objectParts.join("/"))
+    .save(contentBytes, {
+      contentType: "text/plain; charset=utf-8",
+      resumable: false,
+      metadata: { cacheControl: "private, max-age=0" },
+    });
+
+  return { objectPath, size: contentBytes.byteLength };
+}
+
+export async function seedAppleReviewForOwner(ownerId: string): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [ownerId]);
 
     const existing = await client.query(
-      "SELECT id FROM weddings WHERE owner_id = $1 AND notes LIKE $2 LIMIT 1",
-      [OWNER_ID, `%${DEMO_MARKER}%`],
+      "SELECT id FROM weddings WHERE owner_id = $1 LIMIT 1",
+      [ownerId],
     );
     if (existing.rowCount) {
       await client.query("ROLLBACK");
-      logger.info("Apple Review demo data already exists; skipping seed.");
+      logger.info("Apple Review workspace already contains data; skipping seed.");
       return;
     }
 
@@ -107,7 +147,7 @@ export async function seedAppleReview(): Promise<void> {
           (owner_id, couple_name, partner1, partner2, currency, wedding_date, venue, budget_total, guest_count_target, notes)
          VALUES ($1,$2,$3,$4,'EUR',$5,$6,$7,$8,$9)
          RETURNING id`,
-        [OWNER_ID, wedding.names, wedding.partner1, wedding.partner2, wedding.date, wedding.venue, wedding.budget * 100, wedding.guests, wedding.notes],
+         [ownerId, wedding.names, wedding.partner1, wedding.partner2, wedding.date, wedding.venue, wedding.budget * 100, wedding.guests, wedding.notes],
       );
       weddingIds.push(result.rows[0].id as number);
     }
@@ -119,7 +159,7 @@ export async function seedAppleReview(): Promise<void> {
         await client.query(
           `INSERT INTO guests (wedding_id,name,email,table_number,dietary,rsvp_status,plus_one,notes)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-          [weddingId, name, `${name.toLowerCase().replaceAll(" ", ".")}@example.test`, String((index % 6) + 1), index % 4 === 0 ? "Végétarien" : "Aucune", status, index % 4 === 0, index % 6 === 0 ? "Famille proche" : null],
+           [weddingId, name, `${name.toLowerCase().replaceAll(" ", ".")}@example.test`, String((index % 6) + 1), index % 4 === 0 ? "Vegetarian" : "No dietary requirements", status, index % 4 === 0, index % 6 === 0 ? "Close family" : null],
         );
       }
 
@@ -129,18 +169,18 @@ export async function seedAppleReview(): Promise<void> {
         const vendor = await client.query(
           `INSERT INTO vendors (wedding_id,name,category,status,total_amount,deposit_amount,contact_name,contact_email,contact_phone,notes)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
-          [weddingId, name, category, status, Math.round(amount * multiplier) * 100, Math.round(amount * multiplier * 0.3) * 100, contactName, `${contactName!.toLowerCase().replaceAll(" ", ".")}@example.test`, "06 12 34 56 78", index === 0 ? "Contrat et dégustation suivis" : "Contact principal du dossier"],
+           [weddingId, name, category, status, Math.round(amount * multiplier) * 100, Math.round(amount * multiplier * 0.3) * 100, contactName, `${contactName!.toLowerCase().replaceAll(" ", ".")}@example.test`, "+44 20 7946 0158", index === 0 ? "Contract and tasting tracked" : "Primary supplier contact for this project"],
         );
         const vendorId: number = vendor.rows[0].id as number;
         await client.query(
           `INSERT INTO contracts (wedding_id,vendor_id,vendor_name,status,total_amount,deposit_amount,signed_at,notes)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-          [weddingId, vendorId, name, status === "confirmed" ? "signed" : "pending", Math.round(amount * multiplier) * 100, Math.round(amount * multiplier * 0.3) * 100, status === "confirmed" ? isoDate(-120 + weddingIndex * 20) : null, "Version relue avec les mariés et archivée dans le dossier."],
+           [weddingId, vendorId, name, status === "confirmed" ? "signed" : "pending", Math.round(amount * multiplier) * 100, Math.round(amount * multiplier * 0.3) * 100, status === "confirmed" ? dateRelativeToWedding(weddings[weddingIndex]!.date, -180 + weddingIndex * 20) : null, "Reviewed with the couple and saved in the project file."],
         );
         await client.query(
           `INSERT INTO payments (wedding_id,vendor_id,vendor_name,description,amount,due_date,status,paid_at,notes)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-          [weddingId, vendorId, name, "Acompte contractuel", Math.round(amount * multiplier * 0.3) * 100, isoDate(30 + index * 18), index % 2 === 0 ? "paid" : "pending", index % 2 === 0 ? isoDate(-40 + index * 4) : null, "Échéance suivie par la planner."],
+           [weddingId, vendorId, name, "Contract deposit", Math.round(amount * multiplier * 0.3) * 100, dateRelativeToWedding(weddings[weddingIndex]!.date, -150 + index * 22), index % 2 === 0 ? "paid" : "pending", index % 2 === 0 ? dateRelativeToWedding(weddings[weddingIndex]!.date, -165 + index * 20) : null, "Due date tracked by the planner."],
         );
       }
 
@@ -149,33 +189,33 @@ export async function seedAppleReview(): Promise<void> {
         await client.query(
           `INSERT INTO budget_categories (wedding_id,name,allocated_cents,spent_cents,notes)
            VALUES ($1,$2,$3,$4,$5)`,
-          [weddingId, category, allocated, Math.round(allocated * (index < 2 ? 0.72 : 0.38)), index === 0 ? "À vérifier avec le budget global" : "Suivi mensuel"],
+           [weddingId, category, allocated, Math.round(allocated * (index < 2 ? 0.72 : 0.38)), index === 0 ? "Review against the total project budget" : "Monthly tracking"],
         );
       }
 
       const events: Array<[string, string, number, string, string, string, boolean]> = [
-        ["Point d'avancement client", "Revue des décisions et arbitrages", 10, "10:00", "Visioconférence", "Planner + couple", false],
-        ["Visite technique du lieu", "Repérage accès, plan B et implantation", 35, "14:30", weddingIndex === 1 ? "Château de Vaux-le-Vicomte" : weddings[weddingIndex]!.venue, "Planner + lieu", weddingIndex === 2],
-        ["Dégustation traiteur", "Validation du menu et des accords", 65, "12:00", "Maison Lune", "Couple + traiteur", weddingIndex === 2],
-        ["Brief équipe Jour J", "Répartition des rôles et déroulé minute par minute", 95, "18:00", "Bureau de la planner", "Équipe production", false],
+        ["Client progress meeting", "Review decisions and open approvals", -85, "10:00", "Video call", "Planner + couple", false],
+        ["Venue walkthrough", "Review access, contingency plan and layout", -55, "14:30", weddingIndex === 1 ? "Pembroke Hall, London" : weddings[weddingIndex]!.venue, "Planner + venue team", weddingIndex === 2],
+        ["Catering tasting", "Confirm menu and drinks pairing", -35, "12:00", "Harvest & Hearth", "Couple + caterer", weddingIndex === 2],
+        ["Wedding-day team briefing", "Assign roles and review the minute-by-minute schedule", -10, "18:00", "Planner's studio", "Production team", false],
       ];
       for (const [title, detail, offset, time, location, actors, completed] of events) {
         await client.query(
           `INSERT INTO calendar_events (wedding_id,title,detail,event_date,event_time,location,actors,tone,completed)
            VALUES ($1,$2,$3,$4,$5,$6,$7,'gold',$8)`,
-          [weddingId, title, detail, isoDate(offset + weddingIndex * 12), time, location, actors, completed],
+           [weddingId, title, detail, dateRelativeToWedding(weddings[weddingIndex]!.date, offset), time, location, actors, completed],
         );
       }
 
-      for (const [index, title] of ["Brief initial et cahier des charges", "Sélection du lieu", "Validation du budget", "Choix des prestataires", "Envoi des invitations", "Coordination finale"].entries()) {
+      for (const [index, title] of ["Discovery brief and project scope", "Venue selection", "Budget approval", "Supplier selection", "Invitation mailing", "Final coordination"].entries()) {
         await client.query(
           `INSERT INTO milestones (wedding_id,title,detail,due_date,completed)
            VALUES ($1,$2,$3,$4,$5)`,
-          [weddingId, title, "Jalon de production suivi dans le rétroplanning de l'agence.", isoDate(-180 + index * 45 + weddingIndex * 15), weddingIndex === 2 || index < 2],
+           [weddingId, title, "Production milestone tracked in the studio timeline.", dateRelativeToWedding(weddings[weddingIndex]!.date, -240 + index * 42), weddingIndex === 2 || index < 2],
         );
       }
 
-      for (const [index, description] of ["Dossier créé et brief client enregistré", "Budget initial structuré", "Prestataires ajoutés au dossier", "Point de suivi réalisé", "Document contractuel archivé"].entries()) {
+      for (const [index, description] of ["Project created and client brief captured", "Initial budget structured", "Suppliers added to the project", "Progress meeting completed", "Contract document filed"].entries()) {
         await client.query(
           `INSERT INTO activity (wedding_id,description,entity_type,initials,created_at)
            VALUES ($1,$2,'wedding','NP',NOW() - ($3 || ' days')::interval)`,
@@ -185,46 +225,47 @@ export async function seedAppleReview(): Promise<void> {
 
       await client.query(
         `INSERT INTO notifications (wedding_id,kind,title,body,route,read,dedupe_key)
-         VALUES ($1,'deadline','Échéances à surveiller','Deux actions de production arrivent cette semaine.','/retroplanning',false,$2)`,
+         VALUES ($1,'deadline','Deadlines to watch','Two production actions are due this week.','/retroplanning',false,$2)`,
         [weddingId, `apple-review-${weddingId}-deadline`],
       );
 
+      const brief = await saveReviewBrief(ownerId, weddingIndex, weddings[weddingIndex]!);
       await client.query(
         `INSERT INTO documents (wedding_id,entity_type,name,object_path,content_type,size)
-         VALUES ($1,'wedding',$2,$3,'application/pdf',248000)`,
-        [weddingId, `Brief client — ${weddingIndex + 1}.pdf`, `/objects/apple-review-demo/brief-${weddingIndex + 1}.pdf`],
+         VALUES ($1,'wedding',$2,$3,$4,$5)`,
+         [weddingId, `Client brief — ${weddings[weddingIndex]!.names}.txt`, brief.objectPath, "text/plain", brief.size],
       );
     }
 
     const addressBook = [
-      ["Maison Lune", "Traiteur", "Clara Meunier", "clara@maison-lune.example", "06 20 11 42 88", "https://maison-lune.example"],
-      ["Atelier Floréal", "Fleurs & décoration", "Morgane Petit", "morgane@atelier-floreal.example", "06 32 54 18 90", "https://atelier-floreal.example"],
-      ["Studio Alba", "Photographe", "Alba Rossi", "bonjour@studio-alba.example", "06 41 28 63 17", "https://studio-alba.example"],
-      ["Les Voix de June", "Musique", "June Bernard", "hello@lesvoixdejune.example", "06 19 87 54 21", "https://lesvoixdejune.example"],
-      ["Papier de Saison", "Papeterie", "Élodie Garnier", "bonjour@papierdesaison.example", "06 73 44 12 66", "https://papierdesaison.example"],
-      ["Domaine & Sens", "Lieu", "Hélène Martin", "contact@domaine-sens.example", "06 15 39 80 22", "https://domaine-sens.example"],
-      ["La Brigade Nomade", "Traiteur", "Karim Daoud", "karim@brigade-nomade.example", "06 28 70 11 45", "https://brigade-nomade.example"],
-      ["Ligne Claire", "Wedding designer", "Maud Lefort", "maud@ligne-claire.example", "06 52 61 04 33", "https://ligne-claire.example"],
-      ["Transport Belle Époque", "Transport", "Nicolas Perrin", "nicolas@belle-epoque.example", "06 44 09 72 13", "https://belle-epoque.example"],
-      ["Maison Sillage", "Beauté", "Louise Caron", "louise@maison-sillage.example", "06 31 45 08 77", "https://maison-sillage.example"],
+      ["Harvest & Hearth", "Catering", "Clara Morgan", "clara@harvest-hearth.example", "+44 20 7946 0101", "https://harvest-hearth.example"],
+      ["Wildflower Atelier", "Flowers & styling", "Morgan Ellis", "morgan@wildflower-atelier.example", "+44 20 7946 0102", "https://wildflower-atelier.example"],
+      ["Northlight Studio", "Photography", "Alba Rossi", "hello@northlight-studio.example", "+44 20 7946 0103", "https://northlight-studio.example"],
+      ["The June Collective", "Music", "June Bennett", "hello@june-collective.example", "+44 20 7946 0104", "https://june-collective.example"],
+      ["Paper & Thread", "Stationery", "Eleanor Grant", "hello@paper-thread.example", "+44 20 7946 0105", "https://paper-thread.example"],
+      ["Willow Estate", "Venue", "Helen Martin", "contact@willow-estate.example", "+44 20 7946 0106", "https://willow-estate.example"],
+      ["The Roaming Table", "Catering", "Karim Daoud", "karim@roaming-table.example", "+44 20 7946 0107", "https://roaming-table.example"],
+      ["Clear Line Studio", "Wedding design", "Maud Lefort", "maud@clear-line.example", "+44 20 7946 0108", "https://clear-line.example"],
+      ["Vintage Car Co.", "Transport", "Nicholas Perrin", "nicholas@vintagecar.example", "+44 20 7946 0109", "https://vintagecar.example"],
+      ["Sillage Beauty", "Beauty", "Louise Caron", "louise@sillage-beauty.example", "+44 20 7946 0110", "https://sillage-beauty.example"],
     ];
     for (const [name, category, contactName, email, phone, website] of addressBook) {
       await client.query(
         `INSERT INTO address_book_entries (owner_id,name,category,contact_name,contact_email,contact_phone,website,notes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,'Contact favori de l''agence — recommandé pour les mariages élégants.')`,
-        [OWNER_ID, name, category, contactName, email, phone, website],
+          VALUES ($1,$2,$3,$4,$5,$6,$7,'Favourite studio contact — recommended for refined weddings.')`,
+         [ownerId, name, category, contactName, email, phone, website],
       );
     }
 
     const conversation = await client.query(
-      `INSERT INTO conversations (owner_id,title) VALUES ($1,'Préparation de la saison 2026') RETURNING id`,
-      [OWNER_ID],
+      `INSERT INTO conversations (owner_id,title) VALUES ($1,'2026 season planning') RETURNING id`,
+      [ownerId],
     );
     for (const [role, content] of [
-      ["user", "Préparer le brief de la saison et prioriser les dossiers actifs."],
-      ["assistant", "Les dossiers Camille & Thomas et Inès & Julien sont prioritaires. Le prochain point de production concerne les prestataires et les échéances budget."],
-      ["user", "Ajouter une note de suivi pour l'équipe."],
-      ["assistant", "Note ajoutée au suivi de l'agence : vérifier les acomptes et partager le déroulé Jour J avant chaque réunion finale."],
+      ["user", "Prepare the season brief and prioritise the active projects."],
+      ["assistant", "Maya & Daniel and Harper & Lewis are the priority projects. The next production focus is supplier decisions and budget due dates."],
+      ["user", "Add a follow-up note for the team."],
+      ["assistant", "Team note added: check deposits and share the wedding-day schedule before every final planning meeting."],
     ] as const) {
       await client.query(
         `INSERT INTO messages (conversation_id,role,content) VALUES ($1,$2,$3)`,
@@ -233,11 +274,17 @@ export async function seedAppleReview(): Promise<void> {
     }
 
     await client.query("COMMIT");
-    logger.info({ weddingCount: weddingIds.length, ownerId: OWNER_ID }, "Apple Review demo data seeded successfully.");
+    logger.info({ weddingCount: weddingIds.length }, "Apple Review demo data seeded successfully.");
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
   }
+}
+
+/** Keeps the historic review workspace available without relying on it for the
+ * dedicated Apple Review account, which is seeded after it authenticates. */
+export async function seedAppleReview(): Promise<void> {
+  await seedAppleReviewForOwner(HISTORICAL_REVIEW_OWNER_ID);
 }

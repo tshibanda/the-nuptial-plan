@@ -2,7 +2,7 @@
  * NuptiaSheet — Floating AI assistant for mobile
  * Jardin Parisien brand · plum gradient panel · SSE streaming
  */
-import { useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Modal,
   View,
@@ -51,7 +51,8 @@ async function apiCreateConversation(token: string | null): Promise<number> {
 async function apiSendMessage(
   convId: number,
   content: string,
-  weddingContext: string,
+  weddingId: number | undefined,
+  language: 'fr' | 'en',
   token: string | null,
 ): Promise<string> {
   const res = await fetch(
@@ -62,7 +63,7 @@ async function apiSendMessage(
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ content, weddingContext }),
+      body: JSON.stringify({ content, weddingId, language }),
     },
   );
   if (!res.ok) throw new Error('send');
@@ -176,16 +177,11 @@ export function NuptiaSheet() {
   const [convId, setConvId] = useState<number | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
-  // Wedding context string sent with each message
-  const weddingContext = wedding
-    ? [
-        `Mariage\u202f: ${wedding.names}`,
-        wedding.weddingDate ? `Date\u202f: ${wedding.weddingDate}` : '',
-        wedding.venue ? `Lieu\u202f: ${wedding.venue}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n')
-    : '';
+  useEffect(() => {
+    setMessages((current) =>
+      current.length === 1 && current[0]?.id === 'welcome' ? [welcomeMessage(language)] : current,
+    );
+  }, [language]);
 
   const scrollToBottom = () =>
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
@@ -237,7 +233,7 @@ export function NuptiaSheet() {
         setConvId(cid);
       }
       const token = await getToken();
-      const reply = await apiSendMessage(cid, content, weddingContext, token);
+      const reply = await apiSendMessage(cid, content, wedding?.id, language, token);
       const assistantMsg: Msg = {
         id: `a-${Date.now()}`,
         role: 'assistant',
@@ -258,7 +254,7 @@ export function NuptiaSheet() {
       setLoading(false);
       scrollToBottom();
     }
-   }, [input, loading, convId, getToken, weddingContext, en]);
+   }, [input, loading, convId, getToken, wedding?.id, language, en]);
 
   // ── Position the FAB just above the tab bar ─────────────────────────────────
   const tabBarH = Platform.OS === 'web' ? 74 : 70;

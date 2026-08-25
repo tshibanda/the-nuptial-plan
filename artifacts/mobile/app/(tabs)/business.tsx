@@ -15,7 +15,7 @@ type Entry = { id: string; month: string; type: 'income' | 'expense'; label: str
 type BusinessData = { hourlyRate: number; annualRevenue: number; fixedCosts: number; microThreshold: number; packagePrice: number; projectHours: number; insurance: boolean; entries: Entry[] };
 const STORAGE_KEY = 'tnp-business';
 const defaults: BusinessData = { hourlyRate: 45, annualRevenue: 0, fixedCosts: 0, microThreshold: 77700, packagePrice: 3500, projectHours: 80, insurance: false, entries: [] };
-const reviewOwnerId = 'user_3HyOEsScTvQuzvLFDB5bbaGbDoq';
+const reviewEmail = 'thenuptialplan2@yopmail.com';
 const reviewBusinessData: BusinessData = {
   hourlyRate: 68,
   annualRevenue: 48600,
@@ -25,11 +25,11 @@ const reviewBusinessData: BusinessData = {
   projectHours: 72,
   insurance: true,
   entries: [
-    { id: 'review-1', month: '2026-01', type: 'income', label: 'Acompte Camille & Thomas', amount: 2100 },
-    { id: 'review-2', month: '2026-02', type: 'expense', label: 'Abonnement outils agence', amount: 189 },
-    { id: 'review-3', month: '2026-03', type: 'income', label: 'Coordination Inès & Julien', amount: 2800 },
-    { id: 'review-4', month: '2026-04', type: 'expense', label: 'Shooting portfolio printemps', amount: 620 },
-    { id: 'review-5', month: '2026-05', type: 'income', label: 'Acompte Louise & Adrien', amount: 1350 },
+    { id: 'review-1', month: '2026-01', type: 'income', label: 'Maya & Daniel planning retainer', amount: 2100 },
+    { id: 'review-2', month: '2026-02', type: 'expense', label: 'Planning studio software', amount: 189 },
+    { id: 'review-3', month: '2026-03', type: 'income', label: 'Harper & Lewis coordination', amount: 2800 },
+    { id: 'review-4', month: '2026-04', type: 'expense', label: 'Spring portfolio shoot', amount: 620 },
+    { id: 'review-5', month: '2026-05', type: 'income', label: 'Olivia & James planning retainer', amount: 1350 },
   ],
 };
 
@@ -56,7 +56,7 @@ export default function BusinessScreen() {
   useEffect(() => {
     if (Platform.OS === 'web') return;
     AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
-      if (!stored && user?.id === reviewOwnerId) {
+      if (!stored && user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() === reviewEmail) {
         setData(reviewBusinessData);
         void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(reviewBusinessData));
       } else if (stored) {

@@ -8,17 +8,23 @@ import { assistantTools, executeAssistantTool } from "./assistant-tools";
 const router: IRouter = Router();
 const owner = (req: unknown) => (req as { userId?: string }).userId!;
 
-const SYSTEM_PROMPT = `Tu es Nuptia, l'assistante IA du Nuptial Plan — une application de planification de mariage élégante et bienveillante.
+const SYSTEM_PROMPT = `You are Nuptia, the AI assistant for The Nuptial Plan — an elegant, caring wedding-planning app.
 
-Tu es experte en organisation de mariages : budgets, prestataires, listes d'invités, calendriers, tendances, traditions françaises et internationales, et bien plus encore.
+You are an expert in wedding planning: budgets, vendors, guest lists, calendars, trends, French and international traditions, and more.
 
-Ton style : chaleureux, précis, légèrement poétique. Tu tutoies les planificateurs avec douceur. Tes réponses sont concises mais complètes — jamais sèches, jamais trop longues.
+Your style is warm, precise, and slightly poetic. Address planners gently and directly. Keep answers concise but complete — never abrupt, never overly long.
 
-Tu réponds toujours en français sauf si l'utilisateur écrit dans une autre langue.
+Always answer in the application's active language. The trusted active language is supplied below. Do not infer the response language from the message alone.
 
-Si un contexte de mariage t'est fourni (noms, date, lieu, budget), utilise-le pour personnaliser tes conseils.
+When verified wedding context is supplied (names, date, venue, budget), use it to personalise your advice.
 
-Tu peux agir dans les données de l'utilisateur avec l'outil disponible. N'utilise cet outil que lorsque l'utilisateur demande clairement de créer, modifier ou supprimer quelque chose. Après une action, confirme exactement ce qui a été fait. Ne prétends jamais avoir modifié une donnée si l'outil n'a pas réussi.`;
+You can act on the planner's data with the available tool. Use it only when the planner clearly asks to create, edit, or delete something. After an action, confirm exactly what happened in the active language. Never claim a change was made if the tool did not succeed.`;
+
+function activeLanguageInstruction(language: "en" | "fr"): string {
+  return language === "fr"
+    ? "Langue active vérifiée de l'application : français. Réponds entièrement en français, y compris les confirmations après une action."
+    : "Verified active application language: English. Reply entirely in English, including confirmations after an action.";
+}
 
 /* ── List conversations ──────────────────────────────────────────────────── */
 router.get("/", async (req, res): Promise<void> => {
@@ -100,10 +106,12 @@ router.post("/:id/messages", async (req, res): Promise<void> => {
   if (!conv) { res.status(404).json({ error: "Not found" }); return; }
   if (conv.ownerId !== owner(req)) { res.status(404).json({ error: "Not found" }); return; }
 
-  const { content, weddingId } = req.body as {
+  const { content, weddingId, language } = req.body as {
     content?: string;
     weddingId?: number;
+    language?: unknown;
   };
+  const activeLanguage: "en" | "fr" = language === "en" ? "en" : "fr";
 
   if (!content || typeof content !== "string" || !content.trim()) {
     res.status(400).json({ error: "content is required" });
@@ -128,7 +136,7 @@ router.post("/:id/messages", async (req, res): Promise<void> => {
 
   // Build context from the server-owned wedding row. Never trust client-sent
   // wedding details for authorization or personalization.
-  let systemContent = SYSTEM_PROMPT;
+  let systemContent = `${SYSTEM_PROMPT}\n\n${activeLanguageInstruction(activeLanguage)}`;
   if (typeof weddingId === "number" && Number.isInteger(weddingId)) {
     const [wedding] = await db.select().from(weddingsTable).where(
       and(eq(weddingsTable.id, weddingId), eq(weddingsTable.ownerId, owner(req))),
@@ -137,7 +145,12 @@ router.post("/:id/messages", async (req, res): Promise<void> => {
       res.status(404).json({ error: "Wedding not found" });
       return;
     }
-    systemContent += `\n\n---\nContexte vérifié du mariage :\nMariage : ${wedding.names}\nDate : ${wedding.weddingDate}\nLieu : ${wedding.venue}\nBudget : ${wedding.totalBudget} ${wedding.currency}`;
+    const contextHeading = activeLanguage === "fr" ? "Contexte vérifié du mariage" : "Verified wedding context";
+    const weddingLabel = activeLanguage === "fr" ? "Mariage" : "Wedding";
+    const dateLabel = activeLanguage === "fr" ? "Date" : "Date";
+    const venueLabel = activeLanguage === "fr" ? "Lieu" : "Venue";
+    const budgetLabel = activeLanguage === "fr" ? "Budget" : "Budget";
+    systemContent += `\n\n---\n${contextHeading}:\n${weddingLabel}: ${wedding.names}\n${dateLabel}: ${wedding.weddingDate}\n${venueLabel}: ${wedding.venue}\n${budgetLabel}: ${wedding.totalBudget} ${wedding.currency}`;
   }
 
   // SSE headers
