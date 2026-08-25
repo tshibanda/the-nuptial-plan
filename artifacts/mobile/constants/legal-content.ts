@@ -52,7 +52,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentKey, LegalDocument> = {
     sections: [
       { title: '1. Objet et acceptation', body: [
         'The Nuptial Plan fournit un espace numérique permettant de préparer, organiser et suivre un projet de mariage. En créant un compte ou en utilisant le service, vous reconnaissez avoir pris connaissance de ces conditions et les accepter.',
-        'L’éditeur doit compléter les informations légales, le prix des offres et les modalités de contact avant la publication définitive de ces conditions.',
+        'Les prix, périodes d’abonnement, conditions de renouvellement et éventuelles périodes d’essai applicables sont présentés avant la confirmation de tout achat.',
       ] },
       { title: '2. Compte et accès', body: [
         'Vous devez fournir des informations exactes et maintenir la confidentialité de vos moyens d’accès. Vous êtes responsable des activités réalisées depuis votre compte et devez nous signaler rapidement toute utilisation non autorisée.',
@@ -73,13 +73,18 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentKey, LegalDocument> = {
       { title: '6. Propriété intellectuelle', body: [
         'The Nuptial Plan, son identité visuelle, ses logiciels, ses textes, ses interfaces et ses éléments graphiques sont protégés par les droits applicables. Sauf autorisation écrite, vous ne pouvez pas les copier, revendre, adapter ou exploiter en dehors de l’utilisation normale du service.',
       ] },
-      { title: '7. Résiliation et suppression', body: [
-        'Vous pouvez cesser d’utiliser le service et demander la suppression de votre compte selon les fonctionnalités disponibles ou en contactant l’éditeur. Nous pouvons résilier ou suspendre un compte en cas de violation grave ou répétée des présentes conditions.',
+      { title: '7. Abonnements et renouvellement', body: [
+        'Les abonnements Premium achetés dans l’application sont des abonnements à renouvellement automatique. Le paiement est débité de votre compte Apple à la confirmation de l’achat, puis renouvelé automatiquement sauf résiliation au moins 24 heures avant la fin de la période en cours.',
+        'Vous pouvez gérer ou résilier votre abonnement depuis les réglages de votre compte Apple. Les montants affichés dans l’application sont ceux fournis par l’App Store dans la devise de votre boutique.',
+        'Pour les abonnements iOS, le contrat de licence utilisateur final standard d’Apple (« Apple Standard EULA ») s’applique également.',
+      ] },
+      { title: '8. Résiliation et suppression', body: [
+        'Vous pouvez supprimer votre compte directement depuis Profil > Supprimer le compte. Cette action efface définitivement les données de votre compte conformément à notre politique de confidentialité.',
         'La résiliation ne supprime pas automatiquement les obligations qui, par leur nature, doivent continuer à s’appliquer après la fin de l’utilisation du service.',
       ] },
-      { title: '8. Droit applicable et contact', body: [
-        'Les présentes conditions sont régies par le droit à préciser par l’éditeur, sous réserve des dispositions impératives applicables au lieu de résidence de l’utilisateur.',
-        'Toute question concernant ces conditions doit être adressée au contact juridique de l’éditeur, à compléter avant publication.',
+      { title: '9. Droit applicable et contact', body: [
+        'Les présentes conditions s’appliquent sous réserve des dispositions impératives de protection des consommateurs applicables dans votre pays de résidence.',
+        'Toute question concernant ces conditions peut être adressée à contact@thenuptialplan.com.',
       ] },
     ],
   },

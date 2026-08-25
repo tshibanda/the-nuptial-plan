@@ -111,8 +111,9 @@ export default function ParametresScreen() {
               const token = await getToken();
               const response = await fetch(getApiUrl('account'), { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} });
               if (!response.ok) throw new Error();
-              await signOut();
-              router.replace('/(auth)/sign-in');
+              Alert.alert('Compte supprimé', 'Votre compte et vos données ont été supprimés définitivement.', [
+                { text: 'OK', onPress: () => void signOut().then(() => router.replace('/(auth)/sign-in')) },
+              ]);
             } catch {
               Alert.alert('Suppression impossible', 'Nous n’avons pas pu supprimer le compte. Réessayez dans quelques instants.');
             }

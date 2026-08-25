@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -35,6 +35,17 @@ export function LegalDocumentScreen({ document }: { document: LegalDocumentKey }
               </View>
             ))}
           </View>
+          {document === 'policy' && (
+            <TouchableOpacity
+              onPress={() => void Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+              style={[ss.eulaLink, { borderColor: colors.plum + '35', backgroundColor: colors.plum + '0D' }]}
+              accessibilityRole="link"
+              accessibilityLabel="Consulter le contrat de licence utilisateur final standard d’Apple"
+            >
+              <Feather name="external-link" size={14} color={colors.plum} />
+              <Text style={[ss.eulaText, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>Consulter l’Apple Standard EULA</Text>
+            </TouchableOpacity>
+          )}
           <View style={ss.footer}>
             <Text style={[ss.footerText, { color: colors.mutedForeground, fontFamily: SANS }]}>The Nuptial Plan</Text>
             <View style={ss.footerLinks}>
@@ -62,6 +73,8 @@ const ss = StyleSheet.create({
   content: { paddingHorizontal: 16 },
   updated: { fontSize: 10, textAlign: 'center', marginVertical: 16 },
   article: { borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, padding: 17 },
+  eulaLink: { minHeight: 46, marginTop: 14, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  eulaText: { fontSize: 11 },
   section: { marginBottom: 23 },
   sectionTitle: { fontSize: 23, lineHeight: 27, marginBottom: 8 },
   paragraph: { fontSize: 12, lineHeight: 20, marginBottom: 9 },

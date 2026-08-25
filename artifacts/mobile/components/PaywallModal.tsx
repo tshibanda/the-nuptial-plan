@@ -1,10 +1,11 @@
 import React from 'react';
 import {
   Modal, View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Linking, Platform, ScrollView,
+  ActivityIndicator, Platform, ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getLocalizedPackagePrice, isNativeStorePricingAvailable, useSubscription } from '@/lib/subscription';
 import { useColors } from '@/hooks/useColors';
@@ -19,8 +20,6 @@ const PREMIUM_FEATURES = [
   { icon: 'star', label: 'Moodboards & inspirations illimitées' },
   { icon: 'zap', label: 'Accès prioritaire aux nouvelles fonctionnalités' },
 ];
-const LEGAL_BASE_URL = 'https://thenuptialplan.app';
-
 function annualMonthlyPrice(pkg: any): string | null {
   const amount = pkg?.product?.price;
   const currency = pkg?.product?.currencyCode ?? pkg?.product?.currency;
@@ -36,9 +35,14 @@ interface PaywallModalProps {
 }
 
 export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalProps) {
+  const router = useRouter();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const subscription = useSubscription();
+  const openLegalDocument = (path: '/legal/privacy' | '/legal/policy') => {
+    onClose();
+    requestAnimationFrame(() => router.push(path));
+  };
 
   const packages: any[] = subscription.offerings?.current?.availablePackages ?? [];
 
@@ -123,9 +127,9 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
                 <Text style={[pw.restoreText, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Restaurer les achats</Text>
               </TouchableOpacity>
               <View style={pw.legalLinks}>
-                <Text onPress={() => void Linking.openURL(`${LEGAL_BASE_URL}/privacy`)} style={[pw.legalLink, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Politique de confidentialité</Text>
+                <Text onPress={() => openLegalDocument('/legal/privacy')} style={[pw.legalLink, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Politique de confidentialité</Text>
                 <Text style={[pw.legalSeparator, { color: colors.mutedForeground }]}>·</Text>
-                <Text onPress={() => void Linking.openURL(`${LEGAL_BASE_URL}/policy`)} style={[pw.legalLink, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Conditions d’utilisation</Text>
+                <Text onPress={() => openLegalDocument('/legal/policy')} style={[pw.legalLink, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Conditions d’utilisation</Text>
               </View>
             </View>
           </View>
