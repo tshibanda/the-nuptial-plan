@@ -12,10 +12,11 @@ import {
   useListWeddings, useGetWeddingSummary, useListEvents, useListVendors,
 } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
+import { useLocalization } from '@/context/LocalizationContext';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
-import { formatCents, formatDateParts, daysUntil, vendorStatusLabel } from '@/utils/format';
+import { daysUntil, vendorStatusLabel } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
@@ -42,6 +43,12 @@ const TOUR_STEPS = [
     title: 'Votre équipe',
     description: 'Les premiers prestataires apparaissent en bas de page. Appuyez sur une fiche pour accéder aux détails.',
   },
+];
+const TOUR_STEPS_EN = [
+  { icon: 'home', title: 'Welcome to Overview', description: 'This page summarizes your wedding essentials: countdown, confirmed guests, vendors, and committed budget.' },
+  { icon: 'grid', title: 'Key metrics', description: 'The four colorful cards provide an instant view of your figures. Pull down to refresh.' },
+  { icon: 'calendar', title: 'Upcoming events', description: 'Find your next appointments and milestones here. Tap an event to open the full calendar.' },
+  { icon: 'briefcase', title: 'Your team', description: 'Your first vendors appear at the bottom of the page. Tap a card to access its details.' },
 ];
 
 // ── Botanical decoration blobs ────────────────────────────────────────────────
@@ -123,13 +130,16 @@ function SectionTitle({ eyebrow, title, colors }: { eyebrow: string; title: stri
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function DashboardScreen() {
   const colors = useColors();
+  const { language, locale } = useLocalization();
   const insets = useSafeAreaInsets();
   const { selectedWeddingId, selectWedding } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:accueil');
   const { user } = useUser();
   const hour = new Date().getHours();
-  const greetingWord = hour < 12 ? 'Bon matin' : hour < 18 ? 'Bonjour' : 'Bonsoir';
+  const greetingWord = language === 'fr'
+    ? (hour < 12 ? 'Bon matin' : hour < 18 ? 'Bonjour' : 'Bonsoir')
+    : (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening');
   const greeting = user?.firstName ? `${greetingWord}, ${user.firstName}` : greetingWord;
 
   const { data: weddings, isLoading: loadingWeddings } = useListWeddings();
@@ -162,8 +172,8 @@ export default function DashboardScreen() {
       <View style={[ss.center, { backgroundColor: colors.background, paddingTop: topPad }]}>
         <EmptyState
           icon="heart"
-          title="Aucun mariage pour le moment"
-          subtitle="Pour commencer, ouvrez l’onglet « Vos mariages » puis appuyez sur « Nouveau mariage »."
+          title={language === 'fr' ? 'Aucun mariage pour le moment' : 'No weddings yet'}
+          subtitle={language === 'fr' ? 'Pour commencer, ouvrez l’onglet « Vos mariages » puis appuyez sur « Nouveau mariage ».' : 'To get started, open the “Your weddings” tab and tap “New wedding”.'}
         />
         <TouchableOpacity
           onPress={() => router.push('/(tabs)/mariages')}
@@ -171,7 +181,7 @@ export default function DashboardScreen() {
           style={[ss.emptyAction, { backgroundColor: colors.plum }]}
         >
           <Feather name="plus" size={16} color="#FBF5FB" />
-          <Text style={[ss.emptyActionText, { fontFamily: SANS_SEMIBOLD }]}>Créer un mariage</Text>
+          <Text style={[ss.emptyActionText, { fontFamily: SANS_SEMIBOLD }]}>{language === 'fr' ? 'Créer un mariage' : 'Create a wedding'}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -216,7 +226,7 @@ export default function DashboardScreen() {
         <View style={ss.goldBar} />
 
         <Text style={[ss.heroGreeting, { fontFamily: SANS }]}>{greeting}</Text>
-        <Text style={[ss.heroEye, { fontFamily: SANS_MEDIUM }]}>LA CÉLÉBRATION</Text>
+        <Text style={[ss.heroEye, { fontFamily: SANS_MEDIUM }]}>{language === 'fr' ? 'LA CÉLÉBRATION' : 'THE CELEBRATION'}</Text>
         <Text style={[ss.heroNames, { fontFamily: SERIF }]}>{activeWedding.names}</Text>
         <Text style={[ss.heroVenue, { fontFamily: SANS }]} numberOfLines={1}>{activeWedding.venue}</Text>
 
@@ -224,7 +234,7 @@ export default function DashboardScreen() {
           {/* Date badge */}
           <View style={ss.heroBadge}>
             <Text style={[ss.heroBadgeText, { fontFamily: SANS_MEDIUM }]}>
-              {new Date(activeWedding.weddingDate).toLocaleDateString('fr-FR', {
+              {new Date(activeWedding.weddingDate).toLocaleDateString(locale, {
                 day: 'numeric', month: 'long', year: 'numeric',
               })}
             </Text>
@@ -235,44 +245,46 @@ export default function DashboardScreen() {
             style={[ss.heroCountdown, accentShadow('sm')]}
           >
             <Text style={[ss.heroNum, { fontFamily: SERIF }]}>{days}</Text>
-            <Text style={[ss.heroUnit, { fontFamily: SANS }]}>jours</Text>
+            <Text style={[ss.heroUnit, { fontFamily: SANS }]}>{language === 'fr' ? 'jours' : 'days'}</Text>
           </LinearGradient>
         </View>
       </LinearGradient>
 
       <View style={ss.body}>
         {/* ── Vivid metric cards ── */}
-        <SectionTitle eyebrow="EN UN COUP D'ŒEIL" title="L'essentiel" colors={colors} />
+        <SectionTitle eyebrow={language === 'fr' ? "EN UN COUP D'ŒIL" : 'AT A GLANCE'} title={language === 'fr' ? "L'essentiel" : 'The essentials'} colors={colors} />
         <View style={ss.grid}>
           <MetricCard
-            icon="users" label="Invités confirmés" variant="plum"
+            icon="users" label={language === 'fr' ? 'Invités confirmés' : 'Confirmed guests'} variant="plum"
             value={String(summary?.confirmedGuests ?? '—')}
-            note={summary ? `sur ${summary.totalGuests} invités` : '—'}
+            note={summary ? (language === 'fr' ? `sur ${summary.totalGuests} invités` : `of ${summary.totalGuests} guests`) : '—'}
           />
           <MetricCard
-            icon="calendar" label="Jours restants" variant="gold"
-            value={String(days)} note="avant la cérémonie"
+            icon="calendar" label={language === 'fr' ? 'Jours restants' : 'Days remaining'} variant="gold"
+            value={String(days)} note={language === 'fr' ? 'avant la cérémonie' : 'until the ceremony'}
           />
           <MetricCard
-            icon="briefcase" label="Prestataires" variant="sage"
+            icon="briefcase" label={language === 'fr' ? 'Prestataires' : 'Vendors'} variant="sage"
             value={String(summary?.vendorCount ?? vendors?.length ?? '—')}
-            note="dans votre équipe"
+            note={language === 'fr' ? 'dans votre équipe' : 'on your team'}
           />
           <MetricCard
-            icon="trending-up" label="Budget engagé" variant="rose"
+            icon="trending-up" label={language === 'fr' ? 'Budget engagé' : 'Budget committed'} variant="rose"
             value={`${budgetPct} %`}
-            note={summary ? formatCents(summary.budgetSpent, activeWedding.currency) : '—'}
+            note={summary ? new Intl.NumberFormat(locale, { style: 'currency', currency: activeWedding.currency }).format(summary.budgetSpent / 100) : '—'}
           />
         </View>
 
         {/* ── Upcoming events ── */}
         {upcoming.length > 0 && (
           <>
-            <SectionTitle eyebrow="LES PROCHAINES SEMAINES" title="À venir" colors={colors} />
+            <SectionTitle eyebrow={language === 'fr' ? 'LES PROCHAINES SEMAINES' : 'THE NEXT FEW WEEKS'} title={language === 'fr' ? 'À venir' : 'Coming up'} colors={colors} />
             <View style={[ss.card, shadow('md'), { borderColor: colors.border, backgroundColor: colors.card }]}>
               <View style={[ss.rimLight, { borderTopColor: 'rgba(255,255,255,0.60)' }]} />
               {upcoming.map((evt, i) => {
-                const { day, month } = formatDateParts(evt.eventDate);
+                const date = new Date(evt.eventDate);
+                const day = date.toLocaleDateString(locale, { day: 'numeric' });
+                const month = date.toLocaleDateString(locale, { month: 'short' }).replace('.', '').toUpperCase();
                 return (
                   <TouchableOpacity
                     key={evt.id}
@@ -302,7 +314,7 @@ export default function DashboardScreen() {
                 activeOpacity={0.75}
                 style={[ss.viewAllRow, { borderTopColor: colors.border }]}
               >
-                <Text style={[ss.viewAllText, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Voir tout l'agenda</Text>
+                <Text style={[ss.viewAllText, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>{language === 'fr' ? "Voir tout l'agenda" : 'View full calendar'}</Text>
                 <Feather name="arrow-right" size={12} color={colors.plum} />
               </TouchableOpacity>
             </View>
@@ -312,10 +324,15 @@ export default function DashboardScreen() {
         {/* ── Vendor preview ── */}
         {previewVendors.length > 0 && (
           <>
-            <SectionTitle eyebrow="SOIGNEUSEMENT CHOISIS" title="Votre équipe" colors={colors} />
+            <SectionTitle eyebrow={language === 'fr' ? 'SOIGNEUSEMENT CHOISIS' : 'CAREFULLY SELECTED'} title={language === 'fr' ? 'Votre équipe' : 'Your team'} colors={colors} />
             <View style={ss.vlist}>
               {previewVendors.map((v) => {
-                const { label, tone } = vendorStatusLabel(v.status);
+                const { label: frenchLabel, tone } = vendorStatusLabel(v.status);
+                const statusLabels: Record<string, string> = {
+                  confirmed: 'Confirmed', deposit_paid: 'Deposit paid', awaiting_contract: 'Contract pending',
+                  cancelled: 'Cancelled', pending: 'Pending', declined: 'Declined',
+                };
+                const label = language === 'fr' ? frenchLabel : (statusLabels[v.status] ?? v.status);
                 const av = v.name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
                 return (
                   <TouchableOpacity
@@ -343,7 +360,7 @@ export default function DashboardScreen() {
       </View>
     </ScrollView>
 
-    <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+    <TourSheet visible={tourVisible} onClose={closeTour} steps={language === 'fr' ? TOUR_STEPS : TOUR_STEPS_EN} />
     </>
   );
 }

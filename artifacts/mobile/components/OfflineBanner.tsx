@@ -7,6 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { SANS, SANS_MEDIUM } from '@/constants/fonts';
+import { useLocalization } from '@/context/LocalizationContext';
 
 const BANNER_HEIGHT = 32;
 
@@ -21,6 +22,7 @@ export function OfflineBanner() {
   const queryClient = useQueryClient();
   const slideAnim = useRef(new Animated.Value(-BANNER_HEIGHT)).current;
   const [lastSync, setLastSync] = useState<string | null>(null);
+  const { locale, t } = useLocalization();
 
   // iOS no longer displays the offline status pill. The cached-query
   // behaviour remains enabled; only this visual notice is hidden.
@@ -37,7 +39,7 @@ export function OfflineBanner() {
       );
       setLastSync(
         maxTs > 0
-          ? new Date(maxTs).toLocaleTimeString('fr-FR', {
+          ? new Date(maxTs).toLocaleTimeString(locale, {
               hour: '2-digit',
               minute: '2-digit',
             })
@@ -51,7 +53,7 @@ export function OfflineBanner() {
       tension: 70,
       friction: 12,
     }).start();
-  }, [isOffline, queryClient, slideAnim]);
+  }, [isOffline, locale, queryClient, slideAnim]);
 
   // Keep off-screen but mounted so the animation can play.
   const topOffset = Platform.OS === 'web' ? 0 : insets.top;
@@ -67,8 +69,8 @@ export function OfflineBanner() {
       <View style={ss.pill}>
         <Feather name="wifi-off" size={11} color="#f5f1eb" />
         <Text style={[ss.text, { fontFamily: SANS_MEDIUM }]}>
-          Mode hors-ligne
-          {lastSync ? ` · Synchro ${lastSync}` : ''}
+           {t('offline.mode')}
+           {lastSync ? ` · ${t('offline.lastSync')} ${lastSync}` : ''}
         </Text>
       </View>
     </Animated.View>

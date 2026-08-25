@@ -30,6 +30,8 @@ import MesReseaux from '@/pages/mes-reseaux';
 import MesReservations from '@/pages/mes-reservations';
 import MesRendezVous from '@/pages/mes-rendez-vous';
 import { canAccessSocials } from '@/lib/social-access';
+import { LanguageProvider, useLanguage } from '@/lib/i18n';
+import { LanguageSelector } from '@/components/language-selector';
 
 // ── Clerk key & proxy ─────────────────────────────────────────────────────────
 // REQUIRED — copy verbatim. Resolves from hostname so one build serves multiple domains.
@@ -162,6 +164,7 @@ function SignUpPage() {
 // ── Landing page (unauthenticated visitors at /) ──────────────────────────────
 function LandingPage() {
   const [showMobileAppPrompt, setShowMobileAppPrompt] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const mobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent);
@@ -170,6 +173,9 @@ function LandingPage() {
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-6 pb-20 pt-12 text-center">
+      <div className="absolute right-5 top-5">
+        <LanguageSelector compact />
+      </div>
       {/* Logo */}
       <div className="mb-6 flex h-20 w-20 items-center justify-center">
         <img
@@ -181,7 +187,7 @@ function LandingPage() {
 
       <h1 className="mb-2 font-serif text-4xl text-[#3C1A3C]">The Nuptial Plan</h1>
       <p className="mb-10 text-sm uppercase tracking-[0.2em] text-[#716471]">
-        L'indispensable du Wedding Planner
+        {t('landing.tagline')}
       </p>
 
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -189,33 +195,33 @@ function LandingPage() {
           href={`${basePath}/sign-in`}
           className="inline-flex items-center justify-center rounded-lg bg-[#5D2D5D] px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-[#3C1A3C]"
         >
-          Se connecter
+          {t('landing.signIn')}
         </a>
         <a
           href={`${basePath}/sign-up`}
           className="inline-flex items-center justify-center rounded-lg border border-[#D7CDD7] bg-white px-8 py-3 text-sm font-medium text-[#5D2D5D] transition-colors hover:bg-[#F5EFF5]"
         >
-          Créer un compte
+          {t('landing.signUp')}
         </a>
       </div>
 
       {showMobileAppPrompt && (
         <div
           role="dialog"
-          aria-label="Application mobile The Nuptial Plan"
+          aria-label={t('landing.mobileTitle')}
           className="mt-8 w-full max-w-sm rounded-2xl border border-[#D7CDD7] bg-white/85 p-4 text-left shadow-[0_12px_35px_rgba(93,45,93,0.12)] backdrop-blur"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-[#3C1A3C]">The Nuptial Plan sur mobile</p>
+              <p className="text-sm font-semibold text-[#3C1A3C]">{t('landing.mobileTitle')}</p>
               <p className="mt-1 text-xs leading-5 text-[#716471]">
-                Retrouvez votre espace de planification plus facilement dans l’application.
+                {t('landing.mobileBody')}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setShowMobileAppPrompt(false)}
-              aria-label="Fermer la proposition de téléchargement"
+              aria-label={t('landing.closeMobilePrompt')}
               className="rounded-full px-2 py-1 text-lg leading-none text-[#9B7E9B] transition hover:bg-[#F5EFF5] hover:text-[#5D2D5D]"
             >
               ×
@@ -225,20 +231,20 @@ function LandingPage() {
             href={IOS_APP_STORE_URL}
             className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-[#5D2D5D] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#3C1A3C]"
           >
-            Télécharger l’application
+            {t('landing.download')}
           </a>
           <button
             type="button"
             onClick={() => setShowMobileAppPrompt(false)}
             className="mt-2 w-full rounded-lg px-4 py-2 text-xs font-medium text-[#716471] transition hover:bg-[#F5EFF5] hover:text-[#5D2D5D]"
           >
-            Continuer sur le site
+            {t('landing.continueWeb')}
           </button>
         </div>
       )}
 
       <p className="mt-12 text-xs text-[#9B7E9B]">
-        Atelier de planification nuptiale · Accès réservé aux planners
+        {t('landing.footer')}
       </p>
       <LegalFooter className="absolute bottom-6 left-4 right-4" />
     </div>
@@ -325,6 +331,7 @@ function AppRouter() {
 // ── ClerkProvider wired to wouter ─────────────────────────────────────────────
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
+  const { t } = useLanguage();
 
   return (
     <ClerkProvider
@@ -336,14 +343,14 @@ function ClerkProviderWithRoutes() {
       localization={{
         signIn: {
           start: {
-            title: 'Connexion',
-            subtitle: 'Accédez à votre espace de planification',
+            title: t('clerk.signInTitle'),
+            subtitle: t('clerk.signInSubtitle'),
           },
         },
         signUp: {
           start: {
-            title: 'Créer un compte',
-            subtitle: 'Rejoignez The Nuptial Plan',
+            title: t('clerk.signUpTitle'),
+            subtitle: t('clerk.signUpSubtitle'),
           },
         },
       }}
@@ -363,7 +370,9 @@ function ClerkProviderWithRoutes() {
 export default function App() {
   return (
     <WouterRouter base={basePath}>
-      <ClerkProviderWithRoutes />
+      <LanguageProvider>
+        <ClerkProviderWithRoutes />
+      </LanguageProvider>
     </WouterRouter>
   );
 }

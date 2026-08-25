@@ -44,21 +44,24 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/lib/i18n';
 
-const paymentSchema = z.object({
+const paymentSchema = (language: 'en' | 'fr') => z.object({
   vendorId: z.number().optional(),
-  vendorName: z.string().min(1, 'Le nom du prestataire est requis'),
-  description: z.string().min(1, 'La description est requise'),
+  vendorName: z.string().min(1, language === 'fr' ? 'Le nom du prestataire est requis' : 'Vendor name is required'),
+  description: z.string().min(1, language === 'fr' ? 'La description est requise' : 'Description is required'),
   amountCents: z.number().min(0),
-  dueDate: z.string().min(1, "La date d'échéance est requise"),
+  dueDate: z.string().min(1, language === 'fr' ? "La date d'échéance est requise" : 'Due date is required'),
   status: z.enum(['pending', 'paid', 'overdue', 'scheduled']),
   paidDate: z.string().optional(),
   notes: z.string().optional(),
 });
 
-type PaymentFormData = z.infer<typeof paymentSchema>;
+type PaymentFormData = z.infer<ReturnType<typeof paymentSchema>>;
 
 export default function Paiements() {
+  const { language, formatCurrency: localCurrency, formatDate: localDate } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
@@ -75,7 +78,7 @@ export default function Paiements() {
   const deletePayment = useDeletePayment();
 
   const form = useForm<PaymentFormData>({
-    resolver: zodResolver(paymentSchema),
+    resolver: zodResolver(paymentSchema(language)),
     defaultValues: {
       vendorId: undefined,
       vendorName: '',
@@ -97,7 +100,7 @@ export default function Paiements() {
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListPaymentsQueryKey(activeWeddingId) });
-            toast({ title: 'Paiement mis à jour' });
+            toast({ title: tr('Paiement mis à jour', 'Payment updated') });
             setOpen(false);
             setEditingPayment(null);
             form.reset();
@@ -110,7 +113,7 @@ export default function Paiements() {
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListPaymentsQueryKey(activeWeddingId) });
-            toast({ title: 'Paiement ajouté' });
+            toast({ title: tr('Paiement ajouté', 'Payment added') });
             setOpen(false);
             form.reset();
           },
@@ -136,13 +139,13 @@ export default function Paiements() {
 
   const handleDelete = (id: number) => {
     if (!activeWeddingId) return;
-    if (confirm('Supprimer ce paiement ?')) {
+    if (confirm(tr('Supprimer ce paiement ?', 'Delete this payment?'))) {
       deletePayment.mutate(
         { weddingId: activeWeddingId, id },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListPaymentsQueryKey(activeWeddingId) });
-            toast({ title: 'Paiement supprimé' });
+            toast({ title: tr('Paiement supprimé', 'Payment deleted') });
           },
         }
       );
@@ -150,10 +153,8 @@ export default function Paiements() {
   };
 
   const statusMap: Record<string, string> = {
-    pending: 'À régler',
-    paid: 'Payé',
-    overdue: 'En retard',
-    scheduled: 'Programmé',
+    pending: tr('À régler', 'Due'), paid: tr('Payé', 'Paid'),
+    overdue: tr('En retard', 'Overdue'), scheduled: tr('Programmé', 'Scheduled'),
   };
 
   const statusColorMap: Record<string, string> = {
@@ -164,7 +165,7 @@ export default function Paiements() {
   };
 
   if (!activeWeddingId || isLoading) {
-    return <div className="text-center font-serif text-2xl text-muted-foreground">Chargement...</div>;
+    return <div className="text-center font-serif text-2xl text-muted-foreground">{tr('Chargement…', 'Loading…')}</div>;
   }
 
   const sortedPayments = [...payments].sort(
@@ -175,18 +176,18 @@ export default function Paiements() {
     .filter((p) => p.status === 'pending' || p.status === 'overdue')
     .reduce((sum, p) => sum + Number(p.amountCents ?? 0), 0);
 
-  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="le suivi des paiements" />;
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel={tr('le suivi des paiements', 'payment tracking')} />;
   return (
     <div>
       <PageTour
         tourKey="paiements"
-        pageTitle="Paiements"
+        pageTitle={tr('Paiements', 'Payments')}
         pageIcon={CreditCard}
         steps={[
-          { icon: CreditCard, title: 'Calendrier financier', body: 'Visualisez toutes vos échéances de paiement à venir — acomptes, soldes et règlements prestataires — sur une seule page.' },
-          { icon: AlertCircle, title: 'Alertes d\'échéance', body: 'Les paiements dus aujourd\'hui ou en retard sont mis en évidence pour ne rien manquer.' },
-          { icon: Plus, title: 'Ajouter un paiement', body: 'Reliez le paiement à un prestataire existant, définissez le montant et la date d\'échéance.' },
-          { icon: CheckCircle, title: 'Marquer comme payé', body: 'Validez un paiement effectué pour mettre à jour le solde restant et archiver la transaction.' },
+          { icon: CreditCard, title: tr('Calendrier financier', 'Financial calendar'), body: tr('Visualisez toutes vos échéances de paiement à venir — acomptes, soldes et règlements prestataires — sur une seule page.', 'See all upcoming payment due dates—deposits, balances and vendor payments—in one place.') },
+          { icon: AlertCircle, title: tr('Alertes d\'échéance', 'Due-date alerts'), body: tr('Les paiements dus aujourd\'hui ou en retard sont mis en évidence pour ne rien manquer.', 'Payments due today or overdue are highlighted so nothing is missed.') },
+          { icon: Plus, title: tr('Ajouter un paiement', 'Add a payment'), body: tr('Reliez le paiement à un prestataire existant, définissez le montant et la date d\'échéance.', 'Link it to an existing vendor and set the amount and due date.') },
+          { icon: CheckCircle, title: tr('Marquer comme payé', 'Mark as paid'), body: tr('Validez un paiement effectué pour mettre à jour le solde restant et archiver la transaction.', 'Confirm a completed payment to update the outstanding balance and archive the transaction.') },
         ]}
       />
       <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"
@@ -194,9 +195,9 @@ export default function Paiements() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
         <div className="flex items-end justify-between">
           <div>
-            <p className="eyebrow mb-2 text-[#a8893e]">Le calendrier financier</p>
+            <p className="eyebrow mb-2 text-[#a8893e]">{tr('Le calendrier financier', 'Financial calendar')}</p>
             <div className="flex items-center gap-3">
-              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Paiements</h1>
+              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">{tr('Paiements', 'Payments')}</h1>
               <PremiumBadge />
             </div>
           </div>
@@ -212,16 +213,16 @@ export default function Paiements() {
         >
           <SheetTrigger asChild>
             <Button size="default" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" data-testid="button-add-payment">
-              <Plus size={14} /> Ajouter un paiement
+              <Plus size={14} /> {tr('Ajouter un paiement', 'Add a payment')}
             </Button>
           </SheetTrigger>
           <SheetContent className="overflow-y-auto">
             <SheetHeader>
               <SheetTitle className="font-serif text-2xl">
-                {editingPayment ? 'Modifier le paiement' : 'Nouveau paiement'}
+                {editingPayment ? tr('Modifier le paiement', 'Edit payment') : tr('Nouveau paiement', 'New payment')}
               </SheetTitle>
               <SheetDescription>
-                {editingPayment ? 'Mettez à jour les informations' : 'Ajoutez un paiement au calendrier'}
+                {editingPayment ? tr('Mettez à jour les informations', 'Update the information') : tr('Ajoutez un paiement au calendrier', 'Add a payment to the calendar')}
               </SheetDescription>
             </SheetHeader>
             <Form {...form}>
@@ -231,7 +232,7 @@ export default function Paiements() {
                   name="vendorName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nom du prestataire</FormLabel>
+                      <FormLabel>{tr('Nom du prestataire', 'Vendor name')}</FormLabel>
                       <FormControl>
                         <Input {...field} data-testid="input-payment-vendor" />
                       </FormControl>
@@ -244,9 +245,9 @@ export default function Paiements() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>{tr('Description', 'Description')}</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Ex: Solde final" data-testid="input-payment-description" />
+                          <Input {...field} placeholder={tr('Ex. : Solde final', 'E.g. final balance')} data-testid="input-payment-description" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -257,7 +258,7 @@ export default function Paiements() {
                   name="amountCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Montant ({currencySymbol})</FormLabel>
+                      <FormLabel>{tr('Montant', 'Amount')} ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -276,7 +277,7 @@ export default function Paiements() {
                   name="dueDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date d'échéance</FormLabel>
+                      <FormLabel>{tr('Date d\'échéance', 'Due date')}</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} data-testid="input-payment-due" />
                       </FormControl>
@@ -289,7 +290,7 @@ export default function Paiements() {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Statut</FormLabel>
+                      <FormLabel>{tr('Statut', 'Status')}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-payment-status">
@@ -297,10 +298,7 @@ export default function Paiements() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="pending">À régler</SelectItem>
-                          <SelectItem value="scheduled">Programmé</SelectItem>
-                          <SelectItem value="paid">Payé</SelectItem>
-                          <SelectItem value="overdue">En retard</SelectItem>
+                          <SelectItem value="pending">{statusMap.pending}</SelectItem><SelectItem value="scheduled">{statusMap.scheduled}</SelectItem><SelectItem value="paid">{statusMap.paid}</SelectItem><SelectItem value="overdue">{statusMap.overdue}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -312,7 +310,7 @@ export default function Paiements() {
                   name="paidDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date de paiement (optionnel)</FormLabel>
+                      <FormLabel>{tr('Date de paiement (optionnel)', 'Payment date (optional)')}</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} data-testid="input-payment-paid" />
                       </FormControl>
@@ -325,7 +323,7 @@ export default function Paiements() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>{tr('Notes', 'Notes')}</FormLabel>
                       <FormControl>
                         <Textarea {...field} rows={3} data-testid="input-payment-notes" />
                       </FormControl>
@@ -335,7 +333,7 @@ export default function Paiements() {
                 />
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" className="flex-1" data-testid="button-save-payment">
-                    {editingPayment ? 'Mettre à jour' : 'Ajouter'}
+                    {editingPayment ? tr('Mettre à jour', 'Update') : tr('Ajouter', 'Add')}
                   </Button>
                   {editingPayment && (
                     <Button
@@ -344,7 +342,7 @@ export default function Paiements() {
                       onClick={() => handleDelete(editingPayment)}
                       data-testid="button-delete-payment"
                     >
-                      Supprimer
+                      {tr('Supprimer', 'Delete')}
                     </Button>
                   )}
                 </div>
@@ -359,7 +357,7 @@ export default function Paiements() {
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sortedPayments.length === 0 ? (
           <div className="col-span-full card-depth px-6 py-12 text-center text-[11px] text-muted-foreground">
-            Aucun paiement. Cliquez sur "Ajouter un paiement" pour commencer.
+            {tr('Aucun paiement. Cliquez sur « Ajouter un paiement » pour commencer.', 'No payments. Click “Add a payment” to get started.')}
           </div>
         ) : (
           sortedPayments.map((payment) => (
@@ -374,7 +372,7 @@ export default function Paiements() {
                 <div>
                   <p className="text-[12px] font-semibold text-foreground">{payment.vendorName}</p>
                   <p className="mt-1 text-[10px] text-muted-foreground">
-                    {payment.description} · {formatDate(payment.dueDate, 'd MMM yyyy')}
+                     {payment.description} · {localDate(payment.dueDate, { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                 </div>
                 <span
@@ -384,7 +382,7 @@ export default function Paiements() {
                 </span>
               </div>
               <p className="font-serif text-[25px] text-foreground">
-                {formatCurrency(payment.amountCents)}
+                 {localCurrency(payment.amountCents / 100, activeWedding?.currency)}
               </p>
             </button>
           ))
@@ -395,7 +393,7 @@ export default function Paiements() {
       {payments.length > 0 && (
         <div className="border-t border-border pt-6">
           <p className="font-serif text-[22px] text-foreground">
-            Total à régler : {formatCurrency(pendingTotal)}
+             {tr('Total à régler :', 'Total due:')} {localCurrency(pendingTotal / 100, activeWedding?.currency)}
           </p>
         </div>
       )}

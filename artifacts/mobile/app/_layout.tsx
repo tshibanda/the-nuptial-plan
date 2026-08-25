@@ -29,6 +29,8 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { OfflineRefreshScreen } from '@/components/OfflineRefreshScreen';
 import { NotificationManager } from '@/components/NotificationManager';
 import { SubscriptionProvider } from '@/lib/subscription';
+import { LocalizationProvider } from '@/context/LocalizationContext';
+import { useLocalization } from '@/context/LocalizationContext';
 
 // Set API base URL at module level so all React Query hooks reach the correct host.
 if (process.env.EXPO_PUBLIC_DOMAIN) {
@@ -59,8 +61,9 @@ const queryClient = new QueryClient({
 });
 
 function RootLayoutNav() {
+  const { t } = useLocalization();
   return (
-    <Stack screenOptions={{ headerBackTitle: 'Retour' }}>
+    <Stack screenOptions={{ headerBackTitle: t('common.back') }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
       <Stack.Screen name="bug-report" options={{ headerShown: false }} />
@@ -98,8 +101,9 @@ export default function RootLayout() {
               client={queryClient}
               persistOptions={{ persister: asyncStoragePersister }}
             >
-                <WeddingProvider>
-                  <SubscriptionProvider>
+                <LocalizationProvider>
+                  <WeddingProvider>
+                    <SubscriptionProvider>
                     <GestureHandlerRootView style={{ flex: 1 }}>
                       <KeyboardProvider>
                         <RootLayoutNav />
@@ -110,8 +114,9 @@ export default function RootLayout() {
                         <NotificationManager />
                       </KeyboardProvider>
                     </GestureHandlerRootView>
-                  </SubscriptionProvider>
-                </WeddingProvider>
+                    </SubscriptionProvider>
+                  </WeddingProvider>
+                </LocalizationProvider>
             </PersistQueryClientProvider>
           </ErrorBoundary>
         </SafeAreaProvider>

@@ -3,6 +3,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { useListPayments } from '@workspace/api-client-react';
 import type { Payment } from '@workspace/api-client-react';
+import { useLocalization } from '@/context/LocalizationContext';
 
 const ID_PREFIX = 'nuptial-payment-';
 
@@ -22,9 +23,9 @@ function isDueSoon(p: Payment): boolean {
   return due >= new Date() && due <= in48h;
 }
 
-function formatAmount(amountCents: number, currency = 'EUR'): string {
+function formatAmount(amountCents: number, currency = 'EUR', locale = 'en-US'): string {
   try {
-    return new Intl.NumberFormat('fr-FR', {
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency,
       minimumFractionDigits: 0,
@@ -44,19 +45,25 @@ async function cancelExistingPaymentNotifications(): Promise<void> {
   );
 }
 
-async function schedulePaymentAlert(payment: Payment, currency: string): Promise<void> {
+async function schedulePaymentAlert(payment: Payment, currency: string, locale: string, language: 'fr' | 'en'): Promise<void> {
   const overdue = isOverdue(payment);
-  const dueStr = parseDueDate(payment.dueDate).toLocaleDateString('fr-FR', {
+  const dueStr = parseDueDate(payment.dueDate).toLocaleDateString(locale, {
     day: 'numeric', month: 'long',
   });
 
   await Notifications.scheduleNotificationAsync({
     identifier: `${ID_PREFIX}${payment.id}`,
     content: {
-      title: overdue ? '⚠️ Paiement en retard' : '💳 Paiement à venir',
+      title: overdue
+        ? language === 'fr' ? '⚠️ Paiement en retard' : '⚠️ Overdue payment'
+        : language === 'fr' ? '💳 Paiement à venir' : '💳 Upcoming payment',
       body: overdue
-        ? `${payment.vendorName} · ${formatAmount(payment.amountCents, currency)} était dû le ${dueStr}`
-        : `${payment.vendorName} · ${formatAmount(payment.amountCents, currency)} dû le ${dueStr}`,
+        ? language === 'fr'
+          ? `${payment.vendorName} · ${formatAmount(payment.amountCents, currency, locale)} était dû le ${dueStr}`
+          : `${payment.vendorName} · ${formatAmount(payment.amountCents, currency, locale)} was due on ${dueStr}`
+        : language === 'fr'
+          ? `${payment.vendorName} · ${formatAmount(payment.amountCents, currency, locale)} dû le ${dueStr}`
+          : `${payment.vendorName} · ${formatAmount(payment.amountCents, currency, locale)} due on ${dueStr}`,
       data: { type: 'payment', paymentId: payment.id, weddingId: payment.weddingId },
       sound: 'default',
       ...(Platform.OS === 'android' && { channelId: 'payments' }),
@@ -75,6 +82,7 @@ async function schedulePaymentAlert(payment: Payment, currency: string): Promise
 export function usePaymentNotifications(weddingId: number | null, currency = 'EUR'): void {
   // Pass 0 when weddingId is null — the query is disabled and returns no data.
   const { data: payments } = useListPayments(weddingId ?? 0);
+  const { language, locale } = useLocalization();
 
   useEffect(() => {
     if (!payments || !weddingId || Platform.OS === 'web') return;
@@ -87,7 +95,7 @@ export function usePaymentNotifications(weddingId: number | null, currency = 'EU
     }
 
     cancelExistingPaymentNotifications()
-      .then(() => Promise.all(alertable.map(p => schedulePaymentAlert(p, currency))))
+      .then(() => Promise.all(alertable.map(p => schedulePaymentAlert(p, currency, locale, language))))
       .catch(() => {});
-  }, [payments, weddingId, currency]);
+  }, [payments, weddingId, currency, language, locale]);
 }

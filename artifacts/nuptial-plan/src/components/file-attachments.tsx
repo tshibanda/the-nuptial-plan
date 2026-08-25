@@ -7,6 +7,7 @@ import {
   formatFileSize,
   downloadUrl,
 } from '@/lib/use-documents';
+import { useLanguage } from '@/lib/i18n';
 
 interface FileAttachmentsProps {
   weddingId: number;
@@ -19,8 +20,9 @@ export function FileAttachments({
   weddingId,
   entityType,
   entityId,
-  label = 'Pièces jointes',
+  label,
 }: FileAttachmentsProps) {
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: docs = [], isLoading } = useListDocuments(weddingId, entityType, entityId);
   const deleteDoc = useDeleteDocument(weddingId);
@@ -37,7 +39,7 @@ export function FileAttachments({
     <div className="mt-6 border-t border-[#e3dbd0] pt-5">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9b8258]">
-          {label}
+          {label ?? t('attachments.label')}
         </p>
         <button
           type="button"
@@ -47,7 +49,7 @@ export function FileAttachments({
           data-testid="button-upload-file"
         >
           <Upload size={12} />
-          {isUploading ? 'Envoi…' : 'Ajouter un fichier'}
+          {isUploading ? t('attachments.uploading') : t('attachments.upload')}
         </button>
         <input
           ref={fileInputRef}
@@ -63,11 +65,11 @@ export function FileAttachments({
       )}
 
       {isLoading && (
-        <p className="text-[11px] text-[#9b9b95]">Chargement…</p>
+        <p className="text-[11px] text-[#9b9b95]">{t('common.loading')}</p>
       )}
 
       {!isLoading && docs.length === 0 && (
-        <p className="text-[11px] italic text-[#a5a19a]">Aucun document joint.</p>
+        <p className="text-[11px] italic text-[#a5a19a]">{t('attachments.empty')}</p>
       )}
 
       <ul className="space-y-2">
@@ -89,7 +91,7 @@ export function FileAttachments({
               rel="noopener noreferrer"
               download={doc.name}
               className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              title="Télécharger"
+              title={t('attachments.download')}
               data-testid={`button-download-doc-${doc.id}`}
             >
               <Download size={14} />
@@ -98,7 +100,7 @@ export function FileAttachments({
               type="button"
               onClick={() => deleteDoc.mutate(doc.id)}
               className="shrink-0 rounded p-1 text-[#a5a19a] hover:bg-red-50 hover:text-red-500 transition-colors"
-              title="Supprimer"
+              title={t('common.delete')}
               data-testid={`button-delete-doc-${doc.id}`}
             >
               <Trash2 size={14} />

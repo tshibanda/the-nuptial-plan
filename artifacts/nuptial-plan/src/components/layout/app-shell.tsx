@@ -69,21 +69,23 @@ import { useToast } from '@/hooks/use-toast';
 import { LegalFooter } from '@/components/legal-footer';
 import { usePremiumStatus } from '@/components/premium-page-gate';
 import { canAccessSocials } from '@/lib/social-access';
+import { LanguageSelector } from '@/components/language-selector';
+import { useLanguage } from '@/lib/i18n';
 
 const navItems = [
-  { label: 'Aperçu', icon: Home, path: '/' },
-  { label: 'Calendrier', icon: CalendarDays, path: '/calendrier' },
-  { label: 'Rétroplanning', icon: ClipboardList, path: '/retroplanning' },
-  { label: 'Prestataires', icon: Users, path: '/prestataires', premium: true },
-  { label: 'Carnet d’adresses', icon: BookOpen, path: '/carnet-adresse', premium: true },
-  { label: 'Invités', icon: UserCircle2, path: '/invites', premium: true },
-  { label: 'Budget', icon: WalletCards, path: '/budget' },
-  { label: 'Contrats', icon: FileText, path: '/contrats', premium: true },
-  { label: 'Paiements', icon: CreditCard, path: '/paiements', premium: true },
-  { label: 'Documents', icon: Paperclip, path: '/documents', premium: true },
-  { label: 'Moodboards', icon: Sparkles, path: '/moodboards', premium: true },
-  { label: 'Jour J', icon: Heart, path: '/jour-j', premium: true },
-  { label: 'Paramètres', icon: Settings, path: '/parametres' },
+  { label: ['Aperçu', 'Overview'], icon: Home, path: '/' },
+  { label: ['Calendrier', 'Calendar'], icon: CalendarDays, path: '/calendrier' },
+  { label: ['Rétroplanning', 'Timeline'], icon: ClipboardList, path: '/retroplanning' },
+  { label: ['Prestataires', 'Suppliers'], icon: Users, path: '/prestataires', premium: true },
+  { label: ['Carnet d’adresses', 'Address book'], icon: BookOpen, path: '/carnet-adresse', premium: true },
+  { label: ['Invités', 'Guests'], icon: UserCircle2, path: '/invites', premium: true },
+  { label: ['Budget', 'Budget'], icon: WalletCards, path: '/budget' },
+  { label: ['Contrats', 'Contracts'], icon: FileText, path: '/contrats', premium: true },
+  { label: ['Paiements', 'Payments'], icon: CreditCard, path: '/paiements', premium: true },
+  { label: ['Documents', 'Documents'], icon: Paperclip, path: '/documents', premium: true },
+  { label: ['Moodboards', 'Moodboards'], icon: Sparkles, path: '/moodboards', premium: true },
+  { label: ['Jour J', 'Wedding day'], icon: Heart, path: '/jour-j', premium: true },
+  { label: ['Paramètres', 'Settings'], icon: Settings, path: '/parametres' },
 ];
 
 const CURRENCIES = [
@@ -115,6 +117,8 @@ function CreateWeddingDialog({
   onCreated: (id: number) => void;
 }) {
   const { toast } = useToast();
+  const { language } = useLanguage();
+  const copy = (fr: string, english: string) => language === 'en' ? english : fr;
   const queryClient = useQueryClient();
   const createWedding = useCreateWedding();
   const form = useForm<NewWeddingData>({
@@ -129,13 +133,13 @@ function CreateWeddingDialog({
       {
         onSuccess: (wedding) => {
           queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
-          toast({ title: 'Mariage créé', description: wedding.names });
+          toast({ title: copy('Mariage créé', 'Wedding created'), description: wedding.names });
           form.reset();
           onCreated(wedding.id);
           onClose();
         },
         onError: () => {
-          toast({ title: 'Erreur', description: 'Impossible de créer le mariage.', variant: 'destructive' });
+          toast({ title: copy('Erreur', 'Error'), description: copy('Impossible de créer le mariage.', 'Unable to create the wedding.'), variant: 'destructive' });
         },
       }
     );
@@ -146,9 +150,9 @@ function CreateWeddingDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-serif text-2xl text-primary">
-            <span className="flex items-center gap-2"><Heart size={18} className="text-accent" /> Nouveau mariage</span>
+            <span className="flex items-center gap-2"><Heart size={18} className="text-accent" /> {copy('Nouveau mariage', 'New wedding')}</span>
           </DialogTitle>
-          <DialogDescription>Ajoutez un nouveau dossier de mariage à votre studio.</DialogDescription>
+          <DialogDescription>{copy('Ajoutez un nouveau dossier de mariage à votre studio.', 'Add a new wedding file to your studio.')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -158,7 +162,7 @@ function CreateWeddingDialog({
                 name="partner1"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prénom — marié·e 1</FormLabel>
+                    <FormLabel>{copy('Prénom — marié·e 1', 'First name — partner 1')}</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="Sophie" data-testid="input-wedding-partner1" />
                     </FormControl>
@@ -171,7 +175,7 @@ function CreateWeddingDialog({
                 name="partner2"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prénom — marié·e 2</FormLabel>
+                    <FormLabel>{copy('Prénom — marié·e 2', 'First name — partner 2')}</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="James" data-testid="input-wedding-partner2" />
                     </FormControl>
@@ -185,7 +189,7 @@ function CreateWeddingDialog({
               name="currency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Devise</FormLabel>
+                  <FormLabel>{copy('Devise', 'Currency')}</FormLabel>
                   <FormControl>
                     <select
                       {...field}
@@ -206,7 +210,7 @@ function CreateWeddingDialog({
               name="weddingDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date du mariage</FormLabel>
+                  <FormLabel>{copy('Date du mariage', 'Wedding date')}</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} data-testid="input-wedding-date" />
                   </FormControl>
@@ -219,7 +223,7 @@ function CreateWeddingDialog({
               name="venue"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lieu</FormLabel>
+                  <FormLabel>{copy('Lieu', 'Venue')}</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="The Orangery at Wychwood" data-testid="input-wedding-venue" />
                   </FormControl>
@@ -236,7 +240,7 @@ function CreateWeddingDialog({
                   const symbol = CURRENCIES.find((c) => c.code === currencyCode)?.symbol ?? currencyCode;
                   return (
                   <FormItem>
-                    <FormLabel>Budget total ({symbol})</FormLabel>
+                    <FormLabel>{copy('Budget total', 'Total budget')} ({symbol})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -256,7 +260,7 @@ function CreateWeddingDialog({
                 name="guestCount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre d'invités</FormLabel>
+                  <FormLabel>{copy("Nombre d'invités", 'Guest count')}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -276,9 +280,9 @@ function CreateWeddingDialog({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes (facultatif)</FormLabel>
+                  <FormLabel>{copy('Notes (facultatif)', 'Notes (optional)')}</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Style, thème, informations clés…" data-testid="input-wedding-notes" />
+                    <Input {...field} placeholder={copy('Style, thème, informations clés…', 'Style, theme, key information…')} data-testid="input-wedding-notes" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -286,7 +290,7 @@ function CreateWeddingDialog({
             />
             <div className="flex gap-2 pt-2">
               <Button type="button" variant="outline" className="flex-1" onClick={onClose} data-testid="button-cancel-wedding">
-                Annuler
+                {copy('Annuler', 'Cancel')}
               </Button>
               <Button
                 type="submit"
@@ -294,7 +298,7 @@ function CreateWeddingDialog({
                 disabled={createWedding.isPending}
                 data-testid="button-create-wedding"
               >
-                {createWedding.isPending ? 'Création…' : 'Créer le dossier'}
+                {createWedding.isPending ? copy('Création…', 'Creating…') : copy('Créer le dossier', 'Create file')}
               </Button>
             </div>
           </form>
@@ -305,6 +309,8 @@ function CreateWeddingDialog({
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { language, locale } = useLanguage();
+  const copy = (fr: string, english: string) => language === 'en' ? english : fr;
   const { isPremium } = usePremiumStatus();
   const [location, navigate] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -321,7 +327,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Derived identity values with graceful fallbacks
   const userFullName = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || 'Planificateur'
-    : 'Planificateur';
+    : copy('Planificateur', 'Planner');
   const userFirstName = user?.firstName || userFullName.split(' ')[0];
   const userInitials = user
     ? ([user.firstName?.[0], user.lastName?.[0]].filter(Boolean).join('') || userFullName.slice(0, 2)).toUpperCase()
@@ -402,7 +408,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     (payments as Array<{ id: number; status: string; description?: string | null; dueDate: string; amountCents: number }>)
       .filter(p => p.status === 'overdue')
       .forEach(p => {
-        items.push({ id: `overdue-${p.id}`, urgency: 'high', title: 'Paiement en retard', body: p.description ?? 'Échéance dépassée', route: '/paiements' });
+        items.push({ id: `overdue-${p.id}`, urgency: 'high', title: copy('Paiement en retard', 'Overdue payment'), body: p.description ?? copy('Échéance dépassée', 'Due date passed'), route: '/paiements' });
       });
 
     // Pending payments due within 7 days
@@ -414,7 +420,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           items.push({
             id: `soon-${p.id}`,
             urgency: days <= 3 ? 'high' : 'medium',
-            title: days === 0 ? 'Paiement dû aujourd\'hui' : `Paiement dans ${days} j`,
+            title: days === 0 ? copy('Paiement dû aujourd\'hui', 'Payment due today') : language === 'en' ? `Payment in ${days} day${days > 1 ? 's' : ''}` : `Paiement dans ${days} j`,
             body: p.description ?? '',
             route: '/paiements',
           });
@@ -426,14 +432,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       const s = weddingSummary as { budgetTotal: number; budgetSpent: number; totalGuests: number; confirmedGuests: number };
       const pct = s.budgetSpent / s.budgetTotal;
       if (pct >= 0.95)
-        items.push({ id: 'budget-critical', urgency: 'high', title: 'Budget presque épuisé', body: `${Math.round(pct * 100)}% du budget engagé`, route: '/budget' });
+        items.push({ id: 'budget-critical', urgency: 'high', title: copy('Budget presque épuisé', 'Budget nearly exhausted'), body: language === 'en' ? `${Math.round(pct * 100)}% of budget committed` : `${Math.round(pct * 100)}% du budget engagé`, route: '/budget' });
       else if (pct >= 0.80)
-        items.push({ id: 'budget-warn', urgency: 'medium', title: 'Budget à surveiller', body: `${Math.round(pct * 100)}% du budget engagé`, route: '/budget' });
+        items.push({ id: 'budget-warn', urgency: 'medium', title: copy('Budget à surveiller', 'Budget needs attention'), body: language === 'en' ? `${Math.round(pct * 100)}% of budget committed` : `${Math.round(pct * 100)}% du budget engagé`, route: '/budget' });
 
       // Many unconfirmed guests
       const pending = s.totalGuests - s.confirmedGuests;
       if (s.totalGuests > 0 && pending / s.totalGuests > 0.3)
-        items.push({ id: 'guests-pending', urgency: 'low', title: `${pending} invité${pending > 1 ? 's' : ''} sans réponse`, body: 'Relancez les invitations en attente', route: '/invites' });
+        items.push({ id: 'guests-pending', urgency: 'low', title: language === 'en' ? `${pending} guest${pending > 1 ? 's' : ''} awaiting a response` : `${pending} invité${pending > 1 ? 's' : ''} sans réponse`, body: copy('Relancez les invitations en attente', 'Follow up on pending invitations'), route: '/invites' });
     }
 
     for (const item of serverNotifications.filter((item) => !item.read)) {
@@ -447,7 +453,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
 
     return items;
-  }, [activeWeddingId, payments, weddingSummary, serverNotifications]);
+  }, [activeWeddingId, payments, weddingSummary, serverNotifications, language]);
 
   // Auto-select first wedding if none selected
   useEffect(() => {
@@ -515,7 +521,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div>
                   <p className="font-serif text-[20px] leading-none">The Nuptial Plan</p>
                   <p className="mt-1 text-[8.5px] uppercase tracking-[0.2em] text-sidebar-foreground/40">
-                    L'indispensable du Wedding Planner
+                    {copy("L'indispensable du Wedding Planner", 'The essential wedding planner tool')}
                   </p>
                 </div>
               </div>
@@ -529,20 +535,20 @@ export function AppShell({ children }: { children: ReactNode }) {
             {/* Weddings list — scrollable middle zone */}
             <div className="flex-1 overflow-y-auto min-h-0 -mx-7 px-7">
             <p className="mb-4 text-[9px] font-semibold uppercase tracking-[0.22em] text-sidebar-foreground/50">
-              Vos mariages
+              {copy('Vos mariages', 'Your weddings')}
             </p>
 
             {isLoading ? (
-              <div className="text-[11px] text-sidebar-foreground/50">Chargement…</div>
+              <div className="text-[11px] text-sidebar-foreground/50">{copy('Chargement…', 'Loading…')}</div>
             ) : weddings.length === 0 ? (
               <div className="rounded-2xl border border-sidebar-border/40 bg-white/5 px-4 py-5 text-center">
-                <p className="text-[11px] text-sidebar-foreground/50">Aucun mariage pour l'instant.</p>
+                <p className="text-[11px] text-sidebar-foreground/50">{copy("Aucun mariage pour l'instant.", 'No weddings yet.')}</p>
                 <button
                   className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-sidebar-primary/80 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-primary-foreground hover:bg-sidebar-primary"
                   onClick={() => setCreateOpen(true)}
                   data-testid="button-first-wedding"
                 >
-                  <Plus size={12} /> Créer votre premier mariage
+                  <Plus size={12} /> {copy('Créer votre premier mariage', 'Create your first wedding')}
                 </button>
               </div>
             ) : (
@@ -621,7 +627,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       <button
                         onClick={(e) => { e.stopPropagation(); setDeleteWeddingId(w.id); }}
                         className="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-lg opacity-0 transition-opacity duration-150 group-hover:opacity-100 hover:bg-red-500/20"
-                        title="Supprimer ce dossier"
+                        title={copy('Supprimer ce dossier', 'Delete this file')}
                         data-testid={`button-delete-wedding-${w.id}`}
                       >
                         <Trash2 size={12} className="text-red-400" />
@@ -639,7 +645,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               onClick={() => setCreateOpen(true)}
               data-testid="button-add-wedding"
             >
-              <Plus size={13} /> Ajouter un mariage
+              <Plus size={13} /> {copy('Ajouter un mariage', 'Add a wedding')}
             </button>
             </div>{/* end scrollable middle zone */}
 
@@ -673,7 +679,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 )}
                 <span className="flex-1">
                   <span className="block text-[12px] font-semibold text-sidebar-foreground">{userFullName}</span>
-                  <span className="block text-[9.5px] text-sidebar-foreground/40">Wedding planner</span>
+                  <span className="block text-[9.5px] text-sidebar-foreground/40">{copy('Wedding planner', 'Wedding planner')}</span>
                 </span>
                 <ChevronDown
                   size={13}
@@ -685,47 +691,47 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div className="mt-1 overflow-hidden rounded-2xl border border-sidebar-border/30 bg-white/[0.06] p-1">
                   <button
                     disabled={!canUseSocials}
-                    title={!canUseSocials ? 'Cette page est en développement' : undefined}
+                    title={!canUseSocials ? copy('Cette page est en développement', 'This page is under development') : undefined}
                     className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition ${canUseSocials ? 'hover:bg-white/[0.08]' : 'cursor-not-allowed opacity-40'}`}
                     data-testid="button-sidebar-address-book"
                     onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/carnet-adresse'); }}
                   >
-                    <BookOpen size={13} className="text-sidebar-foreground/40" /> Mon carnet d’adresses
+                    <BookOpen size={13} className="text-sidebar-foreground/40" /> {copy('Mon carnet d’adresses', 'My address book')}
                   </button>
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
                     data-testid="button-sidebar-business"
                     onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/business'); }}
                   >
-                    <BriefcaseBusiness size={13} className="text-sidebar-foreground/40" /> Mon business
+                    <BriefcaseBusiness size={13} className="text-sidebar-foreground/40" /> {copy('Mon business', 'My business')}
                   </button>
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
                     data-testid="button-sidebar-social-networks"
                     onClick={() => { if (!canUseSocials) return; setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-reseaux'); }}
                   >
-                    <Share2 size={13} className="text-sidebar-foreground/40" /> Mes réseaux
+                    <Share2 size={13} className="text-sidebar-foreground/40" /> {copy('Mes réseaux', 'My networks')}
                   </button>
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
                     data-testid="button-sidebar-reservations"
                     onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-reservations'); }}
                   >
-                    <ClipboardCheck size={13} className="text-sidebar-foreground/40" /> Mes réservations
+                    <ClipboardCheck size={13} className="text-sidebar-foreground/40" /> {copy('Mes réservations', 'My bookings')}
                   </button>
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
                     data-testid="button-sidebar-appointments"
                     onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/mes-rendez-vous'); }}
                   >
-                    <CalendarClock size={13} className="text-sidebar-foreground/40" /> Mes rendez-vous
+                    <CalendarClock size={13} className="text-sidebar-foreground/40" /> {copy('Mes rendez-vous', 'My appointments')}
                   </button>
                   <button
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-sidebar-foreground/70 transition hover:bg-white/[0.08]"
                     data-testid="button-sidebar-settings"
                     onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); navigate('/parametres'); }}
                   >
-                    <Settings size={13} className="text-sidebar-foreground/40" /> Paramètres
+                    <Settings size={13} className="text-sidebar-foreground/40" /> {copy('Paramètres', 'Settings')}
                   </button>
                   <div className="my-1 h-px bg-sidebar-foreground/10" />
                   <button
@@ -733,7 +739,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     data-testid="button-sidebar-sign-out"
                     onClick={() => { setSidebarUserMenuOpen(false); setMobileOpen(false); handleSignOut(); }}
                   >
-                    <LogOut size={13} className="text-rose-300/60" /> Se déconnecter
+                    <LogOut size={13} className="text-rose-300/60" /> {copy('Se déconnecter', 'Sign out')}
                   </button>
                 </div>
               )}
@@ -744,7 +750,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Mobile overlay */}
         {mobileOpen && (
           <button
-            aria-label="Fermer le menu"
+            aria-label={copy('Fermer le menu', 'Close menu')}
             className="fixed inset-0 z-20 bg-foreground/30 md:hidden"
             onClick={() => setMobileOpen(false)}
           />
@@ -764,7 +770,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
               <div>
                 <p className="eyebrow text-[rgba(168,137,62,0.80)]">
-                  {new Date().toLocaleDateString('fr-FR', {
+                  {new Date().toLocaleDateString(locale, {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',
@@ -772,13 +778,14 @@ export function AppShell({ children }: { children: ReactNode }) {
                   })}
                 </p>
                 <p className="mt-1 font-serif text-[16px] leading-none text-foreground/80">
-                  Bonjour, <span className="text-primary">{userFirstName}</span>
+                  {copy('Bonjour', 'Hello')}, <span className="text-primary">{userFirstName}</span>
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
               {/* Search pill — hidden */}
+              <LanguageSelector compact />
 
               {/* Notification bell */}
               <div className="relative">
@@ -811,10 +818,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                     {/* Panel */}
                     <div className="absolute right-0 top-[44px] z-50 w-80 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 shadow-[0_8px_40px_rgba(93,45,93,0.20)] backdrop-blur-md">
                       <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
-                        <p className="text-[12px] font-semibold text-foreground">Notifications</p>
+                        <p className="text-[12px] font-semibold text-foreground">{copy('Notifications', 'Notifications')}</p>
                         {notifications.length > 0 && (
                           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary">
-                            {notifications.length} nouvelle{notifications.length > 1 ? 's' : ''}
+                            {language === 'en' ? `${notifications.length} new` : `${notifications.length} nouvelle${notifications.length > 1 ? 's' : ''}`}
                           </span>
                         )}
                       </div>
@@ -823,8 +830,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                         {notifications.length === 0 ? (
                           <div className="flex flex-col items-center py-8 text-center">
                             <span className="mb-2 text-[22px]">✓</span>
-                            <p className="text-[12px] font-medium text-foreground/70">Tout est en ordre</p>
-                            <p className="text-[10px] text-muted-foreground/60">Aucune action urgente</p>
+                            <p className="text-[12px] font-medium text-foreground/70">{copy('Tout est en ordre', 'Everything is in order')}</p>
+                            <p className="text-[10px] text-muted-foreground/60">{copy('Aucune action urgente', 'No urgent action')}</p>
                           </div>
                         ) : (
                           notifications.map((n) => (
@@ -904,47 +911,47 @@ export function AppShell({ children }: { children: ReactNode }) {
                    <div className="absolute right-6 top-[68px] z-50 w-56 overflow-hidden rounded-2xl border border-border/60 bg-popover/95 p-1.5 shadow-[0_8px_32px_rgba(93,45,93,0.18)] backdrop-blur-md">
                     <button
                       disabled={!canUseSocials}
-                      title={!canUseSocials ? 'Cette page est en développement' : undefined}
+                      title={!canUseSocials ? copy('Cette page est en développement', 'This page is under development') : undefined}
                       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition ${canUseSocials ? 'hover:bg-primary/6' : 'cursor-not-allowed opacity-40'}`}
                       data-testid="button-header-address-book"
                       onClick={() => { setMenuOpen(false); navigate('/carnet-adresse'); }}
                     >
-                      <BookOpen size={13} className="text-muted-foreground" /> Mon carnet d’adresses
+                      <BookOpen size={13} className="text-muted-foreground" /> {copy('Mon carnet d’adresses', 'My address book')}
                     </button>
                     <button
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
                       data-testid="button-header-business"
                       onClick={() => { setMenuOpen(false); navigate('/business'); }}
                     >
-                      <BriefcaseBusiness size={13} className="text-muted-foreground" /> Mon business
+                      <BriefcaseBusiness size={13} className="text-muted-foreground" /> {copy('Mon business', 'My business')}
                     </button>
                     <button
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
                       data-testid="button-header-social-networks"
                       onClick={() => { if (!canUseSocials) return; setMenuOpen(false); navigate('/mes-reseaux'); }}
                     >
-                      <Share2 size={13} className="text-muted-foreground" /> Mes réseaux
+                      <Share2 size={13} className="text-muted-foreground" /> {copy('Mes réseaux', 'My networks')}
                     </button>
                     <button
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
                       data-testid="button-header-reservations"
                       onClick={() => { setMenuOpen(false); navigate('/mes-reservations'); }}
                     >
-                      <ClipboardCheck size={13} className="text-muted-foreground" /> Mes réservations
+                      <ClipboardCheck size={13} className="text-muted-foreground" /> {copy('Mes réservations', 'My bookings')}
                     </button>
                     <button
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
                       data-testid="button-header-appointments"
                       onClick={() => { setMenuOpen(false); navigate('/mes-rendez-vous'); }}
                     >
-                      <CalendarClock size={13} className="text-muted-foreground" /> Mes rendez-vous
+                      <CalendarClock size={13} className="text-muted-foreground" /> {copy('Mes rendez-vous', 'My appointments')}
                     </button>
                     <button
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-foreground/75 transition hover:bg-primary/6"
                       data-testid="button-settings"
                       onClick={() => { setMenuOpen(false); navigate('/parametres'); }}
                     >
-                      <Settings size={13} className="text-muted-foreground" /> Paramètres
+                      <Settings size={13} className="text-muted-foreground" /> {copy('Paramètres', 'Settings')}
                     </button>
                     <div className="my-1 h-px bg-border/40" />
                     <button
@@ -952,7 +959,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       data-testid="button-sign-out"
                       onClick={() => { setMenuOpen(false); handleSignOut({ redirectUrl: '/connexion' }); }}
                     >
-                      <LogOut size={13} className="text-destructive/70" /> Se déconnecter
+                      <LogOut size={13} className="text-destructive/70" /> {copy('Se déconnecter', 'Sign out')}
                     </button>
                   </div>
                 </>
@@ -974,10 +981,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                         ? 'nav-pill-active'
                         : 'rounded-xl text-muted-foreground hover:bg-primary/[0.06] hover:text-foreground/80'
                     }`}
-                    data-testid={`nav-${label.toLowerCase()}`}
+                    data-testid={`nav-${label[0].toLowerCase()}`}
                   >
                     <Icon size={13} strokeWidth={isActive ? 2.1 : 1.6} />
-                    {label}
+                    {language === 'en' ? label[1] : label[0]}
                     {premium && !isPremium && <Crown size={10} className="text-[#A8893E]" />}
                   </Link>
                 );
@@ -995,7 +1002,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       tourKey={`no-wedding-${location.replace(/\W+/g, '-')}`}
                       pageTitle={noWeddingTour.title}
                       pageIcon={Sparkles}
-                      steps={[{ icon: Sparkles, title: 'Commencer sans mariage actif', body: noWeddingTour.body }]}
+                      steps={[{ icon: Sparkles, title: copy('Commencer sans mariage actif', 'Start without an active wedding'), body: noWeddingTour.body }]}
                     />
                   )}
                   <div className="relative flex h-20 w-20 items-center justify-center rounded-full"
@@ -1007,12 +1014,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <Heart size={30} className="text-accent" />
                   </div>
                   <div>
-                    <p className="eyebrow mb-3 text-[#a8893e]">Studio nuptial</p>
-                    <h2 className="font-serif text-[38px] leading-[0.92] text-foreground">Bienvenue dans<br/>votre studio</h2>
+                    <p className="eyebrow mb-3 text-[#a8893e]">{copy('Studio nuptial', 'Wedding studio')}</p>
+                    <h2 className="font-serif text-[38px] leading-[0.92] text-foreground">{copy('Bienvenue dans', 'Welcome to')}<br/>{copy('votre studio', 'your studio')}</h2>
                     <p className="mt-3 text-[13px] text-muted-foreground">
                       {weddings.length === 0
-                        ? 'Commencez par créer votre premier dossier de mariage.'
-                        : 'Sélectionnez un mariage dans la barre latérale pour afficher ses données.'}
+                        ? copy('Commencez par créer votre premier dossier de mariage.', 'Start by creating your first wedding file.')
+                        : copy('Sélectionnez un mariage dans la barre latérale pour afficher ses données.', 'Select a wedding in the sidebar to view its details.')}
                     </p>
                   </div>
                   <button
@@ -1020,7 +1027,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     onClick={() => weddings.length === 0 ? setCreateOpen(true) : setActiveWeddingId(weddings[0].id)}
                     data-testid="button-create-first-wedding"
                   >
-                    <Plus size={14} /> {weddings.length === 0 ? 'Créer un dossier de mariage' : 'Sélectionner un dossier'}
+                    <Plus size={14} /> {weddings.length === 0 ? copy('Créer un dossier de mariage', 'Create a wedding file') : copy('Sélectionner un dossier', 'Select a file')}
                   </button>
                 </div>
               ) : (

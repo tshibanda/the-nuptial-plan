@@ -9,6 +9,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { rsvpLabel } from '@/utils/format';
 import { StatusBadge } from '@/components/StatusBadge';
 import { BottomSheet } from '@/components/BottomSheet';
+import { useLocalization } from '@/context/LocalizationContext';
 
 interface Props {
   visible: boolean;
@@ -19,6 +20,8 @@ interface Props {
 
 export function GuestDetailSheet({ visible, onClose, guest, weddingId }: Props) {
   const colors = useColors();
+  const { language, locale } = useLocalization();
+  const en = language === 'en';
   const updateGuest = useUpdateGuest();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -60,7 +63,7 @@ export function GuestDetailSheet({ visible, onClose, guest, weddingId }: Props) 
         queryClient.invalidateQueries({ queryKey: getGetGuestStatsQueryKey(weddingId) });
         setEditing(false);
       },
-      onError: () => Alert.alert('Erreur', 'Impossible de modifier cet invité.'),
+       onError: () => Alert.alert(en ? 'Error' : 'Erreur', en ? 'Unable to update this guest.' : 'Impossible de modifier cet invité.'),
     });
   };
 
@@ -76,10 +79,10 @@ export function GuestDetailSheet({ visible, onClose, guest, weddingId }: Props) 
     });
   }
   if (guest.tableNumber) {
-    fields.push({ icon: 'map-pin', label: 'Table', value: `Table ${guest.tableNumber}` });
+     fields.push({ icon: 'map-pin', label: en ? 'Table' : 'Table', value: `${en ? 'Table' : 'Table'} ${guest.tableNumber}` });
   }
   if (guest.dietaryRequirements) {
-    fields.push({ icon: 'coffee', label: 'Régime alimentaire', value: guest.dietaryRequirements });
+     fields.push({ icon: 'coffee', label: en ? 'Dietary requirements' : 'Régime alimentaire', value: guest.dietaryRequirements });
   }
 
   const rsvpColors = {
@@ -99,32 +102,32 @@ export function GuestDetailSheet({ visible, onClose, guest, weddingId }: Props) 
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      eyebrow="INVITÉ"
+       eyebrow={en ? 'GUEST' : 'INVITÉ'}
       title={guest.name}
     >
       <View style={ss.body}>
         <TouchableOpacity onPress={editing ? () => setEditing(false) : startEditing} style={[ss.editButton, { borderColor: colors.plum + '40', backgroundColor: colors.plum + '10' }]}>
           <Feather name={editing ? 'x' : 'edit-2'} size={14} color={colors.plum} />
-          <Text style={[ss.editButtonText, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{editing ? 'Annuler' : 'Modifier l’invité'}</Text>
+           <Text style={[ss.editButtonText, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{editing ? (en ? 'Cancel' : 'Annuler') : (en ? 'Edit guest' : 'Modifier l’invité')}</Text>
         </TouchableOpacity>
         {editing && (
           <View style={ss.editForm}>
             {([
-              ['name', 'Nom complet *'], ['email', 'Adresse e-mail'], ['tableNumber', 'Table'], ['dietaryRequirements', 'Régime alimentaire'],
+               ['name', en ? 'Full name *' : 'Nom complet *'], ['email', en ? 'Email address' : 'Adresse e-mail'], ['tableNumber', 'Table'], ['dietaryRequirements', en ? 'Dietary requirements' : 'Régime alimentaire'],
             ] as const).map(([key, placeholder]) => (
               <TextInput key={key} value={draft[key]} onChangeText={(value) => setDraft((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} style={[ss.editInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
             ))}
-            <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>STATUT RSVP</Text>
+             <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{en ? 'RSVP STATUS' : 'STATUT RSVP'}</Text>
             <View style={ss.rsvpChoices}>
               {(['pending', 'confirmed', 'declined'] as GuestRsvpStatus[]).map((status) => (
                 <TouchableOpacity key={status} onPress={() => setDraft((current) => ({ ...current, rsvpStatus: status }))} style={[ss.rsvpChoice, { backgroundColor: draft.rsvpStatus === status ? colors.plum : colors.muted, borderColor: draft.rsvpStatus === status ? colors.plum : colors.border }]}>
-                  <Text style={[ss.rsvpChoiceText, { color: draft.rsvpStatus === status ? '#fff' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{status === 'confirmed' ? 'Confirmé' : status === 'declined' ? 'Décliné' : 'En attente'}</Text>
+                   <Text style={[ss.rsvpChoiceText, { color: draft.rsvpStatus === status ? '#fff' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{status === 'confirmed' ? (en ? 'Confirmed' : 'Confirmé') : status === 'declined' ? (en ? 'Declined' : 'Décliné') : (en ? 'Pending' : 'En attente')}</Text>
                 </TouchableOpacity>
               ))}
             </View>
-            <TextInput value={draft.notes} onChangeText={(value) => setDraft((current) => ({ ...current, notes: value }))} placeholder="Notes" placeholderTextColor={colors.mutedForeground} multiline style={[ss.editInput, ss.notesInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
+             <TextInput value={draft.notes} onChangeText={(value) => setDraft((current) => ({ ...current, notes: value }))} placeholder="Notes" placeholderTextColor={colors.mutedForeground} multiline style={[ss.editInput, ss.notesInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
             <TouchableOpacity disabled={updateGuest.isPending} onPress={save} style={[ss.saveButton, { backgroundColor: colors.plum, opacity: updateGuest.isPending ? 0.6 : 1 }]}>
-              {updateGuest.isPending ? <ActivityIndicator color="#fff" /> : <Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>Enregistrer les modifications</Text>}
+               {updateGuest.isPending ? <ActivityIndicator color="#fff" /> : <Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{en ? 'Save changes' : 'Enregistrer les modifications'}</Text>}
             </TouchableOpacity>
           </View>
         )}
@@ -135,7 +138,7 @@ export function GuestDetailSheet({ visible, onClose, guest, weddingId }: Props) 
           </View>
           <View style={ss.heroInfo}>
             <Text style={[ss.heroSub, { fontFamily: SANS, color: colors.mutedForeground }]}>
-              Statut de participation
+               {en ? 'Attendance status' : 'Statut de participation'}
             </Text>
           </View>
           <StatusBadge label={label} tone={tone} />
@@ -151,9 +154,9 @@ export function GuestDetailSheet({ visible, onClose, guest, weddingId }: Props) 
           <View>
             <Text style={[ss.rsvpLabel, { fontFamily: SANS_SEMIBOLD, color: rsvpColor }]}>{label}</Text>
             <Text style={[ss.rsvpSub, { fontFamily: SANS, color: colors.mutedForeground }]}>
-              {guest.rsvpStatus === 'confirmed' ? 'La présence est confirmée'
-                : guest.rsvpStatus === 'declined' ? 'A décliné l\'invitation'
-                : 'En attente d\'une réponse'}
+               {guest.rsvpStatus === 'confirmed' ? (en ? 'Attendance is confirmed' : 'La présence est confirmée')
+                 : guest.rsvpStatus === 'declined' ? (en ? 'Declined the invitation' : 'A décliné l’invitation')
+                 : (en ? 'Awaiting a response' : 'En attente d’une réponse')}
             </Text>
           </View>
         </View>
@@ -196,7 +199,7 @@ export function GuestDetailSheet({ visible, onClose, guest, weddingId }: Props) 
 
         {/* Footer */}
         <Text style={[ss.added, { fontFamily: SANS, color: colors.tertiaryText }]}>
-          Ajouté le {new Date(guest.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+             {en ? 'Added on' : 'Ajouté le'} {new Date(guest.createdAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
         </Text>
       </View>
     </BottomSheet>

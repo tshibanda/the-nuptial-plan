@@ -24,6 +24,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useActiveWedding } from '@/lib/wedding-context';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/lib/i18n';
 
 const entrySchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -41,6 +42,9 @@ const emptyValues: EntryForm = {
 };
 
 export default function CarnetAdresse() {
+  const { language } = useLanguage();
+  const fr = language === 'fr';
+  const text = (french: string, english: string) => fr ? french : english;
   const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: entries = [], isLoading } = useListAddressBookEntries();
@@ -76,10 +80,10 @@ export default function CarnetAdresse() {
     const mutationOptions = {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAddressBookEntriesQueryKey() });
-        toast({ title: editingId ? 'Contact mis à jour' : 'Contact ajouté au carnet' });
+        toast({ title: editingId ? text('Contact mis à jour', 'Contact updated') : text('Contact ajouté au carnet', 'Contact added to address book') });
         closeSheet();
       },
-      onError: () => toast({ title: 'Erreur', description: 'Impossible d’enregistrer ce contact.', variant: 'destructive' as const }),
+      onError: () => toast({ title: text('Erreur', 'Error'), description: text('Impossible d’enregistrer ce contact.', 'This contact could not be saved.'), variant: 'destructive' as const }),
     };
     if (editingId) {
       updateEntry.mutate({ id: editingId, data }, mutationOptions);
@@ -103,13 +107,13 @@ export default function CarnetAdresse() {
   };
 
   const removeEntry = (id: number) => {
-    if (!confirm('Supprimer ce contact du carnet d’adresses ?')) return;
+    if (!confirm(text('Supprimer ce contact du carnet d’adresses ?', 'Delete this contact from the address book?'))) return;
     deleteEntry.mutate({ id }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAddressBookEntriesQueryKey() });
-        toast({ title: 'Contact supprimé' });
+        toast({ title: text('Contact supprimé', 'Contact deleted') });
       },
-      onError: () => toast({ title: 'Erreur', description: 'Impossible de supprimer ce contact.', variant: 'destructive' }),
+      onError: () => toast({ title: text('Erreur', 'Error'), description: text('Impossible de supprimer ce contact.', 'This contact could not be deleted.'), variant: 'destructive' }),
     });
   };
 
@@ -118,23 +122,23 @@ export default function CarnetAdresse() {
     addToWedding.mutate({ weddingId: activeWeddingId, addressBookId: id }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(activeWeddingId) });
-        toast({ title: 'Prestataire ajouté', description: `La fiche a été ajoutée à ${activeWedding?.names ?? 'votre mariage'}.` });
+        toast({ title: text('Prestataire ajouté', 'Supplier added'), description: text(`La fiche a été ajoutée à ${activeWedding?.names ?? 'votre mariage'}.`, `The contact has been added to ${activeWedding?.names ?? 'your wedding'}.`) });
       },
-      onError: () => toast({ title: 'Erreur', description: 'Impossible d’ajouter ce prestataire au mariage.', variant: 'destructive' }),
+      onError: () => toast({ title: text('Erreur', 'Error'), description: text('Impossible d’ajouter ce prestataire au mariage.', 'This supplier could not be added to the wedding.'), variant: 'destructive' }),
     });
   };
 
-  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="votre carnet d’adresses" />;
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel={text('votre carnet d’adresses', 'your address book')} />;
   return (
     <div>
       <PageTour
         tourKey="carnet-adresse"
-        pageTitle="Mon carnet d’adresses"
+        pageTitle={text('Mon carnet d’adresses', 'My address book')}
         pageIcon={BookOpen}
         steps={[
-          { icon: BookOpen, title: 'Votre réseau', body: 'Conservez ici vos prestataires favoris indépendamment de vos mariages.' },
-          { icon: Plus, title: 'Ajouter une fiche', body: 'Enregistrez les coordonnées et notes une seule fois pour les réutiliser.' },
-          { icon: Sparkles, title: 'Réutiliser un contact', body: 'Ajoutez une fiche au mariage actif sans ressaisir ses informations.' },
+          { icon: BookOpen, title: text('Votre réseau', 'Your network'), body: text('Conservez ici vos prestataires favoris indépendamment de vos mariages.', 'Keep your favourite suppliers here independently of your weddings.') },
+          { icon: Plus, title: text('Ajouter une fiche', 'Add a contact'), body: text('Enregistrez les coordonnées et notes une seule fois pour les réutiliser.', 'Save contact details and notes once, then reuse them.') },
+          { icon: Sparkles, title: text('Réutiliser un contact', 'Reuse a contact'), body: text('Ajoutez une fiche au mariage actif sans ressaisir ses informations.', 'Add a contact to the active wedding without entering its information again.') },
         ]}
       />
 

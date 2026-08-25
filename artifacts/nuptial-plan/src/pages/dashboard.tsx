@@ -16,6 +16,7 @@ import {
 import { formatDate, formatCurrency, formatDateShort } from '@/lib/format';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
+import { useLanguage } from '@/lib/i18n';
 
 /* ── Botanical SVG decoration ── */
 function BotanicalSVG({ className = '' }: { className?: string }) {
@@ -132,12 +133,14 @@ const toneChipClass: Record<string, string> = {
 };
 
 export default function Dashboard() {
+  const { language, locale, formatDate: formatLocalizedDate, formatNumber } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const { activeWeddingId } = useActiveWedding();
   const [, navigate] = useLocation();
   const { user } = useUser();
   const firstName = user?.firstName?.trim() || '';
   const hour = new Date().getHours();
-  const greetingWord = hour < 12 ? 'Bon matin' : hour < 18 ? 'Bonjour' : 'Bonsoir';
+  const greetingWord = hour < 12 ? tr('Bonjour', 'Good morning') : hour < 18 ? tr('Bonjour', 'Good afternoon') : tr('Bonsoir', 'Good evening');
 
   const { data: wedding, isLoading: weddingLoading } = useGetWedding(activeWeddingId!, {
     query: { enabled: !!activeWeddingId, queryKey: getGetWeddingQueryKey(activeWeddingId!) },
@@ -150,14 +153,14 @@ export default function Dashboard() {
   if (!activeWeddingId || weddingLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p className="font-serif text-2xl text-muted-foreground">Chargement…</p>
+        <p className="font-serif text-2xl text-muted-foreground">{tr('Chargement…', 'Loading…')}</p>
       </div>
     );
   }
   if (!wedding) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p className="font-serif text-2xl text-muted-foreground">Aucun mariage sélectionné</p>
+        <p className="font-serif text-2xl text-muted-foreground">{tr('Aucun mariage sélectionné', 'No wedding selected')}</p>
       </div>
     );
   }
@@ -183,13 +186,13 @@ export default function Dashboard() {
     <div>
       <PageTour
         tourKey="dashboard"
-        pageTitle="Aperçu"
+        pageTitle={tr('Aperçu', 'Overview')}
         pageIcon={Sparkles}
         steps={[
-          { icon: TrendingUp, title: 'Vue globale', body: 'Le bandeau du haut affiche les statistiques clés du mariage actif — budget consommé, invités confirmés, tâches complétées et compte à rebours jusqu\'au grand jour.' },
-          { icon: CalendarDays, title: 'Événements à venir', body: 'Visualisez vos prochains rendez-vous, dégustations et répétitions. Cliquez sur « Voir le planning » pour ouvrir le calendrier complet.' },
-          { icon: Users, title: 'Prestataires récents', body: 'Retrouvez vos derniers prestataires avec leur statut et leur devis. Cliquez sur une ligne pour accéder directement à la page Prestataires.' },
-          { icon: Wallet, title: 'Suivi budgétaire', body: 'La progression budgétaire est résumée ici. Cliquez sur « Ouvrir le budget » pour consulter le détail par catégorie de dépenses.' },
+          { icon: TrendingUp, title: tr('Vue globale', 'Overview'), body: tr('Le bandeau du haut affiche les statistiques clés du mariage actif — budget consommé, invités confirmés, tâches complétées et compte à rebours jusqu\'au grand jour.', 'The header displays key statistics for the active wedding—budget spent, confirmed guests, completed tasks, and the countdown to the big day.') },
+          { icon: CalendarDays, title: tr('Événements à venir', 'Upcoming events'), body: tr('Visualisez vos prochains rendez-vous, dégustations et répétitions. Cliquez sur « Voir le planning » pour ouvrir le calendrier complet.', 'View your upcoming appointments, tastings, and rehearsals. Click “View calendar” to open the full calendar.') },
+          { icon: Users, title: tr('Prestataires récents', 'Recent vendors'), body: tr('Retrouvez vos derniers prestataires avec leur statut et leur devis. Cliquez sur une ligne pour accéder directement à la page Prestataires.', 'Find your latest vendors, along with their status and quote. Click a row to go directly to the Vendors page.') },
+          { icon: Wallet, title: tr('Suivi budgétaire', 'Budget tracking'), body: tr('La progression budgétaire est résumée ici. Cliquez sur « Ouvrir le budget » pour consulter le détail par catégorie de dépenses.', 'Your budget progress is summarised here. Click “Open budget” for a breakdown by spending category.') },
         ]}
       />
       {/* ════════════════ HERO ════════════════ */}
@@ -207,7 +210,7 @@ export default function Dashboard() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
 
         <p className="eyebrow mb-3 flex items-center gap-2 text-[#a8893e]">
-          <Sparkles size={12} strokeWidth={2} /> Mariage actif
+          <Sparkles size={12} strokeWidth={2} /> {tr('Mariage actif', 'Active wedding')}
         </p>
 
         <p className="mb-2 font-serif text-[18px] text-foreground/55 italic">
@@ -225,7 +228,7 @@ export default function Dashboard() {
 
         <p className="mt-4 flex items-center gap-2 text-[12px] text-muted-foreground">
           <CalendarDays size={13} className="text-[#a8893e]" />
-          {formatDate(wedding.weddingDate, 'EEEE d MMMM yyyy')}
+          {formatLocalizedDate(wedding.weddingDate, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           <span className="text-border">·</span>
           {wedding.venue}
         </p>
@@ -236,14 +239,14 @@ export default function Dashboard() {
             data-testid="button-add-task"
             onClick={() => navigate('/calendrier')}
           >
-            <Plus size={13} /> Ajouter une tâche
+            <Plus size={13} /> {tr('Ajouter une tâche', 'Add a task')}
           </button>
           <button
             className="btn-glow flex items-center gap-2 rounded-xl px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em]"
             data-testid="button-open-workspace"
             onClick={() => navigate('/parametres')}
           >
-            Modifier les informations <ChevronRight size={13} />
+            {tr('Modifier les informations', 'Edit details')} <ChevronRight size={13} />
           </button>
         </div>
       </div>
@@ -251,24 +254,24 @@ export default function Dashboard() {
       {/* ════════════════ METRICS ════════════════ */}
       <div className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <MetricCard
-          color="plum" icon={Clock3} label="Jours restants"
-          value={summary?.daysUntil?.toString() ?? '—'}
-          note={summary?.daysUntil ? (summary.daysUntil > 60 ? 'Planification lancée' : 'Entrée finale') : '—'}
+          color="plum" icon={Clock3} label={tr('Jours restants', 'Days remaining')}
+          value={summary?.daysUntil !== undefined ? formatNumber(summary.daysUntil) : '—'}
+          note={summary?.daysUntil ? (summary.daysUntil > 60 ? tr('Planification lancée', 'Planning underway') : tr('Dernière ligne droite', 'Final stretch')) : '—'}
         />
         <MetricCard
-          color="rose" icon={Users} label="Invités"
-          value={summary?.totalGuests?.toString() ?? '—'}
-          note={summary ? `${summary.totalGuests - summary.confirmedGuests} à confirmer` : '—'}
+          color="rose" icon={Users} label={tr('Invités', 'Guests')}
+          value={summary?.totalGuests !== undefined ? formatNumber(summary.totalGuests) : '—'}
+          note={summary ? tr(`${formatNumber(summary.totalGuests - summary.confirmedGuests)} à confirmer`, `${formatNumber(summary.totalGuests - summary.confirmedGuests)} to confirm`) : '—'}
         />
         <MetricCard
-          color="gold" icon={Wallet} label="Budget restant"
+          color="gold" icon={Wallet} label={tr('Budget restant', 'Budget remaining')}
           value={summary ? formatCurrency(summary.budgetTotal - summary.budgetSpent) : '—'}
-          note={`${budgetPct}% engagé`}
+          note={tr(`${formatNumber(budgetPct)}% engagé`, `${formatNumber(budgetPct)}% committed`)}
         />
         <MetricCard
-          color="sage" icon={CheckSquare} label="Tâches terminées"
-          value={`${tasksPct}%`}
-          note={summary ? `${summary.tasksTotal - summary.tasksComplete} à revoir` : '—'}
+          color="sage" icon={CheckSquare} label={tr('Tâches terminées', 'Tasks completed')}
+          value={`${formatNumber(tasksPct)}%`}
+          note={summary ? tr(`${formatNumber(summary.tasksTotal - summary.tasksComplete)} à revoir`, `${formatNumber(summary.tasksTotal - summary.tasksComplete)} to review`) : '—'}
         />
       </div>
 
@@ -280,21 +283,21 @@ export default function Dashboard() {
 
           {/* Timeline */}
           <div>
-            <SectionTitle eyebrow="Les semaines à venir" title="Calendrier de planification"
-              action="Voir le planning" onAction={() => navigate('/calendrier')} />
+            <SectionTitle eyebrow={tr('Les semaines à venir', 'The weeks ahead')} title={tr('Calendrier de planification', 'Planning calendar')}
+              action={tr('Voir le planning', 'View calendar')} onAction={() => navigate('/calendrier')} />
             <div className="card-depth overflow-hidden">
               {upcomingEvents.length === 0 ? (
                 <div className="px-6 py-10 text-center">
                   <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/8">
                     <CalendarDays size={18} className="text-primary/50" />
                   </div>
-                  <p className="text-[12px] text-muted-foreground">Aucun événement à venir</p>
+                  <p className="text-[12px] text-muted-foreground">{tr('Aucun événement à venir', 'No upcoming events')}</p>
                 </div>
               ) : (
                 upcomingEvents.map((event, i) => {
                   const d = new Date(event.eventDate);
                   const day = d.getDate().toString().padStart(2, '0');
-                  const month = d.toLocaleDateString('fr-FR', { month: 'short' }).slice(0, 3).toUpperCase();
+                   const month = d.toLocaleDateString(locale, { month: 'short' }).slice(0, 3).toUpperCase();
                   const chipClass = toneChipClass[event.tone ?? 'gold'] ?? toneChipClass.gold;
 
                   return (
@@ -322,8 +325,8 @@ export default function Dashboard() {
 
           {/* Vendors */}
           <div>
-            <SectionTitle eyebrow="Choisis avec soin" title="Votre équipe prestataires"
-              action="Gérer les prestataires" onAction={() => navigate('/prestataires')} />
+            <SectionTitle eyebrow={tr('Choisis avec soin', 'Chosen with care')} title={tr('Votre équipe prestataires', 'Your vendor team')}
+              action={tr('Gérer les prestataires', 'Manage vendors')} onAction={() => navigate('/prestataires')} />
             <div className="card-depth overflow-hidden">
               {vendors.slice(0, 4).map((vendor, i) => {
                 const initials = vendor.name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
@@ -341,10 +344,10 @@ export default function Dashboard() {
                       <p className="mt-0.5 text-[10px] text-muted-foreground">{vendor.category}</p>
                     </div>
                     <span className={`hidden rounded-full px-2.5 py-1 text-[9px] font-semibold sm:inline ${badgeCls}`}>
-                      {vendorStatusLabel[vendor.status] ?? vendor.status}
+                       {language === 'fr' ? (vendorStatusLabel[vendor.status] ?? vendor.status) : ({ confirmed: 'Confirmed', awaiting_contract: 'Contract pending', deposit_paid: 'Deposit paid', cancelled: 'Cancelled' }[vendor.status] ?? vendor.status)}
                     </span>
                     <span className="w-[72px] text-right font-serif text-[18px] text-muted-foreground">
-                      {formatCurrency(vendor.totalAmountCents)}
+                       {formatCurrency(vendor.totalAmountCents)}
                     </span>
                   </div>
                 );

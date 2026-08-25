@@ -1,7 +1,14 @@
+export type FormatLanguage = 'fr' | 'en';
+
+function localeFor(language?: FormatLanguage, locale?: string): string {
+  if (locale) return locale;
+  return language === 'en' ? 'en-US' : 'fr-FR';
+}
+
 /** Format amount in cents to a localized currency string. */
-export function formatCents(cents: number, currency = 'EUR'): string {
+export function formatCents(cents: number, currency = 'EUR', language: FormatLanguage = 'fr', locale?: string): string {
   try {
-    return new Intl.NumberFormat('fr-FR', {
+    return new Intl.NumberFormat(localeFor(language, locale), {
       style: 'currency',
       currency,
       minimumFractionDigits: 0,
@@ -12,10 +19,10 @@ export function formatCents(cents: number, currency = 'EUR'): string {
   }
 }
 
-/** Format ISO date string to a short French date. */
-export function formatDateShort(dateStr: string): string {
+/** Format ISO date string using the selected app language. */
+export function formatDateShort(dateStr: string, language: FormatLanguage = 'fr', locale?: string): string {
   try {
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    return new Date(dateStr).toLocaleDateString(localeFor(language, locale), {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -26,12 +33,12 @@ export function formatDateShort(dateStr: string): string {
 }
 
 /** Format ISO date string to day + month blocks. */
-export function formatDateParts(dateStr: string): { day: string; month: string } {
+export function formatDateParts(dateStr: string, language: FormatLanguage = 'fr', locale?: string): { day: string; month: string } {
   try {
     const d = new Date(dateStr);
     return {
       day: String(d.getDate()).padStart(2, '0'),
-      month: d.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase().slice(0, 3),
+      month: d.toLocaleDateString(localeFor(language, locale), { month: 'short' }).toUpperCase().slice(0, 3),
     };
   } catch {
     return { day: '--', month: '---' };
@@ -61,34 +68,34 @@ export function initials(name: string): string {
     .slice(0, 2);
 }
 
-/** Vendor status → French label + color key. */
-export function vendorStatusLabel(status: string): { label: string; tone: 'success' | 'warning' | 'error' | 'neutral' } {
+/** Vendor status → localized label + color key. */
+export function vendorStatusLabel(status: string, language: FormatLanguage = 'fr'): { label: string; tone: 'success' | 'warning' | 'error' | 'neutral' } {
   switch (status) {
-    case 'confirmed':      return { label: 'Confirmé', tone: 'success' };
-    case 'deposit_paid':   return { label: 'Acompte versé', tone: 'neutral' };
-    case 'awaiting_contract': return { label: 'Contrat en attente', tone: 'warning' };
-    case 'cancelled':      return { label: 'Annulé', tone: 'error' };
+    case 'confirmed':      return { label: language === 'en' ? 'Confirmed' : 'Confirmé', tone: 'success' };
+    case 'deposit_paid':   return { label: language === 'en' ? 'Deposit paid' : 'Acompte versé', tone: 'neutral' };
+    case 'awaiting_contract': return { label: language === 'en' ? 'Contract pending' : 'Contrat en attente', tone: 'warning' };
+    case 'cancelled':      return { label: language === 'en' ? 'Cancelled' : 'Annulé', tone: 'error' };
     default:               return { label: status, tone: 'neutral' };
   }
 }
 
-/** RSVP status → French label + color key. */
-export function rsvpLabel(status: string): { label: string; tone: 'success' | 'warning' | 'neutral' } {
+/** RSVP status → localized label + color key. */
+export function rsvpLabel(status: string, language: FormatLanguage = 'fr'): { label: string; tone: 'success' | 'warning' | 'neutral' } {
   switch (status) {
-    case 'confirmed': return { label: 'Confirmé', tone: 'success' };
-    case 'pending':   return { label: 'En attente', tone: 'warning' };
-    case 'declined':  return { label: 'Décliné', tone: 'neutral' };
+    case 'confirmed': return { label: language === 'en' ? 'Confirmed' : 'Confirmé', tone: 'success' };
+    case 'pending':   return { label: language === 'en' ? 'Pending' : 'En attente', tone: 'warning' };
+    case 'declined':  return { label: language === 'en' ? 'Declined' : 'Décliné', tone: 'neutral' };
     default:          return { label: status, tone: 'neutral' };
   }
 }
 
-/** Payment status → French label + color key. */
-export function paymentStatusLabel(status: string): { label: string; tone: 'success' | 'warning' | 'error' | 'neutral' } {
+/** Payment status → localized label + color key. */
+export function paymentStatusLabel(status: string, language: FormatLanguage = 'fr'): { label: string; tone: 'success' | 'warning' | 'error' | 'neutral' } {
   switch (status) {
-    case 'paid':      return { label: 'Réglé', tone: 'success' };
-    case 'pending':   return { label: 'À régler', tone: 'warning' };
-    case 'overdue':   return { label: 'En retard', tone: 'error' };
-    case 'scheduled': return { label: 'Programmé', tone: 'neutral' };
+    case 'paid':      return { label: language === 'en' ? 'Paid' : 'Réglé', tone: 'success' };
+    case 'pending':   return { label: language === 'en' ? 'Due' : 'À régler', tone: 'warning' };
+    case 'overdue':   return { label: language === 'en' ? 'Overdue' : 'En retard', tone: 'error' };
+    case 'scheduled': return { label: language === 'en' ? 'Scheduled' : 'Programmé', tone: 'neutral' };
     default:          return { label: status, tone: 'neutral' };
   }
 }

@@ -54,6 +54,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/lib/i18n';
 
 // ── Excel parsing ──────────────────────────────────────────────────────────────
 type RsvpStatus = 'confirmed' | 'pending' | 'declined';
@@ -142,6 +143,8 @@ const RSVP_COLOR: Record<string, string> = { confirmed: 'badge-confirmed', pendi
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function Invites() {
+  const { language } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: guests = [], isLoading } = useListGuests(activeWeddingId!);
@@ -177,7 +180,7 @@ export default function Invites() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(activeWeddingId) });
           queryClient.invalidateQueries({ queryKey: getGetGuestStatsQueryKey(activeWeddingId) });
-          toast({ title: 'Invité mis à jour' });
+          toast({ title: tr('Invité mis à jour', 'Guest updated') });
           setOpen(false); setEditingGuest(null); form.reset();
         },
       });
@@ -186,7 +189,7 @@ export default function Invites() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(activeWeddingId) });
           queryClient.invalidateQueries({ queryKey: getGetGuestStatsQueryKey(activeWeddingId) });
-          toast({ title: 'Invité ajouté' });
+          toast({ title: tr('Invité ajouté', 'Guest added') });
           setOpen(false); form.reset();
         },
       });
@@ -201,12 +204,12 @@ export default function Invites() {
 
   const handleDelete = (id: number) => {
     if (!activeWeddingId) return;
-    if (confirm('Supprimer cet invité ?')) {
+    if (confirm(tr('Supprimer cet invité ?', 'Delete this guest?'))) {
       deleteGuest.mutate({ weddingId: activeWeddingId, id }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(activeWeddingId) });
           queryClient.invalidateQueries({ queryKey: getGetGuestStatsQueryKey(activeWeddingId) });
-          toast({ title: 'Invité supprimé' });
+          toast({ title: tr('Invité supprimé', 'Guest deleted') });
         },
       });
     }
@@ -215,10 +218,10 @@ export default function Invites() {
   const copyRsvpLink = async (id: number) => {
     if (!activeWeddingId) return;
     const response = await fetch(`/api/weddings/${activeWeddingId}/guests/${id}/rsvp-link`, { method: 'POST' });
-    if (!response.ok) { toast({ title: 'Impossible de créer le lien RSVP', variant: 'destructive' }); return; }
+    if (!response.ok) { toast({ title: tr('Impossible de créer le lien RSVP', 'Unable to create the RSVP link'), variant: 'destructive' }); return; }
     const result = await response.json() as { url: string };
     await navigator.clipboard.writeText(`${window.location.origin}${result.url}`);
-    toast({ title: 'Lien RSVP copié' });
+    toast({ title: tr('Lien RSVP copié', 'RSVP link copied') });
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -251,7 +254,7 @@ export default function Invites() {
           setImportLoading(false);
         },
         onError: () => {
-          toast({ title: "Erreur lors de l'import", variant: 'destructive' });
+          toast({ title: tr("Erreur lors de l'import", 'Import error'), variant: 'destructive' });
           setImportLoading(false);
         },
       }
@@ -259,7 +262,7 @@ export default function Invites() {
   };
 
   if (!activeWeddingId || isLoading) {
-    return <div className="text-center font-serif text-2xl text-muted-foreground">Chargement...</div>;
+    return <div className="text-center font-serif text-2xl text-muted-foreground">{tr('Chargement…', 'Loading…')}</div>;
   }
 
   const confirmedPct = stats ? Math.round((stats.confirmed / stats.total) * 100) : 0;
@@ -273,7 +276,7 @@ export default function Invites() {
     <div>
       <PageTour
         tourKey="invites"
-        pageTitle="Invités"
+        pageTitle={tr('Invités', 'Guests')}
         pageIcon={UserCircle2}
         steps={[
           { icon: UserCircle2, title: 'La liste des invités', body: 'Visualisez tous vos invités avec leur statut RSVP, leur numéro de table et leurs préférences alimentaires.' },
@@ -289,9 +292,9 @@ export default function Invites() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="eyebrow mb-2 text-[#a8893e]">La liste</p>
+            <p className="eyebrow mb-2 text-[#a8893e]">{tr('La liste', 'The list')}</p>
             <div className="flex items-center gap-3">
-              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Invités</h1>
+              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">{tr('Invités', 'Guests')}</h1>
               <PremiumBadge />
             </div>
           </div>
@@ -310,63 +313,63 @@ export default function Invites() {
               className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]"
               onClick={() => fileInputRef.current?.click()}
             >
-              <FileUp size={14} /> Importer Excel
+              <FileUp size={14} /> {tr('Importer Excel', 'Import Excel')}
             </Button>
 
             {/* Add guest sheet */}
             <Sheet open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setEditingGuest(null); form.reset(); } }}>
               <SheetTrigger asChild>
                 <Button size="default" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" data-testid="button-add-guest">
-                  <Plus size={14} /> Ajouter un invité
+                  <Plus size={14} /> {tr('Ajouter un invité', 'Add a guest')}
                 </Button>
               </SheetTrigger>
               <SheetContent className="overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle className="font-serif text-2xl">
-                    {editingGuest ? "Modifier l'invité" : 'Nouvel invité'}
+                    {editingGuest ? tr("Modifier l'invité", 'Edit guest') : tr('Nouvel invité', 'New guest')}
                   </SheetTitle>
                   <SheetDescription>
-                    {editingGuest ? 'Mettez à jour les informations' : 'Ajoutez un invité à la liste'}
+                    {editingGuest ? tr('Mettez à jour les informations', 'Update the information') : tr('Ajoutez un invité à la liste', 'Add a guest to the list')}
                   </SheetDescription>
                 </SheetHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
                     <FormField control={form.control} name="name" render={({ field }) => (
-                      <FormItem><FormLabel>Nom complet</FormLabel><FormControl><Input {...field} data-testid="input-guest-name" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>{tr('Nom complet', 'Full name')}</FormLabel><FormControl><Input {...field} data-testid="input-guest-name" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="email" render={({ field }) => (
-                      <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} data-testid="input-guest-email" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>{tr('E-mail', 'Email')}</FormLabel><FormControl><Input type="email" {...field} data-testid="input-guest-email" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="rsvpStatus" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Statut RSVP</FormLabel>
+                        <FormLabel>{tr('Statut RSVP', 'RSVP status')}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl><SelectTrigger data-testid="select-guest-status"><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
-                            <SelectItem value="pending">En attente</SelectItem>
-                            <SelectItem value="confirmed">Confirmé</SelectItem>
-                            <SelectItem value="declined">Décliné</SelectItem>
+                            <SelectItem value="pending">{tr('En attente', 'Pending')}</SelectItem>
+                            <SelectItem value="confirmed">{tr('Confirmé', 'Confirmed')}</SelectItem>
+                            <SelectItem value="declined">{tr('Décliné', 'Declined')}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="tableNumber" render={({ field }) => (
-                      <FormItem><FormLabel>Table</FormLabel><FormControl><Input {...field} placeholder="Ex: Table 5" data-testid="input-guest-table" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>{tr('Table', 'Table')}</FormLabel><FormControl><Input {...field} placeholder={tr('Ex. : Table 5', 'E.g. Table 5')} data-testid="input-guest-table" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="dietaryRequirements" render={({ field }) => (
-                      <FormItem><FormLabel>Régime alimentaire</FormLabel><FormControl><Input {...field} placeholder="Ex: Végétarien" data-testid="input-guest-diet" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>{tr('Régime alimentaire', 'Dietary requirements')}</FormLabel><FormControl><Input {...field} placeholder={tr('Ex. : Végétarien', 'E.g. Vegetarian')} data-testid="input-guest-diet" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="notes" render={({ field }) => (
-                      <FormItem><FormLabel>Notes</FormLabel><FormControl><Textarea {...field} rows={3} data-testid="input-guest-notes" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>{tr('Notes', 'Notes')}</FormLabel><FormControl><Textarea {...field} rows={3} data-testid="input-guest-notes" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <div className="flex gap-2 pt-4">
                       <Button type="submit" className="flex-1" data-testid="button-save-guest">
-                        {editingGuest ? 'Mettre à jour' : 'Ajouter'}
+                        {editingGuest ? tr('Mettre à jour', 'Update') : tr('Ajouter', 'Add')}
                       </Button>
                       {editingGuest && (
                         <Button type="button" variant="destructive" onClick={() => handleDelete(editingGuest)} data-testid="button-delete-guest">
-                          Supprimer
+                          {tr('Supprimer', 'Delete')}
                         </Button>
                       )}
                     </div>
@@ -407,8 +410,8 @@ export default function Invites() {
             <Input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Rechercher un invité par son nom"
-              aria-label="Rechercher un invité par son nom"
+              placeholder={tr('Rechercher un invité par son nom', 'Search guests by name')}
+              aria-label={tr('Rechercher un invité par son nom', 'Search guests by name')}
               className="h-10 rounded-xl border-[#e3dbd0] bg-white pl-9 pr-3 text-sm"
               data-testid="input-search-guest"
             />
@@ -416,11 +419,11 @@ export default function Invites() {
         </div>
         {guests.length === 0 ? (
           <div className="px-6 py-12 text-center text-[11px] text-[#858b89]">
-            Aucun invité. Cliquez sur "Ajouter un invité" pour commencer, ou importez un fichier Excel.
+            {tr('Aucun invité. Cliquez sur "Ajouter un invité" pour commencer, ou importez un fichier Excel.', 'No guests. Click “Add a guest” to get started, or import an Excel file.')}
           </div>
         ) : filteredGuests.length === 0 ? (
           <div className="px-6 py-12 text-center text-[11px] text-[#858b89]">
-            Aucun invité ne correspond à « {searchQuery} ».
+            {tr(`Aucun invité ne correspond à « ${searchQuery} ».`, `No guest matches “${searchQuery}”.`)}
           </div>
         ) : (
           filteredGuests.map((guest) => {
@@ -433,7 +436,7 @@ export default function Invites() {
                   <p className="mt-1 text-[10px] text-[#858b89]">{guest.tableNumber || '—'} · {guest.dietaryRequirements || '—'}</p>
                 </div>
                 <span className={`hidden rounded-full px-2.5 py-1 text-[9px] font-semibold sm:block ${RSVP_COLOR[guest.rsvpStatus] || 'badge-pending'}`}>
-                  {RSVP_LABEL[guest.rsvpStatus] || guest.rsvpStatus}
+                  {language === 'fr' ? (RSVP_LABEL[guest.rsvpStatus] || guest.rsvpStatus) : ({ confirmed: 'Confirmed', pending: 'Pending', declined: 'Declined' }[guest.rsvpStatus] || guest.rsvpStatus)}
                 </span>
                 <button className="text-[#a5a19a]" onClick={() => handleEdit(guest)} data-testid={`button-edit-guest-${guest.id}`}>
                   <UserCircle2 size={17} />
@@ -451,10 +454,10 @@ export default function Invites() {
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="font-serif text-2xl">Importer des invités</DialogTitle>
+            <DialogTitle className="font-serif text-2xl">{tr('Importer des invités', 'Import guests')}</DialogTitle>
             <DialogDescription>
-              {importGuests_.length} invité{importGuests_.length > 1 ? 's' : ''} détecté{importGuests_.length > 1 ? 's' : ''}
-              {importSkipped > 0 && ` · ${importSkipped} ligne${importSkipped > 1 ? 's' : ''} ignorée${importSkipped > 1 ? 's' : ''} (nom manquant)`}
+              {importGuests_.length} {tr(importGuests_.length > 1 ? 'invités détectés' : 'invité détecté', importGuests_.length > 1 ? 'guests detected' : 'guest detected')}
+              {importSkipped > 0 && tr(` · ${importSkipped} ligne${importSkipped > 1 ? 's' : ''} ignorée${importSkipped > 1 ? 's' : ''} (nom manquant)`, ` · ${importSkipped} row${importSkipped > 1 ? 's' : ''} skipped (missing name)`)}
             </DialogDescription>
           </DialogHeader>
 
@@ -462,11 +465,11 @@ export default function Invites() {
             <table className="w-full text-[11px]">
               <thead className="sticky top-0 bg-muted">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Nom</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Email</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Table</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground">{tr('Nom', 'Name')}</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground">{tr('E-mail', 'Email')}</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground">{tr('Table', 'Table')}</th>
                   <th className="px-3 py-2 text-left font-semibold text-muted-foreground">RSVP</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Régime</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground">{tr('Régime', 'Diet')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -477,7 +480,7 @@ export default function Invites() {
                     <td className="px-3 py-2 text-muted-foreground">{g.tableNumber || '—'}</td>
                     <td className="px-3 py-2">
                       <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${RSVP_COLOR[g.rsvpStatus]}`}>
-                        {RSVP_LABEL[g.rsvpStatus]}
+                         {language === 'fr' ? RSVP_LABEL[g.rsvpStatus] : ({ confirmed: 'Confirmed', pending: 'Pending', declined: 'Declined' }[g.rsvpStatus])}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">{g.dietaryRequirements || '—'}</td>
@@ -488,9 +491,9 @@ export default function Invites() {
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setImportOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setImportOpen(false)}>{tr('Annuler', 'Cancel')}</Button>
             <Button onClick={handleImport} disabled={importLoading || !importGuests_.length}>
-              {importLoading ? 'Import en cours…' : `Importer ${importGuests_.length} invité${importGuests_.length > 1 ? 's' : ''}`}
+               {importLoading ? tr('Import en cours…', 'Importing…') : tr(`Importer ${importGuests_.length} invité${importGuests_.length > 1 ? 's' : ''}`, `Import ${importGuests_.length} guest${importGuests_.length > 1 ? 's' : ''}`)}
             </Button>
           </DialogFooter>
         </DialogContent>

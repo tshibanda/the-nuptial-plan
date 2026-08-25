@@ -41,6 +41,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/lib/i18n';
 
 const eventSchema = z.object({
   title: z.string().min(1, 'Le titre est requis'),
@@ -54,6 +55,8 @@ const eventSchema = z.object({
 type EventFormData = z.infer<typeof eventSchema>;
 
 export default function Calendrier() {
+  const { language, locale } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const { activeWeddingId } = useActiveWedding();
   const { data: events = [], isLoading } = useListEvents(activeWeddingId!);
   const [open, setOpen] = useState(false);
@@ -86,7 +89,7 @@ export default function Calendrier() {
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListEventsQueryKey(activeWeddingId) });
-            toast({ title: 'Événement mis à jour' });
+            toast({ title: tr('Événement mis à jour', 'Event updated') });
             setOpen(false);
             setEditingEvent(null);
             form.reset();
@@ -99,7 +102,7 @@ export default function Calendrier() {
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListEventsQueryKey(activeWeddingId) });
-            toast({ title: 'Événement ajouté' });
+            toast({ title: tr('Événement ajouté', 'Event added') });
             setOpen(false);
             form.reset();
           },
@@ -123,13 +126,13 @@ export default function Calendrier() {
 
   const handleDelete = (id: number) => {
     if (!activeWeddingId) return;
-    if (confirm('Supprimer cet événement ?')) {
+    if (confirm(tr('Supprimer cet événement ?', 'Delete this event?'))) {
       deleteEvent.mutate(
         { weddingId: activeWeddingId, id },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListEventsQueryKey(activeWeddingId) });
-            toast({ title: 'Événement supprimé' });
+            toast({ title: tr('Événement supprimé', 'Event deleted') });
           },
         }
       );
@@ -153,7 +156,7 @@ export default function Calendrier() {
   };
 
   if (!activeWeddingId || isLoading) {
-    return <div className="text-center font-serif text-2xl text-muted-foreground">Chargement...</div>;
+    return <div className="text-center font-serif text-2xl text-muted-foreground">{tr('Chargement…', 'Loading…')}</div>;
   }
 
   const sortedEvents = [...events].sort(
@@ -170,13 +173,13 @@ export default function Calendrier() {
     <div>
       <PageTour
         tourKey="calendrier"
-        pageTitle="Calendrier"
+        pageTitle={tr('Calendrier', 'Calendar')}
         pageIcon={CalendarDays}
         steps={[
-          { icon: CalendarDays, title: 'Vue mensuelle', body: 'Naviguez de mois en mois avec les flèches pour visualiser l\'ensemble de vos rendez-vous et jalons importants.' },
-          { icon: Plus, title: 'Ajouter un événement', body: 'Cliquez sur « Ajouter un événement » en haut à droite pour planifier un rendez-vous, une dégustation ou un essayage.' },
-          { icon: Search, title: 'Recherche & filtres', body: 'Utilisez la barre de recherche pour trouver un événement par mot-clé, ou filtrez par couleur pour trier vos activités.' },
-          { icon: Palette, title: 'Codes couleur', body: 'Associez une couleur à chaque événement : Or pour les prestataires, Rose pour les essayages, Sauge pour les visites de lieu.' },
+          { icon: CalendarDays, title: tr('Vue mensuelle', 'Monthly view'), body: tr('Naviguez de mois en mois avec les flèches pour visualiser l\'ensemble de vos rendez-vous et jalons importants.', 'Move between months with the arrows to see all your appointments and important milestones.') },
+          { icon: Plus, title: tr('Ajouter un événement', 'Add an event'), body: tr('Cliquez sur « Ajouter un événement » en haut à droite pour planifier un rendez-vous, une dégustation ou un essayage.', 'Click “Add an event” in the top-right corner to schedule an appointment, tasting, or fitting.') },
+          { icon: Search, title: tr('Recherche & filtres', 'Search & filters'), body: tr('Utilisez la barre de recherche pour trouver un événement par mot-clé, ou filtrez par couleur pour trier vos activités.', 'Use the search bar to find an event by keyword, or filter by colour to sort your activities.') },
+          { icon: Palette, title: tr('Codes couleur', 'Colour codes'), body: tr('Associez une couleur à chaque événement : Or pour les prestataires, Rose pour les essayages, Sauge pour les visites de lieu.', 'Assign a colour to each event: Gold for vendors, Rose for fittings, and Sage for venue visits.') },
         ]}
       />
       <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"
@@ -184,8 +187,8 @@ export default function Calendrier() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
         <div className="flex items-end justify-between">
           <div>
-            <p className="eyebrow mb-2 text-[#a8893e]">Les semaines à venir</p>
-            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Calendrier</h1>
+            <p className="eyebrow mb-2 text-[#a8893e]">{tr('Les semaines à venir', 'The weeks ahead')}</p>
+            <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">{tr('Calendrier', 'Calendar')}</h1>
           </div>
         <Sheet
           open={open}
@@ -199,16 +202,16 @@ export default function Calendrier() {
         >
           <SheetTrigger asChild>
             <Button size="default" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" data-testid="button-add-event">
-              <Plus size={14} /> Ajouter un événement
+              <Plus size={14} /> {tr('Ajouter un événement', 'Add an event')}
             </Button>
           </SheetTrigger>
           <SheetContent>
             <SheetHeader>
               <SheetTitle className="font-serif text-2xl">
-                {editingEvent ? "Modifier l'événement" : "Nouvel événement"}
+                {editingEvent ? tr("Modifier l'événement", 'Edit event') : tr('Nouvel événement', 'New event')}
               </SheetTitle>
               <SheetDescription>
-                {editingEvent ? 'Mettez à jour les informations' : 'Ajoutez un événement au calendrier'}
+                {editingEvent ? tr('Mettez à jour les informations', 'Update the information') : tr('Ajoutez un événement au calendrier', 'Add an event to the calendar')}
               </SheetDescription>
             </SheetHeader>
             <Form {...form}>
@@ -218,7 +221,7 @@ export default function Calendrier() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Titre</FormLabel>
+                      <FormLabel>{tr('Titre', 'Title')}</FormLabel>
                       <FormControl>
                         <Input {...field} data-testid="input-event-title" />
                       </FormControl>
@@ -231,7 +234,7 @@ export default function Calendrier() {
                   name="detail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Détails</FormLabel>
+                      <FormLabel>{tr('Détails', 'Details')}</FormLabel>
                       <FormControl>
                         <Textarea {...field} rows={2} data-testid="input-event-detail" />
                       </FormControl>
@@ -244,7 +247,7 @@ export default function Calendrier() {
                   name="eventDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date</FormLabel>
+                      <FormLabel>{tr('Date', 'Date')}</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} data-testid="input-event-date" />
                       </FormControl>
@@ -257,7 +260,7 @@ export default function Calendrier() {
                   name="eventTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Heure (optionnel)</FormLabel>
+                      <FormLabel>{tr('Heure (optionnel)', 'Time (optional)')}</FormLabel>
                       <FormControl>
                         <Input type="time" {...field} data-testid="input-event-time" />
                       </FormControl>
@@ -270,7 +273,7 @@ export default function Calendrier() {
                   name="tone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Couleur</FormLabel>
+                      <FormLabel>{tr('Couleur', 'Colour')}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-event-tone">
@@ -278,9 +281,9 @@ export default function Calendrier() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="gold">Or</SelectItem>
-                          <SelectItem value="rose">Rose</SelectItem>
-                          <SelectItem value="sage">Sauge</SelectItem>
+                          <SelectItem value="gold">{tr('Or', 'Gold')}</SelectItem>
+                          <SelectItem value="rose">{tr('Rose', 'Rose')}</SelectItem>
+                          <SelectItem value="sage">{tr('Sauge', 'Sage')}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -289,7 +292,7 @@ export default function Calendrier() {
                 />
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" className="flex-1" data-testid="button-save-event">
-                    {editingEvent ? 'Mettre à jour' : 'Ajouter'}
+                    {editingEvent ? tr('Mettre à jour', 'Update') : tr('Ajouter', 'Add')}
                   </Button>
                   {editingEvent && (
                     <Button
@@ -298,7 +301,7 @@ export default function Calendrier() {
                       onClick={() => handleDelete(editingEvent)}
                       data-testid="button-delete-event"
                     >
-                      Supprimer
+                      {tr('Supprimer', 'Delete')}
                     </Button>
                   )}
                 </div>
@@ -313,14 +316,14 @@ export default function Calendrier() {
       <div className="card-depth">
         {sortedEvents.length === 0 ? (
           <div className="px-6 py-12 text-center text-[11px] text-[#858b89]">
-            Aucun événement. Cliquez sur "Ajouter un événement" pour commencer.
+            {tr('Aucun événement. Cliquez sur "Ajouter un événement" pour commencer.', 'No events. Click “Add an event” to get started.')}
           </div>
         ) : (
           sortedEvents.map((event) => {
             const eventDate = new Date(event.eventDate);
             const day = eventDate.getDate().toString().padStart(2, '0');
             const month = eventDate
-              .toLocaleDateString('fr-FR', { month: 'short' })
+                .toLocaleDateString(locale, { month: 'short' })
               .slice(0, 3)
               .toUpperCase();
 

@@ -16,6 +16,7 @@ import {
   getListWeddingsQueryKey,
 } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
+import { useLocalization } from '@/context/LocalizationContext';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
@@ -46,6 +47,12 @@ const TOUR_STEPS = [
     description: 'Tirez vers le bas pour synchroniser la liste avec les dernières modifications effectuées depuis l\'application web.',
   },
 ];
+const TOUR_STEPS_EN = [
+  { icon: 'heart', title: 'Your weddings', description: 'Find all the weddings you manage here. Each card shows the couple’s names, venue, and countdown.' },
+  { icon: 'check-circle', title: 'Active wedding', description: 'Tap a card to select the active wedding. The highlighted plum card is displayed throughout the app.' },
+  { icon: 'calendar', title: 'Countdown', description: 'The badge at the bottom right of each card shows the number of days until the ceremony.' },
+  { icon: 'refresh-cw', title: 'Refresh the list', description: 'Pull down to sync the list with the latest changes made in the web app.' },
+];
 
 const CURRENCIES = [
   { code: 'EUR', label: 'Euro (€)' },
@@ -56,6 +63,7 @@ const CURRENCIES = [
 
 export default function MariagesScreen() {
   const colors = useColors();
+  const { language, locale, t } = useLocalization();
   const insets = useSafeAreaInsets();
   const { selectedWeddingId, selectWedding } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
@@ -95,11 +103,11 @@ export default function MariagesScreen() {
       && !Number.isNaN(new Date(`${date}T12:00:00`).getTime());
 
     if (!first || !second || !place || !validDate) {
-      Alert.alert('Informations manquantes', 'Renseignez les deux prénoms, la date au format AAAA-MM-JJ et le lieu du mariage.');
+      Alert.alert(language === 'fr' ? 'Informations manquantes' : 'Missing information', language === 'fr' ? 'Renseignez les deux prénoms, la date au format AAAA-MM-JJ et le lieu du mariage.' : 'Enter both first names, the date in YYYY-MM-DD format, and the wedding venue.');
       return;
     }
     if (!Number.isFinite(budget) || budget < 0 || !Number.isFinite(guests) || guests < 0 || !Number.isInteger(guests)) {
-      Alert.alert('Valeurs invalides', 'Le budget et le nombre d’invités doivent être des nombres positifs.');
+      Alert.alert(language === 'fr' ? 'Valeurs invalides' : 'Invalid values', language === 'fr' ? 'Le budget et le nombre d’invités doivent être des nombres positifs.' : 'Budget and guest count must be positive numbers.');
       return;
     }
 
@@ -123,9 +131,9 @@ export default function MariagesScreen() {
           selectWedding(wedding.id);
           setCreateOpen(false);
           resetCreateForm();
-          Alert.alert('Mariage créé', `${wedding.names} est maintenant votre mariage actif.`);
+          Alert.alert(language === 'fr' ? 'Mariage créé' : 'Wedding created', language === 'fr' ? `${wedding.names} est maintenant votre mariage actif.` : `${wedding.names} is now your active wedding.`);
         },
-        onError: () => Alert.alert('Erreur', 'Impossible de créer le mariage. Réessayez dans quelques instants.'),
+        onError: () => Alert.alert(t('common.error'), language === 'fr' ? 'Impossible de créer le mariage. Réessayez dans quelques instants.' : 'Unable to create the wedding. Please try again shortly.'),
       },
     );
   };
@@ -138,12 +146,12 @@ export default function MariagesScreen() {
   const handleLongPress = (id: number, names: string) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     Alert.alert(
-      'Supprimer ce dossier',
-      `Toutes les données de "${names}" seront définitivement supprimées (invités, prestataires, budget, paiements…). Cette action est irréversible.`,
+      language === 'fr' ? 'Supprimer ce dossier' : 'Delete this file',
+      language === 'fr' ? `Toutes les données de "${names}" seront définitivement supprimées (invités, prestataires, budget, paiements…). Cette action est irréversible.` : `All data for "${names}" will be permanently deleted (guests, vendors, budget, payments…). This action cannot be undone.`,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
             deleteWedding.mutate(
@@ -157,7 +165,7 @@ export default function MariagesScreen() {
                   }
                 },
                 onError: () => {
-                  Alert.alert('Erreur', 'Impossible de supprimer ce dossier. Réessayez.');
+                  Alert.alert(t('common.error'), language === 'fr' ? 'Impossible de supprimer ce dossier. Réessayez.' : 'Unable to delete this file. Please try again.');
                 },
               },
             );
@@ -201,14 +209,14 @@ export default function MariagesScreen() {
             <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
             <View style={ss.goldBar} />
             <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>THE NUPTIAL PLAN</Text>
-            <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Vos mariages</Text>
+            <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>{language === 'fr' ? 'Vos mariages' : 'Your weddings'}</Text>
             <TouchableOpacity
               onPress={() => setCreateOpen(true)}
               activeOpacity={0.8}
               style={ss.createButton}
             >
               <Feather name="plus" size={14} color="#3C1A3C" />
-              <Text style={[ss.createButtonText, { fontFamily: SANS_SEMIBOLD }]}>Nouveau mariage</Text>
+              <Text style={[ss.createButtonText, { fontFamily: SANS_SEMIBOLD }]}>{language === 'fr' ? 'Nouveau mariage' : 'New wedding'}</Text>
             </TouchableOpacity>
           </LinearGradient>
           <View style={{ height: 16 }} />
@@ -218,8 +226,8 @@ export default function MariagesScreen() {
         <View style={ss.emptyWrap}>
           <EmptyState
             icon="heart"
-            title="Aucun mariage pour le moment"
-            subtitle="Vous pouvez créer votre premier dossier directement ici, dans l’onglet « Vos mariages »."
+            title={language === 'fr' ? 'Aucun mariage pour le moment' : 'No weddings yet'}
+            subtitle={language === 'fr' ? 'Vous pouvez créer votre premier dossier directement ici, dans l’onglet « Vos mariages ».' : 'Create your first file directly here in the “Your weddings” tab.'}
           />
           <TouchableOpacity
             onPress={() => setCreateOpen(true)}
@@ -227,7 +235,7 @@ export default function MariagesScreen() {
             style={[ss.emptyCreateButton, { backgroundColor: colors.plum }]}
           >
             <Feather name="plus" size={16} color="#FBF5FB" />
-            <Text style={[ss.emptyCreateButtonText, { fontFamily: SANS_SEMIBOLD }]}>Créer mon premier mariage</Text>
+            <Text style={[ss.emptyCreateButtonText, { fontFamily: SANS_SEMIBOLD }]}>{language === 'fr' ? 'Créer mon premier mariage' : 'Create my first wedding'}</Text>
           </TouchableOpacity>
         </View>
       }
@@ -296,7 +304,7 @@ export default function MariagesScreen() {
                 <View style={ss.footerItem}>
                   <Feather name="calendar" size={12} color={isActive ? '#C8A96E' : colors.accent} />
                   <Text style={[ss.footerText, { fontFamily: SANS, color: isActive ? '#C8A96E' : colors.mutedForeground }]}>
-                    {new Date(item.weddingDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    {new Date(item.weddingDate).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
                   </Text>
                 </View>
                 <View style={[
@@ -305,7 +313,7 @@ export default function MariagesScreen() {
                   shadow('xs'),
                 ]}>
                   <Text style={[ss.daysNum, { fontFamily: SERIF, color: isActive ? colors.gold : colors.plumDark }]}>{days}</Text>
-                  <Text style={[ss.daysLabel, { fontFamily: SANS_SEMIBOLD, color: isActive ? '#bdc8c4' : colors.mutedForeground }]}>JOURS</Text>
+                  <Text style={[ss.daysLabel, { fontFamily: SANS_SEMIBOLD, color: isActive ? '#bdc8c4' : colors.mutedForeground }]}>{language === 'fr' ? 'JOURS' : 'DAYS'}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -331,19 +339,19 @@ export default function MariagesScreen() {
         >
           <View style={ss.modalHeader}>
             <View>
-              <Text style={[ss.modalEyebrow, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>NOUVEAU DOSSIER</Text>
-              <Text style={[ss.modalTitle, { fontFamily: SERIF, color: colors.foreground }]}>Créer un mariage</Text>
+               <Text style={[ss.modalEyebrow, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>{language === 'fr' ? 'NOUVEAU DOSSIER' : 'NEW FILE'}</Text>
+               <Text style={[ss.modalTitle, { fontFamily: SERIF, color: colors.foreground }]}>{language === 'fr' ? 'Créer un mariage' : 'Create a wedding'}</Text>
             </View>
-            <TouchableOpacity onPress={() => setCreateOpen(false)} style={ss.closeButton} accessibilityLabel="Fermer">
+             <TouchableOpacity onPress={() => setCreateOpen(false)} style={ss.closeButton} accessibilityLabel={t('common.close')}>
               <Feather name="x" size={19} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>
 
           <Text style={[ss.modalDescription, { fontFamily: SANS, color: colors.mutedForeground }]}>
-            Ajoutez les informations principales pour commencer à organiser ce mariage.
+            {language === 'fr' ? 'Ajoutez les informations principales pour commencer à organiser ce mariage.' : 'Add the main information to start planning this wedding.'}
           </Text>
 
-          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>Prénom du premier marié</Text>
+          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Prénom du premier marié' : 'First partner’s first name'}</Text>
           <TextInput
             value={partner1}
             onChangeText={setPartner1}
@@ -352,7 +360,7 @@ export default function MariagesScreen() {
             style={[ss.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
           />
 
-          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>Prénom du second marié</Text>
+          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Prénom du second marié' : 'Second partner’s first name'}</Text>
           <TextInput
             value={partner2}
             onChangeText={setPartner2}
@@ -361,26 +369,26 @@ export default function MariagesScreen() {
             style={[ss.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
           />
 
-          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>Date du mariage</Text>
+          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Date du mariage' : 'Wedding date'}</Text>
           <TextInput
             value={weddingDate}
             onChangeText={setWeddingDate}
-            placeholder="AAAA-MM-JJ"
+            placeholder={language === 'fr' ? 'AAAA-MM-JJ' : 'YYYY-MM-DD'}
             placeholderTextColor={colors.mutedForeground}
             keyboardType="numbers-and-punctuation"
             style={[ss.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
           />
 
-          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>Lieu</Text>
+          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Lieu' : 'Venue'}</Text>
           <TextInput
             value={venue}
             onChangeText={setVenue}
-            placeholder="Lieu de réception"
+            placeholder={language === 'fr' ? 'Lieu de réception' : 'Reception venue'}
             placeholderTextColor={colors.mutedForeground}
             style={[ss.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
           />
 
-          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>Devise</Text>
+          <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Devise' : 'Currency'}</Text>
           <View style={ss.currencyRow}>
             {CURRENCIES.map((item) => (
               <TouchableOpacity
@@ -403,7 +411,7 @@ export default function MariagesScreen() {
 
           <View style={ss.twoColumns}>
             <View style={ss.column}>
-              <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>Budget total</Text>
+              <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Budget total' : 'Total budget'}</Text>
               <TextInput
                 value={totalBudget}
                 onChangeText={setTotalBudget}
@@ -414,7 +422,7 @@ export default function MariagesScreen() {
               />
             </View>
             <View style={ss.column}>
-              <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>Nombre d’invités</Text>
+              <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Nombre d’invités' : 'Guest count'}</Text>
               <TextInput
                 value={guestCount}
                 onChangeText={setGuestCount}
@@ -437,7 +445,7 @@ export default function MariagesScreen() {
             ) : (
               <>
                 <Feather name="heart" size={16} color="#FBF5FB" />
-                <Text style={[ss.submitButtonText, { fontFamily: SANS_SEMIBOLD }]}>Créer le mariage</Text>
+                <Text style={[ss.submitButtonText, { fontFamily: SANS_SEMIBOLD }]}>{language === 'fr' ? 'Créer le mariage' : 'Create wedding'}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -445,7 +453,7 @@ export default function MariagesScreen() {
       </KeyboardAvoidingView>
     </Modal>
 
-    <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+    <TourSheet visible={tourVisible} onClose={closeTour} steps={language === 'fr' ? TOUR_STEPS : TOUR_STEPS_EN} />
     </>
   );
 }

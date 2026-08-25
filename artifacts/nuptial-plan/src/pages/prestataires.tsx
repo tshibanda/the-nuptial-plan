@@ -48,6 +48,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/lib/i18n';
 
 const vendorSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -63,6 +64,8 @@ const vendorSchema = z.object({
 type VendorFormData = z.infer<typeof vendorSchema>;
 
 export default function Prestataires() {
+  const { language } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
@@ -104,7 +107,7 @@ export default function Prestataires() {
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(activeWeddingId) });
-            toast({ title: 'Prestataire mis à jour' });
+            toast({ title: tr('Prestataire mis à jour', 'Vendor updated') });
             setOpen(false);
             setEditingVendor(null);
             form.reset();
@@ -117,7 +120,7 @@ export default function Prestataires() {
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(activeWeddingId) });
-            toast({ title: 'Prestataire ajouté' });
+            toast({ title: tr('Prestataire ajouté', 'Vendor added') });
             setOpen(false);
             form.reset();
           },
@@ -133,13 +136,13 @@ export default function Prestataires() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(activeWeddingId) });
-          toast({ title: 'Prestataire ajouté', description: 'La fiche du carnet a été ajoutée à ce mariage.' });
+          toast({ title: tr('Prestataire ajouté', 'Vendor added'), description: tr('La fiche du carnet a été ajoutée à ce mariage.', 'The address book entry was added to this wedding.') });
           setAddressBookOpen(false);
           setOpen(false);
         },
         onError: () => toast({
-          title: 'Erreur',
-          description: 'Impossible d’ajouter ce prestataire au mariage.',
+          title: tr('Erreur', 'Error'),
+          description: tr('Impossible d’ajouter ce prestataire au mariage.', 'This vendor could not be added to the wedding.'),
           variant: 'destructive',
         }),
       },
@@ -163,13 +166,13 @@ export default function Prestataires() {
 
   const handleDelete = (id: number) => {
     if (!activeWeddingId) return;
-    if (confirm('Supprimer ce prestataire ?')) {
+    if (confirm(tr('Supprimer ce prestataire ?', 'Delete this vendor?'))) {
       deleteVendor.mutate(
         { weddingId: activeWeddingId, id },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(activeWeddingId) });
-            toast({ title: 'Prestataire supprimé' });
+            toast({ title: tr('Prestataire supprimé', 'Vendor deleted') });
           },
         }
       );
@@ -198,7 +201,7 @@ export default function Prestataires() {
   };
 
   if (!activeWeddingId || isLoading) {
-    return <div className="text-center font-serif text-2xl text-muted-foreground">Chargement...</div>;
+    return <div className="text-center font-serif text-2xl text-muted-foreground">{tr('Chargement…', 'Loading…')}</div>;
   }
 
   if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="votre carnet de prestataires" />;
@@ -206,7 +209,7 @@ export default function Prestataires() {
     <div>
       <PageTour
         tourKey="prestataires"
-        pageTitle="Prestataires"
+        pageTitle={tr('Prestataires', 'Vendors')}
         pageIcon={Users}
         steps={[
           { icon: Users, title: 'Votre équipe', body: 'Tous vos prestataires sont listés ici par catégorie — Traiteur, Fleuriste, Photographe… Filtrez la liste via la barre de catégories.' },
@@ -220,9 +223,9 @@ export default function Prestataires() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
         <div className="flex items-end justify-between">
           <div>
-            <p className="eyebrow mb-2 text-[#a8893e]">Votre équipe</p>
+            <p className="eyebrow mb-2 text-[#a8893e]">{tr('Votre équipe', 'Your team')}</p>
             <div className="flex items-center gap-3">
-              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Prestataires</h1>
+              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">{tr('Prestataires', 'Vendors')}</h1>
               <PremiumBadge />
             </div>
           </div>
@@ -235,16 +238,16 @@ export default function Prestataires() {
         }}>
           <SheetTrigger asChild>
             <Button size="default" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" data-testid="button-add-vendor">
-              <Plus size={14} /> Ajouter un prestataire
+              <Plus size={14} /> {tr('Ajouter un prestataire', 'Add a vendor')}
             </Button>
           </SheetTrigger>
           <SheetContent className="overflow-y-auto">
             <SheetHeader>
               <SheetTitle className="font-serif text-2xl">
-                {editingVendor ? 'Modifier le prestataire' : 'Nouveau prestataire'}
+                {editingVendor ? tr('Modifier le prestataire', 'Edit vendor') : tr('Nouveau prestataire', 'New vendor')}
               </SheetTitle>
               <SheetDescription>
-                {editingVendor ? 'Mettez à jour les informations' : 'Ajoutez un nouveau prestataire à votre équipe'}
+                {editingVendor ? tr('Mettez à jour les informations', 'Update the information') : tr('Ajoutez un nouveau prestataire à votre équipe', 'Add a new vendor to your team')}
               </SheetDescription>
             </SheetHeader>
             <Form {...form}>
@@ -299,7 +302,7 @@ export default function Prestataires() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nom du prestataire</FormLabel>
+                      <FormLabel>{tr('Nom du prestataire', 'Vendor name')}</FormLabel>
                       <FormControl>
                         <Input {...field} data-testid="input-vendor-name" />
                       </FormControl>
@@ -312,9 +315,9 @@ export default function Prestataires() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Catégorie</FormLabel>
+                      <FormLabel>{tr('Catégorie', 'Category')}</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Ex: Florals & styling" data-testid="input-vendor-category" />
+                        <Input {...field} placeholder={tr('Ex : Fleurs et décoration', 'E.g. Florals & styling')} data-testid="input-vendor-category" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -325,7 +328,7 @@ export default function Prestataires() {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Statut</FormLabel>
+                      <FormLabel>{tr('Statut', 'Status')}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-vendor-status">
@@ -333,10 +336,10 @@ export default function Prestataires() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="confirmed">Confirmé</SelectItem>
-                          <SelectItem value="awaiting_contract">Contrat en attente</SelectItem>
-                          <SelectItem value="deposit_paid">Acompte versé</SelectItem>
-                          <SelectItem value="cancelled">Annulé</SelectItem>
+                          <SelectItem value="confirmed">{tr('Confirmé', 'Confirmed')}</SelectItem>
+                          <SelectItem value="awaiting_contract">{tr('Contrat en attente', 'Contract pending')}</SelectItem>
+                          <SelectItem value="deposit_paid">{tr('Acompte versé', 'Deposit paid')}</SelectItem>
+                          <SelectItem value="cancelled">{tr('Annulé', 'Cancelled')}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -348,7 +351,7 @@ export default function Prestataires() {
                   name="totalAmountCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Montant total ({currencySymbol})</FormLabel>
+                      <FormLabel>{tr('Montant total', 'Total amount')} ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -367,7 +370,7 @@ export default function Prestataires() {
                   name="depositAmountCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Acompte ({currencySymbol})</FormLabel>
+                      <FormLabel>{tr('Acompte', 'Deposit')} ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -386,7 +389,7 @@ export default function Prestataires() {
                   name="contactName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Contact</FormLabel>
+                      <FormLabel>{tr('Contact', 'Contact')}</FormLabel>
                       <FormControl>
                         <Input {...field} data-testid="input-vendor-contact" />
                       </FormControl>
@@ -399,7 +402,7 @@ export default function Prestataires() {
                   name="contactEmail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{tr('E-mail', 'Email')}</FormLabel>
                       <FormControl>
                         <Input type="email" {...field} data-testid="input-vendor-email" />
                       </FormControl>
@@ -412,7 +415,7 @@ export default function Prestataires() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>{tr('Notes', 'Notes')}</FormLabel>
                       <FormControl>
                         <Textarea {...field} rows={3} data-testid="input-vendor-notes" />
                       </FormControl>
@@ -422,7 +425,7 @@ export default function Prestataires() {
                 />
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" className="flex-1" data-testid="button-save-vendor">
-                    {editingVendor ? 'Mettre à jour' : 'Ajouter'}
+                    {editingVendor ? tr('Mettre à jour', 'Update') : tr('Ajouter', 'Add')}
                   </Button>
                   {editingVendor && (
                     <Button
@@ -431,7 +434,7 @@ export default function Prestataires() {
                       onClick={() => handleDelete(editingVendor)}
                       data-testid="button-delete-vendor"
                     >
-                      Supprimer
+                      {tr('Supprimer', 'Delete')}
                     </Button>
                   )}
                 </div>
@@ -453,7 +456,7 @@ export default function Prestataires() {
       <div className="card-depth overflow-hidden">
         {vendors.length === 0 ? (
           <div className="px-6 py-12 text-center text-[11px] text-[#858b89]">
-            Aucun prestataire. Cliquez sur "Ajouter un prestataire" pour commencer.
+            {tr('Aucun prestataire. Cliquez sur "Ajouter un prestataire" pour commencer.', 'No vendors. Click “Add a vendor” to get started.')}
           </div>
         ) : (
           vendors.map((vendor) => {
@@ -479,7 +482,7 @@ export default function Prestataires() {
                 <span
                   className={`hidden rounded-full px-2.5 py-1 text-[9px] font-semibold sm:block ${vendorColorMap[vendor.status] || 'badge-pending'}`}
                 >
-                  {vendorStatusMap[vendor.status] || vendor.status}
+                  {language === 'fr' ? (vendorStatusMap[vendor.status] || vendor.status) : ({ confirmed: 'Confirmed', awaiting_contract: 'Contract pending', deposit_paid: 'Deposit paid', cancelled: 'Cancelled' }[vendor.status] || vendor.status)}
                 </span>
                 <span className="w-[72px] text-right font-serif text-[18px] text-muted-foreground">
                   {formatCurrency(vendor.totalAmountCents)}
@@ -496,10 +499,10 @@ export default function Prestataires() {
       {vendors.length > 0 && (
         <div className="mt-6 flex justify-between border-t border-border pt-6">
           <p className="text-[11px] font-semibold text-[#8c8b86]">
-            {vendors.length} prestataire{vendors.length > 1 ? 's' : ''}
+            {vendors.length} {tr(vendors.length > 1 ? 'prestataires' : 'prestataire', vendors.length > 1 ? 'vendors' : 'vendor')}
           </p>
           <p className="font-serif text-[22px] text-foreground">
-            Total: {formatCurrency(vendors.reduce((sum, v) => sum + v.totalAmountCents, 0))}
+            {tr('Total :', 'Total:')} {formatCurrency(vendors.reduce((sum, v) => sum + v.totalAmountCents, 0))}
           </p>
         </div>
       )}

@@ -5,6 +5,7 @@ import { CalendarDays, Check, ChevronRight, Clock3, Copy, Facebook, Instagram, L
 import { useToast } from '@/hooks/use-toast';
 import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
 import { EditorialCalendar } from '@/components/social/editorial-calendar';
+import { useLanguage } from '@/lib/i18n';
 
 const DEMO_OWNER_ID = 'user_3HyOEsScTvQuzvLFDB5bbaGbDoq';
 const DEMO_EMAIL = 'thenuptialplan@yopmail.com';
@@ -105,6 +106,9 @@ function Metric({ label, value, detail, icon: Icon }: { label: string; value: st
 function SocialIcon({ platform }: { platform: Platform }) { return platform === 'instagram' ? <Instagram size={18} /> : platform === 'facebook' ? <Facebook size={18} /> : <Video size={18} />; }
 
 export function SocialsPage() {
+  const { language } = useLanguage();
+  const fr = language === 'fr';
+  const text = (french: string, english: string) => fr ? french : english;
   const { user } = useUser();
   const { toast } = useToast();
   const { isPremium, loading: premiumLoading } = usePremiumStatus();
@@ -147,7 +151,7 @@ export function SocialsPage() {
       window.history.replaceState({}, '', url.toString());
     };
     if (connected && Object.keys(platformNames).includes(connected)) {
-      toast({ title: `${platformNames[connected as Platform]} connecté`, description: 'Vos statistiques réelles sont maintenant disponibles.' });
+      toast({ title: `${platformNames[connected as Platform]} ${text('connecté', 'connected')}`, description: text('Vos statistiques réelles sont maintenant disponibles.', 'Your live statistics are now available.') });
       cleanOAuthUrl();
     }
     if (error) {
@@ -163,8 +167,8 @@ export function SocialsPage() {
         invalid_state: 'La session de connexion a expiré. Relancez la connexion.',
       };
       toast({
-        title: 'Connexion échouée',
-        description: errorMessages[error] ?? 'La connexion n’a pas pu être finalisée. Réessayez dans un instant.',
+        title: text('Connexion échouée', 'Connection failed'),
+        description: errorMessages[error] ?? text('La connexion n’a pas pu être finalisée. Réessayez dans un instant.', 'The connection could not be completed. Please try again shortly.'),
         variant: 'destructive',
       });
       cleanOAuthUrl();
@@ -173,7 +177,7 @@ export function SocialsPage() {
 
   const connect = () => {
     if (isDemo) {
-      toast({ title: `Connexion ${platformNames[selected]}`, description: 'Disponible sur votre compte personnel.' });
+      toast({ title: `${text('Connexion', 'Connect')} ${platformNames[selected]}`, description: text('Disponible sur votre compte personnel.', 'Available on your personal account.') });
       return;
     }
     // Full-page redirect to the server OAuth start — the server redirects to the provider.
@@ -185,9 +189,9 @@ export function SocialsPage() {
     try {
       await syncPlatformStats(selected);
       await loadAccounts();
-      toast({ title: 'Statistiques mises à jour' });
+      toast({ title: text('Statistiques mises à jour', 'Statistics updated') });
     } catch {
-      toast({ title: 'Erreur de synchronisation', variant: 'destructive' });
+      toast({ title: text('Erreur de synchronisation', 'Sync error'), variant: 'destructive' });
     } finally {
       setSyncing(false);
     }
@@ -196,14 +200,14 @@ export function SocialsPage() {
   const handleDisconnect = async () => {
     await disconnectPlatform(selected);
     await loadAccounts();
-    toast({ title: `${platformNames[selected]} déconnecté` });
+    toast({ title: `${platformNames[selected]} ${text('déconnecté', 'disconnected')}` });
   };
 
-  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="votre espace Réseaux" />;
-  return <><Header eyebrow="MON STUDIO" title="Mes réseaux" description="Pilotez la visibilité de votre agence, suivez vos contenus et préparez vos prochaines prises de parole." />
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel={text('votre espace Réseaux', 'your Networks workspace')} />;
+  return <><Header eyebrow="MY STUDIO" title={text('Mes réseaux', 'My networks')} description={text('Pilotez la visibilité de votre agence, suivez vos contenus et préparez vos prochaines prises de parole.', 'Manage your agency’s visibility, track your content, and prepare your next communications.')} />
     <div className="mb-6 inline-flex rounded-xl border border-border bg-card p-1">
-      <button onClick={() => setActiveTab('networks')} className={`rounded-lg px-3 py-2 text-xs font-medium transition ${activeTab === 'networks' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Mes comptes</button>
-      <button onClick={() => setActiveTab('calendar')} className={`rounded-lg px-3 py-2 text-xs font-medium transition ${activeTab === 'calendar' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Calendrier éditorial</button>
+       <button onClick={() => setActiveTab('networks')} className={`rounded-lg px-3 py-2 text-xs font-medium transition ${activeTab === 'networks' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{text('Mes comptes', 'My accounts')}</button>
+       <button onClick={() => setActiveTab('calendar')} className={`rounded-lg px-3 py-2 text-xs font-medium transition ${activeTab === 'calendar' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{text('Calendrier éditorial', 'Editorial calendar')}</button>
     </div>
     {activeTab === 'calendar' ? <EditorialCalendar isDemo={isDemo} /> : <>{loading && <p className="mb-4 text-xs text-muted-foreground">Chargement des comptes…</p>}
     <div className="mb-6 grid gap-4 md:grid-cols-3">{displaySocials.map((item) => <button key={item.platform} onClick={() => setSelected(item.platform)} className={`rounded-2xl border p-4 text-left transition ${selected === item.platform ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/40'}`}><div className="flex items-center justify-between"><span className="flex items-center gap-2 font-medium text-foreground"><SocialIcon platform={item.platform} />{platformNames[item.platform]}</span><span className={`rounded-full px-2 py-1 text-[10px] ${item.status === 'connected' ? 'bg-[#E5F1E6] text-[#4B754D]' : item.status === 'needs_reauth' ? 'bg-[#F7EEDB] text-[#9A7530]' : 'bg-muted text-muted-foreground'}`}>{item.status === 'connected' ? 'Connecté' : item.status === 'needs_reauth' ? 'À reconnecter' : 'Non connecté'}</span></div><p className="mt-4 text-sm text-muted-foreground">{item.handle || 'Connectez un compte professionnel'}</p></button>)}</div>

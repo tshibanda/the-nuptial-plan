@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
+import { useLocalization } from '@/context/LocalizationContext';
 
 export interface TourStep {
   icon: string;
@@ -41,6 +42,8 @@ const SHEET_H = Math.min(480, SCREEN_HEIGHT * 0.65);
 export function TourSheet({ visible, onClose, steps }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { language } = useLocalization();
+  const en = language === 'en';
   const [step, setStep] = useState(0);
 
   // Reset to first step whenever the sheet becomes visible
@@ -161,7 +164,7 @@ export function TourSheet({ visible, onClose, steps }: Props) {
           <View style={ts.goldBar} />
 
           {/* Eyebrow */}
-          <Text style={[ts.eyebrow, { fontFamily: SANS_SEMIBOLD }]}>GUIDE DE L'ÉCRAN</Text>
+          <Text style={[ts.eyebrow, { fontFamily: SANS_SEMIBOLD }]}>{en ? 'SCREEN GUIDE' : 'GUIDE DE L’ÉCRAN'}</Text>
 
           {/* Icon circle */}
           <Animated.View style={[ts.iconCircle, { opacity: contentOpacity }]}>
@@ -219,7 +222,7 @@ export function TourSheet({ visible, onClose, steps }: Props) {
               >
                 <Feather name="chevron-left" size={14} color={colors.mutedForeground} />
                 <Text style={[ts.backLabel, { fontFamily: SANS_MEDIUM, color: colors.mutedForeground }]}>
-                  Retour
+                  {en ? 'Back' : 'Retour'}
                 </Text>
               </TouchableOpacity>
             )}
@@ -237,7 +240,7 @@ export function TourSheet({ visible, onClose, steps }: Props) {
               >
                 <View style={ts.nextRim} />
                 <Text style={[ts.nextLabel, { fontFamily: SANS_SEMIBOLD }]}>
-                  {isLast ? 'Commencer' : 'Suivant'}
+                  {isLast ? (en ? 'Start' : 'Commencer') : (en ? 'Next' : 'Suivant')}
                 </Text>
                 {!isLast && <Feather name="arrow-right" size={14} color="#FBF5FB" />}
                 {isLast && <Feather name="check" size={14} color="#C8A96E" />}
@@ -299,10 +302,29 @@ const GLOBAL_HELP_STEPS = [
   },
 ];
 
+const GLOBAL_HELP_STEPS_EN: TourStep[] = [
+  {
+    icon: 'grid',
+    title: 'Your planning space',
+    description: 'Find your weddings, guests, vendors, budget and documents from the main navigation.',
+  },
+  {
+    icon: 'help-circle',
+    title: 'Need help?',
+    description: 'The “?” button remains available at the bottom of every screen.',
+  },
+  {
+    icon: 'heart',
+    title: 'Nuptia',
+    description: 'Use the Nuptia assistant to ask questions about organizing your wedding.',
+  },
+];
+
 export function GlobalTourHelp({ hidden = false }: { hidden?: boolean }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { tourVisible, openTour, closeTour } = useTour('tour:global-help');
+  const { language } = useLocalization();
   // Keep the help button close to the navigation bar and below the last
   // content row; every tab reserves a larger bottom inset for this zone.
   const bottom = (Platform.OS === 'web' ? 74 : 70) + insets.bottom + 4;
@@ -315,7 +337,7 @@ export function GlobalTourHelp({ hidden = false }: { hidden?: boolean }) {
         onPress={openTour}
         activeOpacity={0.82}
         accessibilityRole="button"
-        accessibilityLabel="Ouvrir l’aide"
+         accessibilityLabel={language === 'en' ? 'Open help' : 'Ouvrir l’aide'}
         style={[
           fab.btn,
           {
@@ -332,7 +354,7 @@ export function GlobalTourHelp({ hidden = false }: { hidden?: boolean }) {
       >
         <Text style={[fab.label, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>?</Text>
       </TouchableOpacity>
-      <TourSheet visible={tourVisible} onClose={closeTour} steps={GLOBAL_HELP_STEPS} />
+       <TourSheet visible={tourVisible} onClose={closeTour} steps={language === 'en' ? GLOBAL_HELP_STEPS_EN : GLOBAL_HELP_STEPS} />
     </>
   );
 }

@@ -12,10 +12,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { CalendarEvent } from '@workspace/api-client-react';
 import { useListWeddings, useListEvents, useUpdateEvent, getListEventsQueryKey } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
+import { useLocalization } from '@/context/LocalizationContext';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
-import { formatDateParts, formatDateShort } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { EventAddSheet } from '@/components/EventAddSheet';
@@ -44,6 +44,12 @@ const TOUR_STEPS = [
     description: 'Appuyez sur le bouton + en bas à droite pour créer un nouvel événement ou rendez-vous.',
   },
 ];
+const TOUR_STEPS_EN = [
+  { icon: 'calendar', title: 'Your calendar', description: 'Manage all your wedding-preparation events and appointments in one place.' },
+  { icon: 'grid', title: 'Two views to choose from', description: 'Switch between List and Calendar views with the buttons at the top of the screen.' },
+  { icon: 'filter', title: 'Filters & colors', description: 'Filter by status (upcoming, completed) or Gold, Rose, and Sage colors to organize events.' },
+  { icon: 'plus-circle', title: 'Add an event', description: 'Tap the + button to create a new event or appointment.' },
+];
 
 type Filter = 'all' | 'upcoming' | 'done';
 type ViewMode = 'list' | 'calendar';
@@ -65,13 +71,13 @@ const FR_DAYS_SHORT = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 interface Section { title: string; data: CalendarEvent[] }
 
-function buildSections(events: CalendarEvent[]): Section[] {
+function buildSections(events: CalendarEvent[], locale: string): Section[] {
   const sorted = [...events].sort(
     (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
   );
   const map = new Map<string, CalendarEvent[]>();
   for (const evt of sorted) {
-    const key = new Date(evt.eventDate).toLocaleDateString('fr-FR', {
+    const key = new Date(evt.eventDate).toLocaleDateString(locale, {
       month: 'long', year: 'numeric',
     }).toUpperCase();
     if (!map.has(key)) map.set(key, []);
@@ -97,6 +103,7 @@ function EventRow({
   colors,
   onToggle,
   onPress,
+  locale,
 }: {
   item: CalendarEvent;
   isFirst: boolean;
@@ -104,8 +111,11 @@ function EventRow({
   colors: ReturnType<typeof useColors>;
   onToggle: (item: CalendarEvent) => void;
   onPress: (item: CalendarEvent) => void;
+  locale: string;
 }) {
-  const { day, month } = formatDateParts(item.eventDate);
+  const date = new Date(item.eventDate);
+  const day = date.toLocaleDateString(locale, { day: 'numeric' });
+  const month = date.toLocaleDateString(locale, { month: 'short' }).replace('.', '').toUpperCase();
   const isCompleted = item.completed ?? false;
 
   return (
@@ -173,7 +183,7 @@ function EventRow({
           </Text>
         ) : null}
         <Text style={[er.dateStr, { fontFamily: SANS, color: colors.mutedForeground }]}>
-          {formatDateShort(item.eventDate)}
+          {new Date(item.eventDate).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}
         </Text>
       </View>
 
@@ -226,12 +236,13 @@ function StatBlock({ value, label, color, colors }: { value: number; label: stri
 }
 
 // ── Month navigator ───────────────────────────────────────────────────────────
-function MonthNavigator({ year, month, onPrev, onNext, colors }: {
+function MonthNavigator({ year, month, onPrev, onNext, colors, locale }: {
   year: number; month: number; onPrev: () => void; onNext: () => void;
   colors: ReturnType<typeof useColors>;
+  locale: string;
 }) {
   const label = new Date(year, month, 1)
-    .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+    .toLocaleDateString(locale, { month: 'long', year: 'numeric' })
     .toUpperCase();
   return (
     <View style={mn.row}>
@@ -371,8 +382,8 @@ const cg = StyleSheet.create({
 });
 
 // ── View toggle ───────────────────────────────────────────────────────────────
-function ViewToggle({ view, onChange, colors }: {
-  view: ViewMode; onChange: (v: ViewMode) => void; colors: ReturnType<typeof useColors>;
+function ViewToggle({ view, onChange, colors, language }: {
+  view: ViewMode; onChange: (v: ViewMode) => void; colors: ReturnType<typeof useColors>; language: 'fr' | 'en';
 }) {
   return (
     <View style={[vt.wrap, { backgroundColor: colors.muted, borderColor: colors.border }]}>
@@ -391,7 +402,7 @@ function ViewToggle({ view, onChange, colors }: {
               color={isActive ? '#FBF5FB' : colors.mutedForeground}
             />
             <Text style={[vt.label, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>
-              {v === 'list' ? 'Liste' : 'Calendrier'}
+               {v === 'list' ? (language === 'fr' ? 'Liste' : 'List') : (language === 'fr' ? 'Calendrier' : 'Calendar')}
             </Text>
           </TouchableOpacity>
         );
@@ -408,6 +419,7 @@ const vt = StyleSheet.create({
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function EvenementsScreen() {
   const colors = useColors();
+  const { language, locale } = useLocalization();
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:evenements');
@@ -508,13 +520,13 @@ export default function EvenementsScreen() {
     return result;
   }, [allEvents, view, filter, selectedDay, calYear, calMonth, search, toneFilter]);
 
-  const sections = buildSections(filtered);
+  const sections = buildSections(filtered, locale);
   const upcomingCount = allEvents.filter((e) => !e.completed).length;
   const doneCount = allEvents.filter((e) => !!e.completed).length;
 
   // Calendar empty-state subtitle
   const calEmptySubtitle = selectedDay
-    ? `Aucun événement le ${new Date(selectedDay + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}.`
+    ? (language === 'fr' ? `Aucun événement le ${new Date(selectedDay + 'T12:00:00').toLocaleDateString(locale, { day: 'numeric', month: 'long' })}.` : `No events on ${new Date(selectedDay + 'T12:00:00').toLocaleDateString(locale, { day: 'numeric', month: 'long' })}.`)
     : undefined;
 
   return (
@@ -540,18 +552,18 @@ export default function EvenementsScreen() {
               <View style={{ position: 'absolute', bottom: 0, left: 10, width: 80, height: 80, borderRadius: 40, backgroundColor: colors.sage + '18' }} pointerEvents="none" />
               <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={hs.heroSheen} pointerEvents="none" />
               <View style={hs.goldBar} />
-              <Text style={[hs.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>LA CÉLÉBRATION</Text>
+              <Text style={[hs.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>{language === 'fr' ? 'LA CÉLÉBRATION' : 'THE CELEBRATION'}</Text>
               <View style={hs.heroTop}>
-                <Text style={[hs.heroTitle, { fontFamily: SERIF, color: '#FBF5FB' }]}>Agenda</Text>
+                <Text style={[hs.heroTitle, { fontFamily: SERIF, color: '#FBF5FB' }]}>{language === 'fr' ? 'Agenda' : 'Calendar'}</Text>
                 <TouchableOpacity
                   onPress={() => { setAddSheetInitialDate(null); setShowAdd(true); }}
                   activeOpacity={0.8}
                   style={hs.heroAddBtn}
                   accessibilityRole="button"
-                  accessibilityLabel="Ajouter un événement"
+                  accessibilityLabel={language === 'fr' ? 'Ajouter un événement' : 'Add an event'}
                 >
                   <Feather name="plus" size={14} color="#FBF5FB" />
-                  <Text style={[hs.heroAddText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                  <Text style={[hs.heroAddText, { fontFamily: SANS_SEMIBOLD }]}>{language === 'fr' ? 'Ajouter' : 'Add'}</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -564,9 +576,9 @@ export default function EvenementsScreen() {
                     <View style={[hs.rim, { borderTopColor: 'rgba(255,255,255,0.80)' }]} />
                     <StatBlock value={allEvents.length} label="Total" color={colors.foreground} colors={colors} />
                     <View style={[hs.divider, { backgroundColor: colors.border }]} />
-                    <StatBlock value={upcomingCount} label="À venir" color={colors.plum} colors={colors} />
+                    <StatBlock value={upcomingCount} label={language === 'fr' ? 'À venir' : 'Upcoming'} color={colors.plum} colors={colors} />
                     <View style={[hs.divider, { backgroundColor: colors.border }]} />
-                    <StatBlock value={doneCount} label="Terminés" color={colors.sage} colors={colors} />
+                    <StatBlock value={doneCount} label={language === 'fr' ? 'Terminés' : 'Completed'} color={colors.sage} colors={colors} />
                   </View>
                 </View>
               )}
@@ -582,6 +594,7 @@ export default function EvenementsScreen() {
                     setToneFilter(null);
                   }}
                   colors={colors}
+                  language={language}
                 />
               </View>
               {view === 'list' && (
@@ -593,7 +606,7 @@ export default function EvenementsScreen() {
                         style={[hs.pill, isActive ? accentShadow('sm') : shadow('xs'),
                           { backgroundColor: isActive ? colors.plum : colors.muted, borderColor: isActive ? colors.plum : colors.border }]}
                       >
-                        <Text style={[hs.pillText, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>{f.label}</Text>
+                        <Text style={[hs.pillText, { fontFamily: SANS_MEDIUM, color: isActive ? '#FBF5FB' : colors.mutedForeground }]}>{f.key === 'all' ? (language === 'fr' ? 'Tous' : 'All') : f.key === 'upcoming' ? (language === 'fr' ? 'À venir' : 'Upcoming') : (language === 'fr' ? 'Terminés' : 'Completed')}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -610,7 +623,7 @@ export default function EvenementsScreen() {
                     <TextInput
                       value={search}
                       onChangeText={setSearch}
-                      placeholder="Rechercher un événement…"
+                      placeholder={language === 'fr' ? 'Rechercher un événement…' : 'Search for an event…'}
                       placeholderTextColor={colors.mutedForeground}
                       style={[hs.searchInput, { fontFamily: SANS, color: colors.foreground }]}
                       returnKeyType="search"
@@ -646,7 +659,7 @@ export default function EvenementsScreen() {
                         >
                           <View style={[hs.toneDot, { backgroundColor: dotColor }]} />
                           <Text style={[hs.toneLabel, { fontFamily: SANS_MEDIUM, color: isActive ? dotColor : colors.mutedForeground }]}>
-                            {t.label}
+                            {t.key === 'gold' ? (language === 'fr' ? 'Or' : 'Gold') : t.key === 'rose' ? 'Rose' : (language === 'fr' ? 'Sauge' : 'Sage')}
                           </Text>
                           {isActive && (
                             <Feather name="x" size={10} color={dotColor} />
@@ -667,6 +680,7 @@ export default function EvenementsScreen() {
                       year={calYear} month={calMonth}
                       onPrev={handlePrevMonth} onNext={handleNextMonth}
                       colors={colors}
+                      locale={locale}
                     />
                     <CalendarGrid
                       year={calYear} month={calMonth}
@@ -682,7 +696,7 @@ export default function EvenementsScreen() {
                     <View style={[hs.dayBanner, { borderTopColor: colors.border, backgroundColor: colors.plumBg }]}>
                       <Feather name="calendar" size={13} color={colors.plum} />
                       <Text style={[hs.dayBannerText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>
-                        {new Date(selectedDay + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                        {new Date(selectedDay + 'T12:00:00').toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}
                       </Text>
                       <TouchableOpacity
                         onPress={() => {
@@ -694,7 +708,7 @@ export default function EvenementsScreen() {
                         style={[hs.dayBannerAdd, { backgroundColor: colors.plum }]}
                       >
                         <Feather name="plus" size={12} color="#FBF5FB" />
-                        <Text style={[hs.dayBannerAddText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                        <Text style={[hs.dayBannerAddText, { fontFamily: SANS_SEMIBOLD }]}>{language === 'fr' ? 'Ajouter' : 'Add'}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => setSelectedDay(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                         <Feather name="x" size={14} color={colors.plum} />
@@ -708,8 +722,8 @@ export default function EvenementsScreen() {
               {view === 'calendar' && !selectedDay && (
                 <Text style={[hs.calSubtitle, { fontFamily: SANS, color: colors.mutedForeground }]}>
                   {filtered.length === 0
-                    ? 'Aucun événement ce mois-ci'
-                    : `${filtered.length} événement${filtered.length > 1 ? 's' : ''} ce mois`}
+                    ? (language === 'fr' ? 'Aucun événement ce mois-ci' : 'No events this month')
+                    : (language === 'fr' ? `${filtered.length} événement${filtered.length > 1 ? 's' : ''} ce mois` : `${filtered.length} event${filtered.length > 1 ? 's' : ''} this month`)}
                 </Text>
               )}
             </View>
@@ -724,21 +738,21 @@ export default function EvenementsScreen() {
                 icon={view === 'list' && (search || toneFilter) ? 'search' : 'calendar'}
                 title={
                   view === 'calendar'
-                    ? selectedDay ? 'Journée libre' : 'Mois sans événements'
+                    ? selectedDay ? (language === 'fr' ? 'Journée libre' : 'Free day') : (language === 'fr' ? 'Mois sans événements' : 'Month without events')
                     : search.trim()
-                      ? 'Aucun résultat'
+                      ? (language === 'fr' ? 'Aucun résultat' : 'No results')
                       : toneFilter
-                        ? 'Aucun événement de cette couleur'
-                        : filter === 'done' ? 'Aucun événement terminé' : 'Aucun événement'
+                        ? (language === 'fr' ? 'Aucun événement de cette couleur' : 'No events in this color')
+                        : filter === 'done' ? (language === 'fr' ? 'Aucun événement terminé' : 'No completed events') : (language === 'fr' ? 'Aucun événement' : 'No events')
                 }
                 subtitle={
                   view === 'calendar'
                     ? calEmptySubtitle
                     : search.trim()
-                      ? `Aucun événement ne correspond à « ${search.trim()} ».`
+                      ? (language === 'fr' ? `Aucun événement ne correspond à « ${search.trim()} ».` : `No event matches “${search.trim()}”.`)
                       : toneFilter
                         ? 'Essayez une autre couleur ou effacez le filtre.'
-                        : filter === 'all' ? 'Ajoutez votre premier événement avec le bouton +.' : undefined
+                        : filter === 'all' ? (language === 'fr' ? 'Ajoutez votre premier événement avec le bouton +.' : 'Add your first event with the + button.') : undefined
                 }
               />
             </View>
@@ -766,6 +780,7 @@ export default function EvenementsScreen() {
                   colors={colors}
                   onToggle={handleToggle}
                   onPress={handleRowPress}
+                  locale={locale}
                 />
                 {!isLast && <View style={[hs.separator, { backgroundColor: colors.border }]} />}
               </View>
@@ -803,7 +818,7 @@ export default function EvenementsScreen() {
       />
 
       {/* Tour */}
-      <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+       <TourSheet visible={tourVisible} onClose={closeTour} steps={language === 'fr' ? TOUR_STEPS : TOUR_STEPS_EN} />
     </>
   );
 }

@@ -12,6 +12,7 @@ import { formatDateShort } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { BottomSheet } from '@/components/BottomSheet';
 import { EventAddSheet } from '@/components/EventAddSheet';
+import { useLocalization } from '@/context/LocalizationContext';
 
 interface Props {
   visible: boolean;
@@ -36,6 +37,8 @@ const TONE_LABELS: Record<string, string> = {
 
 export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated, onDeleted }: Props) {
   const colors = useColors();
+  const { language, locale } = useLocalization();
+  const en = language === 'en';
   const [showEdit, setShowEdit] = useState(false);
 
   // Local optimistic completed state — reset whenever we get a new event
@@ -85,12 +88,12 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
   const handleDelete = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
-      'Supprimer cet événement ?',
-      `"${event.title}" sera définitivement supprimé.`,
+       en ? 'Delete this event?' : 'Supprimer cet événement ?',
+       en ? `"${event.title}" will be permanently deleted.` : `"${event.title}" sera définitivement supprimé.`,
       [
-        { text: 'Annuler', style: 'cancel' },
+         { text: en ? 'Cancel' : 'Annuler', style: 'cancel' },
         {
-          text: 'Supprimer',
+           text: en ? 'Delete' : 'Supprimer',
           style: 'destructive',
           onPress: () => {
             deleteEvent({ weddingId, id: event.id });
@@ -112,7 +115,7 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
       <BottomSheet
         visible={visible && !showEdit}
         onClose={onClose}
-        eyebrow="AGENDA"
+         eyebrow={en ? 'CALENDAR' : 'AGENDA'}
         title={event.title}
       >
         <View style={ss.body}>
@@ -120,7 +123,7 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
           <View style={[ss.infoCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
             <InfoRow
               icon="calendar"
-              label="Date"
+               label={en ? 'Date' : 'Date'}
               value={formatDateShort(event.eventDate)}
               colors={colors}
               isLast={!event.eventTime}
@@ -128,7 +131,7 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
             {event.eventTime ? (
               <InfoRow
                 icon="clock"
-                label="Heure"
+                 label={en ? 'Time' : 'Heure'}
                 value={event.eventTime}
                 colors={colors}
                 isLast
@@ -139,7 +142,7 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
           {/* Detail / notes */}
           {event.detail ? (
             <View style={ss.section}>
-              <Text style={[ss.sectionTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>NOTES</Text>
+               <Text style={[ss.sectionTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>NOTES</Text>
               <View style={[ss.noteBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
                 <Text style={[ss.noteText, { fontFamily: SANS, color: colors.foreground }]}>{event.detail}</Text>
               </View>
@@ -149,11 +152,11 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
           {/* Tone badge */}
           {event.tone && toneColor ? (
             <View style={ss.section}>
-              <Text style={[ss.sectionTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>COULEUR</Text>
+               <Text style={[ss.sectionTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>{en ? 'COLOR' : 'COULEUR'}</Text>
               <View style={[ss.toneBadge, { borderColor: toneColor + '44', backgroundColor: toneColor + '18' }]}>
                 <View style={[ss.toneDot, { backgroundColor: toneColor }]} />
                 <Text style={[ss.toneLabel, { fontFamily: SANS_MEDIUM, color: toneColor }]}>
-                  {TONE_LABELS[event.tone] ?? event.tone}
+                   {en ? (({ gold: 'Gold', rose: 'Rose', sage: 'Sage' } as Record<string, string>)[event.tone] ?? event.tone) : (TONE_LABELS[event.tone] ?? event.tone)}
                 </Text>
               </View>
             </View>
@@ -161,7 +164,7 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
 
           {/* Status — tappable toggle */}
           <View style={ss.section}>
-            <Text style={[ss.sectionTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>STATUT</Text>
+             <Text style={[ss.sectionTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>{en ? 'STATUS' : 'STATUT'}</Text>
             <TouchableOpacity
               activeOpacity={0.75}
               onPress={handleToggleComplete}
@@ -187,10 +190,10 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
                 ss.statusText,
                 { fontFamily: SANS_MEDIUM, color: isCompleted ? colors.sage : colors.mutedForeground, flex: 1 },
               ]}>
-                {isCompleted ? 'Terminé' : 'À venir'}
+                 {isCompleted ? (en ? 'Completed' : 'Terminé') : (en ? 'Upcoming' : 'À venir')}
               </Text>
               <Text style={[ss.statusHint, { fontFamily: SANS, color: colors.tertiaryText }]}>
-                {isCompleted ? 'Marquer à venir' : 'Marquer terminé'}
+                 {isCompleted ? (en ? 'Mark upcoming' : 'Marquer à venir') : (en ? 'Mark completed' : 'Marquer terminé')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -203,7 +206,7 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
               style={[ss.editBtn, shadow('sm'), { backgroundColor: colors.plum }]}
             >
               <Feather name="edit-2" size={15} color="#FBF5FB" />
-              <Text style={[ss.editBtnText, { fontFamily: SANS_SEMIBOLD }]}>Modifier</Text>
+               <Text style={[ss.editBtnText, { fontFamily: SANS_SEMIBOLD }]}>{en ? 'Edit' : 'Modifier'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -217,14 +220,14 @@ export function EventDetailSheet({ visible, onClose, event, weddingId, onUpdated
                 : (
                   <>
                     <Feather name="trash-2" size={15} color={colors.rose} />
-                    <Text style={[ss.deleteBtnText, { fontFamily: SANS_SEMIBOLD, color: colors.rose }]}>Supprimer</Text>
+                     <Text style={[ss.deleteBtnText, { fontFamily: SANS_SEMIBOLD, color: colors.rose }]}>{en ? 'Delete' : 'Supprimer'}</Text>
                   </>
                 )}
             </TouchableOpacity>
           </View>
 
           <Text style={[ss.added, { fontFamily: SANS, color: colors.tertiaryText }]}>
-            Ajouté le {new Date(event.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+             {en ? 'Added on' : 'Ajouté le'} {new Date(event.createdAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
           </Text>
         </View>
       </BottomSheet>

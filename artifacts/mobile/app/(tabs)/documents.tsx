@@ -11,6 +11,7 @@ import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
+import { useLocalization } from '@/context/LocalizationContext';
 
 type WeddingDocument = {
   id: number;
@@ -28,22 +29,25 @@ const apiBase = () => {
   return domain ? `https://${domain}` : '';
 };
 
-function formatSize(bytes: number | null) {
+function formatSize(bytes: number | null, language: string) {
   if (!bytes) return '—';
-  if (bytes < 1024) return `${bytes} o`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  const units = language === 'fr' ? ['o', 'Ko', 'Mo'] : ['B', 'KB', 'MB'];
+  if (bytes < 1024) return `${bytes} ${units[0]}`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} ${units[1]}`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} ${units[2]}`;
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value));
+function formatDate(value: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value));
 }
 
-function DocumentRow({ doc, onDelete, onOpen, colors }: {
+function DocumentRow({ doc, onDelete, onOpen, colors, language, locale }: {
   doc: WeddingDocument;
   onDelete: () => void;
   onOpen: () => void;
   colors: ReturnType<typeof useColors>;
+  language: 'fr' | 'en';
+  locale: string;
 }) {
   return (
     <View style={[styles.row, { borderBottomColor: colors.border }]}>
@@ -52,12 +56,12 @@ function DocumentRow({ doc, onDelete, onOpen, colors }: {
       </View>
       <View style={styles.rowInfo}>
         <Text style={[styles.fileName, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]} numberOfLines={1}>{doc.name}</Text>
-        <Text style={[styles.fileMeta, { color: colors.mutedForeground, fontFamily: SANS }]}>{formatDate(doc.createdAt)} · {formatSize(doc.size)}</Text>
+        <Text style={[styles.fileMeta, { color: colors.mutedForeground, fontFamily: SANS }]}>{formatDate(doc.createdAt, locale)} · {formatSize(doc.size, language)}</Text>
       </View>
-      <TouchableOpacity onPress={onOpen} accessibilityLabel={`Ouvrir ${doc.name}`} style={styles.rowAction}>
+      <TouchableOpacity onPress={onOpen} accessibilityLabel={`${language === 'fr' ? 'Ouvrir' : 'Open'} ${doc.name}`} style={styles.rowAction}>
         <Feather name="download" size={15} color={colors.mutedForeground} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={onDelete} accessibilityLabel={`Supprimer ${doc.name}`} style={styles.rowAction}>
+      <TouchableOpacity onPress={onDelete} accessibilityLabel={`${language === 'fr' ? 'Supprimer' : 'Delete'} ${doc.name}`} style={styles.rowAction}>
         <Feather name="trash-2" size={15} color={colors.mutedForeground} />
       </TouchableOpacity>
     </View>
@@ -65,6 +69,22 @@ function DocumentRow({ doc, onDelete, onOpen, colors }: {
 }
 
 export default function DocumentsScreen() {
+  const { language, locale } = useLocalization();
+  const tr = useMemo(() => language === 'fr' ? {
+    network: 'Erreur réseau', docs: 'Documents', loadError: 'Impossible de charger vos documents.',
+    upload: 'Téléversement', uploadError: 'Impossible d’ajouter ce fichier.', deleteTitle: 'Supprimer le document ?',
+    cancel: 'Annuler', delete: 'Supprimer', deleteError: 'Suppression impossible.', gate: 'votre coffre-fort de documents',
+    select: 'Sélectionnez un mariage', eye: 'DOSSIER DU MARIAGE', title: 'Documents', vault: 'dans votre coffre-fort numérique.',
+    sending: 'Envoi en cours…', add: 'Ajouter un fichier', general: 'Dossier général', vendors: 'Prestataires (divers)',
+    contracts: 'Contrats (divers)', vendor: 'Prestataire', contract: 'Contrat', emptyTitle: 'Dossier vide', emptyBody: 'Ajoutez vos contrats, plans et fichiers importants.',
+  } : {
+    network: 'Network error', docs: 'Documents', loadError: 'Unable to load your documents.',
+    upload: 'Upload', uploadError: 'Unable to add this file.', deleteTitle: 'Delete document?',
+    cancel: 'Cancel', delete: 'Delete', deleteError: 'Unable to delete this document.', gate: 'your document vault',
+    select: 'Select a wedding', eye: 'WEDDING FILE', title: 'Documents', vault: 'in your digital vault.',
+    sending: 'Uploading…', add: 'Add a file', general: 'General folder', vendors: 'Vendors (miscellaneous)',
+    contracts: 'Contracts (miscellaneous)', vendor: 'Vendor', contract: 'Contract', emptyTitle: 'Empty folder', emptyBody: 'Add your contracts, plans and important files.',
+  }, [language]);
   const colors = useColors();
   const { isPremium } = usePremiumGate();
   const { getToken } = useAuth();
@@ -82,9 +102,9 @@ export default function DocumentsScreen() {
     const headers = new Headers(init?.headers);
     if (token) headers.set('Authorization', `Bearer ${token}`);
     const response = await fetch(`${apiBase()}${path}`, { ...init, headers });
-    if (!response.ok) throw new Error('Erreur réseau');
+    if (!response.ok) throw new Error(tr.network);
     return response;
-  }, [getToken]);
+  }, [getToken, tr.network]);
 
   const loadDocuments = useCallback(async () => {
     if (!weddingId || !isPremium) return;
@@ -93,32 +113,32 @@ export default function DocumentsScreen() {
       const response = await request(`/api/weddings/${weddingId}/documents`);
       setDocuments(await response.json() as WeddingDocument[]);
     } catch {
-      Alert.alert('Documents', 'Impossible de charger vos documents.');
+      Alert.alert(tr.docs, tr.loadError);
     } finally {
       setLoading(false);
     }
-  }, [isPremium, request, weddingId]);
+  }, [isPremium, request, weddingId, tr.docs, tr.loadError]);
 
   useEffect(() => { void loadDocuments(); }, [loadDocuments]);
 
   const grouped = useMemo(() => {
     const sections: Array<{ title: string; docs: WeddingDocument[] }> = [
-      { title: 'Dossier général', docs: documents.filter((doc) => doc.entityType === 'wedding') },
+      { title: tr.general, docs: documents.filter((doc) => doc.entityType === 'wedding') },
     ];
     vendors.forEach((vendor) => {
       const docs = documents.filter((doc) => doc.entityType === 'vendor' && doc.entityId === vendor.id);
-      if (docs.length) sections.push({ title: `Prestataire — ${vendor.name}`, docs });
+      if (docs.length) sections.push({ title: `${tr.vendor} — ${vendor.name}`, docs });
     });
     const vendorOrphans = documents.filter((doc) => doc.entityType === 'vendor' && !vendors.some((vendor) => vendor.id === doc.entityId));
-    if (vendorOrphans.length) sections.push({ title: 'Prestataires (divers)', docs: vendorOrphans });
+    if (vendorOrphans.length) sections.push({ title: tr.vendors, docs: vendorOrphans });
     contracts.forEach((contract) => {
       const docs = documents.filter((doc) => doc.entityType === 'contract' && doc.entityId === contract.id);
-      if (docs.length) sections.push({ title: `Contrat — ${contract.vendorName}`, docs });
+      if (docs.length) sections.push({ title: `${tr.contract} — ${contract.vendorName}`, docs });
     });
     const contractOrphans = documents.filter((doc) => doc.entityType === 'contract' && !contracts.some((contract) => contract.id === doc.entityId));
-    if (contractOrphans.length) sections.push({ title: 'Contrats (divers)', docs: contractOrphans });
+    if (contractOrphans.length) sections.push({ title: tr.contracts, docs: contractOrphans });
     return sections;
-  }, [contracts, documents, vendors]);
+  }, [contracts, documents, vendors, tr]);
 
   const upload = async () => {
     if (!weddingId || uploading) return;
@@ -144,7 +164,7 @@ export default function DocumentsScreen() {
       });
       await loadDocuments();
     } catch {
-      Alert.alert('Téléversement', 'Impossible d’ajouter ce fichier.');
+      Alert.alert(tr.upload, tr.uploadError);
     } finally {
       setUploading(false);
     }
@@ -152,14 +172,14 @@ export default function DocumentsScreen() {
 
   const remove = (doc: WeddingDocument) => {
     if (!weddingId) return;
-    Alert.alert('Supprimer le document ?', doc.name, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => void request(`/api/weddings/${weddingId}/documents/${doc.id}`, { method: 'DELETE' }).then(loadDocuments).catch(() => Alert.alert('Documents', 'Suppression impossible.')) },
+    Alert.alert(tr.deleteTitle, doc.name, [
+      { text: tr.cancel, style: 'cancel' },
+      { text: tr.delete, style: 'destructive', onPress: () => void request(`/api/weddings/${weddingId}/documents/${doc.id}`, { method: 'DELETE' }).then(loadDocuments).catch(() => Alert.alert(tr.docs, tr.deleteError)) },
     ]);
   };
 
-  if (!isPremium) return <PremiumPageGate featureLabel="votre coffre-fort de documents" />;
-  if (!weddingId) return <View style={[styles.emptyPage, { backgroundColor: colors.background }]}><Text style={[styles.emptyTitle, { color: colors.mutedForeground, fontFamily: SERIF }]}>Sélectionnez un mariage</Text></View>;
+  if (!isPremium) return <PremiumPageGate featureLabel={tr.gate} />;
+  if (!weddingId) return <View style={[styles.emptyPage, { backgroundColor: colors.background }]}><Text style={[styles.emptyTitle, { color: colors.mutedForeground, fontFamily: SERIF }]}>{tr.select}</Text></View>;
 
   return (
     <FlatList
@@ -178,16 +198,16 @@ export default function DocumentsScreen() {
       ListHeaderComponent={
         <>
           <LinearGradient colors={[colors.plumDark, colors.plum, colors.plumLight]} style={styles.hero}>
-            <Text style={[styles.eyebrow, { color: colors.gold, fontFamily: SANS_MEDIUM }]}>DOSSIER DU MARIAGE</Text>
+            <Text style={[styles.eyebrow, { color: colors.gold, fontFamily: SANS_MEDIUM }]}>{tr.eye}</Text>
             <View style={styles.titleRow}>
-              <Text style={[styles.title, { color: '#FBF5FB', fontFamily: SERIF }]}>Documents</Text>
+              <Text style={[styles.title, { color: '#FBF5FB', fontFamily: SERIF }]}>{tr.title}</Text>
               <PremiumBadge />
             </View>
-            <Text style={[styles.heroBody, { color: '#F7EAF4', fontFamily: SANS }]}>{documents.length} fichier{documents.length !== 1 ? 's' : ''} dans votre coffre-fort numérique.</Text>
+            <Text style={[styles.heroBody, { color: '#F7EAF4', fontFamily: SANS }]}>{documents.length} {language === 'fr' ? `fichier${documents.length !== 1 ? 's' : ''}` : `file${documents.length !== 1 ? 's' : ''}`} {tr.vault}</Text>
           </LinearGradient>
           <TouchableOpacity onPress={() => void upload()} disabled={uploading} style={[styles.uploadButton, { backgroundColor: colors.gold }]}>
             <Feather name="upload" size={15} color="#3C1A3C" />
-            <Text style={[styles.uploadText, { fontFamily: SANS_SEMIBOLD }]}>{uploading ? 'Envoi en cours…' : 'Ajouter un fichier'}</Text>
+            <Text style={[styles.uploadText, { fontFamily: SANS_SEMIBOLD }]}>{uploading ? tr.sending : tr.add}</Text>
           </TouchableOpacity>
         </>
       }
@@ -203,13 +223,15 @@ export default function DocumentsScreen() {
               key={doc.id}
               doc={doc}
               colors={colors}
+              language={language}
+              locale={locale}
               onDelete={() => remove(doc)}
               onOpen={() => void Linking.openURL(`${apiBase()}/api/storage${doc.objectPath}`)}
             />
           ))}
         </View>
       )}
-      ListEmptyComponent={<View style={styles.empty}><Feather name="folder" size={30} color={colors.goldDim} /><Text style={[styles.emptyTitle, { color: colors.mutedForeground, fontFamily: SERIF }]}>Dossier vide</Text><Text style={[styles.emptyBody, { color: colors.mutedForeground, fontFamily: SANS }]}>Ajoutez vos contrats, plans et fichiers importants.</Text></View>}
+      ListEmptyComponent={<View style={styles.empty}><Feather name="folder" size={30} color={colors.goldDim} /><Text style={[styles.emptyTitle, { color: colors.mutedForeground, fontFamily: SERIF }]}>{tr.emptyTitle}</Text><Text style={[styles.emptyBody, { color: colors.mutedForeground, fontFamily: SANS }]}>{tr.emptyBody}</Text></View>}
     />
   );
 }

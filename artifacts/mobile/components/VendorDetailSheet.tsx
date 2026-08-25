@@ -8,6 +8,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents, vendorStatusLabel } from '@/utils/format';
 import { StatusBadge } from '@/components/StatusBadge';
 import { BottomSheet } from '@/components/BottomSheet';
+import { useLocalization } from '@/context/LocalizationContext';
 
 interface Props {
   visible: boolean;
@@ -19,6 +20,8 @@ interface Props {
 
 export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, currency = 'EUR' }: Props) {
   const colors = useColors();
+  const { language, locale } = useLocalization();
+  const en = language === 'en';
   const { data: vendor, isLoading } = useGetVendor(weddingId, vendorId ?? 0);
   const updateVendor = useUpdateVendor();
   const queryClient = useQueryClient();
@@ -65,7 +68,7 @@ export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, curre
         queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(weddingId) });
         setEditing(false);
       },
-      onError: () => Alert.alert('Erreur', 'Impossible de modifier ce prestataire.'),
+       onError: () => Alert.alert(en ? 'Error' : 'Erreur', en ? 'Unable to update this vendor.' : 'Impossible de modifier ce prestataire.'),
     });
   };
 
@@ -73,7 +76,7 @@ export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, curre
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      eyebrow="PRESTATAIRE"
+       eyebrow={en ? 'VENDOR' : 'PRESTATAIRE'}
       title={vendor?.name ?? ''}
     >
       {isLoading || !vendor ? (
@@ -84,18 +87,18 @@ export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, curre
         <View style={ss.body}>
           <TouchableOpacity onPress={editing ? () => setEditing(false) : startEditing} style={[ss.editButton, { borderColor: colors.plum + '40', backgroundColor: colors.plum + '10' }]}>
             <Feather name={editing ? 'x' : 'edit-2'} size={14} color={colors.plum} />
-            <Text style={[ss.editButtonText, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{editing ? 'Annuler' : 'Modifier le prestataire'}</Text>
+             <Text style={[ss.editButtonText, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{editing ? (en ? 'Cancel' : 'Annuler') : (en ? 'Edit vendor' : 'Modifier le prestataire')}</Text>
           </TouchableOpacity>
           {editing && (
             <View style={ss.editForm}>
               {([
-                ['name', 'Nom du prestataire *'], ['category', 'Catégorie *'], ['contactName', 'Nom du contact'], ['contactEmail', 'E-mail'], ['amount', 'Montant total'], ['deposit', 'Acompte'],
+                 ['name', en ? 'Vendor name *' : 'Nom du prestataire *'], ['category', en ? 'Category *' : 'Catégorie *'], ['contactName', en ? 'Contact name' : 'Nom du contact'], ['contactEmail', 'E-mail'], ['amount', en ? 'Total amount' : 'Montant total'], ['deposit', en ? 'Deposit' : 'Acompte'],
               ] as const).map(([key, placeholder]) => (
                 <TextInput key={key} value={draft[key]} onChangeText={(value) => setDraft((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' || key === 'deposit' ? 'decimal-pad' : key === 'contactEmail' ? 'email-address' : 'default'} style={[ss.editInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
               ))}
-              <TextInput value={draft.notes} onChangeText={(value) => setDraft((current) => ({ ...current, notes: value }))} placeholder="Notes" placeholderTextColor={colors.mutedForeground} multiline style={[ss.editInput, ss.notesInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
+               <TextInput value={draft.notes} onChangeText={(value) => setDraft((current) => ({ ...current, notes: value }))} placeholder="Notes" placeholderTextColor={colors.mutedForeground} multiline style={[ss.editInput, ss.notesInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
               <TouchableOpacity disabled={updateVendor.isPending} onPress={save} style={[ss.saveButton, { backgroundColor: colors.plum, opacity: updateVendor.isPending ? 0.6 : 1 }]}>
-                {updateVendor.isPending ? <ActivityIndicator color="#fff" /> : <Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>Enregistrer les modifications</Text>}
+                 {updateVendor.isPending ? <ActivityIndicator color="#fff" /> : <Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{en ? 'Save changes' : 'Enregistrer les modifications'}</Text>}
               </TouchableOpacity>
             </View>
           )}
@@ -115,14 +118,14 @@ export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, curre
           {/* Financial summary */}
           <View style={[ss.financialRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
             <FinancialBlock
-              label="Montant total"
+               label={en ? 'Total amount' : 'Montant total'}
               value={formatCents(vendor.totalAmountCents, currency)}
               highlight
               colors={colors}
             />
             <View style={[ss.divider, { backgroundColor: colors.border }]} />
             <FinancialBlock
-              label="Acompte versé"
+               label={en ? 'Deposit paid' : 'Acompte versé'}
               value={vendor.depositAmountCents != null
                 ? formatCents(vendor.depositAmountCents, currency)
                 : '—'}
@@ -130,7 +133,7 @@ export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, curre
             />
             <View style={[ss.divider, { backgroundColor: colors.border }]} />
             <FinancialBlock
-              label="Solde restant"
+               label={en ? 'Balance due' : 'Solde restant'}
               value={vendor.depositAmountCents != null ? formatCents(remaining, currency) : '—'}
               colors={colors}
             />
@@ -138,9 +141,9 @@ export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, curre
 
           {/* Contact */}
           {(vendor.contactName || vendor.contactEmail) && (
-            <Section title="CONTACT" colors={colors}>
+             <Section title={en ? 'CONTACT' : 'CONTACT'} colors={colors}>
               {vendor.contactName ? (
-                <InfoRow icon="user" label="Nom" value={vendor.contactName} colors={colors} />
+                 <InfoRow icon="user" label={en ? 'Name' : 'Nom'} value={vendor.contactName} colors={colors} />
               ) : null}
               {vendor.contactEmail ? (
                 <InfoRow
@@ -157,7 +160,7 @@ export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, curre
 
           {/* Notes */}
           {vendor.notes ? (
-            <Section title="NOTES" colors={colors}>
+             <Section title="NOTES" colors={colors}>
               <View style={[ss.noteBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
                 <Text style={[ss.noteText, { fontFamily: SANS, color: colors.foreground }]}>
                   {vendor.notes}
@@ -168,7 +171,7 @@ export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, curre
 
           {/* Footer date */}
           <Text style={[ss.added, { fontFamily: SANS, color: colors.tertiaryText }]}>
-            Ajouté le {new Date(vendor.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+             {en ? 'Added on' : 'Ajouté le'} {new Date(vendor.createdAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
           </Text>
         </View>
       )}

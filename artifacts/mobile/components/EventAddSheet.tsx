@@ -10,6 +10,7 @@ import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow } from '@/utils/shadow';
 import { BottomSheet } from '@/components/BottomSheet';
+import { useLocalization } from '@/context/LocalizationContext';
 
 interface Props {
   visible: boolean;
@@ -63,6 +64,8 @@ function splitIsoDate(isoDate: string): { day: string; month: string; year: stri
 
 export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialEvent, initialDate }: Props) {
   const colors = useColors();
+  const { language } = useLocalization();
+  const en = language === 'en';
   const isEditMode = !!initialEvent;
 
   const [title, setTitle] = useState('');
@@ -145,11 +148,11 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
 
   const handleSubmit = () => {
     const errs: Record<string, string> = {};
-    if (!title.trim()) errs.title = 'Le titre est requis';
+    if (!title.trim()) errs.title = en ? 'Title is required' : 'Le titre est requis';
     const isoDate = parseLocalDate(day, month, year);
-    if (!isoDate) errs.date = 'Date invalide (JJ/MM/AAAA)';
+    if (!isoDate) errs.date = en ? 'Invalid date (DD/MM/YYYY)' : 'Date invalide (JJ/MM/AAAA)';
     const parsedTime = time.trim() ? parseTime(time) : null;
-    if (time.trim() && !parsedTime) errs.time = 'Heure invalide (HH:MM)';
+    if (time.trim() && !parsedTime) errs.time = en ? 'Invalid time (HH:MM)' : 'Heure invalide (HH:MM)';
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
 
@@ -172,8 +175,8 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
     <BottomSheet
       visible={visible}
       onClose={handleClose}
-      eyebrow="AGENDA"
-      title={isEditMode ? "Modifier l'événement" : 'Nouvel événement'}
+       eyebrow={en ? 'CALENDAR' : 'AGENDA'}
+       title={isEditMode ? (en ? 'Edit event' : 'Modifier l’événement') : (en ? 'New event' : 'Nouvel événement')}
     >
       <ScrollView
         keyboardShouldPersistTaps="handled"
@@ -183,13 +186,13 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
         {/* Title */}
         <View style={ss.field}>
           <Text style={[ss.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
-            TITRE <Text style={{ color: colors.rose }}>*</Text>
+             {en ? 'TITLE' : 'TITRE'} <Text style={{ color: colors.rose }}>*</Text>
           </Text>
           <View style={[ss.inputWrap, shadow('xs'), { borderColor: errors.title ? colors.rose : colors.border, backgroundColor: colors.background }]}>
             <Feather name="calendar" size={14} color={colors.goldDim} style={ss.inputIcon} />
             <TextInput
               style={[ss.input, { fontFamily: SANS, color: colors.foreground }]}
-              placeholder="Ex : Dégustation traiteur"
+               placeholder={en ? 'E.g. caterer tasting' : 'Ex. : dégustation traiteur'}
               placeholderTextColor={colors.mutedForeground}
               value={title}
               onChangeText={(t) => { setTitle(t); if (errors.title) setErrors((e) => ({ ...e, title: '' })); }}
@@ -204,7 +207,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
         {/* Date */}
         <View style={ss.field}>
           <Text style={[ss.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
-            DATE <Text style={{ color: colors.rose }}>*</Text>
+             {en ? 'DATE' : 'DATE'} <Text style={{ color: colors.rose }}>*</Text>
           </Text>
           <View style={ss.dateRow}>
             {/* Day */}
@@ -255,7 +258,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
               <TextInput
                 ref={yearRef}
                 style={[ss.dateInput, { fontFamily: SANS, color: colors.foreground }]}
-                placeholder="AAAA"
+                 placeholder={en ? 'YYYY' : 'AAAA'}
                 placeholderTextColor={colors.mutedForeground}
                 value={year}
                 onChangeText={(v) => {
@@ -278,14 +281,14 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
         {/* Time */}
         <View style={ss.field}>
           <Text style={[ss.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
-            HEURE <Text style={{ color: colors.mutedForeground, fontFamily: SANS }}>(facultatif)</Text>
+             {en ? 'TIME' : 'HEURE'} <Text style={{ color: colors.mutedForeground, fontFamily: SANS }}>({en ? 'optional' : 'facultatif'})</Text>
           </Text>
           <View style={[ss.inputWrap, shadow('xs'), { borderColor: errors.time ? colors.rose : colors.border, backgroundColor: colors.background }]}>
             <Feather name="clock" size={14} color={colors.goldDim} style={ss.inputIcon} />
             <TextInput
               ref={timeRef}
               style={[ss.input, { fontFamily: SANS, color: colors.foreground }]}
-              placeholder="Ex : 14:30"
+               placeholder={en ? 'E.g. 14:30' : 'Ex. : 14:30'}
               placeholderTextColor={colors.mutedForeground}
               value={time}
               onChangeText={(t) => { setTime(t); if (errors.time) setErrors((e) => ({ ...e, time: '' })); }}
@@ -300,13 +303,13 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
         {/* Detail */}
         <View style={ss.field}>
           <Text style={[ss.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
-            NOTES <Text style={{ color: colors.mutedForeground, fontFamily: SANS }}>(facultatif)</Text>
+             NOTES <Text style={{ color: colors.mutedForeground, fontFamily: SANS }}>({en ? 'optional' : 'facultatif'})</Text>
           </Text>
           <View style={[ss.textAreaWrap, shadow('xs'), { borderColor: colors.border, backgroundColor: colors.background }]}>
             <TextInput
               ref={detailRef}
               style={[ss.textArea, { fontFamily: SANS, color: colors.foreground }]}
-              placeholder="Informations supplémentaires…"
+               placeholder={en ? 'Additional information…' : 'Informations supplémentaires…'}
               placeholderTextColor={colors.mutedForeground}
               value={detail}
               onChangeText={setDetail}
@@ -320,7 +323,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
         {/* Tone */}
         <View style={ss.field}>
           <Text style={[ss.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
-            COULEUR <Text style={{ color: colors.mutedForeground, fontFamily: SANS }}>(facultatif)</Text>
+             {en ? 'COLOR' : 'COULEUR'} <Text style={{ color: colors.mutedForeground, fontFamily: SANS }}>({en ? 'optional' : 'facultatif'})</Text>
           </Text>
           <View style={ss.toneRow}>
             {TONES.map((t) => {
@@ -341,7 +344,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
                 >
                   <View style={[ss.toneDot, { backgroundColor: dotColor }]} />
                   <Text style={[ss.toneLabel, { fontFamily: SANS_MEDIUM, color: isSelected ? dotColor : colors.mutedForeground }]}>
-                    {TONE_LABELS[t]}
+                     {en ? ({ gold: 'Gold', rose: 'Rose', sage: 'Sage' }[t]) : TONE_LABELS[t]}
                   </Text>
                 </TouchableOpacity>
               );
@@ -362,7 +365,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
               <>
                 <Feather name={isEditMode ? 'check' : 'plus'} size={16} color="#FBF5FB" />
                 <Text style={[ss.submitText, { fontFamily: SANS_SEMIBOLD }]}>
-                  {isEditMode ? 'Enregistrer les modifications' : "Ajouter l'événement"}
+                   {isEditMode ? (en ? 'Save changes' : 'Enregistrer les modifications') : (en ? 'Add event' : 'Ajouter l’événement')}
                 </Text>
               </>
             )}

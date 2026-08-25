@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Edit3, Facebook, Instagram, Plus, Trash2, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useLanguage } from '@/lib/i18n';
 
 type Platform = 'facebook' | 'instagram' | 'tiktok';
 type EditorialStatus = 'draft' | 'scheduled' | 'published' | 'cancelled';
@@ -131,6 +132,15 @@ function PlatformIcon({ platform }: { platform: Platform }) {
 
 export function EditorialCalendar({ isDemo }: { isDemo: boolean }) {
   const { toast } = useToast();
+  const { language, locale } = useLanguage();
+  const en = language === 'en';
+  const copy = (fr: string, english: string) => en ? english : fr;
+  const statusLabel = (status: EditorialStatus) => ({
+    draft: copy('Brouillon', 'Draft'),
+    scheduled: copy('Planifié', 'Scheduled'),
+    published: copy('Publié', 'Published'),
+    cancelled: copy('Non publié / annulé', 'Unpublished / cancelled'),
+  })[status];
   const [month, setMonth] = useState(() => new Date());
   const [posts, setPosts] = useState<EditorialPost[]>([]);
   const [loading, setLoading] = useState(!isDemo);
@@ -167,7 +177,7 @@ export function EditorialCalendar({ isDemo }: { isDemo: boolean }) {
         }
       })
       .catch(() => {
-        if (mounted) setError('Le calendrier n’a pas pu être chargé. Réessayez dans un instant.');
+        if (mounted) setError(copy('Le calendrier n’a pas pu être chargé. Réessayez dans un instant.', 'The calendar could not be loaded. Please try again in a moment.'));
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -227,7 +237,7 @@ export function EditorialCalendar({ isDemo }: { isDemo: boolean }) {
 
   const savePost = async () => {
     if (!form.title.trim()) {
-      toast({ title: 'Ajoutez un titre à ce post', variant: 'destructive' });
+      toast({ title: copy('Ajoutez un titre à ce post', 'Add a title to this post'), variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -262,9 +272,9 @@ export function EditorialCalendar({ isDemo }: { isDemo: boolean }) {
           : [...current, saved]);
       }
       setDialogOpen(false);
-      toast({ title: editingPost ? 'Publication mise à jour' : 'Publication ajoutée au calendrier' });
+      toast({ title: editingPost ? copy('Publication mise à jour', 'Post updated') : copy('Publication ajoutée au calendrier', 'Post added to calendar') });
     } catch {
-      toast({ title: 'Impossible d’enregistrer ce post', description: 'Vérifiez votre connexion puis réessayez.', variant: 'destructive' });
+      toast({ title: copy('Impossible d’enregistrer ce post', 'Unable to save this post'), description: copy('Vérifiez votre connexion puis réessayez.', 'Check your connection and try again.'), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -286,14 +296,14 @@ export function EditorialCalendar({ isDemo }: { isDemo: boolean }) {
         const updated = await response.json() as EditorialPost;
         setPosts((current) => current.map((item) => item.id === updated.id ? updated : item));
       }
-      toast({ title: `Statut : ${statusNames[status]}` });
+      toast({ title: `${copy('Statut', 'Status')}: ${statusLabel(status)}` });
     } catch {
-      toast({ title: 'Impossible de mettre à jour le statut', variant: 'destructive' });
+      toast({ title: copy('Impossible de mettre à jour le statut', 'Unable to update the status'), variant: 'destructive' });
     }
   };
 
   const deletePost = async (post: EditorialPost) => {
-    if (!window.confirm(`Supprimer « ${post.title} » du calendrier ?`)) return;
+    if (!window.confirm(copy(`Supprimer « ${post.title} » du calendrier ?`, `Remove “${post.title}” from the calendar?`))) return;
     try {
       if (isDemo) {
         persistDemo(posts.filter((item) => item.id !== post.id));
@@ -303,9 +313,9 @@ export function EditorialCalendar({ isDemo }: { isDemo: boolean }) {
         setPosts((current) => current.filter((item) => item.id !== post.id));
       }
       setDialogOpen(false);
-      toast({ title: 'Publication supprimée' });
+      toast({ title: copy('Publication supprimée', 'Post deleted') });
     } catch {
-      toast({ title: 'Impossible de supprimer ce post', variant: 'destructive' });
+      toast({ title: copy('Impossible de supprimer ce post', 'Unable to delete this post'), variant: 'destructive' });
     }
   };
 
@@ -313,23 +323,23 @@ export function EditorialCalendar({ isDemo }: { isDemo: boolean }) {
     <section>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="eyebrow mb-2 text-[#a8893e]">PLAN DE CONTENU</p>
-          <h2 className="font-serif text-3xl text-foreground">Calendrier éditorial</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Préparez vos contenus, gardez l’historique de vos publications et marquez simplement ce qui a réellement été publié.</p>
+          <p className="eyebrow mb-2 text-[#a8893e]">{copy('PLAN DE CONTENU', 'CONTENT PLAN')}</p>
+          <h2 className="font-serif text-3xl text-foreground">{copy('Calendrier éditorial', 'Editorial calendar')}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{copy('Préparez vos contenus, gardez l’historique de vos publications et marquez simplement ce qui a réellement été publié.', 'Plan your content, keep a history of your posts, and easily mark what was actually published.')}</p>
         </div>
         <button onClick={() => openNewPost()} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground">
-          <Plus size={16} />Nouveau post
+          <Plus size={16} />{copy('Nouveau post', 'New post')}
         </button>
       </div>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-border/70 bg-card px-4 py-3"><p className="text-[11px] text-muted-foreground">À publier</p><p className="mt-1 font-serif text-2xl text-[#966F28]">{counters.scheduled}</p></div>
-        <div className="rounded-2xl border border-border/70 bg-card px-4 py-3"><p className="text-[11px] text-muted-foreground">Déjà publiés</p><p className="mt-1 font-serif text-2xl text-[#427146]">{counters.published}</p></div>
-        <div className="rounded-2xl border border-border/70 bg-card px-4 py-3"><p className="text-[11px] text-muted-foreground">À préparer</p><p className="mt-1 font-serif text-2xl text-primary">{counters.draft}</p></div>
+        <div className="rounded-2xl border border-border/70 bg-card px-4 py-3"><p className="text-[11px] text-muted-foreground">{copy('À publier', 'To publish')}</p><p className="mt-1 font-serif text-2xl text-[#966F28]">{counters.scheduled}</p></div>
+        <div className="rounded-2xl border border-border/70 bg-card px-4 py-3"><p className="text-[11px] text-muted-foreground">{copy('Déjà publiés', 'Already published')}</p><p className="mt-1 font-serif text-2xl text-[#427146]">{counters.published}</p></div>
+        <div className="rounded-2xl border border-border/70 bg-card px-4 py-3"><p className="text-[11px] text-muted-foreground">{copy('À préparer', 'To prepare')}</p><p className="mt-1 font-serif text-2xl text-primary">{counters.draft}</p></div>
       </div>
 
       {loading ? (
-        <div className="rounded-3xl border border-border bg-card p-8 text-sm text-muted-foreground">Chargement du calendrier…</div>
+        <div className="rounded-3xl border border-border bg-card p-8 text-sm text-muted-foreground">{copy('Chargement du calendrier…', 'Loading calendar…')}</div>
       ) : error ? (
         <div className="rounded-3xl border border-destructive/30 bg-card p-8 text-sm text-destructive">{error}</div>
       ) : (
@@ -337,18 +347,18 @@ export function EditorialCalendar({ isDemo }: { isDemo: boolean }) {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-5 py-4">
             <div className="flex items-center gap-3">
               <CalendarDays size={18} className="text-primary" />
-              <h3 className="font-serif text-2xl capitalize text-foreground">{month.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</h3>
+              <h3 className="font-serif text-2xl capitalize text-foreground">{month.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}</h3>
             </div>
             <div className="flex items-center gap-2">
-              <button aria-label="Mois précédent" onClick={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))} className="rounded-lg border border-border p-2 text-muted-foreground hover:border-primary/40"><ChevronLeft size={16} /></button>
-              <button onClick={() => setMonth(new Date())} className="rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground hover:border-primary/40">Aujourd’hui</button>
-              <button aria-label="Mois suivant" onClick={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))} className="rounded-lg border border-border p-2 text-muted-foreground hover:border-primary/40"><ChevronRight size={16} /></button>
+              <button aria-label={copy('Mois précédent', 'Previous month')} onClick={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))} className="rounded-lg border border-border p-2 text-muted-foreground hover:border-primary/40"><ChevronLeft size={16} /></button>
+              <button onClick={() => setMonth(new Date())} className="rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground hover:border-primary/40">{copy('Aujourd’hui', 'Today')}</button>
+              <button aria-label={copy('Mois suivant', 'Next month')} onClick={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))} className="rounded-lg border border-border p-2 text-muted-foreground hover:border-primary/40"><ChevronRight size={16} /></button>
             </div>
           </div>
           <div className="overflow-x-auto">
             <div className="min-w-[760px]">
               <div className="grid grid-cols-7 border-b border-border/70 bg-muted/25">
-                {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => <p key={day} className="px-3 py-2.5 text-center text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{day}</p>)}
+                {(en ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] : ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']).map((day) => <p key={day} className="px-3 py-2.5 text-center text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{day}</p>)}
               </div>
               <div className="grid grid-cols-7">
                 {days.map(({ date, inMonth }) => {
@@ -363,7 +373,7 @@ export function EditorialCalendar({ isDemo }: { isDemo: boolean }) {
                             <span className="flex items-center gap-1"><PlatformIcon platform={post.platform} /><span className="truncate font-medium">{post.scheduledTime ? `${post.scheduledTime} · ` : ''}{post.title}</span></span>
                           </button>
                         ))}
-                        {(postsByDate[key]?.length ?? 0) > 3 && <button onClick={() => openNewPost(key)} className="px-1 text-[10px] font-medium text-primary">+{postsByDate[key].length - 3} autres</button>}
+                        {(postsByDate[key]?.length ?? 0) > 3 && <button onClick={() => openNewPost(key)} className="px-1 text-[10px] font-medium text-primary">+{postsByDate[key].length - 3} {copy('autres', 'more')}</button>}
                       </div>
                     </div>
                   );
@@ -371,49 +381,49 @@ export function EditorialCalendar({ isDemo }: { isDemo: boolean }) {
               </div>
             </div>
           </div>
-          {!posts.length && <div className="border-t border-border/70 px-6 py-10 text-center"><CalendarDays className="mx-auto text-primary/60" size={26} /><p className="mt-3 font-medium text-foreground">Votre calendrier est prêt.</p><p className="mt-1 text-sm text-muted-foreground">Ajoutez votre premier post pour visualiser votre plan de contenu.</p></div>}
+          {!posts.length && <div className="border-t border-border/70 px-6 py-10 text-center"><CalendarDays className="mx-auto text-primary/60" size={26} /><p className="mt-3 font-medium text-foreground">{copy('Votre calendrier est prêt.', 'Your calendar is ready.')}</p><p className="mt-1 text-sm text-muted-foreground">{copy('Ajoutez votre premier post pour visualiser votre plan de contenu.', 'Add your first post to see your content plan.')}</p></div>}
         </div>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="font-serif text-2xl">{editingPost ? 'Suivre cette publication' : 'Préparer une publication'}</DialogTitle>
-            <DialogDescription>La publication reste manuelle : ce calendrier ne publie pas de contenu sur vos réseaux.</DialogDescription>
+            <DialogTitle className="font-serif text-2xl">{editingPost ? copy('Suivre cette publication', 'Track this post') : copy('Préparer une publication', 'Prepare a post')}</DialogTitle>
+            <DialogDescription>{copy('La publication reste manuelle : ce calendrier ne publie pas de contenu sur vos réseaux.', 'Publishing remains manual: this calendar does not publish content to your social networks.')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 pt-2 sm:grid-cols-2">
-            <label className="text-xs font-medium text-foreground">Plateforme
+            <label className="text-xs font-medium text-foreground">{copy('Plateforme', 'Platform')}
               <select value={form.platform} onChange={(event) => setForm({ ...form, platform: event.target.value as Platform })} className={inputClass}>
                 {Object.entries(platformNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
-            <label className="text-xs font-medium text-foreground">Statut
+            <label className="text-xs font-medium text-foreground">{copy('Statut', 'Status')}
               <select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as EditorialStatus })} className={inputClass}>
                 {Object.entries(statusNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
-            <label className="text-xs font-medium text-foreground sm:col-span-2">Titre du post *
-              <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Ex. Inspirations fleuries pour un mariage d’été" className={inputClass} />
+            <label className="text-xs font-medium text-foreground sm:col-span-2">{copy('Titre du post', 'Post title')} *
+              <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder={copy('Ex. Inspirations fleuries pour un mariage d’été', 'E.g. Floral inspiration for a summer wedding')} className={inputClass} />
             </label>
-            <label className="text-xs font-medium text-foreground">Date prévue
+            <label className="text-xs font-medium text-foreground">{copy('Date prévue', 'Scheduled date')}
               <input type="date" value={form.scheduledDate} onChange={(event) => setForm({ ...form, scheduledDate: event.target.value })} className={inputClass} />
             </label>
-            <label className="text-xs font-medium text-foreground">Heure prévue
+            <label className="text-xs font-medium text-foreground">{copy('Heure prévue', 'Scheduled time')}
               <input type="time" value={form.scheduledTime ?? ''} onChange={(event) => setForm({ ...form, scheduledTime: event.target.value })} className={inputClass} />
             </label>
-            <label className="text-xs font-medium text-foreground sm:col-span-2">Contenu / légende
-              <textarea value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} placeholder="Résumé, angle, légende ou déroulé de votre publication…" className={`${inputClass} min-h-24 resize-y`} />
+            <label className="text-xs font-medium text-foreground sm:col-span-2">{copy('Contenu / légende', 'Content / caption')}
+              <textarea value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} placeholder={copy('Résumé, angle, légende ou déroulé de votre publication…', 'Summary, angle, caption, or outline for your post…')} className={`${inputClass} min-h-24 resize-y`} />
             </label>
-            <label className="text-xs font-medium text-foreground sm:col-span-2">Notes de suivi
-              <textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} placeholder="À vérifier, résultats, retour client…" className={`${inputClass} min-h-20 resize-y`} />
+            <label className="text-xs font-medium text-foreground sm:col-span-2">{copy('Notes de suivi', 'Tracking notes')}
+              <textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} placeholder={copy('À vérifier, résultats, retour client…', 'To check, results, client feedback…')} className={`${inputClass} min-h-20 resize-y`} />
             </label>
           </div>
-          {editingPost && <div className="rounded-xl bg-muted/50 px-3 py-2.5 text-xs text-muted-foreground"><Clock3 size={13} className="mr-1.5 inline text-primary" />{editingPost.publishedAt ? `Publié le ${new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(editingPost.publishedAt))}` : 'Pas encore marqué comme publié.'}</div>}
+          {editingPost && <div className="rounded-xl bg-muted/50 px-3 py-2.5 text-xs text-muted-foreground"><Clock3 size={13} className="mr-1.5 inline text-primary" />{editingPost.publishedAt ? `${copy('Publié le', 'Published on')} ${new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeStyle: 'short' }).format(new Date(editingPost.publishedAt))}` : copy('Pas encore marqué comme publié.', 'Not yet marked as published.')}</div>}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <div>{editingPost && <button onClick={() => void deletePost(editingPost)} className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs text-destructive hover:bg-destructive/10"><Trash2 size={14} />Supprimer</button>}</div>
+            <div>{editingPost && <button onClick={() => void deletePost(editingPost)} className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs text-destructive hover:bg-destructive/10"><Trash2 size={14} />{copy('Supprimer', 'Delete')}</button>}</div>
             <div className="flex gap-2">
-              {editingPost && editingPost.status !== 'published' && <button onClick={() => void changeStatus(editingPost, 'published')} className="rounded-lg border border-[#6A966E] px-3 py-2 text-xs font-medium text-[#427146] hover:bg-[#E5F1E6]">Marquer comme publié</button>}
-              <button disabled={saving} onClick={() => void savePost()} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-60"><Edit3 size={13} />{saving ? 'Enregistrement…' : 'Enregistrer'}</button>
+              {editingPost && editingPost.status !== 'published' && <button onClick={() => void changeStatus(editingPost, 'published')} className="rounded-lg border border-[#6A966E] px-3 py-2 text-xs font-medium text-[#427146] hover:bg-[#E5F1E6]">{copy('Marquer comme publié', 'Mark as published')}</button>}
+              <button disabled={saving} onClick={() => void savePost()} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-60"><Edit3 size={13} />{saving ? copy('Enregistrement…', 'Saving…') : copy('Enregistrer', 'Save')}</button>
             </div>
           </div>
         </DialogContent>

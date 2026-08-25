@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n';
 
 export interface TourStep {
   icon: LucideIcon;
@@ -19,6 +20,7 @@ interface PageTourProps {
 export const STORAGE_PREFIX = 'nuptial-tour-seen:';
 
 export function PageTour({ tourKey, pageTitle, pageIcon: PageIcon, steps, forceOpen = 0 }: PageTourProps & { forceOpen?: number }) {
+  const { t } = useLanguage();
   const storageKey = STORAGE_PREFIX + tourKey;
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
@@ -112,7 +114,7 @@ export function PageTour({ tourKey, pageTitle, pageIcon: PageIcon, steps, forceO
             </span>
             <div>
               <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-white/40">
-                Guide d'utilisation
+                {t('tour.guide')}
               </p>
               <p className="font-serif text-[22px] leading-none text-white">{pageTitle}</p>
             </div>
@@ -146,7 +148,7 @@ export function PageTour({ tourKey, pageTitle, pageIcon: PageIcon, steps, forceO
                 <button
                   key={i}
                   onClick={() => setStep(i)}
-                  aria-label={`Étape ${i + 1}`}
+                  aria-label={t('tour.step', { number: i + 1 })}
                   className="h-1.5 rounded-full transition-all duration-250"
                   style={{
                     width: i === step ? '20px' : '6px',
@@ -163,7 +165,7 @@ export function PageTour({ tourKey, pageTitle, pageIcon: PageIcon, steps, forceO
                   onClick={() => setStep((s) => s - 1)}
                   className="flex items-center gap-1 rounded-xl border border-border/60 px-3 py-2 text-[11px] font-medium text-muted-foreground transition hover:bg-muted/40"
                 >
-                  <ChevronLeft size={13} /> Précédent
+                  <ChevronLeft size={13} /> {t('tour.previous')}
                 </button>
               )}
               {isLast ? (
@@ -172,7 +174,7 @@ export function PageTour({ tourKey, pageTitle, pageIcon: PageIcon, steps, forceO
                   className="flex items-center gap-1.5 rounded-xl px-5 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
                   style={{ background: 'linear-gradient(135deg, #5D2D5D, #7A4A7A)' }}
                 >
-                  Commencer <ChevronRight size={13} />
+                  {t('tour.start')} <ChevronRight size={13} />
                 </button>
               ) : (
                 <button
@@ -180,7 +182,7 @@ export function PageTour({ tourKey, pageTitle, pageIcon: PageIcon, steps, forceO
                   className="flex items-center gap-1.5 rounded-xl px-5 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
                   style={{ background: 'linear-gradient(135deg, #5D2D5D, #7A4A7A)' }}
                 >
-                  Suivant <ChevronRight size={13} />
+                  {t('tour.next')} <ChevronRight size={13} />
                 </button>
               )}
             </div>

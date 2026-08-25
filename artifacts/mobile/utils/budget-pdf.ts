@@ -41,12 +41,14 @@ export interface BudgetPDFData {
   totalAllocated: number;
   totalSpent: number;
   categories: BudgetPDFCategory[];
+  locale?: string;
+  language?: 'fr' | 'en';
 }
 
 // ── Formatters ────────────────────────────────────────────────────────────────
-function fmtCents(cents: number, currency: string): string {
+function fmtCents(cents: number, currency: string, locale: string): string {
   try {
-    return new Intl.NumberFormat('fr-FR', {
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency,
       minimumFractionDigits: 0,
@@ -54,20 +56,20 @@ function fmtCents(cents: number, currency: string): string {
     }).format(cents / 100);
   } catch {
     const sym = currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency;
-    return `${Math.round(cents / 100).toLocaleString('fr-FR')} ${sym}`;
+    return `${Math.round(cents / 100).toLocaleString(locale)} ${sym}`;
   }
 }
 
-function fmtDate(iso: string): string {
+function fmtDate(iso: string, locale: string): string {
   try {
-    return new Date(iso).toLocaleDateString('fr-FR', {
+    return new Date(iso).toLocaleDateString(locale, {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     });
   } catch { return iso; }
 }
 
-function today(): string {
-  return new Date().toLocaleDateString('fr-FR', {
+function today(locale: string): string {
+  return new Date().toLocaleDateString(locale, {
     day: 'numeric', month: 'long', year: 'numeric',
   });
 }
@@ -93,7 +95,7 @@ function arcPath(cx: number, cy: number, oR: number, iR: number, s: number, e: n
   ].join(' ');
 }
 
-function buildDonutSvg(categories: BudgetPDFCategory[], pct: number): string {
+function buildDonutSvg(categories: BudgetPDFCategory[], pct: number, language: 'fr' | 'en'): string {
   const total = categories.reduce((s, c) => s + c.allocatedCents, 0);
   if (total === 0) return '';
 
@@ -116,7 +118,7 @@ function buildDonutSvg(categories: BudgetPDFCategory[], pct: number): string {
 <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
   ${paths}
   <text x="${CX}" y="${CY - 4}" text-anchor="middle" font-size="20" font-weight="bold" fill="${PLUM}">${pct}%</text>
-  <text x="${CX}" y="${CY + 16}" text-anchor="middle" font-size="9" fill="${GREY}">dépensé</text>
+   <text x="${CX}" y="${CY + 16}" text-anchor="middle" font-size="9" fill="${GREY}">${language === 'fr' ? 'dépensé' : 'spent'}</text>
 </svg>`;
 }
 
@@ -132,7 +134,7 @@ function buildLegend(categories: BudgetPDFCategory[]): string {
 }
 
 // ── Category rows HTML ────────────────────────────────────────────────────────
-function buildCategoryRows(categories: BudgetPDFCategory[], currency: string): string {
+function buildCategoryRows(categories: BudgetPDFCategory[], currency: string, locale: string, language: 'fr' | 'en'): string {
   return categories.map((cat, i) => {
     const color = CHART_COLORS[i % CHART_COLORS.length]!;
     const pct = cat.allocatedCents > 0
@@ -159,16 +161,16 @@ function buildCategoryRows(categories: BudgetPDFCategory[], currency: string): s
     </div>
   </td>
   <td style="padding:10px 14px;text-align:right;white-space:nowrap;vertical-align:middle;">
-    <span style="font-size:13px;font-weight:bold;color:${PLUM}">${fmtCents(cat.allocatedCents, currency)}</span>
-    <div style="font-size:8px;color:${GREY};margin-top:1px;">alloué</div>
+    <span style="font-size:13px;font-weight:bold;color:${PLUM}">${fmtCents(cat.allocatedCents, currency, locale)}</span>
+    <div style="font-size:8px;color:${GREY};margin-top:1px;">${language === 'fr' ? 'alloué' : 'allocated'}</div>
   </td>
   <td style="padding:10px 14px;text-align:right;white-space:nowrap;vertical-align:middle;">
-    <span style="font-size:13px;font-weight:600;color:${isOver ? DESTRUCTIVE : '#1a091a'}">${fmtCents(cat.spentCents, currency)}</span>
-    <div style="font-size:8px;color:${GREY};margin-top:1px;">dépensé</div>
+    <span style="font-size:13px;font-weight:600;color:${isOver ? DESTRUCTIVE : '#1a091a'}">${fmtCents(cat.spentCents, currency, locale)}</span>
+    <div style="font-size:8px;color:${GREY};margin-top:1px;">${language === 'fr' ? 'dépensé' : 'spent'}</div>
   </td>
   <td style="padding:10px 14px;text-align:right;white-space:nowrap;vertical-align:middle;">
-    <span style="font-size:13px;color:${isOver ? DESTRUCTIVE : SAGE};font-weight:600;">${isOver ? '−' : ''}${fmtCents(Math.abs(remaining), currency)}</span>
-    <div style="font-size:8px;color:${GREY};margin-top:1px;">${isOver ? 'dépassement' : 'restant'}</div>
+    <span style="font-size:13px;color:${isOver ? DESTRUCTIVE : SAGE};font-weight:600;">${isOver ? '−' : ''}${fmtCents(Math.abs(remaining), currency, locale)}</span>
+    <div style="font-size:8px;color:${GREY};margin-top:1px;">${isOver ? (language === 'fr' ? 'dépassement' : 'over budget') : (language === 'fr' ? 'restant' : 'remaining')}</div>
   </td>
   <td style="padding:10px 14px;text-align:center;vertical-align:middle;">
     <span style="font-size:10px;font-weight:bold;color:${barColor}">${pct}%</span>
@@ -185,10 +187,12 @@ function buildHTML(data: BudgetPDFData): string {
   const pct = totalAllocated > 0 ? Math.min(100, Math.round((totalSpent / totalAllocated) * 100)) : 0;
   const barColor = isOver ? DESTRUCTIVE : pct >= 80 ? WARNING : PLUM2;
 
-  const donutSvg = buildDonutSvg(categories, pct);
+  const locale = data.locale ?? (data.language === 'fr' ? 'fr-FR' : 'en-US');
+  const language = data.language ?? (locale.startsWith('fr') ? 'fr' : 'en');
+  const donutSvg = buildDonutSvg(categories, pct, language);
   const legend = buildLegend(categories);
-  const categoryRows = buildCategoryRows(categories, currency);
-  const dateStr = weddingDate ? fmtDate(weddingDate) : '';
+  const categoryRows = buildCategoryRows(categories, currency, locale, language);
+  const dateStr = weddingDate ? fmtDate(weddingDate, locale) : '';
 
   return `<!DOCTYPE html>
 <html>
@@ -233,8 +237,8 @@ function buildHTML(data: BudgetPDFData): string {
 <div style="background:${LIGHT};padding:14px 40px;border-bottom:1px solid rgba(200,180,200,0.25);">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;">
     <div style="text-align:center;">
-      <div style="font-size:20px;font-weight:bold;color:#1a091a;">${fmtCents(totalSpent, currency)}</div>
-      <div style="font-size:9px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">DÉPENSÉ</div>
+       <div style="font-size:20px;font-weight:bold;color:#1a091a;">${fmtCents(totalSpent, currency, locale)}</div>
+       <div style="font-size:9px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">${language === 'fr' ? 'DÉPENSÉ' : 'SPENT'}</div>
     </div>
     <div style="flex:1;padding:0 16px;">
       <div style="height:10px;border-radius:5px;background:#e8e0e8;overflow:hidden;">
@@ -242,13 +246,13 @@ function buildHTML(data: BudgetPDFData): string {
       </div>
       <div style="font-size:9px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;text-align:center;margin-top:5px;">
         ${isOver
-          ? `Dépassement de ${fmtCents(Math.abs(remaining), currency)}`
-          : `${fmtCents(remaining, currency)} restant — ${pct}% utilisé`}
+          ? `${language === 'fr' ? 'Dépassement de' : 'Over budget by'} ${fmtCents(Math.abs(remaining), currency, locale)}`
+          : language === 'fr' ? `${fmtCents(remaining, currency, locale)} restant — ${pct}% utilisé` : `${fmtCents(remaining, currency, locale)} remaining — ${pct}% used`}
       </div>
     </div>
     <div style="text-align:center;">
-      <div style="font-size:20px;font-weight:bold;color:${PLUM};">${fmtCents(totalAllocated, currency)}</div>
-      <div style="font-size:9px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">BUDGET TOTAL</div>
+       <div style="font-size:20px;font-weight:bold;color:${PLUM};">${fmtCents(totalAllocated, currency, locale)}</div>
+       <div style="font-size:9px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;margin-top:2px;letter-spacing:0.5px;">${language === 'fr' ? 'BUDGET TOTAL' : 'TOTAL BUDGET'}</div>
     </div>
   </div>
 </div>
@@ -260,7 +264,7 @@ ${categories.length > 0 ? `
     ${donutSvg}
   </div>
   <div style="flex:1;">
-    <div style="font-size:7.5px;letter-spacing:2.5px;text-transform:uppercase;color:${GOLD_DIM};font-family:'DM Sans',Arial,sans-serif;margin-bottom:10px;">RÉPARTITION DU BUDGET</div>
+     <div style="font-size:7.5px;letter-spacing:2.5px;text-transform:uppercase;color:${GOLD_DIM};font-family:'DM Sans',Arial,sans-serif;margin-bottom:10px;">${language === 'fr' ? 'RÉPARTITION DU BUDGET' : 'BUDGET BREAKDOWN'}</div>
     <div style="display:flex;flex-wrap:wrap;">
       ${legend}
     </div>
@@ -272,14 +276,14 @@ ${categories.length > 0 ? `
 <!-- ── CATEGORY TABLE ── -->
 ${categories.length > 0 ? `
 <div style="padding:20px 40px;">
-  <div style="font-size:7.5px;letter-spacing:2.5px;text-transform:uppercase;color:${GOLD_DIM};font-family:'DM Sans',Arial,sans-serif;margin-bottom:12px;">PAR CATÉGORIE</div>
+   <div style="font-size:7.5px;letter-spacing:2.5px;text-transform:uppercase;color:${GOLD_DIM};font-family:'DM Sans',Arial,sans-serif;margin-bottom:12px;">${language === 'fr' ? 'PAR CATÉGORIE' : 'BY CATEGORY'}</div>
   <table style="width:100%;border-collapse:collapse;">
     <thead>
       <tr style="border-bottom:1px solid rgba(200,180,200,0.35);">
-        <th style="padding:6px 14px;text-align:left;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Catégorie</th>
-        <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Alloué</th>
-        <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Dépensé</th>
-        <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">Restant</th>
+         <th style="padding:6px 14px;text-align:left;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">${language === 'fr' ? 'Catégorie' : 'Category'}</th>
+         <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">${language === 'fr' ? 'Alloué' : 'Allocated'}</th>
+         <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">${language === 'fr' ? 'Dépensé' : 'Spent'}</th>
+         <th style="padding:6px 14px;text-align:right;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">${language === 'fr' ? 'Restant' : 'Remaining'}</th>
         <th style="padding:6px 14px;text-align:center;font-size:8px;letter-spacing:1.5px;color:${GREY};font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;">%</th>
       </tr>
     </thead>
@@ -292,9 +296,9 @@ ${categories.length > 0 ? `
 
 <!-- ── FOOTER ── -->
 <div style="padding:16px 40px;border-top:1px solid rgba(200,180,200,0.25);display:flex;justify-content:space-between;align-items:center;margin-top:auto;">
-  <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:'DM Sans',Arial,sans-serif;">Exporté le ${today()}</span>
+   <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:'DM Sans',Arial,sans-serif;">${language === 'fr' ? 'Exporté le' : 'Exported on'} ${today(locale)}</span>
   <span style="font-size:8px;color:${GOLD};font-family:'DM Sans',Arial,sans-serif;font-weight:bold;letter-spacing:1.5px;">THE NUPTIAL PLAN</span>
-  <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:'DM Sans',Arial,sans-serif;">${categories.length} catégorie${categories.length !== 1 ? 's' : ''}</span>
+   <span style="font-size:8px;color:rgba(0,0,0,0.30);font-family:'DM Sans',Arial,sans-serif;">${categories.length} ${language === 'fr' ? `catégorie${categories.length !== 1 ? 's' : ''}` : `categor${categories.length === 1 ? 'y' : 'ies'}`}</span>
 </div>
 
 </body>
@@ -338,7 +342,7 @@ export async function exportBudgetPDF(data: BudgetPDFData): Promise<void> {
     if (canShare) {
       await Sharing.shareAsync(destUri, {
         mimeType: 'application/pdf',
-        dialogTitle: 'Partager le budget',
+         dialogTitle: data.language === 'en' ? 'Share budget' : 'Partager le budget',
         UTI: 'com.adobe.pdf',
       });
     } else {
@@ -348,8 +352,8 @@ export async function exportBudgetPDF(data: BudgetPDFData): Promise<void> {
   } catch (err: any) {
     console.error('[budget-pdf] export failed', err);
     Alert.alert(
-      'Erreur d\'export',
-      'Impossible de générer le PDF. Veuillez réessayer.',
+       data.language === 'en' ? 'Export error' : 'Erreur d’export',
+       data.language === 'en' ? 'Unable to generate the PDF. Please try again.' : 'Impossible de générer le PDF. Veuillez réessayer.',
     );
   }
 }

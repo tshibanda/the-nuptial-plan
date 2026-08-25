@@ -57,6 +57,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { LanguageSelector } from '@/components/language-selector';
+import { useLanguage } from '@/lib/i18n';
 
 /* ── Constants ── */
 const TOUR_PAGES = [
@@ -239,6 +241,7 @@ function SubscriptionSection() {
 
 /* ── Main page ── */
 export default function Parametres() {
+  const { language } = useLanguage();
   const { user } = useUser();
   const { signOut } = useClerk();
   const { activeWeddingId, setActiveWeddingId } = useActiveWedding();
@@ -523,6 +526,18 @@ export default function Parametres() {
               Aucun mariage actif. Les informations du dossier apparaîtront ici après la création ou la sélection d’un mariage.
             </div>
           )}
+          <SettingsSection
+            icon={Globe}
+            eyebrow={language === 'fr' ? 'Préférences' : 'Preferences'}
+            title={language === 'fr' ? 'Langue' : 'Language'}
+          >
+            <p className="mb-4 text-[12px] text-muted-foreground">
+              {language === 'fr'
+                ? 'Choisissez la langue de l’interface. Votre choix est enregistré sur cet appareil.'
+                : 'Choose the interface language. Your choice is saved on this device.'}
+            </p>
+            <LanguageSelector />
+          </SettingsSection>
           {/* ── Mariés ── */}
           <SettingsSection icon={User} eyebrow="Identité" title="Les mariés">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

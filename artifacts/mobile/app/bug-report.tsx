@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { useColors } from '@/hooks/useColors';
 import { shadow, accentShadow } from '@/utils/shadow';
+import { useLocalization } from '@/context/LocalizationContext';
 
 const DESTINATION = 'contact@thenuptialplan.com';
 
@@ -17,6 +18,9 @@ export default function BugReportScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useLocalization();
+  const withEmail = (key: 'bug.emailUnavailableMessage' | 'bug.openEmailFailedMessage') =>
+    t(key).replace('{email}', DESTINATION);
   const [description, setDescription] = useState('');
   const [steps, setSteps] = useState('');
   const [contact, setContact] = useState('');
@@ -25,36 +29,36 @@ export default function BugReportScreen() {
 
   const sendReport = async () => {
     if (!description.trim()) {
-      Alert.alert('Description requise', 'Décrivez le problème rencontré avant d’envoyer votre rapport.');
+      Alert.alert(t('bug.descriptionRequired'), t('bug.descriptionRequiredMessage'));
       return;
     }
     setSending(true);
     const body = [
-      'Bonjour,',
+       t('bug.hello'),
       '',
-      'Je souhaite signaler un bug dans The Nuptial Plan.',
+       t('bug.reportIntro'),
       '',
-      'Description du problème :',
+       t('bug.issueDescription'),
       description.trim(),
       '',
-      'Étapes pour reproduire :',
-      steps.trim() || 'Non renseignées',
+       t('bug.steps'),
+       steps.trim() || t('bug.notProvided'),
       '',
-      `Appareil / version : ${device}`,
-      contact.trim() ? `Adresse de contact : ${contact.trim()}` : '',
+       `${t('bug.deviceVersion')}: ${device}`,
+       contact.trim() ? `${t('bug.contactEmail')}: ${contact.trim()}` : '',
       '',
-      'Merci.',
+       t('bug.thanks'),
     ].filter(Boolean).join('\n');
-    const url = `mailto:${DESTINATION}?subject=${encodeURIComponent('Rapport de bug — The Nuptial Plan')}&body=${encodeURIComponent(body)}`;
+    const url = `mailto:${DESTINATION}?subject=${encodeURIComponent(t('bug.subject'))}&body=${encodeURIComponent(body)}`;
     try {
       const supported = await Linking.canOpenURL(url);
       if (!supported) {
-        Alert.alert('E-mail indisponible', `Aucune application e-mail n’est configurée sur cet appareil. Vous pouvez écrire à ${DESTINATION}.`);
+        Alert.alert(t('bug.emailUnavailable'), withEmail('bug.emailUnavailableMessage'));
       } else {
         await Linking.openURL(url);
       }
     } catch {
-      Alert.alert('Impossible d’ouvrir l’e-mail', `Veuillez envoyer votre rapport à ${DESTINATION}.`);
+      Alert.alert(t('bug.openEmailFailed'), withEmail('bug.openEmailFailedMessage'));
     } finally {
       setSending(false);
     }
@@ -73,54 +77,54 @@ export default function BugReportScreen() {
             <View style={[ss.heroGlow, { backgroundColor: colors.gold + '18' }]} pointerEvents="none" />
             <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
             <View style={ss.goldBar} />
-            <TouchableOpacity onPress={() => router.back()} style={ss.backButton} accessibilityLabel="Retour aux paramètres">
+            <TouchableOpacity onPress={() => router.back()} style={ss.backButton} accessibilityLabel={t('bug.backSettings')}>
               <Feather name="arrow-left" size={17} color="#FBF5FB" />
-              <Text style={[ss.backText, { fontFamily: SANS_MEDIUM }]}>Retour aux paramètres</Text>
+              <Text style={[ss.backText, { fontFamily: SANS_MEDIUM }]}>{t('bug.backSettings')}</Text>
             </TouchableOpacity>
             <View style={[ss.iconCircle, accentShadow('md')]}>
               <LinearGradient colors={[colors.gold, colors.goldDim]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={ss.iconGradient}>
                 <Feather name="alert-circle" size={25} color={colors.plumDark} />
               </LinearGradient>
             </View>
-            <Text style={[ss.eyebrow, { color: colors.gold, fontFamily: SANS_MEDIUM }]}>AIDE & SUPPORT</Text>
-            <Text style={[ss.title, { color: '#FBF5FB', fontFamily: SERIF }]}>Signaler un bug</Text>
-            <Text style={[ss.subtitle, { color: '#F7EAF4', fontFamily: SANS }]}>Aidez-nous à améliorer votre expérience. Décrivez ce qui s’est passé et nous vous répondrons dès que possible.</Text>
+            <Text style={[ss.eyebrow, { color: colors.gold, fontFamily: SANS_MEDIUM }]}>{t('bug.support')}</Text>
+            <Text style={[ss.title, { color: '#FBF5FB', fontFamily: SERIF }]}>{t('bug.title')}</Text>
+            <Text style={[ss.subtitle, { color: '#F7EAF4', fontFamily: SANS }]}>{t('bug.subtitle')}</Text>
           </LinearGradient>
 
           <View style={ss.content}>
             <View style={[ss.formCard, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[ss.infoCard, { backgroundColor: colors.goldLight, borderColor: colors.gold + '45' }]}>
               <Feather name="mail" size={15} color={colors.goldDim} />
-              <Text style={[ss.infoText, { color: colors.foreground, fontFamily: SANS }]}>Votre rapport sera préparé dans un e-mail adressé à <Text style={{ color: colors.foreground, fontFamily: SANS_SEMIBOLD }}>{DESTINATION}</Text>.</Text>
+              <Text style={[ss.infoText, { color: colors.foreground, fontFamily: SANS }]}>{t('bug.info')}<Text style={{ color: colors.foreground, fontFamily: SANS_SEMIBOLD }}>{DESTINATION}</Text>.</Text>
             </View>
 
-            <Text style={[ss.label, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>DESCRIPTION DU PROBLÈME *</Text>
+             <Text style={[ss.label, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>{t('bug.issueLabel')}</Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
-              placeholder="Que s’est-il passé ?"
+               placeholder={t('bug.issuePlaceholder')}
               placeholderTextColor={colors.mutedForeground + 'AA'}
               multiline
               textAlignVertical="top"
               style={[ss.textArea, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border, fontFamily: SANS }]}
             />
 
-            <Text style={[ss.label, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>ÉTAPES POUR REPRODUIRE</Text>
+             <Text style={[ss.label, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>{t('bug.stepsLabel')}</Text>
             <TextInput
               value={steps}
               onChangeText={setSteps}
-              placeholder="1. Ouvrir…&#10;2. Appuyer sur…&#10;3. Observer…"
+               placeholder={t('bug.stepsPlaceholder')}
               placeholderTextColor={colors.mutedForeground + 'AA'}
               multiline
               textAlignVertical="top"
               style={[ss.textArea, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border, fontFamily: SANS }]}
             />
 
-            <Text style={[ss.label, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>VOTRE E-MAIL (FACULTATIF)</Text>
+             <Text style={[ss.label, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>{t('bug.emailLabel')}</Text>
             <TextInput
               value={contact}
               onChangeText={setContact}
-              placeholder="Pour recevoir une réponse"
+               placeholder={t('bug.emailPlaceholder')}
               placeholderTextColor={colors.mutedForeground + 'AA'}
               autoCapitalize="none"
               keyboardType="email-address"
@@ -129,7 +133,7 @@ export default function BugReportScreen() {
 
             <View style={[ss.deviceRow, { borderColor: colors.border }]}>
               <Feather name="smartphone" size={14} color={colors.mutedForeground} />
-              <Text style={[ss.deviceText, { color: colors.mutedForeground, fontFamily: SANS }]}>Informations techniques jointes : {device}</Text>
+                <Text style={[ss.deviceText, { color: colors.mutedForeground, fontFamily: SANS }]}>{t('bug.technicalInfo')} {device}</Text>
             </View>
 
             <TouchableOpacity
@@ -138,7 +142,7 @@ export default function BugReportScreen() {
               activeOpacity={0.82}
               style={[ss.submit, accentShadow('md'), { backgroundColor: colors.plum, opacity: sending ? 0.65 : 1 }]}
             >
-              {sending ? <ActivityIndicator color="#FBF5FB" /> : <><Feather name="send" size={16} color="#FBF5FB" /><Text style={[ss.submitText, { fontFamily: SANS_SEMIBOLD }]}>Préparer l’e-mail</Text></>}
+               {sending ? <ActivityIndicator color="#FBF5FB" /> : <><Feather name="send" size={16} color="#FBF5FB" /><Text style={[ss.submitText, { fontFamily: SANS_SEMIBOLD }]}>{t('bug.prepareEmail')}</Text></>}
             </TouchableOpacity>
             </View>
           </View>

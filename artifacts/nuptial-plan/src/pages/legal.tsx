@@ -1,6 +1,7 @@
 import { ArrowLeft, ShieldCheck, ScrollText } from 'lucide-react';
 import { Link } from 'wouter';
 import { LegalFooter } from '@/components/legal-footer';
+import { useLanguage } from '@/lib/i18n';
 
 type LegalDocument = 'privacy' | 'policy';
 
@@ -133,7 +134,36 @@ const documents: Record<LegalDocument, {
 };
 
 export function LegalPage({ document }: { document: LegalDocument }) {
-  const content = documents[document];
+  const { language, formatDate } = useLanguage();
+  const content = language === 'fr' ? documents[document] : {
+    privacy: {
+      eyebrow: 'Your data, handled with care', title: 'Privacy policy', icon: ShieldCheck,
+      intro: 'This policy explains which data The Nuptial Plan processes, why it is used, and what your rights are.',
+      sections: [
+        { title: '1. Who are we?', body: ['The Nuptial Plan is a wedding-planning tool for planners and the teams supporting them. This policy applies to data processed when you use the application, website, and related services.', 'The publisher must complete its name, address, and contact details before the service is finally published.'] },
+        { title: '2. Data we may process', body: ['We may process information needed to create and manage your account: name, email address, profile photo, account identifier, and sign-in information managed by our authentication provider.', 'We may also process the information entered in your wedding files: the couple’s names, wedding date and venue, guests, suppliers, contracts, payments, events, notes, and uploaded documents.', 'Technical data needed to operate and secure the service may also be recorded, such as connection logs, device type, browser, and diagnostic information.'] },
+        { title: '3. Why do we use your data?', body: ['Your data is used to provide The Nuptial Plan features, save your changes, display dashboards, secure your account, answer your requests, and improve service reliability.', 'When you use an assistance or content-generation feature, only the information strictly necessary for that feature may be sent to our technical provider. We do not sell your personal data.'] },
+        { title: '4. Hosting, security, and retention', body: ['We apply reasonable technical and organisational measures to protect data against unauthorised access, loss, alteration, or disclosure. Access to files is limited to the planner who owns them, in accordance with the application’s security rules.', 'Data is kept for the time needed to provide the service, manage the account, and meet legal obligations. When you request deletion of a file or your account, data is deleted or anonymised within applicable time limits, subject to retention obligations.'] },
+        { title: '5. Your rights', body: ['Depending on your place of residence and applicable law, you may request access to, rectification, deletion, restriction, or portability of your data, or object to certain processing.', 'To exercise your rights, contact the publisher at the data-protection email address, which must be added here before publication. You may also lodge a complaint with the competent data-protection authority.'] },
+        { title: '6. Cookies and similar technologies', body: ['The site may use cookies or similar technologies necessary for authentication, security, session maintenance, and operating preferences. Analytics or marketing tools may only be enabled with the consents required by applicable law.'] },
+        { title: '7. Updating this policy', body: ['We may update this policy to reflect changes to the service or regulations. The date of the latest update is shown below. We will notify you appropriately of any significant change.'] },
+      ],
+    },
+    policy: {
+      eyebrow: 'The service framework', title: 'Terms of use', icon: ScrollText,
+      intro: 'These terms define the rules for accessing and using The Nuptial Plan.',
+      sections: [
+        { title: '1. Purpose and acceptance', body: ['The Nuptial Plan provides a digital workspace to prepare, organise, and track a wedding project. By creating an account or using the service, you acknowledge that you have read and accepted these terms.', 'The publisher must complete its legal information, offer prices, and contact arrangements before these terms are finally published.'] },
+        { title: '2. Account and access', body: ['You must provide accurate information and keep your access credentials confidential. You are responsible for activity from your account and must promptly notify us of any unauthorised use.', 'Access may be temporarily suspended for security, maintenance, breach of these terms, or where required by law.'] },
+        { title: '3. Permitted use', body: ['You may use the service to manage wedding projects and collaborate with people you authorise. You must have the rights needed for information, images, and documents you upload.', 'You may not disrupt the service, bypass security measures, access another user’s data, use the service unlawfully, or upload content that infringes third-party rights.'] },
+        { title: '4. Your content', body: ['You retain rights to content you enter or upload. You grant us only the permissions needed to host, back up, display, and process it in order to provide requested features.', 'You are responsible for the legality, accuracy, and relevance of content added to your account, including information about guests, suppliers, and other people.'] },
+        { title: '5. Availability and service limits', body: ['We aim to keep The Nuptial Plan available and reliable, but the service may be interrupted for maintenance, updates, technical incidents, or events beyond our control.', 'Calendars, budgets, recommendations, exports, and other displayed information are organisational aids. They do not replace professional advice, a signed contract, or human review before an important decision.'] },
+        { title: '6. Intellectual property', body: ['The Nuptial Plan, its visual identity, software, text, interfaces, and graphic elements are protected by applicable rights. Unless authorised in writing, you may not copy, resell, adapt, or exploit them outside normal use of the service.'] },
+        { title: '7. Termination and deletion', body: ['You may stop using the service and request deletion of your account through available features or by contacting the publisher. We may terminate or suspend an account for a serious or repeated breach of these terms.', 'Termination does not automatically remove obligations that, by their nature, must continue after use of the service ends.'] },
+        { title: '8. Governing law and contact', body: ['These terms are governed by the law to be specified by the publisher, subject to mandatory provisions applicable where the user resides.', 'Questions about these terms should be sent to the publisher’s legal contact, to be completed before publication.'] },
+      ],
+    },
+  }[document];
   const Icon = content.icon;
 
   return (
@@ -145,7 +175,7 @@ export function LegalPage({ document }: { document: LegalDocument }) {
             <span className="hidden font-serif text-xl sm:block">The Nuptial Plan</span>
           </Link>
           <Link href="/" className="inline-flex items-center gap-2 text-xs font-medium text-[#5D2D5D] hover:text-[#3C1A3C]">
-            <ArrowLeft size={14} /> Retour à l’accueil
+            <ArrowLeft size={14} /> {language === 'fr' ? 'Retour à l’accueil' : 'Back to home'}
           </Link>
         </div>
       </header>
@@ -158,7 +188,7 @@ export function LegalPage({ document }: { document: LegalDocument }) {
           <p className="eyebrow mb-2 text-[#A8893E]">{content.eyebrow}</p>
           <h1 className="font-serif text-4xl leading-tight text-[#3C1A3C] sm:text-5xl">{content.title}</h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#716471]">{content.intro}</p>
-          <p className="mt-3 text-[11px] text-[#9B7E9B]">Dernière mise à jour : 8 août 2026</p>
+           <p className="mt-3 text-[11px] text-[#9B7E9B]">{language === 'fr' ? 'Dernière mise à jour' : 'Last updated'}: {formatDate('2026-08-08', { dateStyle: 'long' })}</p>
         </div>
 
         <article className="rounded-3xl border border-[#D7CDD7]/70 bg-[#FDF9FD] p-6 shadow-[0_12px_40px_rgba(93,45,93,0.08)] sm:p-10">

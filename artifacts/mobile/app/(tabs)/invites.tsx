@@ -30,6 +30,7 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { useSubscription } from '@/lib/subscription';
+import { useLocalization } from '@/context/LocalizationContext';
 
 // ── Excel parsing ──────────────────────────────────────────────────────────────
 type RsvpStatus = 'confirmed' | 'pending' | 'declined';
@@ -105,6 +106,27 @@ const AVATAR_COLORS = ['#ebe2d4', '#dce4e5', '#e2dceb', '#dce8df', '#f0e2cb'];
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function InvitesScreen() {
+  const { language, locale } = useLocalization();
+  const tr = language === 'fr' ? {
+    gate: 'la gestion des invités', eye: 'LA CÉLÉBRATION', title: 'Gestion des invités', import: 'Importer', add: 'Ajouter',
+    guests: 'Invités', tables: 'Plan de table', total: 'Total', confirmed: 'Confirmés', pending: 'En attente', declined: 'Déclinés',
+    noGuests: 'Aucun invité', noTableBody: 'Ajoutez des invités pour commencer votre plan de table.', noGuestsBody: "Appuyez sur « Importer » pour charger un fichier Excel, ou ajoutez des invités depuis l'application web.",
+    noTable: 'Sans table', table: 'Table', guest: 'invité', tableLabel: 'NUMÉRO OU NOM DE TABLE', tablePlaceholder: 'Ex. 5 ou Table des mariés', tableHint: 'Laissez vide pour retirer l’invité de sa table.', saveTable: 'Enregistrer la table',
+    sheet: 'INVITÉS', addTitle: 'Ajouter un invité', fields: ['Nom complet *', 'Adresse e-mail', 'Table', 'Régime alimentaire'], rsvp: 'STATUT RSVP', notes: 'Notes', saveGuest: 'Enregistrer l’invité',
+    error: 'Erreur', tableError: 'Impossible de modifier la table de cet invité.', nameRequired: 'Nom requis', nameBody: 'Saisissez le nom de l’invité pour continuer.', addError: 'Impossible d’ajouter cet invité.',
+    emptyFile: 'Fichier vide', emptyFileBody: 'Aucun invité trouvé. Vérifiez que votre fichier contient une colonne « Nom ».', readError: "Impossible de lire ce fichier. Vérifiez qu'il s'agit d'un fichier Excel (.xlsx) ou CSV.",
+    imported: 'Import réussi', importFailed: "L'import a échoué. Veuillez réessayer.", importTitle: 'Importer des invités',
+  } : {
+    gate: 'guest management', eye: 'THE CELEBRATION', title: 'Guest management', import: 'Import', add: 'Add',
+    guests: 'Guests', tables: 'Seating plan', total: 'Total', confirmed: 'Confirmed', pending: 'Pending', declined: 'Declined',
+    noGuests: 'No guests', noTableBody: 'Add guests to start your seating plan.', noGuestsBody: 'Tap Import to upload an Excel file, or add guests from the web app.',
+    noTable: 'Unassigned', table: 'Table', guest: 'guest', tableLabel: 'TABLE NUMBER OR NAME', tablePlaceholder: 'E.g. 5 or Head table', tableHint: 'Leave blank to remove the guest from their table.', saveTable: 'Save table',
+    sheet: 'GUESTS', addTitle: 'Add a guest', fields: ['Full name *', 'Email address', 'Table', 'Dietary requirements'], rsvp: 'RSVP STATUS', notes: 'Notes', saveGuest: 'Save guest',
+    error: 'Error', tableError: 'Unable to update this guest’s table.', nameRequired: 'Name required', nameBody: 'Enter the guest name to continue.', addError: 'Unable to add this guest.',
+    emptyFile: 'Empty file', emptyFileBody: 'No guests found. Check that your file contains a Name column.', readError: 'Unable to read this file. Check that it is an Excel (.xlsx) or CSV file.',
+    imported: 'Import successful', importFailed: 'Import failed. Please try again.', importTitle: 'Import guests',
+  };
+  const rsvpLabels = { confirmed: tr.confirmed, pending: tr.pending, declined: tr.declined };
   const { isActive: isPremium } = useSubscription();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -141,13 +163,13 @@ export default function InvitesScreen() {
   const filtered = (guests ?? []).filter((g) => filter === 'all' || g.rsvpStatus === filter);
   const tableGroups = Array.from(
     (guests ?? []).reduce((groups, guest) => {
-      const key = guest.tableNumber?.trim() || 'Sans table';
+      const key = guest.tableNumber?.trim() || tr.noTable;
       const current = groups.get(key) ?? [];
       current.push(guest);
       groups.set(key, current);
       return groups;
     }, new Map<string, Guest[]>()).entries(),
-  ).sort(([a], [b]) => a === 'Sans table' ? 1 : b === 'Sans table' ? -1 : a.localeCompare(b, 'fr', { numeric: true }));
+  ).sort(([a], [b]) => a === tr.noTable ? 1 : b === tr.noTable ? -1 : a.localeCompare(b, locale, { numeric: true }));
 
   const handleGuestPress = (guest: Guest) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -169,14 +191,14 @@ export default function InvitesScreen() {
           setTableGuest(null);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         },
-        onError: () => Alert.alert('Erreur', 'Impossible de modifier la table de cet invité.'),
+        onError: () => Alert.alert(tr.error, tr.tableError),
       },
     );
   };
 
   const handleCreateGuest = () => {
     if (!wId || !newGuest.name.trim()) {
-      Alert.alert('Nom requis', 'Saisissez le nom de l’invité pour continuer.');
+      Alert.alert(tr.nameRequired, tr.nameBody);
       return;
     }
     createGuestMutation.mutate(
@@ -199,7 +221,7 @@ export default function InvitesScreen() {
           setAddVisible(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         },
-        onError: () => Alert.alert('Erreur', 'Impossible d’ajouter cet invité.'),
+        onError: () => Alert.alert(tr.error, tr.addError),
       },
     );
   };
@@ -227,7 +249,7 @@ export default function InvitesScreen() {
       const { guests: parsed, skipped } = parseSheetRows(data);
 
       if (!parsed.length) {
-        Alert.alert('Fichier vide', "Aucun invité trouvé. Vérifiez que votre fichier contient une colonne « Nom ».");
+        Alert.alert(tr.emptyFile, tr.emptyFileBody);
         return;
       }
 
@@ -235,7 +257,7 @@ export default function InvitesScreen() {
       setImportSkipped(skipped);
       setImportModalVisible(true);
     } catch {
-      Alert.alert('Erreur', 'Impossible de lire ce fichier. Vérifiez qu\'il s\'agit d\'un fichier Excel (.xlsx) ou CSV.');
+      Alert.alert(tr.error, tr.readError);
     }
   };
 
@@ -253,19 +275,19 @@ export default function InvitesScreen() {
           setImporting(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           Alert.alert(
-            'Import réussi',
+             tr.imported,
             `${result.created} invité${result.created > 1 ? 's' : ''} importé${result.created > 1 ? 's' : ''}${result.skipped > 0 ? `\n${result.skipped} ligne${result.skipped > 1 ? 's' : ''} ignorée${result.skipped > 1 ? 's' : ''} (nom manquant)` : ''}`,
           );
         },
         onError: () => {
           setImporting(false);
-          Alert.alert('Erreur', "L'import a échoué. Veuillez réessayer.");
+           Alert.alert(tr.error, tr.importFailed);
         },
       }
     );
   };
 
-  if (!isPremium) return <PremiumPageGate featureLabel="la gestion des invités" />;
+  if (!isPremium) return <PremiumPageGate featureLabel={tr.gate} />;
   return (
     <>
       <FlatList
@@ -292,20 +314,20 @@ export default function InvitesScreen() {
 
               <View style={ss.heroTop}>
                 <View style={ss.heroTitleWrap}>
-                  <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>LA CÉLÉBRATION</Text>
+                  <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>{tr.eye}</Text>
                   <View style={ss.titleRow}>
-                    <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]} numberOfLines={2}>Gestion des invités</Text>
+                     <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]} numberOfLines={2}>{tr.title}</Text>
                     <PremiumBadge />
                   </View>
                 </View>
                 <View style={ss.heroActions}>
                   <TouchableOpacity onPress={handlePickFile} activeOpacity={0.75} style={ss.importBtn} accessibilityLabel="Importer depuis Excel">
                     <Feather name="upload" size={15} color="#C8A96E" />
-                    <Text style={[ss.importBtnText, { fontFamily: SANS_SEMIBOLD }]}>Importer</Text>
+                     <Text style={[ss.importBtnText, { fontFamily: SANS_SEMIBOLD }]}>{tr.import}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setAddVisible(true)} activeOpacity={0.75} style={ss.addGuestBtn} accessibilityLabel="Ajouter un invité">
                     <Feather name="plus" size={16} color="#FBF5FB" />
-                    <Text style={[ss.addGuestText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                     <Text style={[ss.addGuestText, { fontFamily: SANS_SEMIBOLD }]}>{tr.add}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -315,11 +337,11 @@ export default function InvitesScreen() {
               <View style={[ss.viewTabs, { backgroundColor: colors.muted, borderColor: colors.border }]}>
                 <TouchableOpacity onPress={() => setViewMode('guests')} style={[ss.viewTab, viewMode === 'guests' && { backgroundColor: colors.card, shadowColor: colors.plum, shadowOpacity: 0.12, shadowRadius: 5, elevation: 2 }]}>
                   <Feather name="users" size={14} color={viewMode === 'guests' ? colors.plum : colors.mutedForeground} />
-                  <Text style={[ss.viewTabText, { fontFamily: SANS_SEMIBOLD, color: viewMode === 'guests' ? colors.plum : colors.mutedForeground }]}>Invités</Text>
+                   <Text style={[ss.viewTabText, { fontFamily: SANS_SEMIBOLD, color: viewMode === 'guests' ? colors.plum : colors.mutedForeground }]}>{tr.guests}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setViewMode('tables')} style={[ss.viewTab, viewMode === 'tables' && { backgroundColor: colors.card, shadowColor: colors.plum, shadowOpacity: 0.12, shadowRadius: 5, elevation: 2 }]}>
                   <Feather name="grid" size={14} color={viewMode === 'tables' ? colors.plum : colors.mutedForeground} />
-                  <Text style={[ss.viewTabText, { fontFamily: SANS_SEMIBOLD, color: viewMode === 'tables' ? colors.plum : colors.mutedForeground }]}>Plan de table</Text>
+                   <Text style={[ss.viewTabText, { fontFamily: SANS_SEMIBOLD, color: viewMode === 'tables' ? colors.plum : colors.mutedForeground }]}>{tr.tables}</Text>
                 </TouchableOpacity>
               </View>
               {/* Stats bar */}
@@ -327,13 +349,13 @@ export default function InvitesScreen() {
                 <View style={[ss.statsWrap, shadow('md')]}>
                   <View style={[ss.statsBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.80)' }]} />
-                    <StatBlock value={stats.total} label="Total" color={colors.foreground} colors={colors} />
+                     <StatBlock value={stats.total} label={tr.total} color={colors.foreground} colors={colors} />
                     <View style={[ss.statDivider, { backgroundColor: colors.border }]} />
-                    <StatBlock value={stats.confirmed} label="Confirmés" color={colors.success} colors={colors} />
+                     <StatBlock value={stats.confirmed} label={tr.confirmed} color={colors.success} colors={colors} />
                     <View style={[ss.statDivider, { backgroundColor: colors.border }]} />
-                    <StatBlock value={stats.pending} label="En attente" color={colors.warning} colors={colors} />
+                     <StatBlock value={stats.pending} label={tr.pending} color={colors.warning} colors={colors} />
                     <View style={[ss.statDivider, { backgroundColor: colors.border }]} />
-                    <StatBlock value={stats.declined} label="Déclinés" color={colors.mutedForeground} colors={colors} />
+                     <StatBlock value={stats.declined} label={tr.declined} color={colors.mutedForeground} colors={colors} />
                   </View>
                 </View>
               )}
@@ -359,24 +381,24 @@ export default function InvitesScreen() {
                   {tableGroups.length === 0 ? (
                     <View style={[ss.noTables, { backgroundColor: colors.card, borderColor: colors.border }]}>
                       <Feather name="grid" size={22} color={colors.goldDim} />
-                      <Text style={[ss.noTablesTitle, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>Aucun invité</Text>
-                      <Text style={[ss.noTablesText, { fontFamily: SANS, color: colors.mutedForeground }]}>Ajoutez des invités pour commencer votre plan de table.</Text>
+                       <Text style={[ss.noTablesTitle, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{tr.noGuests}</Text>
+                       <Text style={[ss.noTablesText, { fontFamily: SANS, color: colors.mutedForeground }]}>{tr.noTableBody}</Text>
                     </View>
                   ) : tableGroups.map(([table, tableGuests]) => (
                     <View key={table} style={[ss.tableCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                       <View style={ss.tableHeading}>
-                        <View style={[ss.tableIcon, { backgroundColor: table === 'Sans table' ? colors.muted : colors.plum + '18' }]}>
-                          <Feather name={table === 'Sans table' ? 'help-circle' : 'grid'} size={16} color={table === 'Sans table' ? colors.mutedForeground : colors.plum} />
+                         <View style={[ss.tableIcon, { backgroundColor: table === tr.noTable ? colors.muted : colors.plum + '18' }]}>
+                           <Feather name={table === tr.noTable ? 'help-circle' : 'grid'} size={16} color={table === tr.noTable ? colors.mutedForeground : colors.plum} />
                         </View>
                         <View style={ss.tableHeadingText}>
-                          <Text style={[ss.tableName, { fontFamily: SERIF, color: colors.foreground }]}>{table === 'Sans table' ? table : `Table ${table}`}</Text>
-                          <Text style={[ss.tableCount, { fontFamily: SANS, color: colors.mutedForeground }]}>{tableGuests.length} invité{tableGuests.length > 1 ? 's' : ''}</Text>
+                           <Text style={[ss.tableName, { fontFamily: SERIF, color: colors.foreground }]}>{table === tr.noTable ? table : `${tr.table} ${table}`}</Text>
+                           <Text style={[ss.tableCount, { fontFamily: SANS, color: colors.mutedForeground }]}>{tableGuests.length} {tr.guest}{tableGuests.length > 1 ? 's' : ''}</Text>
                         </View>
                       </View>
                       {tableGuests.map((guest) => (
                         <TouchableOpacity key={guest.id} onPress={() => openTableEditor(guest)} style={[ss.tableGuest, { borderTopColor: colors.border }]} activeOpacity={0.75}>
                           <Text style={[ss.tableGuestName, { fontFamily: SANS_MEDIUM, color: colors.foreground }]} numberOfLines={1}>{guest.name}</Text>
-                          <StatusBadge label={RSVP_LABEL[guest.rsvpStatus]} tone={rsvpLabel(guest.rsvpStatus).tone} />
+                           <StatusBadge label={rsvpLabels[guest.rsvpStatus as keyof typeof rsvpLabels]} tone={rsvpLabel(guest.rsvpStatus).tone} />
                           <Feather name="edit-2" size={13} color={colors.mutedForeground} />
                         </TouchableOpacity>
                       ))}
@@ -393,7 +415,7 @@ export default function InvitesScreen() {
             <View style={ss.loading}><ActivityIndicator color={colors.accent} /></View>
           ) : (
             <View style={ss.emptyWrap}>
-              <EmptyState icon="users" title="Aucun invité" subtitle="Appuyez sur « Importer » pour charger un fichier Excel, ou ajoutez des invités depuis l'application web." />
+               <EmptyState icon="users" title={tr.noGuests} subtitle={tr.noGuestsBody} />
             </View>
           )
           )

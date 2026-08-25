@@ -19,6 +19,7 @@ import { useWedding } from '@/context/WeddingContext';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalization } from '@/context/LocalizationContext';
 
 type Tone = 'gold' | 'sage' | 'rose';
 type Milestone = {
@@ -39,8 +40,8 @@ function shiftDate(date: string, months: number, days = 0) {
   return value;
 }
 
-function formatDate(date: Date) {
-  return date.toLocaleDateString('fr-FR', {
+function formatDate(date: Date, locale: string) {
+  return date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -57,12 +58,16 @@ function MilestoneRow({
   last,
   colors,
   today,
+  copy,
+  locale,
 }: {
   milestone: Milestone;
   index: number;
   last: boolean;
   colors: ReturnType<typeof useColors>;
   today: number;
+  copy: ReturnType<typeof getCopy>;
+  locale: string;
 }) {
   const isPast = milestone.date.getTime() < today;
   const toneColor = milestone.tone === 'gold'
@@ -112,7 +117,7 @@ function MilestoneRow({
             {milestone.title}
           </Text>
           <Text style={[styles.milestoneDate, { color: toneColor, fontFamily: SANS_SEMIBOLD }]}>
-            {formatDate(milestone.date)}
+            {formatDate(milestone.date, locale)}
           </Text>
         </View>
         <Text style={[styles.milestoneDetail, { color: colors.mutedForeground, fontFamily: SANS }]}>
@@ -125,7 +130,7 @@ function MilestoneRow({
             color={isPast ? colors.sage : colors.mutedForeground}
           />
           <Text style={[styles.statusText, { color: isPast ? colors.sage : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>
-            {isPast ? 'Échéance passée' : index === 0 ? 'À anticiper' : 'À venir'}
+            {isPast ? copy.pastDue : index === 0 ? copy.anticipate : copy.upcoming}
           </Text>
         </View>
       </View>
@@ -134,6 +139,8 @@ function MilestoneRow({
 }
 
 export default function RetroplanningScreen() {
+  const { language, locale } = useLocalization();
+  const copy = getCopy(language);
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
@@ -159,17 +166,17 @@ export default function RetroplanningScreen() {
 
   const milestones = useMemo<Milestone[]>(() => {
     if (!wedding?.weddingDate) return [];
-    const venue = wedding.venue || 'Votre lieu de réception';
-    const catererName = caterer?.name || 'Traiteur à définir';
+    const venue = wedding.venue || copy.venueTbd;
+    const catererName = caterer?.name || copy.catererTbd;
     return [
-      { title: 'Valider le lieu de réception', detail: venue, date: shiftDate(wedding.weddingDate, -12), tone: 'gold' },
-      { title: 'Réserver le traiteur', detail: catererName, date: shiftDate(wedding.weddingDate, -10), tone: 'rose' },
-      { title: 'Signer les contrats principaux', detail: 'Photographe, DJ, fleuriste et traiteur', date: shiftDate(wedding.weddingDate, -8), tone: 'sage' },
-      { title: 'Finaliser le menu et les dégustations', detail: catererName, date: shiftDate(wedding.weddingDate, -5), tone: 'gold' },
-      { title: 'Confirmer le planning avec les prestataires', detail: venue, date: shiftDate(wedding.weddingDate, -2), tone: 'rose' },
-      { title: 'Jour J', detail: `${wedding.names} · ${venue}`, date: new Date(`${wedding.weddingDate.slice(0, 10)}T12:00:00`), tone: 'sage' },
+      { title: copy.validateVenue, detail: venue, date: shiftDate(wedding.weddingDate, -12), tone: 'gold' },
+      { title: copy.bookCaterer, detail: catererName, date: shiftDate(wedding.weddingDate, -10), tone: 'rose' },
+      { title: copy.signContracts, detail: copy.contractDetails, date: shiftDate(wedding.weddingDate, -8), tone: 'sage' },
+      { title: copy.finalizeMenu, detail: catererName, date: shiftDate(wedding.weddingDate, -5), tone: 'gold' },
+      { title: copy.confirmSchedule, detail: venue, date: shiftDate(wedding.weddingDate, -2), tone: 'rose' },
+      { title: copy.weddingDay, detail: `${wedding.names} · ${venue}`, date: new Date(`${wedding.weddingDate.slice(0, 10)}T12:00:00`), tone: 'sage' },
     ];
-  }, [caterer, wedding]);
+  }, [caterer, copy, wedding]);
 
   const today = startOfDay(new Date());
   const completedCount = milestones.filter((milestone) => milestone.date.getTime() < today).length;
@@ -189,10 +196,10 @@ export default function RetroplanningScreen() {
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <Feather name="calendar" size={28} color={colors.goldDim} />
         <Text style={[styles.emptyTitle, { color: colors.foreground, fontFamily: SERIF }]}>
-          Sélectionnez un mariage
+          {copy.selectWedding}
         </Text>
         <Text style={[styles.emptyText, { color: colors.mutedForeground, fontFamily: SANS }]}>
-          Votre rétro-planning sera généré à partir de la date de votre mariage.
+          {copy.selectWeddingBody}
         </Text>
       </View>
     );
@@ -212,18 +219,18 @@ export default function RetroplanningScreen() {
       >
         <View style={styles.goldBar} />
         <Text style={[styles.eyebrow, { color: '#C8A96E', fontFamily: SANS_MEDIUM }]}>
-          ORGANISATION SEREINE
+          {copy.eyebrow}
         </Text>
         <Text style={[styles.title, { color: '#FBF5FB', fontFamily: SERIF }]}>
-          Rétro-planning
+          {copy.title}
         </Text>
         <Text style={[styles.heroBody, { color: '#F7EAF4', fontFamily: SANS }]}>
-          Un calendrier vivant pour {wedding.names}. Les échéances se recalculent automatiquement lorsque la date, le lieu ou le traiteur évolue.
+          {copy.heroBody(wedding.names)}
         </Text>
         <View style={styles.infoChips}>
-          <InfoChip icon="calendar" value={formatDate(new Date(`${wedding.weddingDate.slice(0, 10)}T12:00:00`))} colors={colors} />
-          <InfoChip icon="map-pin" value={wedding.venue || 'Lieu à définir'} colors={colors} />
-          <InfoChip icon="coffee" value={caterer?.name || 'Traiteur à définir'} colors={colors} />
+          <InfoChip icon="calendar" value={formatDate(new Date(`${wedding.weddingDate.slice(0, 10)}T12:00:00`), locale)} colors={colors} />
+          <InfoChip icon="map-pin" value={wedding.venue || copy.venueTbd} colors={colors} />
+          <InfoChip icon="coffee" value={caterer?.name || copy.catererTbd} colors={colors} />
         </View>
       </LinearGradient>
 
@@ -231,10 +238,10 @@ export default function RetroplanningScreen() {
         <View style={styles.progressHeader}>
           <View>
             <Text style={[styles.sectionEyebrow, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>
-              VOTRE AVANCEMENT
+              {copy.progress}
             </Text>
             <Text style={[styles.progressTitle, { color: colors.foreground, fontFamily: SERIF }]}>
-              {completedCount} étape{completedCount > 1 ? 's' : ''} sur {milestones.length}
+              {copy.stepCount(completedCount, milestones.length)}
             </Text>
           </View>
           <Text style={[styles.progressValue, { color: colors.plum, fontFamily: SERIF }]}>{progress}%</Text>
@@ -243,13 +250,13 @@ export default function RetroplanningScreen() {
           <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: colors.plum }]} />
         </View>
         <Text style={[styles.progressHint, { color: colors.mutedForeground, fontFamily: SANS }]}>
-          Les jalons passés sont automatiquement identifiés selon la date du jour.
+          {copy.progressHint}
         </Text>
       </View>
 
       <View style={styles.timeline}>
         <Text style={[styles.timelineHeading, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>
-          LES GRANDES ÉTAPES
+          {copy.mainSteps}
         </Text>
         {milestones.map((milestone, index) => (
           <MilestoneRow
@@ -259,11 +266,27 @@ export default function RetroplanningScreen() {
             last={index === milestones.length - 1}
             colors={colors}
             today={today}
+            copy={copy}
+            locale={locale}
           />
         ))}
       </View>
     </ScrollView>
   );
+}
+
+function getCopy(language: 'fr' | 'en') {
+  return language === 'fr' ? {
+    pastDue: 'Échéance passée', anticipate: 'À anticiper', upcoming: 'À venir', venueTbd: 'Lieu à définir', catererTbd: 'Traiteur à définir',
+    validateVenue: 'Valider le lieu de réception', bookCaterer: 'Réserver le traiteur', signContracts: 'Signer les contrats principaux', contractDetails: 'Photographe, DJ, fleuriste et traiteur', finalizeMenu: 'Finaliser le menu et les dégustations', confirmSchedule: 'Confirmer le planning avec les prestataires', weddingDay: 'Jour J',
+    selectWedding: 'Sélectionnez un mariage', selectWeddingBody: 'Votre rétro-planning sera généré à partir de la date de votre mariage.', eyebrow: 'ORGANISATION SEREINE', title: 'Rétro-planning', heroBody: (names: string) => `Un calendrier vivant pour ${names}. Les échéances se recalculent automatiquement lorsque la date, le lieu ou le traiteur évolue.`,
+    progress: 'VOTRE AVANCEMENT', stepCount: (count: number, total: number) => `${count} étape${count > 1 ? 's' : ''} sur ${total}`, progressHint: 'Les jalons passés sont automatiquement identifiés selon la date du jour.', mainSteps: 'LES GRANDES ÉTAPES',
+  } : {
+    pastDue: 'Past due', anticipate: 'Plan ahead', upcoming: 'Upcoming', venueTbd: 'Venue to be confirmed', catererTbd: 'Caterer to be confirmed',
+    validateVenue: 'Confirm the reception venue', bookCaterer: 'Book the caterer', signContracts: 'Sign the main contracts', contractDetails: 'Photographer, DJ, florist and caterer', finalizeMenu: 'Finalize the menu and tastings', confirmSchedule: 'Confirm the schedule with vendors', weddingDay: 'Wedding day',
+    selectWedding: 'Select a wedding', selectWeddingBody: 'Your timeline will be generated from your wedding date.', eyebrow: 'STRESS-FREE PLANNING', title: 'Timeline', heroBody: (names: string) => `A living calendar for ${names}. Deadlines update automatically when the date, venue or caterer changes.`,
+    progress: 'YOUR PROGRESS', stepCount: (count: number, total: number) => `${count} step${count === 1 ? '' : 's'} of ${total}`, progressHint: 'Past milestones are identified automatically based on today’s date.', mainSteps: 'KEY MILESTONES',
+  };
 }
 
 function InfoChip({

@@ -22,6 +22,7 @@ import { PaywallModal } from '@/components/PaywallModal';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
+import { useLocalization } from '@/context/LocalizationContext';
 
 const TOUR_STEPS = [
   {
@@ -56,6 +57,24 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export default function ContratsScreen() {
+  const { language, locale } = useLocalization();
+  const tr = language === 'fr' ? {
+    title: 'Contrats', add: 'Ajouter', search: 'Rechercher un prestataire…', noResults: 'Aucun résultat', noContracts: 'Aucun contrat',
+    editSearch: 'Modifiez votre recherche.', empty: 'Appuyez sur Ajouter pour créer votre premier contrat.', signed: 'Signé le', noDate: 'Date non renseignée',
+    gate: 'vos contrats', feature: 'Contrats prestataires', eye: 'THE NUPTIAL PLAN', documents: 'DOCUMENTS', addTitle: 'Ajouter un contrat',
+    status: 'STATUT', notes: 'Notes', required: 'Prestataire requis', requiredBody: 'Saisissez le nom du prestataire.',
+    error: 'Erreur', errorBody: 'Impossible d’ajouter ce contrat.', saving: 'Enregistrement…', save: 'Enregistrer le contrat',
+    fields: ['Nom du prestataire *', 'Montant total (€)', 'Acompte versé (€)', 'Date de signature (AAAA-MM-JJ)'],
+    statuses: { signed: 'Signé', pending: 'En attente', partial: 'Partiel', cancelled: 'Annulé' },
+  } : {
+    title: 'Contracts', add: 'Add', search: 'Search for a vendor…', noResults: 'No results', noContracts: 'No contracts',
+    editSearch: 'Edit your search.', empty: 'Tap Add to create your first contract.', signed: 'Signed on', noDate: 'No date provided',
+    gate: 'your contracts', feature: 'Vendor contracts', eye: 'THE NUPTIAL PLAN', documents: 'DOCUMENTS', addTitle: 'Add a contract',
+    status: 'STATUS', notes: 'Notes', required: 'Vendor required', requiredBody: 'Enter the vendor name.',
+    error: 'Error', errorBody: 'Unable to add this contract.', saving: 'Saving…', save: 'Save contract',
+    fields: ['Vendor name *', 'Total amount (€)', 'Deposit paid (€)', 'Signature date (YYYY-MM-DD)'],
+    statuses: { signed: 'Signed', pending: 'Pending', partial: 'Partial', cancelled: 'Cancelled' },
+  };
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
@@ -89,7 +108,7 @@ export default function ContratsScreen() {
     );
   }
 
-  if (!isPremium) return <PremiumPageGate featureLabel="vos contrats" />;
+  if (!isPremium) return <PremiumPageGate featureLabel={tr.gate} />;
   return (
     <>
       <FlatList
@@ -117,7 +136,7 @@ export default function ContratsScreen() {
                 <View style={ss.heroTitleWrap}>
                   <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>THE NUPTIAL PLAN</Text>
                   <View style={ss.titleRow}>
-                    <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Contrats</Text>
+                    <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>{tr.title}</Text>
                     <PremiumBadge />
                   </View>
                   {activeWedding && (
@@ -128,7 +147,7 @@ export default function ContratsScreen() {
                 </View>
                 <TouchableOpacity onPress={() => requirePremium(() => setAddVisible(true))} style={ss.addHeaderBtn}>
                   <Feather name="plus" size={15} color="#FBF5FB" />
-                  <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                  <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>{tr.add}</Text>
                   <PremiumBadge hidden={isPremium} />
                 </TouchableOpacity>
               </View>
@@ -139,7 +158,7 @@ export default function ContratsScreen() {
               <Feather name="search" size={16} color={colors.mutedForeground} />
               <TextInput
                 style={[ss.searchInput, { fontFamily: SANS, color: colors.foreground }]}
-                placeholder="Rechercher un prestataire…"
+                placeholder={tr.search}
                 placeholderTextColor={colors.mutedForeground}
                 value={search}
                 onChangeText={setSearch}
@@ -152,14 +171,14 @@ export default function ContratsScreen() {
           <View style={ss.emptyWrap}>
             <EmptyState
               icon="file-text"
-              title={search ? 'Aucun résultat' : 'Aucun contrat'}
-              subtitle={search ? 'Modifiez votre recherche.' : 'Appuyez sur Ajouter pour créer votre premier contrat.'}
+              title={search ? tr.noResults : tr.noContracts}
+              subtitle={search ? tr.editSearch : tr.empty}
             />
           </View>
         }
         renderItem={({ item }) => {
           const statusInfo = STATUS_COLORS[item.status] ?? STATUS_COLORS.pending;
-          const label = STATUS_LABELS[item.status] ?? item.status;
+          const label = tr.statuses[item.status as keyof typeof tr.statuses] ?? item.status;
 
           return (
             <TouchableOpacity
@@ -182,10 +201,10 @@ export default function ContratsScreen() {
                     </Text>
                     {item.signedDate ? (
                       <Text style={[ss.dateText, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                        Signé le {new Date(item.signedDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                         {tr.signed} {new Date(item.signedDate).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
                       </Text>
                     ) : (
-                      <Text style={[ss.dateText, { fontFamily: SANS, color: colors.mutedForeground }]}>Date non renseignée</Text>
+                       <Text style={[ss.dateText, { fontFamily: SANS, color: colors.mutedForeground }]}>{tr.noDate}</Text>
                     )}
                   </View>
 
@@ -214,22 +233,22 @@ export default function ContratsScreen() {
       <PaywallModal
         visible={paywallVisible}
         onClose={closePaywall}
-        featureLabel="Contrats prestataires"
+        featureLabel={tr.feature}
       />
-      <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow="DOCUMENTS" title="Ajouter un contrat">
+      <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow={tr.documents} title={tr.addTitle}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>
           {([
-            ['vendorName', 'Nom du prestataire *'], ['amount', 'Montant total (€)'], ['deposit', 'Acompte versé (€)'], ['signedDate', 'Date de signature (AAAA-MM-JJ)'],
+            ['vendorName', tr.fields[0]], ['amount', tr.fields[1]], ['deposit', tr.fields[2]], ['signedDate', tr.fields[3]],
           ] as const).map(([key, placeholder]) => (
             <TextInput key={key} value={form[key]} onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' || key === 'deposit' ? 'decimal-pad' : 'default'} style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
           ))}
-          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>STATUT</Text>
-          <View style={ss.statusRow}>{(['pending', 'signed', 'partial', 'cancelled'] as const).map((item) => <TouchableOpacity key={item} onPress={() => setStatus(item)} style={[ss.statusChoice, { backgroundColor: status === item ? colors.plum : colors.muted, borderColor: status === item ? colors.plum : colors.border }]}><Text style={[ss.statusText, { color: status === item ? '#FBF5FB' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{STATUS_LABELS[item]}</Text></TouchableOpacity>)}</View>
-          <TextInput value={form.notes} onChangeText={(value) => setForm((current) => ({ ...current, notes: value }))} placeholder="Notes" placeholderTextColor={colors.mutedForeground} multiline style={[ss.formInput, ss.formNotes, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
+          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{tr.status}</Text>
+          <View style={ss.statusRow}>{(['pending', 'signed', 'partial', 'cancelled'] as const).map((item) => <TouchableOpacity key={item} onPress={() => setStatus(item)} style={[ss.statusChoice, { backgroundColor: status === item ? colors.plum : colors.muted, borderColor: status === item ? colors.plum : colors.border }]}><Text style={[ss.statusText, { color: status === item ? '#FBF5FB' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{tr.statuses[item]}</Text></TouchableOpacity>)}</View>
+          <TextInput value={form.notes} onChangeText={(value) => setForm((current) => ({ ...current, notes: value }))} placeholder={tr.notes} placeholderTextColor={colors.mutedForeground} multiline style={[ss.formInput, ss.formNotes, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
           <TouchableOpacity disabled={createContract.isPending} onPress={() => {
-            if (!form.vendorName.trim()) { Alert.alert('Prestataire requis', 'Saisissez le nom du prestataire.'); return; }
-            createContract.mutate({ weddingId: wId, data: { vendorName: form.vendorName.trim(), status, totalAmountCents: Math.round((Number(form.amount.replace(',', '.')) || 0) * 100), depositPaidCents: Math.round((Number(form.deposit.replace(',', '.')) || 0) * 100), signedDate: form.signedDate.trim() || undefined, notes: form.notes.trim() || undefined } }, { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListContractsQueryKey(wId) }); setForm({ vendorName: '', amount: '', deposit: '', signedDate: '', notes: '' }); setStatus('pending'); setAddVisible(false); }, onError: () => Alert.alert('Erreur', 'Impossible d’ajouter ce contrat.') });
-          }} style={[ss.saveBtn, { backgroundColor: colors.plum }]}><Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{createContract.isPending ? 'Enregistrement…' : 'Enregistrer le contrat'}</Text></TouchableOpacity>
+            if (!form.vendorName.trim()) { Alert.alert(tr.required, tr.requiredBody); return; }
+            createContract.mutate({ weddingId: wId, data: { vendorName: form.vendorName.trim(), status, totalAmountCents: Math.round((Number(form.amount.replace(',', '.')) || 0) * 100), depositPaidCents: Math.round((Number(form.deposit.replace(',', '.')) || 0) * 100), signedDate: form.signedDate.trim() || undefined, notes: form.notes.trim() || undefined } }, { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListContractsQueryKey(wId) }); setForm({ vendorName: '', amount: '', deposit: '', signedDate: '', notes: '' }); setStatus('pending'); setAddVisible(false); }, onError: () => Alert.alert(tr.error, tr.errorBody) });
+          }} style={[ss.saveBtn, { backgroundColor: colors.plum }]}><Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{createContract.isPending ? tr.saving : tr.save}</Text></TouchableOpacity>
         </ScrollView>
       </BottomSheet>
       <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />

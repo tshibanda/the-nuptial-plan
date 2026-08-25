@@ -20,6 +20,7 @@ import { EventAddSheet } from '@/components/EventAddSheet';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { useSubscription } from '@/lib/subscription';
+import { useLocalization } from '@/context/LocalizationContext';
 
 type Tab = 'runsheet' | 'prestataires' | 'checklist';
 type EventStatus = 'terminé' | 'en_cours' | 'en_retard' | 'à_venir';
@@ -49,15 +50,15 @@ function statusOf(event: CalendarEvent): EventStatus {
   return 'à_venir';
 }
 
-const STATUS_META: Record<EventStatus, { label: string; color: string }> = {
-  terminé: { label: 'Terminé', color: '#4A7157' },
-  en_cours: { label: 'En cours', color: '#A87532' },
-  en_retard: { label: 'En retard', color: '#9D6246' },
-  à_venir: { label: 'À venir', color: '#8C858C' },
+const STATUS_META: Record<EventStatus, { color: string }> = {
+  terminé: { color: '#4A7157' },
+  en_cours: { color: '#A87532' },
+  en_retard: { color: '#9D6246' },
+  à_venir: { color: '#8C858C' },
 };
 
-function formatDate(date: string) {
-  return new Date(`${date.slice(0, 10)}T12:00:00`).toLocaleDateString('fr-FR', {
+function formatDate(date: string, locale: string) {
+  return new Date(`${date.slice(0, 10)}T12:00:00`).toLocaleDateString(locale, {
     weekday: 'long', day: 'numeric', month: 'long',
   });
 }
@@ -67,6 +68,20 @@ function initials(name: string) {
 }
 
 export default function JourJScreen() {
+  const { language, locale, t } = useLocalization();
+  const copy = language === 'fr' ? {
+    deleteStep: 'Supprimer cette étape ?', deleteBody: 'sera supprimée du déroulé.', exportError: 'Erreur d’export', exportErrorBody: 'Impossible de générer le PDF. Veuillez réessayer.', exportShare: 'Partager le déroulé Jour J',
+    completed: 'Terminé', upcoming: 'À venir', grandDay: 'GRAND JOUR', noWedding: 'Aucun mariage sélectionné', exporting: 'Export…', add: 'Ajouter', progress: 'Avancement du programme', complete: 'complété',
+    runsheet: 'Déroulé', vendors: 'Prestataires', checklist: 'Checklist', noEvents: 'Aucun événement planifié', noEventsText: 'Ajoutez les étapes importantes de votre grand jour.', noVendors: 'Aucun prestataire enregistré', noVendorsText: 'Ajoutez votre équipe depuis la page Prestataires.',
+    noTasks: 'Aucune tâche à afficher', noTasksText: 'Les étapes du déroulé apparaîtront ici.', morning: 'Matinée', afternoon: 'Après-midi', evening: 'Soirée', celebration: 'Déroulé de la célébration', stepsCompleted: 'étapes terminées',
+    statuses: { terminé: 'Terminé', en_cours: 'En cours', en_retard: 'En retard', à_venir: 'À venir' },
+  } : {
+    deleteStep: 'Delete this step?', deleteBody: 'will be removed from the schedule.', exportError: 'Export error', exportErrorBody: 'Unable to generate the PDF. Please try again.', exportShare: 'Share wedding-day schedule',
+    completed: 'Completed', upcoming: 'Upcoming', grandDay: 'WEDDING DAY', noWedding: 'No wedding selected', exporting: 'Exporting…', add: 'Add', progress: 'Schedule progress', complete: 'complete',
+    runsheet: 'Schedule', vendors: 'Vendors', checklist: 'Checklist', noEvents: 'No events planned', noEventsText: 'Add the important moments of your wedding day.', noVendors: 'No vendors saved', noVendorsText: 'Add your team from the Vendors page.',
+    noTasks: 'No tasks to display', noTasksText: 'Schedule steps will appear here.', morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening', celebration: 'Celebration schedule', stepsCompleted: 'steps completed',
+    statuses: { terminé: 'Completed', en_cours: 'In progress', en_retard: 'Overdue', à_venir: 'Upcoming' },
+  };
   const { isActive: isPremium } = useSubscription();
   const colors = useColors();
   const { selectedWeddingId } = useWedding();
@@ -97,9 +112,9 @@ export default function JourJScreen() {
   };
 
   const removeEvent = (event: CalendarEvent) => {
-    Alert.alert('Supprimer cette étape ?', `"${event.title}" sera supprimée du déroulé.`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => deleteEvent.mutate({ weddingId, id: event.id }, { onSuccess: invalidate }) },
+    Alert.alert(copy.deleteStep, `"${event.title}" ${copy.deleteBody}`, [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => deleteEvent.mutate({ weddingId, id: event.id }, { onSuccess: invalidate }) },
     ]);
   };
 
@@ -111,24 +126,24 @@ export default function JourJScreen() {
         <tr>
           <td>${event.eventTime?.slice(0, 5) ?? '—'}</td>
           <td><strong>${event.title}</strong><br/><small>${event.location ?? ''}${event.actors ? ` · ${event.actors}` : ''}</small></td>
-          <td>${event.completed ? '✓ Terminé' : 'À venir'}</td>
+          <td>${event.completed ? `✓ ${copy.completed}` : copy.upcoming}</td>
         </tr>`).join('');
       const html = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1"/><style>
         body{font-family:Arial,sans-serif;color:#3C1A3C;padding:28px}h1{font-family:Georgia,serif;font-size:30px;margin:0 0 4px}h2{font-size:12px;color:#8a6530;text-transform:uppercase;letter-spacing:2px;margin-top:28px}p{font-size:12px;color:#777}table{width:100%;border-collapse:collapse;margin-top:12px}td{padding:10px 6px;border-bottom:1px solid #eadfe8;font-size:11px;vertical-align:top}td:first-child{width:52px;color:#5D2D5D;font-family:Georgia,serif;font-size:16px}td:last-child{width:70px;color:#6B8C72;font-size:10px}small{color:#888;font-size:9px}</style></head><body>
-        <h2>Grand jour</h2><h1>Jour J</h1><p>${wedding.names} · ${wedding.weddingDate}${wedding.venue ? ` · ${wedding.venue}` : ''}</p>
-        <h2>Déroulé de la célébration</h2><table>${rows}</table>
-        <p style="margin-top:28px;text-align:right">${completedCount}/${events.length} étapes terminées</p>
+        <h2>${copy.grandDay}</h2><h1>${language === 'fr' ? 'Jour J' : 'Wedding day'}</h1><p>${wedding.names} · ${formatDate(wedding.weddingDate, locale)}${wedding.venue ? ` · ${wedding.venue}` : ''}</p>
+        <h2>${copy.celebration}</h2><table>${rows}</table>
+        <p style="margin-top:28px;text-align:right">${completedCount}/${events.length} ${copy.stepsCompleted}</p>
       </body></html>`;
       if (Platform.OS === 'web') {
         const win = window.open('', '_blank');
         if (win) { win.document.write(html); win.document.close(); win.focus(); win.print(); }
       } else {
         const { uri } = await Print.printToFileAsync({ html, base64: false });
-        if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Partager le déroulé Jour J', UTI: 'com.adobe.pdf' });
+        if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: copy.exportShare, UTI: 'com.adobe.pdf' });
         else await Print.printAsync({ uri });
       }
     } catch {
-      Alert.alert('Erreur d’export', 'Impossible de générer le PDF. Veuillez réessayer.');
+      Alert.alert(copy.exportError, copy.exportErrorBody);
     } finally {
       setExporting(false);
     }
@@ -141,9 +156,9 @@ export default function JourJScreen() {
   }, [events]);
 
   const timeGroups: [string, CalendarEvent[]][] = [
-    ['Matinée', events.filter((event) => !event.eventTime || event.eventTime < '12:00')],
-    ['Après-midi', events.filter((event) => !!event.eventTime && event.eventTime >= '12:00' && event.eventTime < '18:00')],
-    ['Soirée', events.filter((event) => !!event.eventTime && event.eventTime >= '18:00')],
+    [copy.morning, events.filter((event) => !event.eventTime || event.eventTime < '12:00')],
+    [copy.afternoon, events.filter((event) => !!event.eventTime && event.eventTime >= '12:00' && event.eventTime < '18:00')],
+    [copy.evening, events.filter((event) => !!event.eventTime && event.eventTime >= '18:00')],
   ];
 
   const renderEvent = (event: CalendarEvent, showDate = false) => {
@@ -153,13 +168,13 @@ export default function JourJScreen() {
     return (
       <View key={event.id} style={[ss.eventCard, { backgroundColor: colors.card, borderColor: colors.border, opacity: status === 'terminé' ? 0.68 : 1 }]}>
         <View style={[ss.accentBar, { backgroundColor: accent }]} />
-        {showDate && <Text style={[ss.eventDate, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>{formatDate(event.eventDate)}</Text>}
+        {showDate && <Text style={[ss.eventDate, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>{formatDate(event.eventDate, locale)}</Text>}
         <View style={ss.eventRow}>
           <View style={ss.timeCol}><Text style={[ss.eventTime, { color: accent, fontFamily: SERIF }]}>{event.eventTime?.slice(0, 5) || '—'}</Text></View>
           <View style={ss.eventMain}>
             <View style={ss.eventTitleRow}>
               <Text numberOfLines={2} style={[ss.eventTitle, { color: colors.foreground, fontFamily: SANS_SEMIBOLD, textDecorationLine: status === 'terminé' ? 'line-through' : 'none' }]}>{event.title}</Text>
-              <View style={[ss.statusPill, { backgroundColor: meta.color + '18' }]}><Text style={[ss.statusText, { color: meta.color, fontFamily: SANS_MEDIUM }]}>{meta.label}</Text></View>
+              <View style={[ss.statusPill, { backgroundColor: meta.color + '18' }]}><Text style={[ss.statusText, { color: meta.color, fontFamily: SANS_MEDIUM }]}>{copy.statuses[status]}</Text></View>
             </View>
             {event.location ? <View style={ss.metaRow}><Feather name="map-pin" size={10} color={colors.plum + '88'} /><Text style={[ss.metaText, { color: colors.mutedForeground, fontFamily: SANS }]}>{event.location}</Text></View> : null}
             {event.actors ? <View style={ss.metaRow}><Feather name="users" size={10} color={colors.plum + '88'} /><Text style={[ss.metaText, { color: colors.mutedForeground, fontFamily: SANS }]}>{event.actors}</Text></View> : null}
@@ -185,34 +200,34 @@ export default function JourJScreen() {
         showsVerticalScrollIndicator={false}
       >
         <LinearGradient colors={[colors.plumDark, colors.plum, colors.plumLight]} style={ss.hero}>
-          <Text style={[ss.eyebrow, { color: colors.gold, fontFamily: SANS_MEDIUM }]}>GRAND JOUR</Text>
+           <Text style={[ss.eyebrow, { color: colors.gold, fontFamily: SANS_MEDIUM }]}>{copy.grandDay}</Text>
           <View style={ss.heroTitleRow}>
             <View style={{ flex: 1 }}>
               <View style={ss.titleRow}>
-                <Text style={[ss.title, { color: '#FBF5FB', fontFamily: SERIF }]}>Jour J</Text>
+                 <Text style={[ss.title, { color: '#FBF5FB', fontFamily: SERIF }]}>{language === 'fr' ? 'Jour J' : 'Wedding day'}</Text>
                 <PremiumBadge />
               </View>
-              <Text style={[ss.subtitle, { color: '#DEC0DE', fontFamily: SANS }]}>{wedding?.names ?? 'Aucun mariage sélectionné'}</Text>
+               <Text style={[ss.subtitle, { color: '#DEC0DE', fontFamily: SANS }]}>{wedding?.names ?? copy.noWedding}</Text>
             </View>
             <View style={ss.heroActions}>
-              <TouchableOpacity onPress={exportPdf} disabled={exporting || events.length === 0} style={[ss.exportButton, { opacity: exporting || events.length === 0 ? 0.55 : 1 }]}><Feather name="file-text" size={13} color={colors.gold} /><Text style={[ss.exportText, { fontFamily: SANS_SEMIBOLD }]}>{exporting ? 'Export…' : 'PDF'}</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => { setEditEvent(null); setEditOpen(true); }} style={ss.addButton}><Feather name="plus" size={14} color="#FBF5FB" /><Text style={[ss.addText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text></TouchableOpacity>
+               <TouchableOpacity onPress={exportPdf} disabled={exporting || events.length === 0} style={[ss.exportButton, { opacity: exporting || events.length === 0 ? 0.55 : 1 }]}><Feather name="file-text" size={13} color={colors.gold} /><Text style={[ss.exportText, { fontFamily: SANS_SEMIBOLD }]}>{exporting ? copy.exporting : 'PDF'}</Text></TouchableOpacity>
+               <TouchableOpacity onPress={() => { setEditEvent(null); setEditOpen(true); }} style={ss.addButton}><Feather name="plus" size={14} color="#FBF5FB" /><Text style={[ss.addText, { fontFamily: SANS_SEMIBOLD }]}>{copy.add}</Text></TouchableOpacity>
             </View>
           </View>
-          {wedding && <View style={ss.weddingMeta}><Feather name="calendar" size={13} color={colors.gold} /><Text style={[ss.metaLight, { fontFamily: SANS }]}>{formatDate(wedding.weddingDate)}{wedding.venue ? ` · ${wedding.venue}` : ''}</Text></View>}
+           {wedding && <View style={ss.weddingMeta}><Feather name="calendar" size={13} color={colors.gold} /><Text style={[ss.metaLight, { fontFamily: SANS }]}>{formatDate(wedding.weddingDate, locale)}{wedding.venue ? ` · ${wedding.venue}` : ''}</Text></View>}
         </LinearGradient>
 
         <View style={[ss.progressCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={ss.progressHeader}><Text style={[ss.progressLabel, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]}>Avancement du programme</Text><Text style={[ss.progressValue, { color: colors.foreground, fontFamily: SERIF }]}>{completedCount}<Text style={ss.progressTotal}>/{events.length}</Text></Text></View>
+           <View style={ss.progressHeader}><Text style={[ss.progressLabel, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]}>{copy.progress}</Text><Text style={[ss.progressValue, { color: colors.foreground, fontFamily: SERIF }]}>{completedCount}<Text style={ss.progressTotal}>/{events.length}</Text></Text></View>
           <View style={[ss.progressTrack, { backgroundColor: colors.muted }]}><View style={[ss.progressFill, { width: `${progress}%`, backgroundColor: colors.plum }]} /></View>
-          <Text style={[ss.progressCaption, { color: colors.mutedForeground, fontFamily: SANS }]}>{progress}% complété</Text>
+           <Text style={[ss.progressCaption, { color: colors.mutedForeground, fontFamily: SANS }]}>{progress}% {copy.complete}</Text>
         </View>
 
         <View style={[ss.tabs, { backgroundColor: colors.muted, borderColor: colors.border }]}>
           {([
-            ['runsheet', 'clipboard', 'Runsheet'],
-            ['prestataires', 'user', 'Prestataires'],
-            ['checklist', 'check', 'Checklist'],
+             ['runsheet', 'clipboard', copy.runsheet],
+             ['prestataires', 'user', copy.vendors],
+             ['checklist', 'check', copy.checklist],
           ] as const).map(([key, icon, label]) => (
             <TouchableOpacity key={key} onPress={() => setTab(key)} style={[ss.tab, tab === key && { backgroundColor: colors.plum }]}><Feather name={icon} size={13} color={tab === key ? '#fff' : colors.mutedForeground} /><Text style={[ss.tabText, { color: tab === key ? '#fff' : colors.mutedForeground, fontFamily: SANS_SEMIBOLD }]}>{label}</Text></TouchableOpacity>
           ))}
@@ -220,16 +235,16 @@ export default function JourJScreen() {
 
         {tab === 'runsheet' && (
           events.length === 0
-            ? <Empty icon="clipboard" title="Aucun événement planifié" text="Ajoutez les étapes importantes de votre grand jour." colors={colors} />
-            : <View style={ss.section}>{grouped.map(([date, dayEvents]) => <View key={date}><Text style={[ss.dayLabel, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>{formatDate(date)}</Text>{dayEvents.map((event) => renderEvent(event))}</View>)}</View>
+             ? <Empty icon="clipboard" title={copy.noEvents} text={copy.noEventsText} colors={colors} />
+             : <View style={ss.section}>{grouped.map(([date, dayEvents]) => <View key={date}><Text style={[ss.dayLabel, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>{formatDate(date, locale)}</Text>{dayEvents.map((event) => renderEvent(event))}</View>)}</View>
         )}
         {tab === 'prestataires' && (
           vendors.length === 0
-            ? <Empty icon="user" title="Aucun prestataire enregistré" text="Ajoutez votre équipe depuis la page Prestataires." colors={colors} />
+             ? <Empty icon="user" title={copy.noVendors} text={copy.noVendorsText} colors={colors} />
             : <View style={ss.section}>{vendors.map((vendor: Vendor) => <View key={vendor.id} style={[ss.vendorCard, { backgroundColor: colors.card, borderColor: colors.border }]}><View style={[ss.vendorAvatar, { backgroundColor: colors.gold + '20', borderColor: colors.gold + '55' }]}><Text style={[ss.vendorInitials, { color: colors.goldDim, fontFamily: SERIF }]}>{initials(vendor.name)}</Text></View><View style={{ flex: 1 }}><Text style={[ss.vendorName, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]}>{vendor.name}</Text>{vendor.category ? <Text style={[ss.vendorCategory, { color: colors.mutedForeground, fontFamily: SANS }]}>{vendor.category}</Text> : null}{vendor.contactName ? <View style={ss.metaRow}><Feather name="user" size={10} color={colors.plum + '88'} /><Text style={[ss.metaText, { color: colors.mutedForeground, fontFamily: SANS }]}>{vendor.contactName}</Text></View> : null}{vendor.contactEmail ? <TouchableOpacity onPress={() => void Linking.openURL(`mailto:${vendor.contactEmail}`)} style={ss.metaRow}><Feather name="mail" size={10} color={colors.plum} /><Text style={[ss.metaText, { color: colors.plum, fontFamily: SANS }]}>{vendor.contactEmail}</Text></TouchableOpacity> : null}</View></View>)}</View>
         )}
         {tab === 'checklist' && (
-          <View style={ss.section}>{timeGroups.every(([, group]) => group.length === 0) ? <Empty icon="check" title="Aucune tâche à afficher" text="Les étapes du déroulé apparaîtront ici." colors={colors} /> : timeGroups.map(([label, group]) => group.length ? <View key={label} style={ss.checkGroup}><View style={ss.checkHeader}><Text style={[ss.dayLabel, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>{label}</Text><Text style={[ss.count, { color: colors.mutedForeground, fontFamily: SANS }]}>{group.filter((event) => event.completed).length}/{group.length}</Text></View>{group.map((event) => <TouchableOpacity key={event.id} onPress={() => toggleEvent(event)} style={[ss.checkRow, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name={event.completed ? 'check-circle' : 'circle'} size={20} color={event.completed ? colors.sage : colors.mutedForeground} /><Text style={[ss.checkTitle, { color: event.completed ? colors.mutedForeground : colors.foreground, fontFamily: SANS, textDecorationLine: event.completed ? 'line-through' : 'none' }]}>{event.title}</Text>{event.eventTime ? <Text style={[ss.checkTime, { color: colors.mutedForeground, fontFamily: SANS }]}>{event.eventTime.slice(0, 5)}</Text> : null}</TouchableOpacity>)}</View> : null)}</View>
+           <View style={ss.section}>{timeGroups.every(([, group]) => group.length === 0) ? <Empty icon="check" title={copy.noTasks} text={copy.noTasksText} colors={colors} /> : timeGroups.map(([label, group]) => group.length ? <View key={label} style={ss.checkGroup}><View style={ss.checkHeader}><Text style={[ss.dayLabel, { color: colors.goldDim, fontFamily: SANS_SEMIBOLD }]}>{label}</Text><Text style={[ss.count, { color: colors.mutedForeground, fontFamily: SANS }]}>{group.filter((event) => event.completed).length}/{group.length}</Text></View>{group.map((event) => <TouchableOpacity key={event.id} onPress={() => toggleEvent(event)} style={[ss.checkRow, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name={event.completed ? 'check-circle' : 'circle'} size={20} color={event.completed ? colors.sage : colors.mutedForeground} /><Text style={[ss.checkTitle, { color: event.completed ? colors.mutedForeground : colors.foreground, fontFamily: SANS, textDecorationLine: event.completed ? 'line-through' : 'none' }]}>{event.title}</Text>{event.eventTime ? <Text style={[ss.checkTime, { color: colors.mutedForeground, fontFamily: SANS }]}>{event.eventTime.slice(0, 5)}</Text> : null}</TouchableOpacity>)}</View> : null)}</View>
         )}
       </ScrollView>
       <EventAddSheet visible={editOpen} onClose={() => setEditOpen(false)} weddingId={weddingId} initialEvent={editEvent} onCreated={() => { setEditOpen(false); invalidate(); }} />

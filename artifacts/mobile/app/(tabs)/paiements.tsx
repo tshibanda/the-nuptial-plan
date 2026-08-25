@@ -34,6 +34,7 @@ import { exportPaymentsPDF } from '@/utils/payments-pdf';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { useSubscription } from '@/lib/subscription';
+import { useLocalization } from '@/context/LocalizationContext';
 
 // ── Tour steps ────────────────────────────────────────────────────────────────
 const TOUR_STEPS = [
@@ -70,10 +71,14 @@ interface PaymentRowProps {
   payment: Payment;
   currency: string;
   colors: ReturnType<typeof useColors>;
+  language: 'fr' | 'en';
 }
 
-function PaymentRow({ payment, currency, colors }: PaymentRowProps) {
-  const { label, tone } = paymentStatusLabel(payment.status);
+function PaymentRow({ payment, currency, colors, language }: PaymentRowProps) {
+  const { tone } = paymentStatusLabel(payment.status);
+  const label = language === 'fr'
+    ? ({ pending: 'En attente', scheduled: 'Programmé', paid: 'Réglé', overdue: 'En retard' }[payment.status] ?? payment.status)
+    : ({ pending: 'Pending', scheduled: 'Scheduled', paid: 'Paid', overdue: 'Overdue' }[payment.status] ?? payment.status);
 
   const accentColor =
     tone === 'success' ? colors.sage :
@@ -157,9 +162,10 @@ interface SummaryCardProps {
   payments: Payment[];
   currency: string;
   colors: ReturnType<typeof useColors>;
+  language: 'fr' | 'en';
 }
 
-function SummaryCard({ payments, currency, colors }: SummaryCardProps) {
+function SummaryCard({ payments, currency, colors, language }: SummaryCardProps) {
   const total     = payments.reduce((s, p) => s + Number(p.amountCents ?? 0), 0);
   const paid      = payments.filter(p => p.status === 'paid').reduce((s, p) => s + Number(p.amountCents ?? 0), 0);
   const pending   = total - paid;
@@ -174,14 +180,14 @@ function SummaryCard({ payments, currency, colors }: SummaryCardProps) {
           <Text style={[ss.summaryValue, { fontFamily: SERIF, color: colors.foreground }]}>
             {formatCents(total, currency)}
           </Text>
-          <Text style={[ss.summaryLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>total</Text>
+          <Text style={[ss.summaryLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>{language === 'fr' ? 'total' : 'total'}</Text>
         </View>
         <View style={[ss.divider, { backgroundColor: colors.border }]} />
         <View style={ss.summaryItem}>
           <Text style={[ss.summaryValue, { fontFamily: SERIF, color: colors.sage }]}>
             {formatCents(paid, currency)}
           </Text>
-          <Text style={[ss.summaryLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>réglé</Text>
+          <Text style={[ss.summaryLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>{language === 'fr' ? 'réglé' : 'paid'}</Text>
         </View>
         <View style={[ss.divider, { backgroundColor: colors.border }]} />
         <View style={ss.summaryItem}>
@@ -189,7 +195,7 @@ function SummaryCard({ payments, currency, colors }: SummaryCardProps) {
             {formatCents(pending, currency)}
           </Text>
           <Text style={[ss.summaryLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>
-            restant{overdueCnt > 0 ? ` · ${overdueCnt} retard` : ''}
+            {language === 'fr' ? `restant${overdueCnt > 0 ? ` · ${overdueCnt} retard` : ''}` : `remaining${overdueCnt > 0 ? ` · ${overdueCnt} overdue` : ''}`}
           </Text>
         </View>
       </View>
@@ -198,7 +204,7 @@ function SummaryCard({ payments, currency, colors }: SummaryCardProps) {
         <View style={[ss.barFill, { width: `${paidPct}%` as any, backgroundColor: colors.sage }]} />
       </View>
       <Text style={[ss.pctLabel, { fontFamily: SANS_MEDIUM, color: colors.mutedForeground }]}>
-        {paidPct}% réglé
+        {paidPct}% {language === 'fr' ? 'réglé' : 'paid'}
       </Text>
     </View>
   );
@@ -206,6 +212,22 @@ function SummaryCard({ payments, currency, colors }: SummaryCardProps) {
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function PaiementsScreen() {
+  const { language } = useLocalization();
+  const tr = language === 'fr' ? {
+    gate: 'le suivi des paiements', eye: 'FINANCES', title: 'Paiements', exporting: 'Export…', export: 'Exporter', add: 'Ajouter',
+    emptyTitle: 'Aucun paiement', emptyBody: 'Appuyez sur Ajouter pour enregistrer un nouveau paiement.',
+    overdue: 'EN RETARD', due: 'À RÉGLER', paid: 'RÉGLÉS', sheet: 'FINANCES', addTitle: 'Ajouter un paiement', status: 'STATUT',
+    notes: 'Notes', required: 'Informations manquantes', requiredBody: 'Renseignez le prestataire, le libellé, le montant et la date d’échéance.',
+    error: 'Erreur', errorBody: 'Impossible d’ajouter ce paiement.', saving: 'Enregistrement…', save: 'Enregistrer le paiement',
+    fields: ['Nom du prestataire *', 'Libellé du paiement *', 'Montant (€) *', 'Date d’échéance (AAAA-MM-JJ) *'],
+  } : {
+    gate: 'payment tracking', eye: 'FINANCES', title: 'Payments', exporting: 'Exporting…', export: 'Export', add: 'Add',
+    emptyTitle: 'No payments', emptyBody: 'Tap Add to record a new payment.',
+    overdue: 'OVERDUE', due: 'DUE', paid: 'PAID', sheet: 'FINANCES', addTitle: 'Add a payment', status: 'STATUS',
+    notes: 'Notes', required: 'Missing information', requiredBody: 'Enter the vendor, description, amount, and due date.',
+    error: 'Error', errorBody: 'Unable to add this payment.', saving: 'Saving…', save: 'Save payment',
+    fields: ['Vendor name *', 'Payment description *', 'Amount (€) *', 'Due date (YYYY-MM-DD) *'],
+  };
   const { isActive: isPremium } = useSubscription();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -262,7 +284,7 @@ export default function PaiementsScreen() {
   const pendingPayments   = sorted.filter(p => p.status === 'pending' || p.status === 'scheduled');
   const paidPayments      = sorted.filter(p => p.status === 'paid');
 
-  if (!isPremium) return <PremiumPageGate featureLabel="le suivi des paiements" />;
+  if (!isPremium) return <PremiumPageGate featureLabel={tr.gate} />;
   return (
     <>
       <ScrollView
@@ -285,20 +307,20 @@ export default function PaiementsScreen() {
           <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
           <View style={ss.goldBar} />
 
-          <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>FINANCES</Text>
+          <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>{tr.eye}</Text>
           <View style={ss.heroTop}>
             <View style={ss.titleRow}>
-              <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Paiements</Text>
+              <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>{tr.title}</Text>
               <PremiumBadge />
             </View>
             <View style={ss.heroActions}>
               {payments && <TouchableOpacity onPress={handleExport} disabled={isExporting} activeOpacity={0.75} style={ss.heroAction}>
                 {isExporting ? <ActivityIndicator size="small" color="#C8A96E" /> : <Feather name="share" size={14} color="#C8A96E" />}
-                <Text style={[ss.exportBtnText, { fontFamily: SANS_SEMIBOLD }]}>{isExporting ? 'Export…' : 'Exporter'}</Text>
+                <Text style={[ss.exportBtnText, { fontFamily: SANS_SEMIBOLD }]}>{isExporting ? tr.exporting : tr.export}</Text>
               </TouchableOpacity>}
               <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
                 <Feather name="plus" size={15} color="#FBF5FB" />
-                <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>{tr.add}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -314,19 +336,19 @@ export default function PaiementsScreen() {
           ) : !payments || payments.length === 0 ? (
             <EmptyState
               icon="credit-card"
-              title="Aucun paiement"
-              subtitle="Appuyez sur Ajouter pour enregistrer un nouveau paiement."
+              title={tr.emptyTitle}
+              subtitle={tr.emptyBody}
             />
           ) : (
             <>
-              <SummaryCard payments={sorted} currency={currency} colors={colors} />
+               <SummaryCard payments={sorted} currency={currency} colors={colors} language={language} />
 
               {/* Overdue */}
               {overduePayments.length > 0 && (
                 <>
                   <View style={ss.sectionRow}>
                     <Text style={[ss.sectionHeader, { fontFamily: SANS_SEMIBOLD, color: colors.destructive }]}>
-                      EN RETARD
+                       {tr.overdue}
                     </Text>
                     <View style={[ss.countBadge, { backgroundColor: colors.destructive + '18' }]}>
                       <Text style={[ss.countText, { fontFamily: SANS_SEMIBOLD, color: colors.destructive }]}>
@@ -335,7 +357,7 @@ export default function PaiementsScreen() {
                     </View>
                   </View>
                   {overduePayments.map(p => (
-                    <PaymentRow key={p.id} payment={p} currency={currency} colors={colors} />
+                     <PaymentRow key={p.id} payment={p} currency={currency} colors={colors} language={language} />
                   ))}
                 </>
               )}
@@ -345,7 +367,7 @@ export default function PaiementsScreen() {
                 <>
                   <View style={ss.sectionRow}>
                     <Text style={[ss.sectionHeader, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>
-                      À RÉGLER
+                       {tr.due}
                     </Text>
                     <View style={[ss.countBadge, { backgroundColor: colors.warningBg }]}>
                       <Text style={[ss.countText, { fontFamily: SANS_SEMIBOLD, color: colors.warning }]}>
@@ -354,7 +376,7 @@ export default function PaiementsScreen() {
                     </View>
                   </View>
                   {pendingPayments.map(p => (
-                    <PaymentRow key={p.id} payment={p} currency={currency} colors={colors} />
+                     <PaymentRow key={p.id} payment={p} currency={currency} colors={colors} language={language} />
                   ))}
                 </>
               )}
@@ -364,7 +386,7 @@ export default function PaiementsScreen() {
                 <>
                   <View style={ss.sectionRow}>
                     <Text style={[ss.sectionHeader, { fontFamily: SANS_SEMIBOLD, color: colors.sageDark }]}>
-                      RÉGLÉS
+                       {tr.paid}
                     </Text>
                     <View style={[ss.countBadge, { backgroundColor: colors.sageBg }]}>
                       <Text style={[ss.countText, { fontFamily: SANS_SEMIBOLD, color: colors.sageDark }]}>
@@ -373,7 +395,7 @@ export default function PaiementsScreen() {
                     </View>
                   </View>
                   {paidPayments.map(p => (
-                    <PaymentRow key={p.id} payment={p} currency={currency} colors={colors} />
+                     <PaymentRow key={p.id} payment={p} currency={currency} colors={colors} language={language} />
                   ))}
                 </>
               )}
@@ -382,13 +404,13 @@ export default function PaiementsScreen() {
         </View>
       </ScrollView>
 
-      <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow="FINANCES" title="Ajouter un paiement">
+      <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow={tr.sheet} title={tr.addTitle}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>
           {([
-            ['vendorName', 'Nom du prestataire *'],
-            ['description', 'Libellé du paiement *'],
-            ['amount', 'Montant (€) *'],
-            ['dueDate', 'Date d’échéance (AAAA-MM-JJ) *'],
+             ['vendorName', tr.fields[0]],
+             ['description', tr.fields[1]],
+             ['amount', tr.fields[2]],
+             ['dueDate', tr.fields[3]],
           ] as const).map(([key, placeholder]) => (
             <TextInput
               key={key}
@@ -400,20 +422,20 @@ export default function PaiementsScreen() {
               style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
             />
           ))}
-          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>STATUT</Text>
+          <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{tr.status}</Text>
           <View style={ss.statusRow}>
             {(['pending', 'scheduled', 'paid', 'overdue'] as const).map((item) => (
               <TouchableOpacity key={item} onPress={() => setStatus(item)} style={[ss.statusChoice, { backgroundColor: status === item ? colors.plum : colors.muted, borderColor: status === item ? colors.plum : colors.border }]}>
-                <Text style={[ss.statusText, { color: status === item ? '#FBF5FB' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{paymentStatusLabel(item).label}</Text>
+                <Text style={[ss.statusText, { color: status === item ? '#FBF5FB' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{language === 'fr' ? ({ pending: 'En attente', scheduled: 'Programmé', paid: 'Réglé', overdue: 'En retard' }[item]) : ({ pending: 'Pending', scheduled: 'Scheduled', paid: 'Paid', overdue: 'Overdue' }[item])}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <TextInput value={form.notes} onChangeText={(value) => setForm((current) => ({ ...current, notes: value }))} placeholder="Notes" placeholderTextColor={colors.mutedForeground} multiline style={[ss.formInput, ss.formNotes, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
+          <TextInput value={form.notes} onChangeText={(value) => setForm((current) => ({ ...current, notes: value }))} placeholder={tr.notes} placeholderTextColor={colors.mutedForeground} multiline style={[ss.formInput, ss.formNotes, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
           <TouchableOpacity
             disabled={createPayment.isPending}
             onPress={() => {
               if (!form.vendorName.trim() || !form.description.trim() || !form.amount.trim() || !form.dueDate.trim()) {
-                Alert.alert('Informations manquantes', 'Renseignez le prestataire, le libellé, le montant et la date d’échéance.');
+                 Alert.alert(tr.required, tr.requiredBody);
                 return;
               }
               createPayment.mutate({
@@ -433,12 +455,12 @@ export default function PaiementsScreen() {
                   setStatus('pending');
                   setAddVisible(false);
                 },
-                onError: () => Alert.alert('Erreur', 'Impossible d’ajouter ce paiement.'),
+                 onError: () => Alert.alert(tr.error, tr.errorBody),
               });
             }}
             style={[ss.saveBtn, { backgroundColor: colors.plum, opacity: createPayment.isPending ? 0.6 : 1 }]}
           >
-            <Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{createPayment.isPending ? 'Enregistrement…' : 'Enregistrer le paiement'}</Text>
+             <Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{createPayment.isPending ? tr.saving : tr.save}</Text>
           </TouchableOpacity>
         </ScrollView>
       </BottomSheet>

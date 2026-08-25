@@ -11,6 +11,7 @@ import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_SEMIBOLD } from '@/constants/fonts';
 import { accentShadow } from '@/utils/shadow';
 import { BottomSheet } from '@/components/BottomSheet';
+import { useLocalization } from '@/context/LocalizationContext';
 
 interface Props {
   visible: boolean;
@@ -19,6 +20,8 @@ interface Props {
 
 export function ProfileEditSheet({ visible, onClose }: Props) {
   const colors = useColors();
+  const { language } = useLocalization();
+  const en = language === 'en';
   const { user } = useUser();
 
   const [firstName, setFirstName] = useState('');
@@ -50,9 +53,9 @@ export function ProfileEditSheet({ visible, onClose }: Props) {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
-          'Permission requise',
-          'Autorisez l\'accès à vos photos pour changer votre photo de profil.',
-          [{ text: 'OK' }],
+           en ? 'Permission required' : 'Permission requise',
+           en ? 'Allow access to your photos to change your profile picture.' : 'Autorisez l’accès à vos photos pour changer votre photo de profil.',
+           [{ text: 'OK' }],
         );
         return;
       }
@@ -66,7 +69,7 @@ export function ProfileEditSheet({ visible, onClose }: Props) {
         setLocalImageUri(result.assets[0].uri);
       }
     } catch {
-      Alert.alert('Erreur', 'Impossible d\'accéder à la galerie.');
+       Alert.alert(en ? 'Error' : 'Erreur', en ? 'Unable to access the photo library.' : 'Impossible d’accéder à la galerie.');
     }
   };
 
@@ -75,7 +78,7 @@ export function ProfileEditSheet({ visible, onClose }: Props) {
     const first = firstName.trim();
     const last = lastName.trim();
     if (!first) {
-      Alert.alert('Prénom requis', 'Veuillez saisir votre prénom.');
+       Alert.alert(en ? 'First name required' : 'Prénom requis', en ? 'Please enter your first name.' : 'Veuillez saisir votre prénom.');
       return;
     }
 
@@ -106,8 +109,8 @@ export function ProfileEditSheet({ visible, onClose }: Props) {
       const msg =
         err?.errors?.[0]?.message ??
         err?.message ??
-        'Impossible de sauvegarder les modifications.';
-      Alert.alert('Erreur', msg);
+         (en ? 'Unable to save changes.' : 'Impossible de sauvegarder les modifications.');
+       Alert.alert(en ? 'Error' : 'Erreur', msg);
     } finally {
       setSaving(false);
     }
@@ -117,8 +120,8 @@ export function ProfileEditSheet({ visible, onClose }: Props) {
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      eyebrow="PROFIL"
-      title="Modifier le profil"
+       eyebrow={en ? 'PROFILE' : 'PROFIL'}
+       title={en ? 'Edit profile' : 'Modifier le profil'}
     >
       <View style={ed.body}>
         {/* Avatar picker */}
@@ -127,7 +130,7 @@ export function ProfileEditSheet({ visible, onClose }: Props) {
             onPress={pickImage}
             activeOpacity={0.82}
             style={ed.avatarWrap}
-            accessibilityLabel="Changer la photo de profil"
+             accessibilityLabel={en ? 'Change profile picture' : 'Changer la photo de profil'}
           >
             <LinearGradient
               colors={[colors.gold + 'AA', colors.rose + '88', colors.plumLight + '66']}
@@ -149,14 +152,14 @@ export function ProfileEditSheet({ visible, onClose }: Props) {
             </View>
           </TouchableOpacity>
           <Text style={[ed.photoHint, { fontFamily: SANS, color: colors.mutedForeground }]}>
-            Appuyez pour changer la photo
+             {en ? 'Tap to change photo' : 'Appuyez pour changer la photo'}
           </Text>
         </View>
 
         {/* Name fields */}
         <View style={ed.fields}>
           <View style={ed.fieldGroup}>
-            <Text style={[ed.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>PRÉNOM</Text>
+             <Text style={[ed.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{en ? 'FIRST NAME' : 'PRÉNOM'}</Text>
             <TextInput
               style={[
                 ed.input,
@@ -169,14 +172,14 @@ export function ProfileEditSheet({ visible, onClose }: Props) {
               ]}
               value={firstName}
               onChangeText={setFirstName}
-              placeholder="Votre prénom"
+               placeholder={en ? 'Your first name' : 'Votre prénom'}
               placeholderTextColor={colors.mutedForeground + '88'}
               autoCapitalize="words"
               returnKeyType="next"
             />
           </View>
           <View style={ed.fieldGroup}>
-            <Text style={[ed.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>NOM</Text>
+             <Text style={[ed.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{en ? 'LAST NAME' : 'NOM'}</Text>
             <TextInput
               style={[
                 ed.input,
@@ -189,7 +192,7 @@ export function ProfileEditSheet({ visible, onClose }: Props) {
               ]}
               value={lastName}
               onChangeText={setLastName}
-              placeholder="Votre nom de famille"
+               placeholder={en ? 'Your last name' : 'Votre nom de famille'}
               placeholderTextColor={colors.mutedForeground + '88'}
               autoCapitalize="words"
               returnKeyType="done"
@@ -214,7 +217,7 @@ export function ProfileEditSheet({ visible, onClose }: Props) {
             {saving ? (
               <ActivityIndicator size="small" color="#FBF5FB" />
             ) : (
-              <Text style={[ed.saveBtnText, { fontFamily: SANS_SEMIBOLD }]}>Enregistrer</Text>
+               <Text style={[ed.saveBtnText, { fontFamily: SANS_SEMIBOLD }]}>{en ? 'Save' : 'Enregistrer'}</Text>
             )}
           </LinearGradient>
         </TouchableOpacity>

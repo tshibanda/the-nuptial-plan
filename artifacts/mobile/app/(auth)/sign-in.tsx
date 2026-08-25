@@ -13,6 +13,7 @@ import { AppleLogo } from '@/components/AppleLogo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
+import { useLocalization } from '@/context/LocalizationContext';
 
 // Required: complete any pending OAuth session on mount.
 WebBrowser.maybeCompleteAuthSession();
@@ -40,6 +41,7 @@ export default function SignInScreen() {
   const insets = useSafeAreaInsets();
   const { signIn, errors, fetchStatus } = useSignIn();
   const { startSSOFlow } = useSSO();
+  const { t } = useLocalization();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -104,8 +106,8 @@ export default function SignInScreen() {
         <LinearGradient colors={['rgba(255,255,255,0.05)', 'transparent']} style={StyleSheet.absoluteFill} pointerEvents="none" />
         <View style={ss.verifyBox}>
           <Feather name="mail" size={40} color={GOLD} style={{ marginBottom: 16 }} />
-          <Text style={[ss.verifyTitle, { fontFamily: SERIF }]}>Vérification requise</Text>
-          <Text style={[ss.verifySubtitle, { fontFamily: SANS }]}>Entrez le code reçu par e-mail.</Text>
+          <Text style={[ss.verifyTitle, { fontFamily: SERIF }]}>{t('auth.verificationRequired')}</Text>
+          <Text style={[ss.verifySubtitle, { fontFamily: SANS }]}>{t('auth.enterEmailCode')}</Text>
           <TextInput
             style={[ss.input, { fontFamily: SANS, letterSpacing: 8, textAlign: 'center' }]}
             value={code}
@@ -121,10 +123,10 @@ export default function SignInScreen() {
           >
             {isFetching
               ? <ActivityIndicator color={NAVY} />
-              : <Text style={[ss.primaryBtnText, { fontFamily: SANS_SEMIBOLD }]}>Vérifier</Text>}
+              : <Text style={[ss.primaryBtnText, { fontFamily: SANS_SEMIBOLD }]}>{t('auth.verify')}</Text>}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => signIn.mfa.sendEmailCode()} style={{ marginTop: 12 }}>
-            <Text style={[ss.linkText, { fontFamily: SANS }]}>Renvoyer le code</Text>
+            <Text style={[ss.linkText, { fontFamily: SANS }]}>{t('auth.resendCode')}</Text>
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -144,10 +146,10 @@ export default function SignInScreen() {
           <View style={ss.logoArea}>
             <Image source={logoImage} style={ss.logoImage} resizeMode="contain" />
             <Text style={[ss.wordmark, { fontFamily: SERIF }]}>The Nuptial Plan</Text>
-            <Text style={[ss.tagline, { fontFamily: SANS }]}>L'indispensable du Wedding Planner</Text>
+            <Text style={[ss.tagline, { fontFamily: SANS }]}>{t('auth.tagline')}</Text>
           </View>
 
-          <Text style={[ss.heading, { fontFamily: SERIF }]}>Connexion</Text>
+          <Text style={[ss.heading, { fontFamily: SERIF }]}>{t('auth.signIn')}</Text>
 
           {/* ── Social buttons ── */}
           <View style={ss.socialGroup}>
@@ -160,7 +162,7 @@ export default function SignInScreen() {
               {oauthLoading === 'google'
                 ? <ActivityIndicator color="#4285F4" size="small" />
                 : <Text style={[ss.googleG, { fontFamily: SANS_SEMIBOLD }]}>G</Text>}
-              <Text style={[ss.socialBtnText, { fontFamily: SANS_MEDIUM }]}>Continuer avec Google</Text>
+              <Text style={[ss.socialBtnText, { fontFamily: SANS_MEDIUM }]}>{t('auth.continueGoogle')}</Text>
             </TouchableOpacity>
 
             {Platform.OS === 'ios' && (
@@ -173,7 +175,7 @@ export default function SignInScreen() {
                 {oauthLoading === 'apple'
                   ? <ActivityIndicator color="#fff" size="small" />
                    : <AppleLogo size={17} color="#fff" />}
-                <Text style={[ss.applBtnText, { fontFamily: SANS_MEDIUM }]}>Continuer avec Apple</Text>
+                <Text style={[ss.applBtnText, { fontFamily: SANS_MEDIUM }]}>{t('auth.continueApple')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -181,12 +183,12 @@ export default function SignInScreen() {
           {/* ── Divider ── */}
           <View style={ss.divider}>
             <View style={ss.dividerLine} />
-            <Text style={[ss.dividerText, { fontFamily: SANS }]}>ou par e-mail</Text>
+            <Text style={[ss.dividerText, { fontFamily: SANS }]}>{t('auth.orEmail')}</Text>
             <View style={ss.dividerLine} />
           </View>
 
           {/* ── Email ── */}
-          <Text style={[ss.label, { fontFamily: SANS_MEDIUM }]}>Adresse e-mail</Text>
+          <Text style={[ss.label, { fontFamily: SANS_MEDIUM }]}>{t('auth.email')}</Text>
           <TextInput
             style={[ss.input, { fontFamily: SANS }]}
             value={email}
@@ -202,7 +204,7 @@ export default function SignInScreen() {
           )}
 
           {/* ── Password ── */}
-          <Text style={[ss.label, { fontFamily: SANS_MEDIUM }]}>Mot de passe</Text>
+          <Text style={[ss.label, { fontFamily: SANS_MEDIUM }]}>{t('auth.password')}</Text>
           <View style={ss.passwordRow}>
             <TextInput
               style={[ss.input, { fontFamily: SANS, flex: 1 }]}
@@ -230,23 +232,23 @@ export default function SignInScreen() {
           >
             {isFetching
               ? <ActivityIndicator color={NAVY} />
-              : <Text style={[ss.primaryBtnText, { fontFamily: SANS_SEMIBOLD }]}>Se connecter</Text>}
+              : <Text style={[ss.primaryBtnText, { fontFamily: SANS_SEMIBOLD }]}>{t('auth.login')}</Text>}
           </TouchableOpacity>
 
           {/* ── Sign-up link ── */}
           <View style={ss.footer}>
-            <Text style={[ss.footerText, { fontFamily: SANS }]}>Pas encore de compte ? </Text>
+            <Text style={[ss.footerText, { fontFamily: SANS }]}>{t('auth.noAccount')}</Text>
             <Link href="/(auth)/sign-up" asChild>
               <TouchableOpacity>
-                <Text style={[ss.footerLink, { fontFamily: SANS_SEMIBOLD }]}>S'inscrire</Text>
+                <Text style={[ss.footerLink, { fontFamily: SANS_SEMIBOLD }]}>{t('auth.register')}</Text>
               </TouchableOpacity>
             </Link>
           </View>
           <View style={ss.legalFooter}>
-            <Text style={[ss.legalText, { fontFamily: SANS }]}>En continuant, vous acceptez nos </Text>
+            <Text style={[ss.legalText, { fontFamily: SANS }]}>{t('auth.continuingTerms')}</Text>
             <Link href="/legal/policy" asChild><TouchableOpacity><Text style={[ss.legalLink, { fontFamily: SANS_SEMIBOLD }]}>CGU</Text></TouchableOpacity></Link>
-            <Text style={[ss.legalText, { fontFamily: SANS }]}> et notre </Text>
-            <Link href="/legal/privacy" asChild><TouchableOpacity><Text style={[ss.legalLink, { fontFamily: SANS_SEMIBOLD }]}>politique de confidentialité</Text></TouchableOpacity></Link>
+            <Text style={[ss.legalText, { fontFamily: SANS }]}>{t('auth.andPrivacy')}</Text>
+            <Link href="/legal/privacy" asChild><TouchableOpacity><Text style={[ss.legalLink, { fontFamily: SANS_SEMIBOLD }]}>{t('auth.privacy')}</Text></TouchableOpacity></Link>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

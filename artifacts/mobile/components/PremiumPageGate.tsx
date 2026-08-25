@@ -5,10 +5,13 @@ import { PaywallModal } from '@/components/PaywallModal';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
 import { useColors } from '@/hooks/useColors';
 import { SANS, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
+import { useLocalization } from '@/context/LocalizationContext';
 
 export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
   const colors = useColors();
   const { paywallVisible, closePaywall, openPaywall } = usePremiumGate();
+  const { language } = useLocalization();
+  const en = language === 'en';
 
   return (
     <>
@@ -16,14 +19,14 @@ export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <LinearGradient colors={[colors.plumDark, colors.plum, colors.plumLight]} style={styles.hero}>
           <Feather name="lock" size={24} color={colors.gold} />
-          <Text style={[styles.eyebrow, { color: colors.gold, fontFamily: SANS_SEMIBOLD }]}>FONCTIONNALITÉ PREMIUM</Text>
-          <Text style={[styles.title, { color: '#FBF5FB', fontFamily: SERIF }]}>Débloquez {featureLabel}</Text>
+          <Text style={[styles.eyebrow, { color: colors.gold, fontFamily: SANS_SEMIBOLD }]}>{en ? 'PREMIUM FEATURE' : 'FONCTIONNALITÉ PREMIUM'}</Text>
+          <Text style={[styles.title, { color: '#FBF5FB', fontFamily: SERIF }]}>{en ? `Unlock ${featureLabel}` : `Débloquez ${featureLabel}`}</Text>
           <Text style={[styles.body, { color: '#F7EAF4', fontFamily: SANS }]}>
-            Abonnez-vous à Premium pour accéder à cet onglet et utiliser toutes ses fonctionnalités.
+            {en ? 'Subscribe to Premium to access this tab and all its features.' : 'Abonnez-vous à Premium pour accéder à cet onglet et utiliser toutes ses fonctionnalités.'}
           </Text>
           <TouchableOpacity onPress={openPaywall} style={styles.button} activeOpacity={0.82}>
             <Feather name="award" size={15} color="#3C1A3C" />
-            <Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD }]}>Passer à Premium</Text>
+            <Text style={[styles.buttonText, { fontFamily: SANS_SEMIBOLD }]}>{en ? 'Go Premium' : 'Passer à Premium'}</Text>
           </TouchableOpacity>
         </LinearGradient>
       </View>

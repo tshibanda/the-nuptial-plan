@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { downloadRunsheetPDF } from '@/components/jour-j/runsheet-pdf';
 import { PremiumBadge } from '@/components/premium-badge';
 import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
+import { useLanguage } from '@/lib/i18n';
 
 /* ── Types ── */
 type Tab = 'runsheet' | 'prestataires' | 'checklist';
@@ -108,11 +109,13 @@ const TONE_HEX: Record<string, string> = Object.fromEntries(TONES.map(t => [t.ke
 
 /* ── Status badge ── */
 function StatusBadge({ status }: { status: EventStatus }) {
+  const { language } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const map = {
-    terminé:   { bg: 'bg-[#dce8df]', text: 'text-[#4a7157]', label: 'Terminé'   },
-    en_cours:  { bg: 'bg-[#f3e8d4]', text: 'text-[#8a6530]', label: 'En cours'  },
-    en_retard: { bg: 'bg-[#f1dfd0]', text: 'text-[#9d6246]', label: 'En retard' },
-    à_venir:   { bg: 'bg-muted/60',  text: 'text-muted-foreground', label: 'À venir' },
+    terminé:   { bg: 'bg-[#dce8df]', text: 'text-[#4a7157]', label: tr('Terminé', 'Completed') },
+    en_cours:  { bg: 'bg-[#f3e8d4]', text: 'text-[#8a6530]', label: tr('En cours', 'In progress') },
+    en_retard: { bg: 'bg-[#f1dfd0]', text: 'text-[#9d6246]', label: tr('En retard', 'Overdue') },
+    à_venir:   { bg: 'bg-muted/60',  text: 'text-muted-foreground', label: tr('À venir', 'Upcoming') },
   };
   const { bg, text, label } = map[status];
   return (
@@ -127,12 +130,14 @@ function StatusBadge({ status }: { status: EventStatus }) {
 
 /* ── Progress bar ── */
 function ProgressBar({ done, total }: { done: number; total: number }) {
+  const { language } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
   return (
     <div className="mb-8 rounded-2xl bg-card/80 p-5"
       style={{ border: '1px solid rgba(200,180,200,0.30)', boxShadow: '0 2px 16px rgba(93,45,93,0.04)' }}>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-[12px] font-semibold text-foreground/70">Avancement du programme</span>
+        <span className="text-[12px] font-semibold text-foreground/70">{tr('Avancement du programme', 'Schedule progress')}</span>
         <span className="font-serif text-[20px] leading-none text-foreground">
           {done}<span className="text-[13px] text-muted-foreground">/{total}</span>
         </span>
@@ -141,7 +146,7 @@ function ProgressBar({ done, total }: { done: number; total: number }) {
         <div className="h-full rounded-full transition-all duration-500"
           style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #5D2D5D, #C8A96E)' }} />
       </div>
-      <p className="mt-1.5 text-right text-[10px] text-muted-foreground">{pct}% complété</p>
+      <p className="mt-1.5 text-right text-[10px] text-muted-foreground">{pct}% {tr('complété', 'complete')}</p>
     </div>
   );
 }
@@ -155,12 +160,14 @@ function RunsheetTab({
   onEdit: (event: CalEvent) => void;
   onDelete: (id: number) => void;
 }) {
+  const { language, formatDate: localDate } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   if (events.length === 0) {
     return (
       <div className="py-16 text-center">
         <ClipboardList size={32} className="mx-auto mb-3 text-muted-foreground/30" />
-        <p className="text-[14px] text-muted-foreground">Aucun événement planifié</p>
-        <p className="mt-1 text-[12px] text-muted-foreground/60">Utilisez le bouton &laquo;&nbsp;Ajouter&nbsp;&raquo; ci-dessus</p>
+        <p className="text-[14px] text-muted-foreground">{tr('Aucun événement planifié', 'No events planned')}</p>
+        <p className="mt-1 text-[12px] text-muted-foreground/60">{tr('Utilisez le bouton « Ajouter » ci-dessus', 'Use the “Add” button above')}</p>
       </div>
     );
   }
@@ -175,7 +182,7 @@ function RunsheetTab({
       {Object.entries(byDate).map(([date, dayEvents]) => (
         <div key={date}>
           <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a8893e]">
-            {formatDate(date, 'EEEE d MMMM')}
+            {localDate(date, { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
           <div className="space-y-2">
             {dayEvents.map((event) => {
@@ -246,7 +253,7 @@ function RunsheetTab({
                       <button
                         onClick={() => onEdit(event)}
                         className="rounded-lg p-1.5 text-muted-foreground/30 opacity-0 transition hover:bg-primary/8 hover:text-primary group-hover:opacity-100"
-                        aria-label="Modifier"
+                        aria-label={tr('Modifier', 'Edit')}
                       >
                         <Pencil size={13} />
                       </button>
@@ -254,7 +261,7 @@ function RunsheetTab({
                       <button
                         onClick={() => onDelete(event.id)}
                         className="rounded-lg p-1.5 text-muted-foreground/30 opacity-0 transition hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-                        aria-label="Supprimer"
+                        aria-label={tr('Supprimer', 'Delete')}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -262,7 +269,7 @@ function RunsheetTab({
                       <button
                         onClick={() => onToggle(event.id, !event.completed)}
                         className="ml-1 shrink-0 text-muted-foreground/30 transition hover:text-primary"
-                        aria-label={event.completed ? 'Marquer non terminé' : 'Marquer terminé'}
+                        aria-label={event.completed ? tr('Marquer non terminé', 'Mark incomplete') : tr('Marquer terminé', 'Mark complete')}
                       >
                         {event.completed
                           ? <CheckCircle2 size={20} className="text-[#4a7157]" />
@@ -282,11 +289,13 @@ function RunsheetTab({
 
 /* ── Prestataires tab ── */
 function PrestatairesTab({ vendors }: { vendors: Vendor[] }) {
+  const { language } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   if (vendors.length === 0) {
     return (
       <div className="py-16 text-center">
         <User size={32} className="mx-auto mb-3 text-muted-foreground/30" />
-        <p className="text-[14px] text-muted-foreground">Aucun prestataire enregistré</p>
+        <p className="text-[14px] text-muted-foreground">{tr('Aucun prestataire enregistré', 'No vendors registered')}</p>
       </div>
     );
   }
@@ -331,10 +340,12 @@ function PrestatairesTab({ vendors }: { vendors: Vendor[] }) {
 
 /* ── Checklist tab ── */
 function ChecklistTab({ events, onToggle }: { events: CalEvent[]; onToggle: (id: number, v: boolean) => void }) {
+  const { language } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const groups: [string, CalEvent[]][] = [
-    ['Matinée',    events.filter(e => !e.eventTime || e.eventTime < '12:00')],
-    ['Après-midi', events.filter(e => !!e.eventTime && e.eventTime >= '12:00' && e.eventTime < '18:00')],
-    ['Soirée',     events.filter(e => !!e.eventTime && e.eventTime >= '18:00')],
+    [tr('Matinée', 'Morning'), events.filter(e => !e.eventTime || e.eventTime < '12:00')],
+    [tr('Après-midi', 'Afternoon'), events.filter(e => !!e.eventTime && e.eventTime >= '12:00' && e.eventTime < '18:00')],
+    [tr('Soirée', 'Evening'), events.filter(e => !!e.eventTime && e.eventTime >= '18:00')],
   ];
 
   const hasAny = groups.some(([, g]) => g.length > 0);
@@ -342,7 +353,7 @@ function ChecklistTab({ events, onToggle }: { events: CalEvent[]; onToggle: (id:
     return (
       <div className="py-16 text-center">
         <Check size={32} className="mx-auto mb-3 text-muted-foreground/30" />
-        <p className="text-[14px] text-muted-foreground">Aucune tâche à afficher</p>
+        <p className="text-[14px] text-muted-foreground">{tr('Aucune tâche à afficher', 'No tasks to display')}</p>
       </div>
     );
   }
@@ -391,6 +402,8 @@ function EventFormDialog({
   initial?: CalEvent | null;
   defaultDate?: string;
 }) {
+  const { language } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const [form, setForm] = useState<EventForm>(BLANK_FORM);
   const [saving, setSaving] = useState(false);
 
@@ -426,28 +439,28 @@ function EventFormDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-serif text-[20px]">
-            {isEdit ? "Modifier l'étape" : 'Nouvelle étape du déroulé'}
+             {isEdit ? tr("Modifier l'étape", 'Edit step') : tr('Nouvelle étape du déroulé', 'New schedule step')}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-1">
           {/* Title */}
           <div className="space-y-1.5">
-            <Label htmlFor="ev-title">Titre <span className="text-destructive">*</span></Label>
+             <Label htmlFor="ev-title">{tr('Titre', 'Title')} <span className="text-destructive">*</span></Label>
             <Input id="ev-title" value={form.title}
               onChange={e => set('title', e.target.value)}
-              placeholder="Ex\u00a0: Cérémonie civile, Vin d'honneur…" />
+               placeholder={tr('Ex. : Cérémonie civile, vin d’honneur…', 'E.g. civil ceremony, reception drinks…')} />
           </div>
 
           {/* Date + Time */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ev-date">Date <span className="text-destructive">*</span></Label>
+               <Label htmlFor="ev-date">{tr('Date', 'Date')} <span className="text-destructive">*</span></Label>
               <Input id="ev-date" type="date" value={form.eventDate}
                 onChange={e => set('eventDate', e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ev-time">Heure</Label>
+               <Label htmlFor="ev-time">{tr('Heure', 'Time')}</Label>
               <Input id="ev-time" type="time" value={form.eventTime}
                 onChange={e => set('eventTime', e.target.value)} />
             </div>
@@ -457,37 +470,37 @@ function EventFormDialog({
           <div className="space-y-1.5">
             <Label htmlFor="ev-location">
               <MapPin size={12} className="mr-1 inline-block text-primary/50" />
-              Lieu
+               {tr('Lieu', 'Location')}
             </Label>
             <Input id="ev-location" value={form.location}
               onChange={e => set('location', e.target.value)}
-              placeholder="Ex\u00a0: Salle de réception, Jardin, Mairie…" />
+               placeholder={tr('Ex. : Salle de réception, jardin, mairie…', 'E.g. reception room, garden, town hall…')} />
           </div>
 
           {/* Actors */}
           <div className="space-y-1.5">
             <Label htmlFor="ev-actors">
               <Users size={12} className="mr-1 inline-block text-primary/50" />
-              Acteurs / Participants
+               {tr('Acteurs / Participants', 'People / Participants')}
             </Label>
             <Input id="ev-actors" value={form.actors}
               onChange={e => set('actors', e.target.value)}
-              placeholder="Ex\u00a0: Mariés, Témoins, Photographe…" />
+               placeholder={tr('Ex. : Mariés, témoins, photographe…', 'E.g. couple, witnesses, photographer…')} />
           </div>
 
           {/* Detail */}
           <div className="space-y-1.5">
-            <Label htmlFor="ev-detail">Notes / Détails</Label>
+             <Label htmlFor="ev-detail">{tr('Notes / Détails', 'Notes / Details')}</Label>
             <textarea id="ev-detail" value={form.detail}
               onChange={e => set('detail', e.target.value)}
               rows={2}
-              placeholder="Informations complémentaires, rappels…"
+               placeholder={tr('Informations complémentaires, rappels…', 'Additional information, reminders…')}
               className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20" />
           </div>
 
           {/* Tone picker */}
           <div className="space-y-2">
-            <Label>Couleur</Label>
+             <Label>{tr('Couleur', 'Colour')}</Label>
             <div className="flex flex-wrap gap-2">
               {/* Clear option */}
               <button
@@ -495,34 +508,37 @@ function EventFormDialog({
                 onClick={() => set('tone', '')}
                 className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition ${form.tone === '' ? 'border-foreground/40' : 'border-transparent'}`}
                 style={{ background: 'rgba(200,180,200,0.15)' }}
-                title="Aucune"
-                aria-label="Aucune couleur"
+                 title={tr('Aucune', 'None')}
+                 aria-label={tr('Aucune couleur', 'No colour')}
               >
                 <X size={12} className="text-muted-foreground" />
               </button>
-              {TONES.map(({ key, hex, label }) => (
+              {TONES.map(({ key, hex, label }) => {
+                const toneLabel = tr(label, ({ Prune: 'Plum', Or: 'Gold', Rose: 'Rose', Sauge: 'Sage', Lavande: 'Lavender', Bleu: 'Blue' } as Record<string, string>)[label] ?? label);
+                return (
                 <button
                   key={key}
                   type="button"
                   onClick={() => set('tone', key)}
-                  title={label}
-                  aria-label={label}
+                  title={toneLabel}
+                  aria-label={toneLabel}
                   className={`h-8 w-8 rounded-full border-2 transition ${form.tone === key ? 'border-foreground/60 scale-110' : 'border-transparent hover:scale-105'}`}
                   style={{ background: hex, boxShadow: form.tone === key ? `0 0 0 3px ${hex}30` : undefined }}
                 />
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-2 border-t border-border/30 pt-3">
             <Button variant="outline" size="sm" onClick={onClose} disabled={saving}>
-              Annuler
+               {tr('Annuler', 'Cancel')}
             </Button>
             <Button size="sm" onClick={handleSave}
               disabled={!form.title.trim() || !form.eventDate || saving}
               style={{ background: 'linear-gradient(135deg, #5D2D5D, #3C1A3C)' }}>
-              {saving ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Ajouter'}
+               {saving ? tr('Enregistrement…', 'Saving…') : isEdit ? tr('Enregistrer', 'Save') : tr('Ajouter', 'Add')}
             </Button>
           </div>
         </div>
@@ -533,6 +549,8 @@ function EventFormDialog({
 
 /* ── Main page ── */
 export default function JourJ() {
+  const { language, locale, formatDate: localDate } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const queryClient = useQueryClient();
@@ -566,11 +584,11 @@ export default function JourJ() {
 
   /* Live clock */
   useEffect(() => {
-    const fmt = () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+     const fmt = () => new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     setClock(fmt());
     const iv = setInterval(() => setClock(fmt()), 60_000);
     return () => clearInterval(iv);
-  }, []);
+   }, [locale]);
 
   /* Invalidate helper */
   const invalidate = useCallback(() => {
@@ -582,7 +600,7 @@ export default function JourJ() {
     if (!activeWeddingId) return;
     updateEvent.mutate(
       { weddingId: activeWeddingId, id, data: { completed } },
-      { onSuccess: invalidate, onError: () => toast({ title: 'Erreur', description: 'Impossible de mettre à jour.', variant: 'destructive' }) }
+       { onSuccess: invalidate, onError: () => toast({ title: tr('Erreur', 'Error'), description: tr('Impossible de mettre à jour.', 'Unable to update.'), variant: 'destructive' }) }
     );
   }, [activeWeddingId, updateEvent, invalidate, toast]);
 
@@ -601,10 +619,10 @@ export default function JourJ() {
   /* Delete */
   const handleDelete = useCallback((id: number) => {
     if (!activeWeddingId) return;
-    if (!window.confirm('Supprimer cette étape\u00a0?')) return;
+     if (!window.confirm(tr('Supprimer cette étape ?', 'Delete this step?'))) return;
     deleteEvent.mutate(
       { weddingId: activeWeddingId, id },
-      { onSuccess: invalidate, onError: () => toast({ title: 'Erreur', description: 'Impossible de supprimer.', variant: 'destructive' }) }
+       { onSuccess: invalidate, onError: () => toast({ title: tr('Erreur', 'Error'), description: tr('Impossible de delete.', 'Unable to delete.'), variant: 'destructive' }) }
     );
   }, [activeWeddingId, deleteEvent, invalidate, toast]);
 
@@ -626,7 +644,7 @@ export default function JourJ() {
         { weddingId: activeWeddingId, id: editTarget.id, data },
         {
           onSuccess: () => { invalidate(); setFormOpen(false); },
-          onError: () => toast({ title: 'Erreur', description: 'Impossible de modifier.', variant: 'destructive' }),
+           onError: () => toast({ title: tr('Erreur', 'Error'), description: tr('Impossible de modifier.', 'Unable to edit.'), variant: 'destructive' }),
         }
       );
     } else {
@@ -634,7 +652,7 @@ export default function JourJ() {
         { weddingId: activeWeddingId, data: { ...data, completed: false } },
         {
           onSuccess: () => { invalidate(); setFormOpen(false); },
-          onError: () => toast({ title: 'Erreur', description: 'Impossible de créer.', variant: 'destructive' }),
+           onError: () => toast({ title: tr('Erreur', 'Error'), description: tr('Impossible de créer.', 'Unable to create.'), variant: 'destructive' }),
         }
       );
     }
@@ -655,7 +673,7 @@ export default function JourJ() {
       );
     } catch (err) {
       console.error('[PDF export]', err);
-      toast({ title: 'Erreur', description: "Impossible de générer le PDF.", variant: 'destructive' });
+       toast({ title: tr('Erreur', 'Error'), description: tr('Impossible de générer le PDF.', 'Unable to generate the PDF.'), variant: 'destructive' });
     } finally {
       setPdfLoading(false);
     }
@@ -664,7 +682,7 @@ export default function JourJ() {
   if (!activeWeddingId) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-        <p className="font-serif text-[24px] text-foreground/60">Aucun mariage sélectionné</p>
+         <p className="font-serif text-[24px] text-foreground/60">{tr('Aucun mariage sélectionné', 'No wedding selected')}</p>
       </div>
     );
   }
@@ -672,44 +690,44 @@ export default function JourJ() {
   if (weddingLoading || eventsLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <p className="text-[13px] text-muted-foreground">Chargement…</p>
+         <p className="text-[13px] text-muted-foreground">{tr('Chargement…', 'Loading…')}</p>
       </div>
     );
   }
 
   const TABS = [
-    { key: 'runsheet'     as const, label: 'Runsheet',     icon: ClipboardList },
-    { key: 'prestataires' as const, label: 'Prestataires', icon: User          },
-    { key: 'checklist'   as const, label: 'Checklist',    icon: Check         },
+     { key: 'runsheet'     as const, label: 'Runsheet', icon: ClipboardList },
+     { key: 'prestataires' as const, label: tr('Prestataires', 'Vendors'), icon: User },
+     { key: 'checklist' as const, label: tr('Checklist', 'Checklist'), icon: Check },
   ];
 
-  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="votre écran Jour J" />;
+   if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel={tr('votre écran Jour J', 'your wedding-day screen')} />;
   return (
     <>
       <PageTour
         tourKey="jour-j"
-        pageTitle="Jour J"
+        pageTitle={tr('Jour J', 'Wedding day')}
         pageIcon={Heart}
         steps={[
-          { icon: Heart,         title: 'Déroulé du Jour J',  body: "Cet espace centralise tout le programme du grand jour — chronologie, prestataires joignables et liste de contrôle." },
-          { icon: ClipboardList, title: 'Runsheet',            body: "Ajoutez et modifiez vos étapes directement ici. Indiquez l'heure, le lieu, les participants et des notes pour chaque moment." },
-          { icon: User,          title: 'Prestataires',        body: "Accédez rapidement aux coordonnées de chaque prestataire pour les contacter en cas d'imprévu." },
-          { icon: Check,         title: 'Checklist',           body: "Vos tâches regroupées par moment de la journée pour un suivi visuel rapide." },
+          { icon: Heart, title: tr('Déroulé du Jour J', 'Wedding-day schedule'), body: tr('Cet espace centralise tout le programme du grand jour — chronologie, prestataires joignables et liste de contrôle.', 'This space brings together the big day schedule, reachable vendors, and checklist.') },
+          { icon: ClipboardList, title: 'Runsheet', body: tr('Ajoutez et modifiez vos étapes directement ici. Indiquez l\'heure, le lieu, les participants et des notes pour chaque moment.', 'Add and edit steps here. Include the time, location, participants, and notes for every moment.') },
+          { icon: User, title: tr('Prestataires', 'Vendors'), body: tr('Accédez rapidement aux coordonnées de chaque prestataire pour les contacter en cas d\'imprévu.', 'Quickly access each vendor’s contact details if something unexpected happens.') },
+          { icon: Check, title: 'Checklist', body: tr('Vos tâches regroupées par moment de la journée pour un suivi visuel rapide.', 'Tasks grouped by time of day for quick visual tracking.') },
         ]}
       />
 
       {/* Page header */}
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <p className="eyebrow mb-2 text-[#a8893e]">Grand jour</p>
+          <p className="eyebrow mb-2 text-[#a8893e]">{tr('Grand jour', 'Wedding day')}</p>
           <div className="flex items-center gap-3">
-            <h1 className="font-serif text-[38px] leading-[0.92] text-foreground">Jour J</h1>
+            <h1 className="font-serif text-[38px] leading-[0.92] text-foreground">{tr('Jour J', 'Wedding day')}</h1>
             <PremiumBadge />
           </div>
           {wedding && (
             <p className="mt-2 flex items-center gap-2 text-[12px] text-muted-foreground">
               <Calendar size={12} className="text-[#a8893e]" />
-              {formatDate(wedding.weddingDate, 'EEEE d MMMM yyyy')}
+              {localDate(wedding.weddingDate, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               {wedding.venue && (
                 <><span className="text-border">·</span>{wedding.venue}</>
               )}
@@ -729,13 +747,13 @@ export default function JourJ() {
               className="flex items-center gap-1.5 rounded-xl border border-border/50 bg-card/60 px-3 py-2 text-[11px] font-medium text-muted-foreground transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-40"
             >
               <FileDown size={12} />
-              {pdfLoading ? 'Génération…' : 'Exporter PDF'}
+              {pdfLoading ? tr('Génération…', 'Generating…') : tr('Exporter PDF', 'Export PDF')}
             </button>
             <button
               onClick={handleOpenCreate}
               className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/8 px-3 py-2 text-[11px] font-semibold text-primary transition hover:bg-primary/15"
             >
-              <Plus size={12} /> Ajouter une étape
+              <Plus size={12} /> {tr('Ajouter une étape', 'Add a step')}
             </button>
           </div>
         </div>

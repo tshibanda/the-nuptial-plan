@@ -21,6 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocalizedPackagePrice, isNativeStorePricingAvailable, useSubscription } from '@/lib/subscription';
 import { useAuth, useClerk } from '@clerk/expo';
 import { getApiUrl } from '@/lib/apiUrl';
+import { useLocalization } from '@/context/LocalizationContext';
 
 const IOS_APP_STORE_URL = 'https://apps.apple.com/app/id6799479925';
 const IOS_APP_REVIEW_URL = `${IOS_APP_STORE_URL}?action=write-review`;
@@ -96,26 +97,41 @@ export default function ParametresScreen() {
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const subscription = useSubscription();
+  const { language, locale, setLanguage, t } = useLocalization();
+  const interpolate = (key: 'settings.deleteWeddingMessage' | 'settings.weddingDeletedMessage', name: string) =>
+    t(key).replace('{name}', name);
+
+  const chooseLanguage = () => {
+    Alert.alert(
+      t('settings.language'),
+      undefined,
+      [
+        { text: t('settings.french'), onPress: () => { void setLanguage('fr'); } },
+        { text: t('settings.english'), onPress: () => { void setLanguage('en'); } },
+        { text: t('common.cancel'), style: 'cancel' },
+      ],
+    );
+  };
 
   const deleteAccount = () => {
     Alert.alert(
-      'Supprimer le compte',
-      'Cette action efface définitivement vos données et résilie les abonnements web actifs. Pour un achat Apple ou Google, pensez à le résilier dans votre boutique avant de continuer.',
+      t('settings.deleteAccountTitle'),
+      t('settings.deleteAccountMessage'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer définitivement',
+          text: t('settings.deleteForever'),
           style: 'destructive',
           onPress: async () => {
             try {
               const token = await getToken();
               const response = await fetch(getApiUrl('account'), { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} });
               if (!response.ok) throw new Error();
-              Alert.alert('Compte supprimé', 'Votre compte et vos données ont été supprimés définitivement.', [
-                { text: 'OK', onPress: () => void signOut().then(() => router.replace('/(auth)/sign-in')) },
+               Alert.alert(t('settings.accountDeleted'), t('settings.accountDeletedMessage'), [
+                 { text: 'OK', onPress: () => void signOut().then(() => router.replace('/(auth)/sign-in')) },
               ]);
             } catch {
-              Alert.alert('Suppression impossible', 'Nous n’avons pas pu supprimer le compte. Réessayez dans quelques instants.');
+               Alert.alert(t('settings.deleteFailed'), t('settings.deleteFailedMessage'));
             }
           },
         },
@@ -139,11 +155,11 @@ export default function ParametresScreen() {
       // including if the user chooses not to leave a review.
       await AsyncStorage.setItem(promptKey, 'true');
       Alert.alert(
-        'Votre avis compte',
-        'Après quelques jours avec The Nuptial Plan, souhaitez-vous nous laisser une note ou un avis sur l’App Store ?',
+        t('settings.reviewTitle'),
+        t('settings.reviewMessage'),
         [
-          { text: 'Plus tard', style: 'cancel' },
-          { text: 'Laisser un avis', onPress: openReview },
+          { text: t('settings.later'), style: 'cancel' },
+          { text: t('settings.review'), onPress: openReview },
         ],
       );
     });
@@ -166,12 +182,12 @@ export default function ParametresScreen() {
     if (!activeWedding) return;
 
     Alert.alert(
-      'Supprimer ce dossier',
-      `Toutes les données de "${activeWedding.names}" seront définitivement supprimées (invités, prestataires, budget, paiements…). Cette action est irréversible.`,
+      t('settings.deleteWeddingTitle'),
+      interpolate('settings.deleteWeddingMessage', activeWedding.names),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer définitivement',
+          text: t('settings.deleteForever'),
           style: 'destructive',
           onPress: () => {
             deleteWedding.mutate(
@@ -182,10 +198,10 @@ export default function ParametresScreen() {
                   // Select next available wedding or clear selection
                   const remaining = (weddings ?? []).filter((w) => w.id !== activeWedding.id);
                   selectWedding(remaining[0]?.id ?? 0);
-                  Alert.alert('Dossier supprimé', `Le mariage "${activeWedding.names}" a été supprimé.`);
+                  Alert.alert(t('settings.weddingDeleted'), interpolate('settings.weddingDeletedMessage', activeWedding.names));
                 },
                 onError: () => {
-                  Alert.alert('Erreur', 'Impossible de supprimer ce dossier. Réessayez.');
+                  Alert.alert(t('common.error'), t('settings.weddingDeleteError'));
                 },
               },
             );
@@ -218,8 +234,8 @@ export default function ParametresScreen() {
             <Feather name="settings" size={22} color="#3C1A3C" />
           </LinearGradient>
         </View>
-        <Text style={[ps.heroTitle, { fontFamily: SERIF }]}>Paramètres</Text>
-        <Text style={[ps.heroSub, { fontFamily: SANS }]}>L'indispensable du Wedding Planner</Text>
+        <Text style={[ps.heroTitle, { fontFamily: SERIF }]}>{t('settings.title')}</Text>
+        <Text style={[ps.heroSub, { fontFamily: SANS }]}>{t('settings.subtitle')}</Text>
       </LinearGradient>
 
       <View style={{ paddingHorizontal: 16 }}>
@@ -227,25 +243,25 @@ export default function ParametresScreen() {
         {/* ── Dossier de mariage actif ────────────────────────────────────── */}
         {activeWedding && (
           <>
-            <SectionHeader label="DOSSIER DE MARIAGE" colors={colors} />
+            <SectionHeader label={t('settings.weddingFile')} colors={colors} />
             <View style={[ps.weddingCard, shadow('md'), { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={[ps.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
 
               <View style={ps.weddingCardTop}>
                 <View>
-                  <Text style={[ps.weddingCardEye, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>MARIAGE ACTIF</Text>
+                  <Text style={[ps.weddingCardEye, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>{t('settings.activeWedding')}</Text>
                   <Text style={[ps.weddingCardNames, { fontFamily: SERIF, color: colors.foreground }]}>{activeWedding.names}</Text>
                 </View>
                 <View style={[ps.activePill, { backgroundColor: colors.successBg }]}>
-                  <Text style={[ps.activePillText, { fontFamily: SANS_SEMIBOLD, color: colors.success }]}>Actif</Text>
+                  <Text style={[ps.activePillText, { fontFamily: SANS_SEMIBOLD, color: colors.success }]}>{t('common.active')}</Text>
                 </View>
               </View>
 
               <View style={[ps.weddingStats, { borderTopColor: colors.border }]}>
                 {[
-                  { icon: 'calendar', value: new Date(activeWedding.weddingDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) },
+                  { icon: 'calendar', value: new Date(activeWedding.weddingDate).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) },
                   { icon: 'map-pin', value: activeWedding.venue },
-                  { icon: 'users', value: `${activeWedding.guestCount} invités` },
+                  { icon: 'users', value: `${activeWedding.guestCount} ${t('settings.guests')}` },
                 ].map((item) => (
                   <View key={item.icon} style={ps.weddingStatRow}>
                     <Feather name={item.icon as any} size={13} color={colors.goldDim} />
@@ -260,11 +276,20 @@ export default function ParametresScreen() {
         )}
 
         {/* ── Préférences application ─────────────────────────────────────── */}
-        <SectionHeader label="APPLICATION" colors={colors} />
+         <SectionHeader label={t('settings.application')} colors={colors} />
         <Group colors={colors}>
           <RowItem
+            icon="globe"
+            label={t('settings.language')}
+            value={language === 'fr' ? t('settings.french') : t('settings.english')}
+            iconBg={colors.sageBg}
+            iconColor={colors.sageDark}
+            colors={colors}
+            onPress={chooseLanguage}
+          />
+          <RowItem
             icon="bell"
-            label="Notifications"
+            label={t('settings.notifications')}
             iconBg={colors.goldLight}
             iconColor={colors.goldDim}
             colors={colors}
@@ -279,17 +304,17 @@ export default function ParametresScreen() {
           />
           <RowItem
             icon="help-circle"
-            label="Aide & support"
+            label={t('settings.help')}
             iconBg={colors.sageBg}
             iconColor={colors.sageDark}
             colors={colors}
             onPress={() =>
-              Alert.alert('Aide & support', 'Pour toute assistance, contactez-nous à contact@thenuptialplan.com', [{ text: 'OK' }])
+              Alert.alert(t('settings.help'), t('settings.supportMessage'), [{ text: 'OK' }])
             }
           />
           <RowItem
             icon="alert-circle"
-            label="Signaler un bug"
+            label={t('settings.reportBug')}
             value="Envoyer un rapport"
             iconBg={colors.roseBg}
             iconColor={colors.roseDark}
@@ -298,7 +323,7 @@ export default function ParametresScreen() {
           />
           <RowItem
             icon="star"
-            label="Laisser un avis"
+            label={t('settings.leaveReview')}
             value="App Store"
             iconBg={colors.goldLight}
             iconColor={colors.goldDim}
@@ -307,7 +332,7 @@ export default function ParametresScreen() {
           />
           <RowItem
             icon="info"
-            label="Version"
+            label={t('settings.version')}
             value="1.0.0"
             iconBg={colors.muted}
             iconColor={colors.mutedForeground}
@@ -315,16 +340,16 @@ export default function ParametresScreen() {
           />
         </Group>
 
-        <SectionHeader label="INFORMATIONS LÉGALES" colors={colors} />
+        <SectionHeader label={t('settings.legal')} colors={colors} />
         <Group colors={colors}>
-          <RowItem icon="shield" label="Politique de confidentialité" iconBg={colors.sageBg} iconColor={colors.sageDark} colors={colors} onPress={() => openLegal('privacy')} />
-          <RowItem icon="file-text" label="Conditions générales d’utilisation" iconBg={colors.muted} iconColor={colors.mutedForeground} colors={colors} onPress={() => openLegal('policy')} />
+          <RowItem icon="shield" label={t('settings.privacy')} iconBg={colors.sageBg} iconColor={colors.sageDark} colors={colors} onPress={() => openLegal('privacy')} />
+          <RowItem icon="file-text" label={t('settings.terms')} iconBg={colors.muted} iconColor={colors.mutedForeground} colors={colors} onPress={() => openLegal('policy')} />
         </Group>
 
         {/* ── Zone danger ─────────────────────────────────────────────────── */}
         {activeWedding && (
           <>
-            <SectionHeader label="ZONE DANGER" colors={colors} />
+             <SectionHeader label={t('settings.danger')} colors={colors} />
             <Group colors={colors}>
               <TouchableOpacity
                 activeOpacity={0.72}
@@ -336,7 +361,7 @@ export default function ParametresScreen() {
                   <Feather name="trash-2" size={15} color={colors.roseDark} />
                 </View>
                 <Text style={[ps.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>
-                  {deleteWedding.isPending ? 'Suppression…' : 'Supprimer ce dossier'}
+                   {deleteWedding.isPending ? t('settings.deleting') : t('settings.deleteFile')}
                 </Text>
                 <Feather name="chevron-right" size={14} color={colors.roseDark + '88'} />
               </TouchableOpacity>
@@ -348,12 +373,12 @@ export default function ParametresScreen() {
                 <View style={[ps.rowIcon, { backgroundColor: colors.roseBg }]}>
                   <Feather name="trash-2" size={15} color={colors.roseDark} />
                 </View>
-                <Text style={[ps.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>Supprimer le compte</Text>
+                 <Text style={[ps.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>{t('settings.deleteAccount')}</Text>
                 <Feather name="chevron-right" size={14} color={colors.roseDark + '88'} />
               </TouchableOpacity>
             </Group>
             <Text style={[ps.dangerHint, { fontFamily: SANS, color: colors.mutedForeground }]}>
-              La suppression est définitive et irréversible. Toutes les données liées à ce mariage seront perdues.
+              {t('settings.dangerHint')}
             </Text>
           </>
         )}

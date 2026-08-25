@@ -29,6 +29,7 @@ import {
 } from '@workspace/api-client-react';
 import type { BudgetCategory } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
+import { useLocalization } from '@/context/LocalizationContext';
 import { useColors } from '@/hooks/useColors';
 import { useTour } from '@/hooks/useTour';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
@@ -60,6 +61,11 @@ const TOUR_STEPS = [
     description:
       "Chaque poste budg\u00e9taire est list\u00e9 avec son enveloppe et le montant r\u00e9ellement engag\u00e9. Appuyez sur une ligne pour modifier le montant.",
   },
+];
+const TOUR_STEPS_EN = [
+  { icon: 'pie-chart', title: 'Your budget', description: 'Track your total allocated budget and spending to date at a glance.' },
+  { icon: 'bar-chart-2', title: 'Overall summary', description: 'The progress bar visually shows the percentage of budget already spent.' },
+  { icon: 'tag', title: 'By category', description: 'Each budget item shows its allocation and actual spending. Tap a row to edit the amount.' },
 ];
 
 // ── Colour palettes ───────────────────────────────────────────────────────────
@@ -293,9 +299,10 @@ interface CategoryRowProps {
   isSelected: boolean;
   chartColor: string;
   onPress: () => void;
+  language: 'fr' | 'en';
 }
 
-function CategoryRow({ category, index, currency, colors, isSelected, chartColor, onPress }: CategoryRowProps) {
+function CategoryRow({ category, index, currency, colors, isSelected, chartColor, onPress, language }: CategoryRowProps) {
   const pct =
     category.allocatedCents > 0
       ? Math.min(100, Math.round((category.spentCents / category.allocatedCents) * 100))
@@ -362,7 +369,7 @@ function CategoryRow({ category, index, currency, colors, isSelected, chartColor
 
             <View style={ss.catMeta}>
               <Text style={[ss.metaLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                {'Dépensé '}
+                {language === 'fr' ? 'Dépensé ' : 'Spent '}
                 <Text style={{ fontFamily: SANS_MEDIUM, color: isOver ? colors.destructive : colors.foreground }}>
                   {formatCents(category.spentCents, currency)}
                 </Text>
@@ -381,7 +388,7 @@ function CategoryRow({ category, index, currency, colors, isSelected, chartColor
             <View style={ss.editHint}>
               <Feather name="edit-2" size={9} color={colors.mutedForeground} />
               <Text style={[ss.allocLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                alloué
+                {language === 'fr' ? 'allocated' : 'allocated'}
               </Text>
             </View>
           </View>
@@ -400,6 +407,7 @@ interface EditSheetProps {
   currency: string;
   onSaved: () => void;
   colors: ReturnType<typeof useColors>;
+  language: 'fr' | 'en';
 }
 
 function EditCategorySheet({
@@ -410,6 +418,7 @@ function EditCategorySheet({
   currency,
   onSaved,
   colors,
+  language,
 }: EditSheetProps) {
   const isEdit = category !== null;
 
@@ -430,14 +439,14 @@ function EditCategorySheet({
   const updateMut = useUpdateBudgetCategory({
     mutation: {
       onSuccess: () => { onSaved(); onClose(); },
-      onError: () => { Alert.alert('Erreur', 'Impossible de modifier la catégorie.'); },
+      onError: () => { Alert.alert(language === 'fr' ? 'Erreur' : 'Error', language === 'fr' ? 'Impossible de modifier la catégorie.' : 'Unable to update the category.'); },
     },
   });
 
   const createMut = useCreateBudgetCategory({
     mutation: {
       onSuccess: () => { onSaved(); onClose(); },
-      onError: () => { Alert.alert('Erreur', 'Impossible de créer la catégorie.'); },
+      onError: () => { Alert.alert(language === 'fr' ? 'Erreur' : 'Error', language === 'fr' ? 'Impossible de créer la catégorie.' : 'Unable to create the category.'); },
     },
   });
 
@@ -446,7 +455,7 @@ function EditCategorySheet({
   const handleSave = () => {
     const parsed = parseFloat(amountStr.replace(',', '.'));
     if (isNaN(parsed) || parsed < 0) {
-      Alert.alert('Montant invalide', 'Veuillez saisir un montant valide.');
+      Alert.alert(language === 'fr' ? 'Montant invalide' : 'Invalid amount', language === 'fr' ? 'Veuillez saisir un montant valide.' : 'Please enter a valid amount.');
       return;
     }
     const allocatedCents = Math.round(parsed * 100);
@@ -458,7 +467,7 @@ function EditCategorySheet({
     } else {
       const trimmed = name.trim();
       if (!trimmed) {
-        Alert.alert('Nom requis', 'Veuillez saisir un nom de catégorie.');
+        Alert.alert(language === 'fr' ? 'Nom requis' : 'Name required', language === 'fr' ? 'Veuillez saisir un nom de catégorie.' : 'Please enter a category name.');
         return;
       }
       createMut.mutate({ weddingId, data: { name: trimmed, allocatedCents } });
@@ -471,18 +480,18 @@ function EditCategorySheet({
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      eyebrow={isEdit ? 'MODIFIER' : 'NOUVELLE CATÉGORIE'}
-      title={isEdit ? category!.name : 'Ajouter un poste'}
+      eyebrow={isEdit ? (language === 'fr' ? 'MODIFIER' : 'EDIT') : (language === 'fr' ? 'NOUVELLE CATÉGORIE' : 'NEW CATEGORY')}
+      title={isEdit ? category!.name : (language === 'fr' ? 'Ajouter un poste' : 'Add an item')}
     >
       <View style={ss.formBody}>
         <View style={ss.fieldGroup}>
           <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
-            Nom
+            {language === 'fr' ? 'Nom' : 'Name'}
           </Text>
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="ex. Traiteur"
+            placeholder={language === 'fr' ? 'ex. Traiteur' : 'e.g. Caterer'}
             placeholderTextColor={colors.mutedForeground}
             style={[
               ss.input,
@@ -500,7 +509,7 @@ function EditCategorySheet({
 
         <View style={ss.fieldGroup}>
           <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
-            Montant alloué ({currencySymbol})
+            {language === 'fr' ? 'Montant alloué' : 'Allocated amount'} ({currencySymbol})
           </Text>
           <TextInput
             value={amountStr}
@@ -533,7 +542,7 @@ function EditCategorySheet({
             <ActivityIndicator color="#fff" size="small" />
           ) : (
             <Text style={[ss.saveBtnText, { fontFamily: SANS_SEMIBOLD }]}>
-              {isEdit ? 'Enregistrer' : 'Créer'}
+              {isEdit ? (language === 'fr' ? 'Enregistrer' : 'Save') : (language === 'fr' ? 'Créer' : 'Create')}
             </Text>
           )}
         </TouchableOpacity>
@@ -548,9 +557,10 @@ interface SummaryBarProps {
   totalSpent: number;
   currency: string;
   colors: ReturnType<typeof useColors>;
+  language: 'fr' | 'en';
 }
 
-function SummaryBar({ totalAllocated, totalSpent, currency, colors }: SummaryBarProps) {
+function SummaryBar({ totalAllocated, totalSpent, currency, colors, language }: SummaryBarProps) {
   const pct =
     totalAllocated > 0
       ? Math.min(100, Math.round((totalSpent / totalAllocated) * 100))
@@ -575,7 +585,7 @@ function SummaryBar({ totalAllocated, totalSpent, currency, colors }: SummaryBar
             {formatCents(totalSpent, currency)}
           </Text>
           <Text style={[ss.summaryLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>
-            dépensé
+            {language === 'fr' ? 'dépensé' : 'spent'}
           </Text>
         </View>
 
@@ -590,7 +600,7 @@ function SummaryBar({ totalAllocated, totalSpent, currency, colors }: SummaryBar
             {formatCents(totalAllocated, currency)}
           </Text>
           <Text style={[ss.summaryLabel, { fontFamily: SANS, color: colors.mutedForeground }]}>
-            budget total
+            {language === 'fr' ? 'budget total' : 'total budget'}
           </Text>
         </View>
       </View>
@@ -601,8 +611,8 @@ function SummaryBar({ totalAllocated, totalSpent, currency, colors }: SummaryBar
 
       <Text style={[ss.remaining, { fontFamily: SANS_MEDIUM, color: isOver ? colors.destructive : colors.mutedForeground, marginTop: 8 }]}>
         {isOver
-          ? `Dépassement de ${formatCents(Math.abs(remaining), currency)}`
-          : `${formatCents(remaining, currency)} restant`}
+          ? (language === 'fr' ? `Dépassement de ${formatCents(Math.abs(remaining), currency)}` : `${formatCents(Math.abs(remaining), currency)} over budget`)
+          : (language === 'fr' ? `${formatCents(remaining, currency)} restant` : `${formatCents(remaining, currency)} remaining`)}
       </Text>
     </View>
   );
@@ -611,6 +621,7 @@ function SummaryBar({ totalAllocated, totalSpent, currency, colors }: SummaryBar
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function BudgetScreen() {
   const colors = useColors();
+  const { language, locale } = useLocalization();
   const insets = useSafeAreaInsets();
   const { selectedWeddingId } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
@@ -739,13 +750,13 @@ export default function BudgetScreen() {
           <View style={ss.goldBar} />
 
           <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>
-            FINANCES
+              {language === 'fr' ? 'FINANCES' : 'FINANCES'}
           </Text>
           <View style={ss.heroTop}>
             <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Budget</Text>
             {budgetSummary && <TouchableOpacity onPress={handleExport} disabled={isExporting} activeOpacity={0.75} style={ss.heroAction}>
               {isExporting ? <ActivityIndicator size="small" color="#C8A96E" /> : <Feather name="share" size={14} color="#C8A96E" />}
-              <Text style={[ss.exportBtnText, { fontFamily: SANS_SEMIBOLD }]}>{isExporting ? 'Export…' : 'Exporter'}</Text>
+              <Text style={[ss.exportBtnText, { fontFamily: SANS_SEMIBOLD }]}>{isExporting ? (language === 'fr' ? 'Export…' : 'Exporting…') : (language === 'fr' ? 'Exporter' : 'Export')}</Text>
             </TouchableOpacity>}
           </View>
           {activeWedding && (
@@ -764,8 +775,8 @@ export default function BudgetScreen() {
           ) : !budgetSummary ? (
             <EmptyState
               icon="pie-chart"
-              title="Aucun budget"
-              subtitle="Créez votre budget depuis l'application web."
+              title={language === 'fr' ? 'Aucun budget' : 'No budget'}
+              subtitle={language === 'fr' ? "Créez votre budget depuis l'application web." : 'Create your budget in the web app.'}
             />
           ) : (
             <>
@@ -775,6 +786,7 @@ export default function BudgetScreen() {
                 totalSpent={budgetSummary.totalSpent}
                 currency={currency}
                 colors={colors}
+                language={language}
               />
 
               {/* ── Donut chart — Premium analytics ── */}
@@ -789,10 +801,10 @@ export default function BudgetScreen() {
                   >
                     <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
                     <Text style={[ss.chartTitle, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>
-                      RÉPARTITION DU BUDGET
+                      {language === 'fr' ? 'RÉPARTITION DU BUDGET' : 'BUDGET BREAKDOWN'}
                     </Text>
                     <Text style={[ss.chartHint, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                      Appuyez sur une tranche pour détailler
+                      {language === 'fr' ? 'Appuyez sur une tranche pour détailler' : 'Tap a segment for details'}
                     </Text>
                     <DonutChart
                       categories={categories}
@@ -821,15 +833,15 @@ export default function BudgetScreen() {
                         <Feather name="trending-up" size={20} color="#FBF5FB" />
                       </View>
                       <Text style={[ss.paywallTitle, { fontFamily: SERIF, color: colors.plumDark }]}>
-                        Analytiques avancées
+                        {language === 'fr' ? 'Analytiques avancées' : 'Advanced analytics'}
                       </Text>
                       <Text style={[ss.paywallBody, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                        La répartition graphique par catégorie est une fonctionnalité Premium. Débloquez-la pour visualiser vos dépenses.
+                        {language === 'fr' ? 'La répartition graphique par catégorie est une fonctionnalité Premium. Débloquez-la pour visualiser vos dépenses.' : 'Category chart breakdown is a Premium feature. Unlock it to view your spending.'}
                       </Text>
                       <View style={[ss.paywallCta, { backgroundColor: colors.plum }]}>
                         <Feather name="award" size={13} color="#FBF5FB" />
                         <Text style={[ss.paywallCtaText, { fontFamily: SANS_SEMIBOLD }]}>
-                          Passer à Premium
+                          {language === 'fr' ? 'Passer à Premium' : 'Upgrade to Premium'}
                         </Text>
                       </View>
                     </View>
@@ -843,7 +855,7 @@ export default function BudgetScreen() {
                   <Text
                     style={[ss.sectionHeader, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}
                   >
-                    PAR CATÉGORIE
+                    {language === 'fr' ? 'PAR CATÉGORIE' : 'BY CATEGORY'}
                   </Text>
                 )}
                 <TouchableOpacity
@@ -853,7 +865,7 @@ export default function BudgetScreen() {
                 >
                   <Feather name="plus" size={13} color={colors.plum} />
                   <Text style={[ss.addBtnText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>
-                    Ajouter
+                    {language === 'fr' ? 'Ajouter' : 'Add'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -863,8 +875,8 @@ export default function BudgetScreen() {
                 <TouchableOpacity onPress={openCreate} activeOpacity={0.75}>
                   <EmptyState
                     icon="tag"
-                    title="Aucune catégorie"
-                    subtitle="Appuyez sur « Ajouter » pour créer un premier poste budgétaire."
+                    title={language === 'fr' ? 'Aucune catégorie' : 'No categories'}
+                    subtitle={language === 'fr' ? 'Appuyez sur « Ajouter » pour créer un premier poste budgétaire.' : 'Tap “Add” to create your first budget item.'}
                   />
                 </TouchableOpacity>
               ) : (
@@ -878,6 +890,7 @@ export default function BudgetScreen() {
                     isSelected={selectedCatId === cat.id}
                     chartColor={CHART_COLORS[i % CHART_COLORS.length]!}
                     onPress={() => openEdit(cat)}
+                    language={language}
                   />
                 ))
               )}
@@ -887,13 +900,13 @@ export default function BudgetScreen() {
       </ScrollView>
 
       {/* Tour */}
-      <TourSheet visible={tourVisible} onClose={closeTour} steps={TOUR_STEPS} />
+       <TourSheet visible={tourVisible} onClose={closeTour} steps={language === 'fr' ? TOUR_STEPS : TOUR_STEPS_EN} />
 
       {/* Premium paywall */}
       <PaywallModal
         visible={paywallVisible}
         onClose={closePaywall}
-        featureLabel="Analytiques budget avancées"
+        featureLabel={language === 'fr' ? 'Analytiques budget avancées' : 'Advanced budget analytics'}
       />
 
       {/* Edit / Create sheet (from task #46) */}
@@ -905,6 +918,7 @@ export default function BudgetScreen() {
         currency={currency}
         onSaved={refetch}
         colors={colors}
+        language={language}
       />
     </>
   );

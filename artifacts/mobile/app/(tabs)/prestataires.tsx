@@ -30,6 +30,7 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { useSubscription } from '@/lib/subscription';
+import { useLocalization } from '@/context/LocalizationContext';
 
 const TOUR_STEPS = [
   {
@@ -52,6 +53,24 @@ const TOUR_STEPS = [
 const AVATAR_COLORS = ['#eadfcf', '#dce7df', '#eadfdf', '#e1dceb', '#e0e7dc', '#dce0e7'];
 
 export default function PrestatairesScreen() {
+  const { language } = useLocalization();
+  const tr = language === 'fr' ? {
+    eye: "L'ÉQUIPE CRÉATIVE", title: 'Prestataires', add: 'Ajouter', search: 'Rechercher...',
+    emptyTitle: 'Aucun prestataire', emptyBody: "Ajoutez votre équipe depuis l'application web.",
+    eyebrow: 'ÉQUIPE CRÉATIVE', addTitle: 'Ajouter un prestataire', importBook: 'Importer du carnet d’adresses',
+    importHint: 'Ajouter un contact déjà enregistré à ce mariage', bookEmpty: 'Votre carnet d’adresses est encore vide.',
+    or: 'OU SAISIR UN NOUVEAU PRESTATAIRE', save: 'Enregistrer le prestataire', saving: 'Enregistrement…',
+    error: 'Erreur', addError: 'Impossible d’ajouter ce prestataire au mariage.',
+    fields: ['Nom du prestataire *', 'Catégorie *', 'Nom du contact', 'E-mail', 'Montant du devis (€)'],
+  } : {
+    eye: 'THE CREATIVE TEAM', title: 'Vendors', add: 'Add', search: 'Search...',
+    emptyTitle: 'No vendors', emptyBody: 'Add your team from the web app.',
+    eyebrow: 'CREATIVE TEAM', addTitle: 'Add a vendor', importBook: 'Import from address book',
+    importHint: 'Add a contact already saved to this wedding', bookEmpty: 'Your address book is empty.',
+    or: 'OR ENTER A NEW VENDOR', save: 'Save vendor', saving: 'Saving…',
+    error: 'Error', addError: 'Unable to add this vendor to the wedding.',
+    fields: ['Vendor name *', 'Category *', 'Contact name', 'Email', 'Quote amount (€)'],
+  };
   const { isActive: isPremium } = useSubscription();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -110,7 +129,7 @@ export default function PrestatairesScreen() {
           setAddVisible(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         },
-        onError: () => Alert.alert('Erreur', 'Impossible d’ajouter ce prestataire au mariage.'),
+        onError: () => Alert.alert(tr.error, tr.addError),
       },
     );
   };
@@ -129,7 +148,7 @@ export default function PrestatairesScreen() {
         ListHeaderComponent={
           <View>
             {/* ── Hero gradient header ── */}
-            <LinearGradient
+      <LinearGradient
               colors={[colors.plumDark, colors.plum, colors.plumLight]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -142,9 +161,9 @@ export default function PrestatairesScreen() {
 
               <View style={ss.heroTop}>
                 <View style={ss.heroTitleWrap}>
-                  <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>L'ÉQUIPE CRÉATIVE</Text>
+                  <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>{tr.eye}</Text>
                 <View style={ss.titleRow}>
-                  <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>Prestataires</Text>
+                   <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>{tr.title}</Text>
                   <PremiumBadge />
                 </View>
                   {activeWedding && (
@@ -152,7 +171,7 @@ export default function PrestatairesScreen() {
                   )}
                 </View>
                 <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
-                  <Feather name="plus" size={15} color="#FBF5FB" /><Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>Ajouter</Text>
+                   <Feather name="plus" size={15} color="#FBF5FB" /><Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>{tr.add}</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -165,7 +184,7 @@ export default function PrestatairesScreen() {
                 <TextInput
                   value={search}
                   onChangeText={setSearch}
-                  placeholder="Rechercher..."
+                  placeholder={tr.search}
                   placeholderTextColor={colors.mutedForeground}
                   style={[ss.searchInput, { fontFamily: SANS, color: colors.foreground }]}
                 />
@@ -183,7 +202,7 @@ export default function PrestatairesScreen() {
             <View style={ss.loading}><ActivityIndicator color={colors.accent} /></View>
           ) : (
             <View style={ss.emptyWrap}>
-              <EmptyState icon="briefcase" title="Aucun prestataire" subtitle="Ajoutez votre équipe depuis l'application web." />
+              <EmptyState icon="briefcase" title={tr.emptyTitle} subtitle={tr.emptyBody} />
             </View>
           )
         }
@@ -235,7 +254,7 @@ export default function PrestatairesScreen() {
         vendorId={selectedVendorId}
         currency={activeWedding?.currency}
       />
-      <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow="ÉQUIPE CRÉATIVE" title="Ajouter un prestataire">
+      <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow={tr.eyebrow} title={tr.addTitle}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>
           <TouchableOpacity
             onPress={() => setAddressBookVisible((visible) => !visible)}
@@ -244,8 +263,8 @@ export default function PrestatairesScreen() {
           >
             <Feather name="book-open" size={15} color={colors.plum} />
             <View style={ss.addressBookBtnText}>
-              <Text style={[ss.addressBookTitle, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>Importer du carnet d’adresses</Text>
-              <Text style={[ss.addressBookHint, { color: colors.mutedForeground, fontFamily: SANS }]}>Ajouter un contact déjà enregistré à ce mariage</Text>
+              <Text style={[ss.addressBookTitle, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{tr.importBook}</Text>
+              <Text style={[ss.addressBookHint, { color: colors.mutedForeground, fontFamily: SANS }]}>{tr.importHint}</Text>
             </View>
             <Feather name={addressBookVisible ? 'chevron-up' : 'chevron-down'} size={15} color={colors.plum} />
           </TouchableOpacity>
@@ -254,7 +273,7 @@ export default function PrestatairesScreen() {
               {addressBookLoading ? (
                 <ActivityIndicator color={colors.plum} style={ss.addressBookLoading} />
               ) : addressBookEntries.length === 0 ? (
-                <Text style={[ss.addressBookEmpty, { color: colors.mutedForeground, fontFamily: SANS }]}>Votre carnet d’adresses est encore vide.</Text>
+                <Text style={[ss.addressBookEmpty, { color: colors.mutedForeground, fontFamily: SANS }]}>{tr.bookEmpty}</Text>
               ) : (
                 addressBookEntries.map((entry) => (
                   <TouchableOpacity
@@ -277,11 +296,11 @@ export default function PrestatairesScreen() {
               )}
             </View>
           )}
-          <Text style={[ss.orLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>OU SAISIR UN NOUVEAU PRESTATAIRE</Text>
+          <Text style={[ss.orLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{tr.or}</Text>
           {([
-            ['name', 'Nom du prestataire *'], ['category', 'Catégorie *'], ['contactName', 'Nom du contact'], ['contactEmail', 'E-mail'], ['amount', 'Montant du devis (€)'],
+             ['name', tr.fields[0]], ['category', tr.fields[1]], ['contactName', tr.fields[2]], ['contactEmail', tr.fields[3]], ['amount', tr.fields[4]],
           ] as const).map(([key, placeholder]) => <TextInput key={key} value={form[key]} onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' ? 'decimal-pad' : key === 'contactEmail' ? 'email-address' : 'default'} autoCapitalize={key === 'contactEmail' ? 'none' : 'sentences'} style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />)}
-          <TouchableOpacity disabled={createVendor.isPending} onPress={saveVendor} style={[ss.saveBtn, { backgroundColor: colors.plum }]}><Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{createVendor.isPending ? 'Enregistrement…' : 'Enregistrer le prestataire'}</Text></TouchableOpacity>
+          <TouchableOpacity disabled={createVendor.isPending} onPress={saveVendor} style={[ss.saveBtn, { backgroundColor: colors.plum }]}><Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{createVendor.isPending ? tr.saving : tr.save}</Text></TouchableOpacity>
         </ScrollView>
       </BottomSheet>
 

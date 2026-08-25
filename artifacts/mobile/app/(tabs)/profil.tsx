@@ -20,6 +20,7 @@ import { PaywallModal } from '@/components/PaywallModal';
 import { getLocalizedPackagePrice, isNativeStorePricingAvailable, useSubscription } from '@/lib/subscription';
 import { getApiUrl } from '@/lib/apiUrl';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
+import { useLocalization } from '@/context/LocalizationContext';
 
 const SOCIALS_ACCESS_EMAIL = 'e.tshibanda78@gmail.com';
 
@@ -80,6 +81,14 @@ function RowItem({ icon, label, value, variant = 'default', colors, onPress, dis
 }
 
 export default function ProfilScreen() {
+  const { language, t } = useLocalization();
+  const copy = language === 'fr' ? {
+    deleteAccount: 'Supprimer le compte', deleteBody: 'Cette action efface définitivement vos données et résilie les abonnements web actifs. Pour un achat Apple ou Google, pensez à le résilier dans votre boutique avant de continuer.', deleteForever: 'Supprimer définitivement', deleted: 'Compte supprimé', deletedBody: 'Votre compte et vos données ont été supprimés définitivement.', deleteFailed: 'Suppression impossible', deleteFailedBody: 'Nous n’avons pas pu supprimer le compte. Réessayez dans quelques instants.', planner: 'Planificatrice', signOut: 'Se déconnecter', signOutBody: 'Êtes-vous sûre de vouloir vous déconnecter ?', comingSoon: 'Cette fonctionnalité sera disponible dans une prochaine version.', webOnly: 'Gérez vos ', webOnlyEnd: ' depuis l’application web.', editProfile: 'Modifier le profil', editName: 'Modifier le nom', brand: 'L’indispensable du Wedding Planner',
+    activeWedding: 'MARIAGE ACTIF', weddings: 'Mes mariages', contacts: 'Mon carnet d’adresses', business: 'Mon business', networks: 'Mes réseaux', reservations: 'Mes réservations', appointments: 'Mes rendez-vous', management: 'GESTION', application: 'APPLICATION', subscription: 'ABONNEMENT', account: 'COMPTE', premium: 'Votre abonnement est actif.', trial: 'Votre essai gratuit est actif.', freeTrial: 'Un mois d’essai gratuit inclus.', annual: 'Annuel', monthly: 'Mensuel', storePrice: 'Prix selon votre boutique', purchaseUnavailable: 'Les achats intégrés seront disponibles après la configuration App Store et Google Play.', nativePrice: 'Le prix final sera affiché selon la devise de votre App Store dans la version iOS native.', manage: 'Gérer mon abonnement', restore: 'Restaurer mes achats', version: 'Version 1.0.0 · L’indispensable du Wedding Planner',
+  } : {
+    deleteAccount: 'Delete account', deleteBody: 'This permanently deletes your data and cancels active web subscriptions. For an Apple or Google purchase, cancel it in your store before continuing.', deleteForever: 'Delete permanently', deleted: 'Account deleted', deletedBody: 'Your account and data have been permanently deleted.', deleteFailed: 'Unable to delete account', deleteFailedBody: 'We could not delete your account. Please try again in a few moments.', planner: 'Planner', signOut: 'Sign out', signOutBody: 'Are you sure you want to sign out?', comingSoon: 'This feature will be available in a future version.', webOnly: 'Manage your ', webOnlyEnd: ' from the web app.', editProfile: 'Edit profile', editName: 'Edit name', brand: 'Wedding Planner essentials',
+    activeWedding: 'ACTIVE WEDDING', weddings: 'My weddings', contacts: 'My address book', business: 'My business', networks: 'My networks', reservations: 'My reservations', appointments: 'My appointments', management: 'MANAGEMENT', application: 'APPLICATION', subscription: 'SUBSCRIPTION', account: 'ACCOUNT', premium: 'Your subscription is active.', trial: 'Your free trial is active.', freeTrial: 'One month free trial included.', annual: 'Annual', monthly: 'Monthly', storePrice: 'Price according to your store', purchaseUnavailable: 'In-app purchases will be available after App Store and Google Play configuration.', nativePrice: 'The final price will be displayed in your App Store currency in the native iOS version.', manage: 'Manage my subscription', restore: 'Restore my purchases', version: 'Version 1.0.0 · Wedding Planner essentials',
+  };
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -95,23 +104,22 @@ export default function ProfilScreen() {
 
   const deleteAccount = () => {
     Alert.alert(
-      'Supprimer le compte',
-      'Cette action efface définitivement vos données et résilie les abonnements web actifs. Pour un achat Apple ou Google, pensez à le résilier dans votre boutique avant de continuer.',
+       copy.deleteAccount, copy.deleteBody,
       [
-        { text: 'Annuler', style: 'cancel' },
+         { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer définitivement',
+           text: copy.deleteForever,
           style: 'destructive',
           onPress: async () => {
             try {
               const token = await getToken();
               const response = await fetch(getApiUrl('account'), { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} });
               if (!response.ok) throw new Error();
-              Alert.alert('Compte supprimé', 'Votre compte et vos données ont été supprimés définitivement.', [
+               Alert.alert(copy.deleted, copy.deletedBody, [
                 { text: 'OK', onPress: () => void signOut().then(() => router.replace('/(auth)/sign-in')) },
               ]);
             } catch {
-              Alert.alert('Suppression impossible', 'Nous n’avons pas pu supprimer le compte. Réessayez dans quelques instants.');
+               Alert.alert(copy.deleteFailed, copy.deleteFailedBody);
             }
           },
         },
@@ -123,7 +131,7 @@ export default function ProfilScreen() {
   const displayName = user?.fullName
     || (user?.firstName ? user.firstName : null)
     || user?.primaryEmailAddress?.emailAddress?.split('@')[0]
-    || 'Planificatrice';
+     || copy.planner;
 
   const initials = (() => {
     if (user?.firstName && user?.lastName) {
@@ -147,12 +155,11 @@ export default function ProfilScreen() {
 
   const handleSignOut = () => {
     Alert.alert(
-      'Se déconnecter',
-      'Êtes-vous sûre de vouloir vous déconnecter\u00a0?',
+       copy.signOut, copy.signOutBody,
       [
-        { text: 'Annuler', style: 'cancel' },
+         { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Se déconnecter',
+           text: copy.signOut,
           style: 'destructive',
           onPress: () => signOut(),
         },
@@ -167,10 +174,10 @@ export default function ProfilScreen() {
   const { data: summary } = useGetWeddingSummary(wId);
 
   const showComingSoon = (feature: string) =>
-    Alert.alert(feature, 'Cette fonctionnalité sera disponible dans une prochaine version.', [{ text: 'OK' }]);
+     Alert.alert(feature, copy.comingSoon, [{ text: 'OK' }]);
 
   const showWebOnly = (feature: string) =>
-    Alert.alert(feature, 'Gérez vos ' + feature.toLowerCase() + ' depuis l\'application web.', [{ text: 'OK' }]);
+     Alert.alert(feature, copy.webOnly + feature.toLowerCase() + copy.webOnlyEnd, [{ text: 'OK' }]);
 
   const openSubscription = () => {
     setPaywallVisible(true);
@@ -204,7 +211,7 @@ export default function ProfilScreen() {
           onPress={() => setEditVisible(true)}
           activeOpacity={0.82}
           style={ss.avatarTouchable}
-          accessibilityLabel="Modifier le profil"
+           accessibilityLabel={copy.editProfile}
         >
           <LinearGradient
             colors={[colors.gold + 'AA', colors.rose + '88', colors.plumLight + '66']}
@@ -230,7 +237,7 @@ export default function ProfilScreen() {
           onPress={() => setEditVisible(true)}
           activeOpacity={0.75}
           style={ss.nameEdit}
-          accessibilityLabel="Modifier le nom"
+           accessibilityLabel={copy.editName}
         >
           <Text style={[ss.name, { fontFamily: SERIF }]}>{displayName}</Text>
           <Feather name="edit-2" size={14} color={colors.gold} />
@@ -238,7 +245,7 @@ export default function ProfilScreen() {
         {userEmail ? (
           <Text style={[ss.role, { fontFamily: SANS_MEDIUM }]}>{userEmail}</Text>
         ) : null}
-        <Text style={[ss.brand, { fontFamily: SANS }]}>L'indispensable du Wedding Planner</Text>
+         <Text style={[ss.brand, { fontFamily: SANS }]}>{copy.brand}</Text>
       </LinearGradient>
 
       <View style={{ paddingHorizontal: 16 }}>
@@ -252,7 +259,7 @@ export default function ProfilScreen() {
             <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.65)' }]} />
             <View style={ss.summaryTop}>
               <View>
-                <Text style={[ss.summaryEye, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>MARIAGE ACTIF</Text>
+                 <Text style={[ss.summaryEye, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>{copy.activeWedding}</Text>
                 <Text style={[ss.summaryNames, { fontFamily: SERIF, color: colors.foreground }]}>{activeWedding.names}</Text>
               </View>
               <View style={[ss.summaryBadge, { backgroundColor: colors.successBg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.success + '44' }]}>
@@ -261,10 +268,10 @@ export default function ProfilScreen() {
             </View>
             {summary && (
               <View style={[ss.summaryStats, { borderTopColor: colors.border }]}>
-                {[
-                  { label: 'Invités', value: `${summary.confirmedGuests}/${summary.totalGuests}` },
-                  { label: 'Prestataires', value: String(summary.vendorCount) },
-                  { label: 'Budget', value: formatCents(summary.budgetTotal, activeWedding.currency) },
+                 {[
+                   { label: language === 'fr' ? 'Invités' : 'Guests', value: `${summary.confirmedGuests}/${summary.totalGuests}` },
+                   { label: language === 'fr' ? 'Prestataires' : 'Vendors', value: String(summary.vendorCount) },
+                   { label: language === 'fr' ? 'Budget' : 'Budget', value: formatCents(summary.budgetTotal, activeWedding.currency) },
                 ].map((s, i) => (
                   <View key={s.label} style={ss.summaryStat}>
                     {i > 0 && <View style={[ss.statDivider, { backgroundColor: colors.border }]} />}
@@ -278,60 +285,60 @@ export default function ProfilScreen() {
         )}
 
         {/* Quick actions — Gestion */}
-        <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>GESTION</Text>
+         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{copy.management}</Text>
         <View style={[ss.group, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
           <RowItem
-            icon="heart" label="Mes mariages" value={String(weddings?.length ?? 0)}
+             icon="heart" label={copy.weddings} value={String(weddings?.length ?? 0)}
             variant="rose" colors={colors}
             onPress={() => router.push('/(tabs)/mariages')}
           />
           <RowItem
-             icon="book-open" label="Mon carnet d'adresses"
+              icon="book-open" label={copy.contacts}
             variant="sage" colors={colors}
             onPress={() => router.push('/(tabs)/carnet-adresse')}
           />
           <RowItem
-             icon="trending-up" label="Mon business" colors={colors}
+              icon="trending-up" label={copy.business} colors={colors}
              onPress={() => router.push('/(tabs)/business')}
           />
           <RowItem
-            icon="share-2" label="Mes réseaux" colors={colors}
+             icon="share-2" label={copy.networks} colors={colors}
             disabled={!canUseSocials}
             onPress={() => router.push('/(tabs)/mes-reseaux')}
           />
           <RowItem
-            icon="clipboard" label="Mes réservations" colors={colors}
+             icon="clipboard" label={copy.reservations} colors={colors}
             onPress={() => router.push('/(tabs)/mes-reservations')}
           />
           <RowItem
-            icon="clock" label="Mes rendez-vous" colors={colors}
+             icon="clock" label={copy.appointments} colors={colors}
             onPress={() => router.push('/(tabs)/mes-rendez-vous')}
           />
         </View>
 
         {/* Application */}
-        <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>APPLICATION</Text>
+         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{copy.application}</Text>
         <View style={[ss.group, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
           <RowItem
-            icon="settings" label="Paramètres" colors={colors}
+             icon="settings" label={language === 'fr' ? 'Paramètres' : 'Settings'} colors={colors}
             onPress={() => router.push('/(tabs)/parametres')}
           />
           <RowItem
-            icon="bell" label="Notifications" colors={colors}
-            onPress={() => showComingSoon('Notifications')}
+             icon="bell" label={language === 'fr' ? 'Notifications' : 'Notifications'} colors={colors}
+             onPress={() => showComingSoon(language === 'fr' ? 'Notifications' : 'Notifications')}
           />
           <RowItem
-            icon="help-circle" label="Aide & support" colors={colors}
+             icon="help-circle" label={language === 'fr' ? 'Aide & support' : 'Help & support'} colors={colors}
             onPress={() =>
-              Alert.alert('Aide & support', 'Pour toute assistance, contactez-nous à contact@thenuptialplan.com', [{ text: 'OK' }])
+               Alert.alert(language === 'fr' ? 'Aide & support' : 'Help & support', language === 'fr' ? 'Pour toute assistance, contactez-nous à contact@thenuptialplan.com' : 'For assistance, contact us at contact@thenuptialplan.com', [{ text: 'OK' }])
             }
           />
         </View>
 
         {/* Abonnement */}
-        <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>ABONNEMENT</Text>
+         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{copy.subscription}</Text>
         <View style={[ss.group, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
           <View style={{ padding: 16, gap: 10 }}>
@@ -342,7 +349,7 @@ export default function ProfilScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[ss.rowLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>The Nuptial Plan Premium</Text>
                 <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                  {subscription.isActive ? (subscription.isTrialing ? 'Votre essai gratuit est actif.' : 'Votre abonnement est actif.') : 'Un mois d’essai gratuit inclus.'}
+                   {subscription.isActive ? (subscription.isTrialing ? copy.trial : copy.premium) : copy.freeTrial}
                 </Text>
               </View>
               <Feather name="chevron-right" size={14} color={colors.goldDim} />
@@ -351,14 +358,14 @@ export default function ProfilScreen() {
               <TouchableOpacity key={pkg.identifier} disabled={subscription.loading} onPress={() => void subscription.purchase(pkg)}
                 style={{ minHeight: 52, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', borderColor: colors.border, backgroundColor: colors.background }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[{ fontSize: 12 }, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{pkg.packageType === 'ANNUAL' ? 'Annuel' : 'Mensuel'}</Text>
-                  <Text style={[{ fontSize: 11, marginTop: 2 }, { fontFamily: SANS, color: colors.mutedForeground }]}>{getLocalizedPackagePrice(pkg) ?? 'Prix selon votre boutique'}</Text>
+                   <Text style={[{ fontSize: 12 }, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{pkg.packageType === 'ANNUAL' ? copy.annual : copy.monthly}</Text>
+                   <Text style={[{ fontSize: 11, marginTop: 2 }, { fontFamily: SANS, color: colors.mutedForeground }]}>{getLocalizedPackagePrice(pkg) ?? copy.storePrice}</Text>
                 </View>
                 <Feather name="chevron-right" size={14} color={colors.goldDim} />
               </TouchableOpacity>
             ))}
-            {!subscription.available && <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>Les achats intégrés seront disponibles après la configuration App Store et Google Play.</Text>}
-            {!isNativeStorePricingAvailable && subscription.available && <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>Le prix final sera affiché selon la devise de votre App Store dans la version iOS native.</Text>}
+             {!subscription.available && <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>{copy.purchaseUnavailable}</Text>}
+             {!isNativeStorePricingAvailable && subscription.available && <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>{copy.nativePrice}</Text>}
             {subscription.isActive && (
               <TouchableOpacity onPress={() => {
                 const url = Platform.OS === 'android'
@@ -367,17 +374,17 @@ export default function ProfilScreen() {
                 void Linking.openURL(url);
               }} style={{ minHeight: 44, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7, backgroundColor: colors.plum + '14', borderColor: colors.plum + '30' }}>
                 <Feather name="external-link" size={13} color={colors.plum} />
-                <Text style={[{ fontSize: 11 }, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>Gérer mon abonnement</Text>
+                 <Text style={[{ fontSize: 11 }, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>{copy.manage}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity onPress={() => void subscription.restore()} disabled={subscription.loading} style={{ alignItems: 'center', paddingVertical: 4 }}>
-              <Text style={[{ fontSize: 12 }, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>Restaurer mes achats</Text>
+               <Text style={[{ fontSize: 12 }, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>{copy.restore}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Compte */}
-        <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>COMPTE</Text>
+         <Text style={[ss.section, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>{copy.account}</Text>
         <View style={[ss.group, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
           <TouchableOpacity
@@ -388,7 +395,7 @@ export default function ProfilScreen() {
             <View style={[ss.rowIcon, { backgroundColor: colors.roseBg }]}>
               <Feather name="log-out" size={15} color={colors.roseDark} />
             </View>
-            <Text style={[ss.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>Se déconnecter</Text>
+             <Text style={[ss.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>{copy.signOut}</Text>
             <Feather name="chevron-right" size={14} color={colors.roseDark + '88'} />
           </TouchableOpacity>
           <TouchableOpacity
@@ -399,7 +406,7 @@ export default function ProfilScreen() {
             <View style={[ss.rowIcon, { backgroundColor: colors.roseBg }]}>
               <Feather name="trash-2" size={15} color={colors.roseDark} />
             </View>
-            <Text style={[ss.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>Supprimer le compte</Text>
+             <Text style={[ss.rowLabel, { fontFamily: SANS, color: colors.roseDark }]}>{copy.deleteAccount}</Text>
             <Feather name="chevron-right" size={14} color={colors.roseDark + '88'} />
           </TouchableOpacity>
         </View>
@@ -410,7 +417,7 @@ export default function ProfilScreen() {
             <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.75)' }]} />
             <Image source={logoImage} style={ss.logoImage} resizeMode="contain" />
             <Text style={[ss.logoLabel, { fontFamily: SERIF, color: colors.foreground }]}>The Nuptial Plan</Text>
-            <Text style={[ss.version, { fontFamily: SANS, color: colors.tertiaryText }]}>Version 1.0.0 · L'indispensable du Wedding Planner</Text>
+             <Text style={[ss.version, { fontFamily: SANS, color: colors.tertiaryText }]}>{copy.version}</Text>
           </View>
         </View>
       </View>

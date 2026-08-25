@@ -6,19 +6,22 @@ import { useRouter } from 'expo-router';
 import { LEGAL_DOCUMENTS, LegalDocumentKey } from '@/constants/legal-content';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
+import { useLocalization } from '@/context/LocalizationContext';
 
 export function LegalDocumentScreen({ document }: { document: LegalDocumentKey }) {
   const colors = useColors();
   const router = useRouter();
   const content = LEGAL_DOCUMENTS[document];
+  const { language, locale } = useLocalization();
+  const en = language === 'en';
 
   return (
     <View style={[ss.root, { backgroundColor: colors.background }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={ss.scroll}>
         <LinearGradient colors={[colors.plumDark, colors.plum, colors.plumLight]} style={ss.hero}>
-          <TouchableOpacity onPress={() => router.back()} style={ss.backButton} accessibilityLabel="Retour">
+          <TouchableOpacity onPress={() => router.back()} style={ss.backButton} accessibilityLabel={en ? 'Back' : 'Retour'}>
             <Feather name="arrow-left" size={17} color="#FBF5FB" />
-            <Text style={[ss.backText, { fontFamily: SANS_MEDIUM }]}>Retour</Text>
+            <Text style={[ss.backText, { fontFamily: SANS_MEDIUM }]}>{en ? 'Back' : 'Retour'}</Text>
           </TouchableOpacity>
           <View style={ss.heroIcon}><Feather name={content.icon} size={25} color={colors.gold} /></View>
           <Text style={[ss.eyebrow, { color: colors.gold, fontFamily: SANS_MEDIUM }]}>{content.eyebrow}</Text>
@@ -26,7 +29,7 @@ export function LegalDocumentScreen({ document }: { document: LegalDocumentKey }
           <Text style={[ss.intro, { color: '#F7EAF4', fontFamily: SANS }]}>{content.intro}</Text>
         </LinearGradient>
         <View style={ss.content}>
-          <Text style={[ss.updated, { color: colors.mutedForeground, fontFamily: SANS }]}>Dernière mise à jour : 8 août 2026</Text>
+          <Text style={[ss.updated, { color: colors.mutedForeground, fontFamily: SANS }]}>{en ? 'Last updated:' : 'Dernière mise à jour :'} {new Date('2026-08-08T12:00:00').toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</Text>
           <View style={[ss.article, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {content.sections.map((section) => (
               <View key={section.title} style={ss.section}>
@@ -40,18 +43,18 @@ export function LegalDocumentScreen({ document }: { document: LegalDocumentKey }
               onPress={() => void Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
               style={[ss.eulaLink, { borderColor: colors.plum + '35', backgroundColor: colors.plum + '0D' }]}
               accessibilityRole="link"
-              accessibilityLabel="Consulter le contrat de licence utilisateur final standard d’Apple"
+               accessibilityLabel={en ? 'View Apple’s Standard End User License Agreement' : 'Consulter le contrat de licence utilisateur final standard d’Apple'}
             >
               <Feather name="external-link" size={14} color={colors.plum} />
-              <Text style={[ss.eulaText, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>Consulter l’Apple Standard EULA</Text>
+               <Text style={[ss.eulaText, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{en ? 'View Apple Standard EULA' : 'Consulter l’Apple Standard EULA'}</Text>
             </TouchableOpacity>
           )}
           <View style={ss.footer}>
             <Text style={[ss.footerText, { color: colors.mutedForeground, fontFamily: SANS }]}>The Nuptial Plan</Text>
             <View style={ss.footerLinks}>
-              <TouchableOpacity onPress={() => router.replace('/legal/privacy')}><Text style={[ss.footerLink, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>Confidentialité</Text></TouchableOpacity>
+               <TouchableOpacity onPress={() => router.replace('/legal/privacy')}><Text style={[ss.footerLink, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{en ? 'Privacy' : 'Confidentialité'}</Text></TouchableOpacity>
               <Text style={[ss.dot, { color: colors.border }]}>·</Text>
-              <TouchableOpacity onPress={() => router.replace('/legal/policy')}><Text style={[ss.footerLink, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>CGU</Text></TouchableOpacity>
+               <TouchableOpacity onPress={() => router.replace('/legal/policy')}><Text style={[ss.footerLink, { color: colors.plum, fontFamily: SANS_SEMIBOLD }]}>{en ? 'Terms' : 'CGU'}</Text></TouchableOpacity>
             </View>
           </View>
         </View>

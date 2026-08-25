@@ -46,10 +46,11 @@ import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { PremiumBadge } from '@/components/premium-badge';
 import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
+import { useLanguage } from '@/lib/i18n';
 
-const contractSchema = z.object({
+const contractSchema = (language: 'en' | 'fr') => z.object({
   vendorId: z.number().optional(),
-  vendorName: z.string().min(1, 'Le nom du prestataire est requis'),
+  vendorName: z.string().min(1, language === 'fr' ? 'Le nom du prestataire est requis' : 'Vendor name is required'),
   status: z.enum(['signed', 'pending', 'partial', 'cancelled']),
   totalAmountCents: z.number().min(0),
   depositPaidCents: z.number().min(0).optional(),
@@ -57,9 +58,11 @@ const contractSchema = z.object({
   notes: z.string().optional(),
 });
 
-type ContractFormData = z.infer<typeof contractSchema>;
+type ContractFormData = z.infer<ReturnType<typeof contractSchema>>;
 
 export default function Contrats() {
+  const { language, locale, formatCurrency: localCurrency, formatDate: localDate } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
@@ -77,7 +80,7 @@ export default function Contrats() {
   const deleteContract = useDeleteContract();
 
   const form = useForm<ContractFormData>({
-    resolver: zodResolver(contractSchema),
+    resolver: zodResolver(contractSchema(language)),
     defaultValues: {
       vendorId: undefined,
       vendorName: '',
@@ -98,7 +101,7 @@ export default function Contrats() {
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListContractsQueryKey(activeWeddingId) });
-            toast({ title: 'Contrat mis à jour' });
+            toast({ title: tr('Contrat mis à jour', 'Contract updated') });
             setOpen(false);
             setEditingContract(null);
             form.reset();
@@ -111,7 +114,7 @@ export default function Contrats() {
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListContractsQueryKey(activeWeddingId) });
-            toast({ title: 'Contrat ajouté' });
+            toast({ title: tr('Contrat ajouté', 'Contract added') });
             setOpen(false);
             form.reset();
           },
@@ -136,13 +139,13 @@ export default function Contrats() {
 
   const handleDelete = (id: number) => {
     if (!activeWeddingId) return;
-    if (confirm('Supprimer ce contrat ?')) {
+    if (confirm(tr('Supprimer ce contrat ?', 'Delete this contract?'))) {
       deleteContract.mutate(
         { weddingId: activeWeddingId, id },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListContractsQueryKey(activeWeddingId) });
-            toast({ title: 'Contrat supprimé' });
+            toast({ title: tr('Contrat supprimé', 'Contract deleted') });
           },
         }
       );
@@ -150,10 +153,8 @@ export default function Contrats() {
   };
 
   const statusMap: Record<string, string> = {
-    signed: 'Signé',
-    pending: 'En attente',
-    partial: 'Partiel',
-    cancelled: 'Annulé',
+    signed: tr('Signé', 'Signed'), pending: tr('En attente', 'Pending'),
+    partial: tr('Partiel', 'Partial'), cancelled: tr('Annulé', 'Cancelled'),
   };
 
   const statusColorMap: Record<string, string> = {
@@ -164,21 +165,21 @@ export default function Contrats() {
   };
 
   if (!activeWeddingId || isLoading) {
-    return <div className="text-center font-serif text-2xl text-muted-foreground">Chargement...</div>;
+    return <div className="text-center font-serif text-2xl text-muted-foreground">{tr('Chargement…', 'Loading…')}</div>;
   }
 
-  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel="vos contrats" />;
+  if (!premiumLoading && !isPremium) return <PremiumPageGate featureLabel={tr('vos contrats', 'your contracts')} />;
   return (
     <div>
       <PageTour
         tourKey="contrats"
-        pageTitle="Contrats"
+        pageTitle={tr('Contrats', 'Contracts')}
         pageIcon={FileText}
         steps={[
-          { icon: FileText, title: 'Centralisation', body: 'Tous les contrats de vos prestataires au même endroit. Plus besoin de chercher dans vos e-mails ou vos dossiers locaux.' },
-          { icon: CheckCircle, title: 'Statuts de signature', body: 'Repérez d\'un coup d\'œil les contrats En attente, Signés ou Expirés grâce aux badges de statut colorés.' },
-          { icon: Plus, title: 'Ajouter un contrat', body: 'Associez le contrat à un prestataire, renseignez la valeur totale et la date de signature prévue ou effective.' },
-          { icon: Upload, title: 'Pièce jointe', body: 'Téléversez le PDF du contrat signé directement depuis le formulaire. Il sera accessible à tout moment depuis cette page.' },
+          { icon: FileText, title: tr('Centralisation', 'Centralised'), body: tr('Tous les contrats de vos prestataires au même endroit. Plus besoin de chercher dans vos e-mails ou vos dossiers locaux.', 'Keep every vendor contract in one place, without searching emails or local folders.') },
+          { icon: CheckCircle, title: tr('Statuts de signature', 'Signature statuses'), body: tr('Repérez d\'un coup d\'œil les contrats En attente, Signés ou Expirés grâce aux badges de statut colorés.', 'Identify pending, signed, or expired contracts at a glance with coloured status badges.') },
+          { icon: Plus, title: tr('Ajouter un contrat', 'Add a contract'), body: tr('Associez le contrat à un prestataire, renseignez la valeur totale et la date de signature prévue ou effective.', 'Link the contract to a vendor and add its total value and expected or actual signature date.') },
+          { icon: Upload, title: tr('Pièce jointe', 'Attachment'), body: tr('Téléversez le PDF du contrat signé directement depuis le formulaire. Il sera accessible à tout moment depuis cette page.', 'Upload the signed contract PDF from the form; it remains available from this page.') },
         ]}
       />
       <div className="relative mb-8 overflow-hidden rounded-2xl hero-gradient-vivid px-8 py-7 ring-1 ring-white/60"
@@ -186,9 +187,9 @@ export default function Contrats() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
         <div className="flex items-end justify-between">
           <div>
-            <p className="eyebrow mb-2 text-[#a8893e]">Documents essentiels</p>
+            <p className="eyebrow mb-2 text-[#a8893e]">{tr('Documents essentiels', 'Essential documents')}</p>
             <div className="flex items-center gap-3">
-              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Contrats</h1>
+              <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">{tr('Contrats', 'Contracts')}</h1>
               <PremiumBadge />
             </div>
           </div>
@@ -204,16 +205,16 @@ export default function Contrats() {
         >
           <SheetTrigger asChild>
             <Button size="default" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" data-testid="button-add-contract">
-              <Plus size={14} /> Ajouter un contrat
+              <Plus size={14} /> {tr('Ajouter un contrat', 'Add a contract')}
             </Button>
           </SheetTrigger>
           <SheetContent className="overflow-y-auto">
             <SheetHeader>
               <SheetTitle className="font-serif text-2xl">
-                {editingContract ? 'Modifier le contrat' : 'Nouveau contrat'}
+                {editingContract ? tr('Modifier le contrat', 'Edit contract') : tr('Nouveau contrat', 'New contract')}
               </SheetTitle>
               <SheetDescription>
-                {editingContract ? 'Mettez à jour les informations' : 'Ajoutez un contrat au dossier'}
+                {editingContract ? tr('Mettez à jour les informations', 'Update the information') : tr('Ajoutez un contrat au dossier', 'Add a contract to the file')}
               </SheetDescription>
             </SheetHeader>
             <Form {...form}>
@@ -223,7 +224,7 @@ export default function Contrats() {
                   name="vendorName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nom du prestataire</FormLabel>
+                      <FormLabel>{tr('Nom du prestataire', 'Vendor name')}</FormLabel>
                       <FormControl>
                         <Input {...field} data-testid="input-contract-vendor" />
                       </FormControl>
@@ -236,7 +237,7 @@ export default function Contrats() {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Statut</FormLabel>
+                      <FormLabel>{tr('Statut', 'Status')}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-contract-status">
@@ -244,10 +245,7 @@ export default function Contrats() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="pending">En attente</SelectItem>
-                          <SelectItem value="partial">Partiel</SelectItem>
-                          <SelectItem value="signed">Signé</SelectItem>
-                          <SelectItem value="cancelled">Annulé</SelectItem>
+                          <SelectItem value="pending">{statusMap.pending}</SelectItem><SelectItem value="partial">{statusMap.partial}</SelectItem><SelectItem value="signed">{statusMap.signed}</SelectItem><SelectItem value="cancelled">{statusMap.cancelled}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -259,7 +257,7 @@ export default function Contrats() {
                   name="totalAmountCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Montant total ({currencySymbol})</FormLabel>
+                      <FormLabel>{tr('Montant total', 'Total amount')} ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -278,7 +276,7 @@ export default function Contrats() {
                   name="depositPaidCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Acompte versé ({currencySymbol})</FormLabel>
+                      <FormLabel>{tr('Acompte versé', 'Deposit paid')} ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -297,7 +295,7 @@ export default function Contrats() {
                   name="signedDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date de signature (optionnel)</FormLabel>
+                      <FormLabel>{tr('Date de signature (optionnel)', 'Signature date (optional)')}</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} data-testid="input-contract-signed" />
                       </FormControl>
@@ -310,7 +308,7 @@ export default function Contrats() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>{tr('Notes', 'Notes')}</FormLabel>
                       <FormControl>
                         <Textarea {...field} rows={3} data-testid="input-contract-notes" />
                       </FormControl>
@@ -320,7 +318,7 @@ export default function Contrats() {
                 />
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" className="flex-1" data-testid="button-save-contract">
-                    {editingContract ? 'Mettre à jour' : 'Ajouter'}
+                    {editingContract ? tr('Mettre à jour', 'Update') : tr('Ajouter', 'Add')}
                   </Button>
                   {editingContract && (
                     <Button
@@ -329,7 +327,7 @@ export default function Contrats() {
                       onClick={() => handleDelete(editingContract)}
                       data-testid="button-delete-contract"
                     >
-                      Supprimer
+                      {tr('Supprimer', 'Delete')}
                     </Button>
                   )}
                 </div>
@@ -340,7 +338,7 @@ export default function Contrats() {
                 weddingId={activeWeddingId}
                 entityType="contract"
                 entityId={editingContract}
-                label="Pièces jointes"
+                label={tr('Pièces jointes', 'Attachments')}
               />
             )}
           </SheetContent>
@@ -354,19 +352,19 @@ export default function Contrats() {
           <thead className="border-b border-border">
             <tr className="text-left">
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8c8b86]">
-                Prestataire
+                {tr('Prestataire', 'Vendor')}
               </th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8c8b86]">
-                Statut
+                {tr('Statut', 'Status')}
               </th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8c8b86]">
-                Montant
+                {tr('Montant', 'Amount')}
               </th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8c8b86]">
-                Acompte versé
+                {tr('Acompte versé', 'Deposit paid')}
               </th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8c8b86]">
-                Signé le
+                {tr('Signé le', 'Signed on')}
               </th>
               <th className="px-5 py-3"></th>
             </tr>
@@ -375,7 +373,7 @@ export default function Contrats() {
             {contracts.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-12 text-center text-[11px] text-[#858b89]">
-                  Aucun contrat. Cliquez sur "Ajouter un contrat" pour commencer.
+                  {tr('Aucun contrat. Cliquez sur « Ajouter un contrat » pour commencer.', 'No contracts. Click “Add a contract” to get started.')}
                 </td>
               </tr>
             ) : (
@@ -393,17 +391,17 @@ export default function Contrats() {
                   </td>
                   <td className="px-5 py-4">
                     <p className="font-serif text-[16px] text-foreground">
-                      {formatCurrency(contract.totalAmountCents)}
+                       {localCurrency(contract.totalAmountCents / 100, activeWedding?.currency)}
                     </p>
                   </td>
                   <td className="px-5 py-4">
                     <p className="text-[11px] text-[#858b89]">
-                      {contract.depositPaidCents ? formatCurrency(contract.depositPaidCents) : '—'}
+                       {contract.depositPaidCents ? localCurrency(contract.depositPaidCents / 100, activeWedding?.currency) : '—'}
                     </p>
                   </td>
                   <td className="px-5 py-4">
                     <p className="text-[11px] text-[#858b89]">
-                      {contract.signedDate ? formatDate(contract.signedDate, 'd MMM yyyy') : '—'}
+                       {contract.signedDate ? localDate(contract.signedDate, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                     </p>
                   </td>
                   <td className="px-5 py-4">

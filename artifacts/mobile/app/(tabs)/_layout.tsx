@@ -20,28 +20,29 @@ import { NuptiaSheet } from '@/components/NuptiaSheet';
 import { GlobalTourHelp } from '@/components/TourSheet';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
+import { useLocalization, type TranslationKey } from '@/context/LocalizationContext';
 
 // ── Tab metadata ───────────────────────────────────────────────────────────────
-const TAB_META: Record<string, { sf: string; feather: string; label: string }> = {
-  index:        { sf: 'house',              feather: 'home',         label: 'Aperçu' },
-  mariages:     { sf: 'heart',              feather: 'heart',        label: 'Mariages' },
-  evenements:   { sf: 'calendar',           feather: 'calendar',     label: 'Agenda' },
-  prestataires: { sf: 'building.2',         feather: 'briefcase',    label: 'Prestataires' },
-  invites:      { sf: 'person.2',           feather: 'users',        label: 'Invités' },
-  budget:       { sf: 'chart.pie',          feather: 'pie-chart',    label: 'Budget' },
-  paiements:    { sf: 'creditcard',         feather: 'credit-card',  label: 'Paiements' },
-  contrats:     { sf: 'doc.text',           feather: 'file-text',    label: 'Contrats' },
-  documents:    { sf: 'folder',             feather: 'folder',       label: 'Documents' },
-  parametres:   { sf: 'gearshape',          feather: 'settings',     label: 'Paramètres' },
-  profil:       { sf: 'person.crop.circle', feather: 'user',         label: 'Profil' },
-  moodboards:   { sf: 'square.grid.2x2',    feather: 'image',         label: 'Moodboards' },
-  business:     { sf: 'briefcase',          feather: 'briefcase',      label: 'Business' },
-  'carnet-adresse': { sf: 'person.2',       feather: 'book-open',      label: 'Carnet d’adresses' },
-  'mes-reseaux': { sf: 'network',            feather: 'share-2',         label: 'Mes réseaux' },
-  'mes-reservations': { sf: 'checkmark.circle', feather: 'clipboard',  label: 'Mes réservations' },
-  'mes-rendez-vous': { sf: 'calendar.badge.clock', feather: 'clock',   label: 'Mes rendez-vous' },
-  retroplanning:{ sf: 'calendar.badge.clock', feather: 'clock',       label: 'Rétro-planning' },
-  'jour-j':      { sf: 'sun.max',             feather: 'sun',          label: 'Jour-J' },
+const TAB_META: Record<string, { sf: string; feather: string; labelKey: TranslationKey }> = {
+  index:        { sf: 'house', feather: 'home', labelKey: 'tabs.dashboard' },
+  mariages:     { sf: 'heart', feather: 'heart', labelKey: 'tabs.weddings' },
+  evenements:   { sf: 'calendar', feather: 'calendar', labelKey: 'tabs.calendar' },
+  prestataires: { sf: 'building.2', feather: 'briefcase', labelKey: 'tabs.vendors' },
+  invites:      { sf: 'person.2', feather: 'users', labelKey: 'tabs.guests' },
+  budget:       { sf: 'chart.pie', feather: 'pie-chart', labelKey: 'tabs.budget' },
+  paiements:    { sf: 'creditcard', feather: 'credit-card', labelKey: 'tabs.payments' },
+  contrats:     { sf: 'doc.text', feather: 'file-text', labelKey: 'tabs.contracts' },
+  documents:    { sf: 'folder', feather: 'folder', labelKey: 'tabs.documents' },
+  parametres:   { sf: 'gearshape', feather: 'settings', labelKey: 'tabs.settings' },
+  profil:       { sf: 'person.crop.circle', feather: 'user', labelKey: 'tabs.profile' },
+  moodboards:   { sf: 'square.grid.2x2', feather: 'image', labelKey: 'tabs.moodboards' },
+  business:     { sf: 'briefcase', feather: 'briefcase', labelKey: 'tabs.business' },
+  'carnet-adresse': { sf: 'person.2', feather: 'book-open', labelKey: 'tabs.contacts' },
+  'mes-reseaux': { sf: 'network', feather: 'share-2', labelKey: 'tabs.networks' },
+  'mes-reservations': { sf: 'checkmark.circle', feather: 'clipboard', labelKey: 'tabs.reservations' },
+  'mes-rendez-vous': { sf: 'calendar.badge.clock', feather: 'clock', labelKey: 'tabs.appointments' },
+  retroplanning: { sf: 'calendar.badge.clock', feather: 'clock', labelKey: 'tabs.timeline' },
+  'jour-j': { sf: 'sun.max', feather: 'sun', labelKey: 'tabs.weddingDay' },
 };
 
 // Five primary tabs visible in the bar. The selection is persisted locally.
@@ -89,6 +90,7 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
   const canUseSocials = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() === SOCIALS_ACCESS_EMAIL;
   const [burgerOpen, setBurgerOpen] = useState(false);
   const [primaryTabs, setPrimaryTabs] = useState(DEFAULT_PRIMARY);
+  const { t, language } = useLocalization();
 
   const BAR_H = 64;
   const bottomPad = insets?.bottom ?? 0;
@@ -162,7 +164,7 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
                 onPress={() => { if (!socialsLocked) navigateTo(tabName); }}
                 style={({ pressed }) => [bar.tabBtn, { opacity: socialsLocked ? 0.38 : pressed ? 0.7 : 1 }]}
                 accessibilityRole="tab"
-                accessibilityLabel={meta.label}
+                accessibilityLabel={t(meta.labelKey)}
                 accessibilityState={{ selected: focused, disabled: socialsLocked }}
               >
                 <View style={bar.tabInner}>
@@ -186,7 +188,7 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
                     ]}
                     numberOfLines={1}
                   >
-                    {meta.label}
+                    {t(meta.labelKey)}
                   </Text>
                 </View>
               </Pressable>
@@ -198,7 +200,7 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
             onPress={openBurger}
             style={({ pressed }) => [bar.tabBtn, { opacity: pressed ? 0.7 : 1 }]}
             accessibilityRole="button"
-            accessibilityLabel="Menu complet"
+            accessibilityLabel={t('navigation.fullMenu')}
           >
             <View style={bar.tabInner}>
               {isSecondaryActive && (
@@ -221,7 +223,7 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
                 ]}
                 numberOfLines={1}
               >
-                Plus
+                {t('common.more')}
               </Text>
             </View>
           </Pressable>
@@ -239,6 +241,7 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
         colors={colors}
         isDark={isDark}
         canUseSocials={canUseSocials}
+        language={language}
       />
     </>
   );
@@ -257,7 +260,7 @@ const bar = StyleSheet.create({
 
 // ── Burger sheet modal ─────────────────────────────────────────────────────────
 function BurgerSheet({
-  visible, onClose, currentRoute, onNavigate, primaryTabs, onPrimaryTabsChange, colors, isDark, canUseSocials,
+  visible, onClose, currentRoute, onNavigate, primaryTabs, onPrimaryTabsChange, colors, isDark, canUseSocials, language,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -268,15 +271,17 @@ function BurgerSheet({
   colors: ReturnType<typeof useColors>;
   isDark: boolean;
   canUseSocials: boolean;
+  language: 'fr' | 'en';
 }) {
   const insets = useSafeAreaInsets();
   const [customizing, setCustomizing] = useState(false);
   const [draftTabs, setDraftTabs] = useState(primaryTabs);
+  const { t } = useLocalization();
   const orderedMenuTabs = [
     ...primaryTabs,
     ...ALL_TABS
       .filter((tabName) => !primaryTabs.includes(tabName))
-      .sort((a, b) => TAB_META[a]!.label.localeCompare(TAB_META[b]!.label, 'fr')),
+       .sort((a, b) => t(TAB_META[a]!.labelKey).localeCompare(t(TAB_META[b]!.labelKey), language)),
   ];
 
   useEffect(() => {
@@ -338,7 +343,7 @@ function BurgerSheet({
               <View style={{ position: 'absolute', bottom: -8, left: 20, width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(200,170,112,0.12)' }} />
             </View>
             <Image source={logoImage} style={bs.logoImage} resizeMode="contain" />
-            <Text style={[bs.headerEye, { fontFamily: SANS_MEDIUM }]}>NAVIGATION</Text>
+            <Text style={[bs.headerEye, { fontFamily: SANS_MEDIUM }]}>{t('navigation.navigation')}</Text>
             <Text style={[bs.headerTitle, { fontFamily: SERIF }]}>The Nuptial Plan</Text>
           </LinearGradient>
           <TouchableOpacity onPress={onClose} style={bs.closeBtn} activeOpacity={0.7}>
@@ -357,10 +362,10 @@ function BurgerSheet({
             </View>
             <View style={bs.customizeText}>
               <Text style={[bs.customizeTitle, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]}>
-                Personnaliser le menu du bas
+                 {t('navigation.customizeBottomMenu')}
               </Text>
               <Text style={[bs.customizeHint, { color: colors.mutedForeground, fontFamily: SANS }]}>
-                Choisissez les 5 onglets que vous utilisez le plus.
+                 {t('navigation.chooseFiveTabs')}
               </Text>
             </View>
             <Feather name="chevron-right" size={17} color={colors.plum} />
@@ -373,10 +378,10 @@ function BurgerSheet({
               </TouchableOpacity>
               <View style={bs.customizeText}>
                 <Text style={[bs.customizeTitle, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]}>
-                  Menu du bas
+                   {t('navigation.bottomMenu')}
                 </Text>
                 <Text style={[bs.customizeHint, { color: colors.mutedForeground, fontFamily: SANS }]}>
-                  {draftTabs.length}/5 onglets sélectionnés
+                   {draftTabs.length}/5 {t('navigation.tabsSelected')}
                 </Text>
               </View>
               <TouchableOpacity
@@ -384,11 +389,11 @@ function BurgerSheet({
                 disabled={draftTabs.length !== 5}
                 style={[bs.saveButton, { backgroundColor: draftTabs.length === 5 ? colors.plum : colors.muted }]}
               >
-                <Text style={[bs.saveButtonText, { fontFamily: SANS_SEMIBOLD }]}>Enregistrer</Text>
+                 <Text style={[bs.saveButtonText, { fontFamily: SANS_SEMIBOLD }]}>{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
             <Text style={[bs.selectionHint, { color: colors.mutedForeground, fontFamily: SANS }]}>
-              Appuyez sur les onglets à afficher dans la barre de navigation.
+               {t('navigation.chooseTabs')}
             </Text>
             <ScrollView
               style={bs.selectionScroll}
@@ -415,7 +420,7 @@ function BurgerSheet({
                       />
                     </View>
                     <Text style={[bs.selectionLabel, { color: colors.foreground, fontFamily: selected ? SANS_SEMIBOLD : SANS }]}>
-                      {TAB_META[tabName]!.label}
+                       {t(TAB_META[tabName]!.labelKey)}
                     </Text>
                     {PREMIUM_TABS.has(tabName) && <PremiumBadge variant="icon" />}
                     <View style={[bs.checkbox, { borderColor: selected ? colors.plum : colors.border, backgroundColor: selected ? colors.plum : 'transparent' }]}>
@@ -491,14 +496,14 @@ function BurgerSheet({
                   ]}
                   numberOfLines={1}
                 >
-                  {meta.label}
+                   {t(meta.labelKey)}
                 </Text>
                 {PREMIUM_TABS.has(tabName) && <PremiumBadge variant="icon" />}
 
                 {/* "Principal" badge for primary tabs */}
                 {isPrimary && (
                   <Text style={[bs.primaryBadge, { color: colors.goldDim, fontFamily: SANS }]}>
-                    ↓ barre
+                     {t('navigation.primary')}
                   </Text>
                 )}
               </TouchableOpacity>

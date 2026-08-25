@@ -9,6 +9,7 @@ import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { useSubscription } from '@/lib/subscription';
 import { useUser } from '@clerk/expo';
+import { useLocalization } from '@/context/LocalizationContext';
 
 type Entry = { id: string; month: string; type: 'income' | 'expense'; label: string; amount: number };
 type BusinessData = { hourlyRate: number; annualRevenue: number; fixedCosts: number; microThreshold: number; packagePrice: number; projectHours: number; insurance: boolean; entries: Entry[] };
@@ -35,9 +36,19 @@ const reviewBusinessData: BusinessData = {
 function loadWebData(): BusinessData {
   try { return { ...defaults, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') }; } catch { return defaults; }
 }
-function money(value: number) { return `${Math.round(value).toLocaleString('fr-FR')} €`; }
+function money(value: number, locale: string) { return `${Math.round(value).toLocaleString(locale)} €`; }
 
 export default function BusinessScreen() {
+  const { language, locale } = useLocalization();
+  const copy = language === 'fr' ? {
+    feature: 'votre espace Business', eyebrow: 'VOTRE ACTIVITÉ', title: 'Mon business', body: 'Un espace personnel pour piloter votre trésorerie, votre rentabilité et vos garde-fous professionnels.',
+    balance: 'Solde suivi', hourly: 'Taux horaire cible', revenue: 'CA enregistré', margin: 'Marge avant plafond', cash: 'Trésorerie', cashBody: 'Suivez les mois creux avant qu’ils ne vous surprennent.', add: 'Ajouter', month: 'AAAA-MM', label: 'Libellé', income: 'Recette', expense: 'Charge', amount: 'Montant €', empty: 'Ajoutez vos encaissements et charges mensuels.',
+    safeguards: 'Garde-fous', safeguardsBody: 'Les chiffres qui protègent vos décisions.', minRate: 'Taux horaire réel minimum', fixedCosts: 'Charges fixes mensuelles', securedRevenue: 'CA annuel déjà sécurisé', threshold: 'Plafond micro à surveiller', insurance: 'RC professionnelle', current: 'À jour', verify: 'À vérifier avant la prochaine saison', markVerified: 'Marquer vérifiée', testPackage: 'Tester un forfait', packageBody: 'Vérifiez votre taux horaire réel avant d’accepter un dossier.', packagePrice: 'Prix du forfait', hours: 'Heures estimées, réunions incluses', actualRate: 'Taux réel du dossier',
+  } : {
+    feature: 'your Business space', eyebrow: 'YOUR BUSINESS', title: 'My business', body: 'A personal space to manage your cash flow, profitability and professional safeguards.',
+    balance: 'Tracked balance', hourly: 'Target hourly rate', revenue: 'Recorded revenue', margin: 'Room before cap', cash: 'Cash flow', cashBody: 'Track quiet months before they catch you by surprise.', add: 'Add', month: 'YYYY-MM', label: 'Label', income: 'Income', expense: 'Expense', amount: 'Amount €', empty: 'Add your monthly income and expenses.',
+    safeguards: 'Safeguards', safeguardsBody: 'The numbers that protect your decisions.', minRate: 'Minimum actual hourly rate', fixedCosts: 'Monthly fixed costs', securedRevenue: 'Annual revenue already secured', threshold: 'Micro-business cap to monitor', insurance: 'Professional liability insurance', current: 'Up to date', verify: 'Check before next season', markVerified: 'Mark as checked', testPackage: 'Test a package', packageBody: 'Check your actual hourly rate before accepting a project.', packagePrice: 'Package price', hours: 'Estimated hours, meetings included', actualRate: 'Actual project rate',
+  };
   const colors = useColors();
   const { user } = useUser();
   const { isActive: isPremium } = useSubscription();
@@ -69,60 +80,60 @@ export default function BusinessScreen() {
   const updateNumber = (key: keyof Pick<BusinessData, 'hourlyRate' | 'annualRevenue' | 'fixedCosts' | 'microThreshold' | 'packagePrice' | 'projectHours'>, value: string) => persist({ ...data, [key]: Number(value) || 0 });
   const inputStyle = [styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }];
 
-  if (!isPremium) return <PremiumPageGate featureLabel="votre espace Business" />;
+  if (!isPremium) return <PremiumPageGate featureLabel={copy.feature} />;
   return (
     <>
       <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <LinearGradient colors={[colors.plumDark, colors.plum, colors.plumLight]} style={styles.hero}>
-          <Text style={[styles.eyebrow, { color: colors.gold }]}>VOTRE ACTIVITÉ</Text>
+           <Text style={[styles.eyebrow, { color: colors.gold }]}>{copy.eyebrow}</Text>
           <View style={styles.heroTitleRow}>
-            <Text style={[styles.heroTitle, { color: '#FBF5FB', fontFamily: SERIF }]}>Mon business</Text>
+             <Text style={[styles.heroTitle, { color: '#FBF5FB', fontFamily: SERIF }]}>{copy.title}</Text>
             <PremiumBadge />
           </View>
-          <Text style={[styles.heroBody, { color: '#F7EAF4', fontFamily: SANS }]}>Un espace personnel pour piloter votre trésorerie, votre rentabilité et vos garde-fous professionnels.</Text>
+           <Text style={[styles.heroBody, { color: '#F7EAF4', fontFamily: SANS }]}>{copy.body}</Text>
         </LinearGradient>
 
         <View style={styles.metrics}>
-          <Metric icon="credit-card" label="Solde suivi" value={money(totals.income - totals.expense)} colors={colors} />
-          <Metric icon="clock" label="Taux horaire cible" value={`${data.hourlyRate} €/h`} colors={colors} />
-          <Metric icon="trending-up" label="CA enregistré" value={money(totals.income)} colors={colors} />
-          <Metric icon="trending-down" label="Marge avant plafond" value={money(Math.max(0, data.microThreshold - data.annualRevenue))} colors={colors} />
+           <Metric icon="credit-card" label={copy.balance} value={money(totals.income - totals.expense, locale)} colors={colors} />
+           <Metric icon="clock" label={copy.hourly} value={`${data.hourlyRate} €/h`} colors={colors} />
+           <Metric icon="trending-up" label={copy.revenue} value={money(totals.income, locale)} colors={colors} />
+           <Metric icon="trending-down" label={copy.margin} value={money(Math.max(0, data.microThreshold - data.annualRevenue), locale)} colors={colors} />
         </View>
 
-        <Section title="Trésorerie" subtitle="Suivez les mois creux avant qu’ils ne vous surprennent." colors={colors} action={<Button label="Ajouter" onPress={addEntry} colors={colors} />}>
+         <Section title={copy.cash} subtitle={copy.cashBody} colors={colors} action={<Button label={copy.add} onPress={addEntry} colors={colors} />}>
           <View style={styles.formGrid}>
-            <TextInput style={inputStyle} value={entry.month} onChangeText={(month) => setEntry({ ...entry, month })} placeholder="AAAA-MM" placeholderTextColor={colors.mutedForeground} />
-            <TextInput style={inputStyle} value={entry.label} onChangeText={(label) => setEntry({ ...entry, label })} placeholder="Libellé" placeholderTextColor={colors.mutedForeground} />
+             <TextInput style={inputStyle} value={entry.month} onChangeText={(month) => setEntry({ ...entry, month })} placeholder={copy.month} placeholderTextColor={colors.mutedForeground} />
+             <TextInput style={inputStyle} value={entry.label} onChangeText={(label) => setEntry({ ...entry, label })} placeholder={copy.label} placeholderTextColor={colors.mutedForeground} />
             <TouchableOpacity style={[styles.select, { borderColor: colors.border, backgroundColor: colors.card }]} onPress={() => setEntry({ ...entry, type: entry.type === 'income' ? 'expense' : 'income' })}>
-              <Text style={[styles.small, { color: colors.foreground, fontFamily: SANS_MEDIUM }]}>{entry.type === 'income' ? 'Recette' : 'Charge'}</Text>
+               <Text style={[styles.small, { color: colors.foreground, fontFamily: SANS_MEDIUM }]}>{entry.type === 'income' ? copy.income : copy.expense}</Text>
             </TouchableOpacity>
-            <TextInput style={inputStyle} value={entry.amount} onChangeText={(amount) => setEntry({ ...entry, amount })} placeholder="Montant €" keyboardType="decimal-pad" placeholderTextColor={colors.mutedForeground} />
+             <TextInput style={inputStyle} value={entry.amount} onChangeText={(amount) => setEntry({ ...entry, amount })} placeholder={copy.amount} keyboardType="decimal-pad" placeholderTextColor={colors.mutedForeground} />
           </View>
-          {data.entries.length === 0 ? <Text style={[styles.empty, { color: colors.mutedForeground, fontFamily: SANS }]}>Ajoutez vos encaissements et charges mensuels.</Text> : data.entries.slice().reverse().map((item) => (
+           {data.entries.length === 0 ? <Text style={[styles.empty, { color: colors.mutedForeground, fontFamily: SANS }]}>{copy.empty}</Text> : data.entries.slice().reverse().map((item) => (
             <View key={item.id} style={[styles.entry, { borderBottomColor: colors.border }]}>
               <View style={[styles.dot, { backgroundColor: item.type === 'income' ? colors.sage : colors.rose }]} />
               <Text style={[styles.entryLabel, { color: colors.foreground, fontFamily: SANS }]}>{item.month} · {item.label}</Text>
-              <Text style={[styles.entryAmount, { color: item.type === 'income' ? colors.sage : colors.destructive, fontFamily: SANS_SEMIBOLD }]}>{item.type === 'income' ? '+' : '-'}{money(item.amount)}</Text>
+               <Text style={[styles.entryAmount, { color: item.type === 'income' ? colors.sage : colors.destructive, fontFamily: SANS_SEMIBOLD }]}>{item.type === 'income' ? '+' : '-'}{money(item.amount, locale)}</Text>
               <TouchableOpacity onPress={() => persist({ ...data, entries: data.entries.filter((entryItem) => entryItem.id !== item.id) })}><Feather name="trash-2" size={15} color={colors.mutedForeground} /></TouchableOpacity>
             </View>
           ))}
         </Section>
 
-        <Section title="Garde-fous" subtitle="Les chiffres qui protègent vos décisions." colors={colors}>
-          <NumberSetting label="Taux horaire réel minimum" value={data.hourlyRate} suffix="€/h" onChange={(v: string) => updateNumber('hourlyRate', v)} colors={colors} />
-          <NumberSetting label="Charges fixes mensuelles" value={data.fixedCosts} suffix="€" onChange={(v: string) => updateNumber('fixedCosts', v)} colors={colors} />
-          <NumberSetting label="CA annuel déjà sécurisé" value={data.annualRevenue} suffix="€" onChange={(v: string) => updateNumber('annualRevenue', v)} colors={colors} />
-          <NumberSetting label="Plafond micro à surveiller" value={data.microThreshold} suffix="€" onChange={(v: string) => updateNumber('microThreshold', v)} colors={colors} />
+         <Section title={copy.safeguards} subtitle={copy.safeguardsBody} colors={colors}>
+           <NumberSetting label={copy.minRate} value={data.hourlyRate} suffix="€/h" onChange={(v: string) => updateNumber('hourlyRate', v)} colors={colors} />
+           <NumberSetting label={copy.fixedCosts} value={data.fixedCosts} suffix="€" onChange={(v: string) => updateNumber('fixedCosts', v)} colors={colors} />
+           <NumberSetting label={copy.securedRevenue} value={data.annualRevenue} suffix="€" onChange={(v: string) => updateNumber('annualRevenue', v)} colors={colors} />
+           <NumberSetting label={copy.threshold} value={data.microThreshold} suffix="€" onChange={(v: string) => updateNumber('microThreshold', v)} colors={colors} />
           <View style={[styles.insurance, { borderTopColor: colors.border }]}>
-            <View style={{ flex: 1 }}><Text style={[styles.settingLabel, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]}>RC professionnelle</Text><Text style={[styles.small, { color: colors.mutedForeground, fontFamily: SANS }]}>{data.insurance ? 'À jour' : 'À vérifier avant la prochaine saison'}</Text></View>
-            <Button label={data.insurance ? 'À jour' : 'Marquer vérifiée'} onPress={() => persist({ ...data, insurance: !data.insurance })} outline colors={colors} />
+             <View style={{ flex: 1 }}><Text style={[styles.settingLabel, { color: colors.foreground, fontFamily: SANS_SEMIBOLD }]}>{copy.insurance}</Text><Text style={[styles.small, { color: colors.mutedForeground, fontFamily: SANS }]}>{data.insurance ? copy.current : copy.verify}</Text></View>
+             <Button label={data.insurance ? copy.current : copy.markVerified} onPress={() => persist({ ...data, insurance: !data.insurance })} outline colors={colors} />
           </View>
         </Section>
 
-        <Section title="Tester un forfait" subtitle="Vérifiez votre taux horaire réel avant d’accepter un dossier." colors={colors}>
-          <NumberSetting label="Prix du forfait" value={data.packagePrice} suffix="€" onChange={(v: string) => updateNumber('packagePrice', v)} colors={colors} />
-          <NumberSetting label="Heures estimées, réunions incluses" value={data.projectHours} suffix="h" onChange={(v: string) => updateNumber('projectHours', v)} colors={colors} />
-          <View style={[styles.result, { backgroundColor: colors.plum + '12' }]}><Text style={[styles.small, { color: colors.mutedForeground, fontFamily: SANS }]}>Taux réel du dossier</Text><Text style={[styles.resultValue, { color: colors.plum, fontFamily: SERIF }]}>{data.projectHours > 0 ? Math.round(data.packagePrice / data.projectHours) : 0} €/h</Text></View>
+         <Section title={copy.testPackage} subtitle={copy.packageBody} colors={colors}>
+           <NumberSetting label={copy.packagePrice} value={data.packagePrice} suffix="€" onChange={(v: string) => updateNumber('packagePrice', v)} colors={colors} />
+           <NumberSetting label={copy.hours} value={data.projectHours} suffix="h" onChange={(v: string) => updateNumber('projectHours', v)} colors={colors} />
+           <View style={[styles.result, { backgroundColor: colors.plum + '12' }]}><Text style={[styles.small, { color: colors.mutedForeground, fontFamily: SANS }]}>{copy.actualRate}</Text><Text style={[styles.resultValue, { color: colors.plum, fontFamily: SERIF }]}>{data.projectHours > 0 ? Math.round(data.packagePrice / data.projectHours) : 0} €/h</Text></View>
         </Section>
       </ScrollView>
     </>

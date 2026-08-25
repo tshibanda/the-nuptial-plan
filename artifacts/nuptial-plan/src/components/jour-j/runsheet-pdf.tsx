@@ -17,6 +17,7 @@ import {
   pdf,
   Font,
 } from '@react-pdf/renderer';
+import { detectLanguage, getStoredLanguage } from '@/lib/i18n';
 
 /* ── Disable automatic hyphenation (prevents layout engine crashes) ── */
 Font.registerHyphenationCallback((word) => [word]);
@@ -341,9 +342,9 @@ const s = StyleSheet.create({
 });
 
 /* ── Helpers ── */
-function fmtDate(iso: string) {
+function fmtDate(iso: string, locale: string) {
   try {
-    return new Date(iso).toLocaleDateString('fr-FR', {
+    return new Date(iso).toLocaleDateString(locale, {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     });
   } catch { return iso; }
@@ -353,20 +354,26 @@ function fmtTime(t?: string | null) {
   return t ? t.slice(0, 5) : null;
 }
 
-function getStatus(e: PDFEvent): { label: string; color: string; bg: string } {
-  if (e.completed) return { label: 'Termine',   color: '#4a7157', bg: '#dce8df' };
+function getStatus(e: PDFEvent, isFrench: boolean): { label: string; color: string; bg: string } {
+  if (e.completed) return { label: isFrench ? 'Terminé' : 'Complete', color: '#4a7157', bg: '#dce8df' };
   const today = new Date().toISOString().split('T')[0]!;
-  if (e.eventDate < today) return { label: 'En retard', color: '#9d6246', bg: '#f1dfd0' };
+  if (e.eventDate < today) return { label: isFrench ? 'En retard' : 'Overdue', color: '#9d6246', bg: '#f1dfd0' };
   if (e.eventDate === today && e.eventTime) {
     const [h, m] = e.eventTime.split(':').map(Number);
     const t = new Date(); t.setHours(h!, m!, 0, 0);
-    if (new Date() >= t) return { label: 'En cours',  color: '#8a6530', bg: '#f3e8d4' };
+    if (new Date() >= t) return { label: isFrench ? 'En cours' : 'In progress', color: '#8a6530', bg: '#f3e8d4' };
   }
-  return { label: 'A venir', color: '#6b6672', bg: '#f0eef0' };
+  return { label: isFrench ? 'À venir' : 'Upcoming', color: '#6b6672', bg: '#f0eef0' };
 }
 
 /* ── Document component ── */
 function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PDFEvent[] }) {
+  // This document renders in react-pdf's separate React tree, outside the
+  // application's LanguageProvider. Read the same persisted preference here.
+  const language = getStoredLanguage() ?? detectLanguage();
+  const locale = language === 'fr' ? 'fr-FR' : 'en-GB';
+  const isFrench = language === 'fr';
+  const text = (fr: string, en: string) => isFrench ? fr : en;
   // Group events by date, sorted
   const byDate: Record<string, PDFEvent[]> = {};
   for (const e of events) {
@@ -377,11 +384,11 @@ function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PD
   const total = events.length;
   const done  = events.filter(e => e.completed).length;
   const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
-  const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const today = new Date().toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
     <Document
-      title={`Deroulement Jour J — ${wedding.names}`}
+      title={`${text('Déroulement Jour J', 'Wedding day schedule')} — ${wedding.names}`}
       author="The Nuptial Plan"
       creator="The Nuptial Plan"
       producer="The Nuptial Plan"
@@ -390,11 +397,11 @@ function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PD
 
         {/* ── Branded header ── */}
         <View style={s.header}>
-          <Text style={s.headerEyebrow}>THE NUPTIAL PLAN  ·  JOUR J</Text>
+          <Text style={s.headerEyebrow}>THE NUPTIAL PLAN  ·  {text('JOUR J', 'WEDDING DAY')}</Text>
           <Text style={s.headerTitle}>{wedding.names}</Text>
           {wedding.weddingDate && (
             <Text style={s.headerSub}>
-              {fmtDate(wedding.weddingDate)}
+              {fmtDate(wedding.weddingDate, locale)}
               {wedding.venue ? `   ·   ${wedding.venue}` : ''}
             </Text>
           )}
@@ -404,7 +411,7 @@ function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PD
         {/* ── Stats band ── */}
         <View style={s.statsBand}>
           <Text style={s.statsBandLabel}>
-            DEROULEMENT DU PROGRAMME  ·  {done}/{total} ETAPES TERMINEES
+            {text('DÉROULEMENT DU PROGRAMME', 'SCHEDULE OVERVIEW')}  ·  {done}/{total} {text('ÉTAPES TERMINÉES', 'STEPS COMPLETE')}
           </Text>
           <Text style={s.statsBandPct}>{pct} %</Text>
         </View>
@@ -414,7 +421,7 @@ function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PD
           {dates.length === 0 && (
             <View style={{ paddingVertical: 32, alignItems: 'center' }}>
               <Text style={{ fontSize: 10, color: MUTED, fontFamily: 'DMSans', fontWeight: 400 }}>
-                Aucun evenement planifie
+                {text('Aucun événement planifié', 'No events planned')}
               </Text>
             </View>
           )}
@@ -425,14 +432,14 @@ function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PD
               <View style={s.dateGroup}>
                 <View style={s.dateGroupRule} />
                 <Text style={s.dateGroupLabel}>
-                  {fmtDate(date).toUpperCase()}
+                  {fmtDate(date, locale).toUpperCase()}
                 </Text>
               </View>
 
               {/* Events for this date */}
               {(byDate[date] ?? []).map((ev) => {
                 const accent   = ev.tone ? (TONE_HEX[ev.tone] ?? PLUM_MID) : PLUM_MID;
-                const { label, color, bg } = getStatus(ev);
+                const { label, color, bg } = getStatus(ev, isFrench);
                 const time     = fmtTime(ev.eventTime);
                 const isDone   = ev.completed;
 
@@ -462,14 +469,14 @@ function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PD
                           {ev.location ? (
                             <View style={s.metaRow}>
                               <View style={s.metaDot} />
-                              <Text style={s.metaText}>Lieu : {ev.location}</Text>
+                              <Text style={s.metaText}>{text('Lieu', 'Location')}: {ev.location}</Text>
                             </View>
                           ) : null}
 
                           {ev.actors ? (
                             <View style={s.metaRow}>
                               <View style={[s.metaDot, { backgroundColor: SAGE, opacity: 0.7 }]} />
-                              <Text style={s.metaText}>Intervenants : {ev.actors}</Text>
+                              <Text style={s.metaText}>{text('Intervenants', 'Participants')}: {ev.actors}</Text>
                             </View>
                           ) : null}
 
@@ -493,7 +500,7 @@ function RunsheetDocument({ wedding, events }: { wedding: PDFWedding; events: PD
 
         {/* ── Footer (fixed on every page) ── */}
         <View style={s.footer} fixed>
-          <Text style={s.footerText}>Exporte le {today}</Text>
+          <Text style={s.footerText}>{text('Exporté le', 'Exported on')} {today}</Text>
           <Text style={s.footerMonogram}>N</Text>
           <Text style={s.footerBrand}>THE NUPTIAL PLAN</Text>
           <Text

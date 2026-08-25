@@ -11,20 +11,19 @@ import { getLocalizedPackagePrice, isNativeStorePricingAvailable, useSubscriptio
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow, accentShadow } from '@/utils/shadow';
+import { useLocalization } from '@/context/LocalizationContext';
 
-const PREMIUM_FEATURES = [
-  { icon: 'file-text', label: 'Contrats prestataires illimités' },
-  { icon: 'trending-up', label: 'Analytiques budget avancées' },
-  { icon: 'layers', label: 'Dossiers de mariage illimités' },
-  { icon: 'cloud', label: 'Pièces jointes & documents' },
-  { icon: 'star', label: 'Moodboards & inspirations illimitées' },
-  { icon: 'zap', label: 'Accès prioritaire aux nouvelles fonctionnalités' },
-];
-function annualMonthlyPrice(pkg: any): string | null {
+function premiumFeatures(language: 'fr' | 'en') {
+  const labels = language === 'fr'
+    ? ['Contrats prestataires illimités', 'Analytiques budget avancées', 'Dossiers de mariage illimités', 'Pièces jointes & documents', 'Moodboards & inspirations illimitées', 'Accès prioritaire aux nouvelles fonctionnalités']
+    : ['Unlimited vendor contracts', 'Advanced budget analytics', 'Unlimited wedding files', 'Attachments & documents', 'Unlimited moodboards & inspiration', 'Priority access to new features'];
+  return ['file-text', 'trending-up', 'layers', 'cloud', 'star', 'zap'].map((icon, index) => ({ icon, label: labels[index]! }));
+}
+function annualMonthlyPrice(pkg: any, locale: string, language: 'fr' | 'en'): string | null {
   const amount = pkg?.product?.price;
   const currency = pkg?.product?.currencyCode ?? pkg?.product?.currency;
   if (typeof amount !== 'number' || !currency) return null;
-  return `${new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(amount / 12)} / mois`;
+  return `${new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount / 12)} / ${language === 'fr' ? 'mois' : 'month'}`;
 }
 
 interface PaywallModalProps {
@@ -39,6 +38,8 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const subscription = useSubscription();
+  const { language, locale } = useLocalization();
+  const en = language === 'en';
   const openLegalDocument = (path: '/legal/privacy' | '/legal/policy') => {
     onClose();
     requestAnimationFrame(() => router.push(path));
@@ -91,15 +92,15 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
               </LinearGradient>
             </View>
 
-            <Text style={[pw.heroEye, { fontFamily: SANS_MEDIUM }]}>ABONNEMENT</Text>
+            <Text style={[pw.heroEye, { fontFamily: SANS_MEDIUM }]}>{en ? 'SUBSCRIPTION' : 'ABONNEMENT'}</Text>
             <Text style={[pw.heroTitle, { fontFamily: SERIF }]}>The Nuptial Plan Premium</Text>
             {featureLabel ? (
               <Text style={[pw.heroSub, { fontFamily: SANS }]}>
-                {featureLabel} est une fonctionnalité Premium
+                {en ? `${featureLabel} is a Premium feature` : `${featureLabel} est une fonctionnalité Premium`}
               </Text>
             ) : (
               <Text style={[pw.heroSub, { fontFamily: SANS }]}>
-                Tout ce dont vous avez besoin pour orchestrer le mariage parfait
+                {en ? 'Everything you need to orchestrate the perfect wedding' : 'Tout ce dont vous avez besoin pour orchestrer le mariage parfait'}
               </Text>
             )}
           </LinearGradient>
@@ -113,23 +114,23 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
                   <View style={{ flex: 1 }}>
                     <Text style={[pw.summaryTitle, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>The Nuptial Plan Premium</Text>
                     <Text style={[pw.summaryDetail, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                      {annual ? 'Abonnement annuel · 12 mois' : 'Abonnement mensuel · 1 mois'}
+                       {annual ? (en ? 'Annual subscription · 12 months' : 'Abonnement annuel · 12 mois') : (en ? 'Monthly subscription · 1 month' : 'Abonnement mensuel · 1 mois')}
                     </Text>
-                    <Text style={[pw.summaryPrice, { fontFamily: SERIF, color: colors.plum }]}>{getLocalizedPackagePrice(pkg) ?? 'Prix selon votre boutique'}</Text>
-                    {annual && annualMonthlyPrice(pkg) && <Text style={[pw.summaryDetail, { fontFamily: SANS, color: colors.mutedForeground }]}>{annualMonthlyPrice(pkg)}</Text>}
+                     <Text style={[pw.summaryPrice, { fontFamily: SERIF, color: colors.plum }]}>{getLocalizedPackagePrice(pkg) ?? (en ? 'Price set by your store' : 'Prix selon votre boutique')}</Text>
+                     {annual && annualMonthlyPrice(pkg, locale, language) && <Text style={[pw.summaryDetail, { fontFamily: SANS, color: colors.mutedForeground }]}>{annualMonthlyPrice(pkg, locale, language)}</Text>}
                   </View>
-                  <Text style={[pw.chooseText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>Choisir</Text>
+                   <Text style={[pw.chooseText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>{en ? 'Choose' : 'Choisir'}</Text>
                 </TouchableOpacity>
               );
             })}
             <View style={pw.complianceActions}>
               <TouchableOpacity onPress={() => void subscription.restore()} disabled={subscription.loading} style={pw.restoreBtn}>
-                <Text style={[pw.restoreText, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Restaurer les achats</Text>
+                <Text style={[pw.restoreText, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>{en ? 'Restore purchases' : 'Restaurer les achats'}</Text>
               </TouchableOpacity>
               <View style={pw.legalLinks}>
-                <Text onPress={() => openLegalDocument('/legal/privacy')} style={[pw.legalLink, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Politique de confidentialité</Text>
+                <Text onPress={() => openLegalDocument('/legal/privacy')} style={[pw.legalLink, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>{en ? 'Privacy policy' : 'Politique de confidentialité'}</Text>
                 <Text style={[pw.legalSeparator, { color: colors.mutedForeground }]}>·</Text>
-                <Text onPress={() => openLegalDocument('/legal/policy')} style={[pw.legalLink, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>Conditions d’utilisation</Text>
+                <Text onPress={() => openLegalDocument('/legal/policy')} style={[pw.legalLink, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>{en ? 'Terms of use' : 'Conditions d’utilisation'}</Text>
               </View>
             </View>
           </View>
@@ -138,9 +139,9 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
           <View style={[pw.featuresCard, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[pw.rim, { borderTopColor: 'rgba(255,255,255,0.70)' }]} />
             <Text style={[pw.featuresTitle, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
-              INCLUS AVEC PREMIUM
+               {en ? 'INCLUDED WITH PREMIUM' : 'INCLUS AVEC PREMIUM'}
             </Text>
-            {PREMIUM_FEATURES.map((f) => (
+             {premiumFeatures(language).map((f) => (
               <View key={f.icon} style={pw.featureRow}>
                 <View style={[pw.featureIcon, { backgroundColor: colors.goldLight }]}>
                   <Feather name={f.icon as any} size={14} color={colors.goldDim} />
@@ -155,7 +156,7 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
           <View style={[pw.trialBadge, { backgroundColor: colors.sageBg, borderColor: colors.sage + '44' }]}>
             <Feather name="gift" size={14} color={colors.sageDark} />
             <Text style={[pw.trialText, { fontFamily: SANS_SEMIBOLD, color: colors.sageDark }]}>
-              Essai gratuit d'un mois inclus
+               {en ? 'One-month free trial included' : 'Essai gratuit d’un mois inclus'}
             </Text>
           </View>
 
@@ -188,19 +189,19 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
                     >
                       {isAnnual && (
                         <View style={[pw.popularPill, { backgroundColor: colors.gold }]}>
-                          <Text style={[pw.popularText, { fontFamily: SANS_SEMIBOLD }]}>POPULAIRE</Text>
+                           <Text style={[pw.popularText, { fontFamily: SANS_SEMIBOLD }]}>{en ? 'POPULAR' : 'POPULAIRE'}</Text>
                         </View>
                       )}
                       <View style={pw.packageLeft}>
                         <Text style={[pw.packageName, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>
-                          {isAnnual ? 'Annuel' : 'Mensuel'}
+                           {isAnnual ? (en ? 'Annual' : 'Annuel') : (en ? 'Monthly' : 'Mensuel')}
                         </Text>
                         <Text style={[pw.packagePrice, { fontFamily: SERIF, color: isAnnual ? colors.plum : colors.foreground }]}>
-                          {getLocalizedPackagePrice(pkg) ?? 'Prix selon votre boutique'}
+                           {getLocalizedPackagePrice(pkg) ?? (en ? 'Price set by your store' : 'Prix selon votre boutique')}
                         </Text>
                         {isAnnual && (
                           <Text style={[pw.packageNote, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                            Économisez par rapport au mensuel
+                             {en ? 'Save compared with monthly' : 'Économisez par rapport au mensuel'}
                           </Text>
                         )}
                       </View>
@@ -212,7 +213,7 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
                           <ActivityIndicator size="small" color={isAnnual ? '#FBF5FB' : colors.plum} />
                         ) : (
                           <Text style={[pw.packageCtaText, { fontFamily: SANS_SEMIBOLD, color: isAnnual ? '#FBF5FB' : colors.plum }]}>
-                            Choisir
+                             {en ? 'Choose' : 'Choisir'}
                           </Text>
                         )}
                       </View>
@@ -225,19 +226,19 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
             <View style={[pw.unavailableCard, { backgroundColor: colors.muted, borderColor: colors.border }]}>
               <Feather name="info" size={15} color={colors.mutedForeground} />
               <Text style={[pw.unavailableText, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                Les achats seront disponibles après la configuration App Store et Google Play.
+                 {en ? 'Purchases will be available after App Store and Google Play configuration.' : 'Les achats seront disponibles après la configuration App Store et Google Play.'}
               </Text>
             </View>
           )}
 
           {!isNativeStorePricingAvailable && packages.length > 0 && (
             <Text style={[pw.storePricingNote, { fontFamily: SANS, color: colors.mutedForeground }]}>
-              Le prix final sera affiché selon la devise de votre App Store dans la version iOS native.
+               {en ? 'The final price will be shown in your App Store currency in the native iOS version.' : 'Le prix final sera affiché selon la devise de votre App Store dans la version iOS native.'}
             </Text>
           )}
 
           <Text style={[pw.legalText, { fontFamily: SANS, color: colors.mutedForeground }]}>
-            L'abonnement est renouvelé automatiquement. Résiliable à tout moment depuis les réglages de votre appareil.
+             {en ? 'The subscription renews automatically. Cancel anytime in your device settings.' : 'L’abonnement est renouvelé automatiquement. Résiliable à tout moment depuis les réglages de votre appareil.'}
           </Text>
         </ScrollView>
       </View>

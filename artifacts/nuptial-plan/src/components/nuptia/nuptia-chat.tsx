@@ -8,6 +8,7 @@ import { Sparkles, Send, RotateCcw, ChevronDown } from 'lucide-react';
 import { useListWeddings, useGetWeddingSummary } from '@workspace/api-client-react';
 import { useActiveWedding } from '@/lib/wedding-context';
 import { PremiumPageGate, usePremiumStatus } from '@/components/premium-page-gate';
+import { useLanguage } from '@/lib/i18n';
 
 /* ── Types ── */
 interface ChatMessage {
@@ -49,11 +50,15 @@ async function apiLoadHistory(convId: number, getToken: TokenGetter): Promise<Ch
 /* ── Constants ── */
 const CONV_KEY = 'nuptia:conversation_id';
 
-const WELCOME: ChatMessage = {
+function welcome(language: 'en' | 'fr'): ChatMessage {
+  return {
   id: 'welcome',
   role: 'assistant',
-  content: 'Bonjour\u202f! Je suis **Nuptia**, votre assistante de mariage. Posez-moi vos questions sur l\u2019organisation, le budget, les prestataires, les tendances ou tout ce qui touche \u00e0 votre grand jour\u202f\u2728',
-};
+  content: language === 'en'
+    ? 'Hello! I’m **Nuptia**, your wedding assistant. Ask me anything about planning, budgeting, suppliers, trends, or anything related to your big day ✨'
+    : 'Bonjour\u202f! Je suis **Nuptia**, votre assistante de mariage. Posez-moi vos questions sur l\u2019organisation, le budget, les prestataires, les tendances ou tout ce qui touche \u00e0 votre grand jour\u202f\u2728',
+  };
+}
 
 /* ── Markdown-lite renderer (bold only) ── */
 function renderMarkdown(text: string) {
@@ -121,6 +126,8 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
 
 /* ── Main component ── */
 export function NuptiaChat({ getToken }: NuptiaChatProps) {
+  const { language, locale } = useLanguage();
+  const copy = (fr: string, english: string) => language === 'en' ? english : fr;
   const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
@@ -128,7 +135,7 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
   const { data: weddingSummary } = useGetWeddingSummary(activeWeddingId ?? 0);
 
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [welcome(language)]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [convId, setConvId] = useState<number | null>(null);
@@ -254,27 +261,27 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
-            ? { ...m, content: aborted ? m.content : 'D\u00e9sol\u00e9e, une erreur s\u2019est produite. R\u00e9essayez\u202f!', streaming: false }
+            ? { ...m, content: aborted ? m.content : copy('Désolée, une erreur s’est produite. Réessayez !', 'Sorry, an error occurred. Please try again!'), streaming: false }
             : m
         )
       );
     } finally {
       setStreaming(false);
     }
-  }, [convId, streaming, getToken, buildWeddingContext, activeWeddingId]);
+  }, [convId, streaming, getToken, buildWeddingContext, activeWeddingId, copy]);
 
   /* New conversation */
   const resetConversation = useCallback(async () => {
     abortRef.current?.abort();
     setStreaming(false);
-    setMessages([WELCOME]);
+    setMessages([welcome(language)]);
     setInput('');
     try {
       const id = await apiCreateConversation(getToken);
       setConvId(id);
       localStorage.setItem(CONV_KEY, String(id));
     } catch { /* ignore */ }
-  }, [getToken]);
+  }, [getToken, language]);
 
   /* Keyboard handling */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -307,7 +314,7 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
           boxShadow: '0 4px 20px rgba(93,45,93,0.45), 0 1px 4px rgba(93,45,93,0.30), inset 0 1px 0 rgba(255,255,255,0.14)',
           border: '1px solid rgba(200,169,110,0.35)',
         }}
-        aria-label="Ouvrir Nuptia"
+        aria-label={copy('Ouvrir Nuptia', 'Open Nuptia')}
         data-testid="button-nuptia-open"
       >
         <Sparkles size={22} color="#C8A96E" />
@@ -319,8 +326,8 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
       {premiumPrompt && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#3C1A3C]/35 p-5" onClick={() => setPremiumPrompt(false)}>
           <div className="w-full max-w-xl" onClick={(event) => event.stopPropagation()}>
-            <PremiumPageGate featureLabel="Nuptia, votre assistante IA" />
-            <button className="mx-auto mt-3 block text-xs text-white/90 underline" onClick={() => setPremiumPrompt(false)}>Fermer</button>
+            <PremiumPageGate featureLabel={copy('Nuptia, votre assistante IA', 'Nuptia, your AI assistant')} />
+            <button className="mx-auto mt-3 block text-xs text-white/90 underline" onClick={() => setPremiumPrompt(false)}>{copy('Fermer', 'Close')}</button>
           </div>
         </div>
       )}
@@ -351,20 +358,20 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
           <NuptiaAvatar size={34} />
           <div className="min-w-0 flex-1">
             <p className="text-[14px] font-semibold leading-none text-white">Nuptia</p>
-            <p className="mt-1 text-[10px] text-white/50">Assistante de planification IA</p>
+            <p className="mt-1 text-[10px] text-white/50">{copy('Assistante de planification IA', 'AI planning assistant')}</p>
           </div>
           <button
             onClick={resetConversation}
             className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white/70"
-            title="Nouvelle conversation"
-            aria-label="Nouvelle conversation"
+            title={copy('Nouvelle conversation', 'New conversation')}
+            aria-label={copy('Nouvelle conversation', 'New conversation')}
           >
             <RotateCcw size={14} />
           </button>
           <button
             onClick={() => setOpen(false)}
             className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white/70"
-            aria-label="Fermer Nuptia"
+            aria-label={copy('Fermer Nuptia', 'Close Nuptia')}
           >
             <ChevronDown size={16} />
           </button>
@@ -376,7 +383,7 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
             <p className="text-[10px] text-muted-foreground/70">
               <span className="font-medium text-primary/70">{activeWedding.names}</span>
               {activeWedding.weddingDate && (
-                <>{' · '}{new Date(activeWedding.weddingDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</>
+                <>{' · '}{new Date(activeWedding.weddingDate).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</>
               )}
             </p>
           </div>
@@ -401,7 +408,7 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
               value={input}
               onChange={handleInput}
               onKeyDown={handleKeyDown}
-              placeholder="Posez votre question \u00e0 Nuptia\u2026"
+              placeholder={copy('Posez votre question à Nuptia…', 'Ask Nuptia a question…')}
               rows={1}
               disabled={streaming}
               className="flex-1 resize-none rounded-xl border border-border/60 bg-white/80 px-3.5 py-2.5 text-[12.5px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
@@ -416,13 +423,13 @@ export function NuptiaChat({ getToken }: NuptiaChatProps) {
                 border: '1px solid rgba(200,169,110,0.25)',
                 boxShadow: '0 2px 8px rgba(93,45,93,0.25)',
               }}
-              aria-label="Envoyer"
+              aria-label={copy('Envoyer', 'Send')}
             >
               <Send size={15} color="#C8A96E" />
             </button>
           </div>
           <p className="mt-1.5 text-center text-[9.5px] text-muted-foreground/40">
-            Nuptia peut se tromper. V\u00e9rifiez les informations importantes.
+            {copy('Nuptia peut se tromper. Vérifiez les informations importantes.', 'Nuptia can make mistakes. Check important information.')}
           </p>
         </div>
       </div>

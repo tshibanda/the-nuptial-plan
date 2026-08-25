@@ -36,6 +36,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/lib/i18n';
 import {
   PieChart,
   Pie,
@@ -92,7 +93,7 @@ interface DonutChartProps {
   totalAllocated: number;
 }
 
-function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocated }: DonutChartProps) {
+function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocated, language }: DonutChartProps & { language: 'fr' | 'en' }) {
   const total = categories.reduce((s, c) => s + c.allocatedCents, 0);
   if (total === 0 || categories.length === 0) return null;
 
@@ -110,7 +111,7 @@ function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocat
     : `${pct}%`;
   const centreLine2 = selectedCat
     ? formatCurrency(selectedCat.spentCents)
-    : 'dépensé';
+    : language === 'fr' ? 'dépensé' : 'spent';
 
   const handleClick = (entry: any) => {
     const id = entry?.id as number;
@@ -120,7 +121,7 @@ function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocat
 
   return (
     <div className="mb-8 card-depth px-5 py-5">
-      <p className="mb-4 text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">Répartition du budget</p>
+      <p className="mb-4 text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">{language === 'fr' ? 'Répartition du budget' : 'Budget breakdown'}</p>
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
         {/* Chart */}
         <div className="relative flex-shrink-0" style={{ width: 200, height: 200 }}>
@@ -200,6 +201,8 @@ function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocat
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Budget() {
+  const { language } = useLanguage();
+  const tr = (fr: string, en: string) => language === 'fr' ? fr : en;
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
@@ -237,7 +240,7 @@ export default function Budget() {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListBudgetCategoriesQueryKey(activeWeddingId) });
             queryClient.invalidateQueries({ queryKey: getGetBudgetSummaryQueryKey(activeWeddingId) });
-            toast({ title: 'Catégorie mise à jour' });
+            toast({ title: tr('Catégorie mise à jour', 'Category updated') });
             setOpen(false);
             setEditingCategory(null);
             form.reset();
@@ -251,7 +254,7 @@ export default function Budget() {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListBudgetCategoriesQueryKey(activeWeddingId) });
             queryClient.invalidateQueries({ queryKey: getGetBudgetSummaryQueryKey(activeWeddingId) });
-            toast({ title: 'Catégorie ajoutée' });
+            toast({ title: tr('Catégorie ajoutée', 'Category added') });
             setOpen(false);
             form.reset();
           },
@@ -272,14 +275,14 @@ export default function Budget() {
 
   const handleDelete = (id: number) => {
     if (!activeWeddingId) return;
-    if (confirm('Supprimer cette catégorie ?')) {
+    if (confirm(tr('Supprimer cette catégorie ?', 'Delete this category?'))) {
       deleteCategory.mutate(
         { weddingId: activeWeddingId, id },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListBudgetCategoriesQueryKey(activeWeddingId) });
             queryClient.invalidateQueries({ queryKey: getGetBudgetSummaryQueryKey(activeWeddingId) });
-            toast({ title: 'Catégorie supprimée' });
+            toast({ title: tr('Catégorie supprimée', 'Category deleted') });
           },
         }
       );
@@ -287,7 +290,7 @@ export default function Budget() {
   };
 
   if (!activeWeddingId || isLoading) {
-    return <div className="text-center font-serif text-2xl text-muted-foreground">Chargement...</div>;
+    return <div className="text-center font-serif text-2xl text-muted-foreground">{tr('Chargement…', 'Loading…')}</div>;
   }
 
   const safePct = (num: number, den: number) => (den > 0 ? Math.min(100, Math.round((num / den) * 100)) : 0);
@@ -297,7 +300,7 @@ export default function Budget() {
     <div>
       <PageTour
         tourKey="budget"
-        pageTitle="Budget"
+        pageTitle={tr('Budget', 'Budget')}
         pageIcon={Wallet}
         steps={[
           { icon: Wallet, title: 'Vue d\'ensemble', body: 'La barre de progression compare le total engagé au budget global défini dans les paramètres du mariage.' },
@@ -311,7 +314,7 @@ export default function Budget() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
         <div className="flex items-end justify-between">
           <div>
-            <p className="eyebrow mb-2 text-[#a8893e]">Où en est-on</p>
+            <p className="eyebrow mb-2 text-[#a8893e]">{tr('Où en est-on', 'Where things stand')}</p>
             <h1 className="font-serif text-[43px] leading-[0.9] text-foreground">Budget</h1>
           </div>
         <Sheet
@@ -326,16 +329,16 @@ export default function Budget() {
         >
           <SheetTrigger asChild>
             <Button size="default" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" data-testid="button-add-category">
-              <Plus size={14} /> Ajouter une catégorie
+              <Plus size={14} /> {tr('Ajouter une catégorie', 'Add a category')}
             </Button>
           </SheetTrigger>
           <SheetContent>
             <SheetHeader>
               <SheetTitle className="font-serif text-2xl">
-                {editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
+                {editingCategory ? tr('Modifier la catégorie', 'Edit category') : tr('Nouvelle catégorie', 'New category')}
               </SheetTitle>
               <SheetDescription>
-                {editingCategory ? 'Mettez à jour les informations' : 'Ajoutez une catégorie budgétaire'}
+                {editingCategory ? tr('Mettez à jour les informations', 'Update the information') : tr('Ajoutez une catégorie budgétaire', 'Add a budget category')}
               </SheetDescription>
             </SheetHeader>
             <Form {...form}>
@@ -345,9 +348,9 @@ export default function Budget() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nom de la catégorie</FormLabel>
+                      <FormLabel>{tr('Nom de la catégorie', 'Category name')}</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Ex: Lieu & traiteur" data-testid="input-category-name" />
+                        <Input {...field} placeholder={tr('Ex. : Lieu et traiteur', 'E.g. Venue & catering')} data-testid="input-category-name" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -358,7 +361,7 @@ export default function Budget() {
                   name="allocatedCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Budget alloué ({currencySymbol})</FormLabel>
+                      <FormLabel>{tr('Budget alloué', 'Allocated budget')} ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -377,7 +380,7 @@ export default function Budget() {
                   name="spentCents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Dépensé ({currencySymbol})</FormLabel>
+                      <FormLabel>{tr('Dépensé', 'Spent')} ({currencySymbol})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -393,7 +396,7 @@ export default function Budget() {
                 />
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" className="flex-1" data-testid="button-save-category">
-                    {editingCategory ? 'Mettre à jour' : 'Ajouter'}
+                    {editingCategory ? tr('Mettre à jour', 'Update') : tr('Ajouter', 'Add')}
                   </Button>
                   {editingCategory && (
                     <Button
@@ -402,7 +405,7 @@ export default function Budget() {
                       onClick={() => handleDelete(editingCategory)}
                       data-testid="button-delete-category"
                     >
-                      Supprimer
+                      {tr('Supprimer', 'Delete')}
                     </Button>
                   )}
                 </div>
@@ -418,7 +421,7 @@ export default function Budget() {
         <div className="mb-8 card-depth px-5 py-5">
           <div className="mb-6 flex items-end justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">Engagé</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">{tr('Engagé', 'Committed')}</p>
               <p className="mt-1 font-serif text-[30px] text-foreground">
                 {formatCurrency(summary.totalSpent)}{' '}
                 <span className="font-sans text-[11px] text-[#8c8b86]">
@@ -442,25 +445,26 @@ export default function Budget() {
           onSelect={setSelectedCategoryId}
           totalSpent={summary?.totalSpent ?? 0}
           totalAllocated={summary?.totalAllocated ?? 0}
+          language={language}
         />
       )}
 
       {/* Categories — filtered to selected when a slice is active */}
       {selectedCategoryId !== null && (
         <div className="mb-3 flex items-center gap-2">
-          <span className="text-[10px] text-[#8c8b86]">Filtré par catégorie</span>
+          <span className="text-[10px] text-[#8c8b86]">{tr('Filtré par catégorie', 'Filtered by category')}</span>
           <button
             onClick={() => setSelectedCategoryId(null)}
             className="text-[10px] font-semibold text-[#5D2D5D] underline underline-offset-2"
           >
-            Tout afficher
+            {tr('Tout afficher', 'Show all')}
           </button>
         </div>
       )}
       <div className="space-y-4">
         {categories.length === 0 ? (
           <div className="rounded border border-border bg-card px-6 py-12 text-center text-[11px] text-[#858b89]">
-            Aucune catégorie. Cliquez sur "Ajouter une catégorie" pour commencer.
+            {tr('Aucune catégorie. Cliquez sur "Ajouter une catégorie" pour commencer.', 'No categories. Click “Add a category” to get started.')}
           </div>
         ) : (
           categoriesWithIndex

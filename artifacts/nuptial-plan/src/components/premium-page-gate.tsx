@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Award, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/lib/i18n';
 
 type SubscriptionStatus = { subscription: { status: string; trialEndsAt: string | null } | null };
 type PlansResponse = { data: Array<{ lookupKey: string; plan: 'monthly' | 'annual'; amount: number | null; currency?: string }> };
@@ -19,6 +20,7 @@ export function usePremiumStatus() {
 }
 
 export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
+  const { t, formatCurrency } = useLanguage();
   const { data: plans, isLoading } = useQuery({
     queryKey: ['subscription-plans'],
     queryFn: async () => {
@@ -56,18 +58,18 @@ export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
     }
   };
   const price = (amount: number | null, currency = 'EUR') => amount == null
-    ? 'Prix indisponible'
-    : new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(amount / 100);
+    ? t('premium.priceUnavailable')
+    : formatCurrency(amount / 100, currency);
 
   return (
     <div className="rounded-2xl border border-[#C8A96E]/45 bg-[#F7EEDB]/55 p-6 shadow-sm">
       <div className="flex items-start gap-4">
         <div className="rounded-xl bg-[#5D2D5D] p-3 text-[#E2B93B]"><Lock size={19} /></div>
         <div className="min-w-0 flex-1">
-          <p className="eyebrow text-[10px] text-[#a8893e]">FONCTIONNALITÉ PREMIUM</p>
+          <p className="eyebrow text-[10px] text-[#a8893e]">{t('premium.feature')}</p>
           <h2 className="mt-1 font-serif text-2xl text-foreground">The Nuptial Plan Premium</h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-            Abonnez-vous à Premium pour accéder à cet onglet et utiliser toutes ses fonctionnalités.
+            {t('premium.description')}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {(plans?.data ?? []).map((plan) => (
@@ -81,8 +83,8 @@ export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
                 <span>
                   <span className="block">The Nuptial Plan Premium</span>
                   <span className="block text-xs font-normal opacity-90">
-                    {plan.plan === 'annual' ? 'Abonnement annuel · 12 mois' : 'Abonnement mensuel · 1 mois'} · {price(plan.amount, plan.currency)}
-                    {plan.plan === 'annual' && plan.amount != null ? ` · ${price(Math.round(plan.amount / 12), plan.currency)} / mois` : ''}
+                    {plan.plan === 'annual' ? t('premium.annual') : t('premium.monthly')} · {price(plan.amount, plan.currency)}
+                    {plan.plan === 'annual' && plan.amount != null ? ` · ${price(Math.round(plan.amount / 12), plan.currency)} ${t('premium.perMonth')}` : ''}
                   </span>
                 </span>
               </Button>
@@ -90,13 +92,13 @@ export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
             <button type="button" onClick={() => void restore()} disabled={busy !== null} className="font-semibold text-primary underline underline-offset-4">
-              Restaurer les achats
+              {t('premium.restore')}
             </button>
-            <a href="/privacy" className="text-primary underline underline-offset-4">Politique de confidentialité</a>
-            <a href="/policy" className="text-primary underline underline-offset-4">Conditions d’utilisation</a>
+            <a href="/privacy" className="text-primary underline underline-offset-4">{t('legal.privacy')}</a>
+            <a href="/policy" className="text-primary underline underline-offset-4">{t('legal.terms')}</a>
           </div>
           {!isLoading && !plans?.data?.length && (
-            <p className="mt-4 text-xs text-muted-foreground">Les formules Premium seront bientôt disponibles.</p>
+            <p className="mt-4 text-xs text-muted-foreground">{t('premium.unavailable')}</p>
           )}
         </div>
       </div>

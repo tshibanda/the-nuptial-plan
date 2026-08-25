@@ -5,12 +5,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_SEMIBOLD } from '@/constants/fonts';
+import { useLocalization } from '@/context/LocalizationContext';
 
 export function OfflineRefreshScreen() {
   const { isOffline } = useNetworkStatus();
   const colors = useColors();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const { t } = useLocalization();
 
   const refresh = async () => {
     setRefreshing(true);
@@ -24,13 +26,13 @@ export function OfflineRefreshScreen() {
         <View style={[ss.icon, { backgroundColor: colors.plum + '12' }]}>
           <Feather name="wifi-off" size={30} color={colors.plum} />
         </View>
-        <Text style={[ss.title, { color: colors.foreground, fontFamily: SERIF }]}>Vous êtes hors connexion</Text>
+        <Text style={[ss.title, { color: colors.foreground, fontFamily: SERIF }]}>{t('offline.title')}</Text>
         <Text style={[ss.body, { color: colors.mutedForeground, fontFamily: SANS }]}>
-          La connexion à Internet semble indisponible. Reconnectez-vous puis actualisez pour synchroniser vos données.
+          {t('offline.body')}
         </Text>
         <TouchableOpacity onPress={refresh} disabled={refreshing} style={[ss.button, { backgroundColor: colors.plum, opacity: refreshing ? 0.65 : 1 }]}>
           {refreshing ? <ActivityIndicator color="#fff" /> : <Feather name="refresh-cw" size={16} color="#fff" />}
-          <Text style={[ss.buttonText, { fontFamily: SANS_SEMIBOLD }]}>Rafraîchir la page</Text>
+          <Text style={[ss.buttonText, { fontFamily: SANS_SEMIBOLD }]}>{t('offline.refresh')}</Text>
         </TouchableOpacity>
       </View>
     </Modal>

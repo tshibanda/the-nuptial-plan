@@ -28,6 +28,7 @@ import { shadow } from '@/utils/shadow';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import { PaywallModal } from '@/components/PaywallModal';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
+import { useLocalization } from '@/context/LocalizationContext';
 
 // ── API ───────────────────────────────────────────────────────────────────────
 const _DOMAIN = process.env.EXPO_PUBLIC_DOMAIN;
@@ -95,12 +96,15 @@ interface Msg {
   content: string;
 }
 
-const WELCOME: Msg = {
-  id: 'welcome',
-  role: 'assistant',
-  content:
-    'Bonjour\u202f! Je suis **Nuptia**, votre assistante de mariage. Posez-moi vos questions sur l\u2019organisation, le budget, les prestataires ou tout ce qui touche à votre grand jour\u2728',
-};
+function welcomeMessage(language: 'fr' | 'en'): Msg {
+  return {
+    id: 'welcome',
+    role: 'assistant',
+    content: language === 'fr'
+      ? 'Bonjour\u202f! Je suis **Nuptia**, votre assistante de mariage. Posez-moi vos questions sur l’organisation, le budget, les prestataires ou tout ce qui touche à votre grand jour ✨'
+      : 'Hello! I’m **Nuptia**, your wedding assistant. Ask me about planning, budget, vendors, or anything related to your big day ✨',
+  };
+}
 
 // ── Bold-only markdown renderer ───────────────────────────────────────────────
 function RichText({ text, style }: { text: string; style?: object }) {
@@ -158,13 +162,15 @@ export function NuptiaSheet() {
   const insets = useSafeAreaInsets();
   const { paywallVisible, closePaywall, openPaywall, isPremium } = usePremiumGate();
   const { getToken } = useAuth();
+  const { language } = useLocalization();
+  const en = language === 'en';
   const { selectedWeddingId } = useWedding();
   const { data: weddings } = useListWeddings();
   const wedding =
     weddings?.find((w) => w.id === selectedWeddingId) ?? weddings?.[0];
 
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([WELCOME]);
+  const [messages, setMessages] = useState<Msg[]>(() => [welcomeMessage(language)]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [convId, setConvId] = useState<number | null>(null);
@@ -205,7 +211,7 @@ export function NuptiaSheet() {
   const closeSheet = () => setOpen(false);
 
   const resetConversation = async () => {
-    setMessages([WELCOME]);
+     setMessages([welcomeMessage(language)]);
     try {
       const token = await getToken();
       const id = await apiCreateConversation(token);
@@ -245,14 +251,14 @@ export function NuptiaSheet() {
           id: `err-${Date.now()}`,
           role: 'assistant',
           content:
-            'Je rencontre une difficulté momentanée. Réessayez dans quelques instants.',
+             en ? 'I’m having a temporary issue. Please try again in a moment.' : 'Je rencontre une difficulté momentanée. Réessayez dans quelques instants.',
         },
       ]);
     } finally {
       setLoading(false);
       scrollToBottom();
     }
-  }, [input, loading, convId, getToken, weddingContext]);
+   }, [input, loading, convId, getToken, weddingContext, en]);
 
   // ── Position the FAB just above the tab bar ─────────────────────────────────
   const tabBarH = Platform.OS === 'web' ? 74 : 70;
@@ -265,7 +271,7 @@ export function NuptiaSheet() {
       <PaywallModal
         visible={paywallVisible}
         onClose={closePaywall}
-        featureLabel="Nuptia, votre assistante IA"
+         featureLabel={en ? 'Nuptia, your AI assistant' : 'Nuptia, votre assistante IA'}
       />
       {/* ── FAB ── */}
       <TouchableOpacity
@@ -276,7 +282,7 @@ export function NuptiaSheet() {
           shadow('lg'),
           { bottom: fabBottom, right: 20 },
         ]}
-        accessibilityLabel="Ouvrir Nuptia"
+         accessibilityLabel={en ? 'Open Nuptia' : 'Ouvrir Nuptia'}
         accessibilityRole="button"
       >
         <LinearGradient
@@ -334,14 +340,14 @@ export function NuptiaSheet() {
                 <View style={{ flex: 1 }}>
                   <Text style={[ss.headerTitle, { fontFamily: SERIF }]}>Nuptia</Text>
                   <Text style={[ss.headerSub, { fontFamily: SANS }]}>
-                    Assistante de mariage
+                     {en ? 'Wedding assistant' : 'Assistante de mariage'}
                   </Text>
                 </View>
                 <TouchableOpacity
                   onPress={resetConversation}
                   style={ss.headerIconBtn}
                   hitSlop={8}
-                  accessibilityLabel="Nouvelle conversation"
+                   accessibilityLabel={en ? 'New conversation' : 'Nouvelle conversation'}
                 >
                   <Feather name="refresh-cw" size={14} color="rgba(255,255,255,0.55)" />
                 </TouchableOpacity>
@@ -349,7 +355,7 @@ export function NuptiaSheet() {
                   onPress={closeSheet}
                   style={ss.headerIconBtn}
                   hitSlop={8}
-                  accessibilityLabel="Fermer"
+                   accessibilityLabel={en ? 'Close' : 'Fermer'}
                 >
                   <Feather name="x" size={17} color="rgba(255,255,255,0.75)" />
                 </TouchableOpacity>
@@ -441,7 +447,7 @@ export function NuptiaSheet() {
                 ]}
                 value={input}
                 onChangeText={setInput}
-                placeholder="Posez votre question…"
+                 placeholder={en ? 'Ask your question…' : 'Posez votre question…'}
                 placeholderTextColor={colors.mutedForeground}
                 multiline
                 maxLength={500}
@@ -454,7 +460,7 @@ export function NuptiaSheet() {
                 disabled={loading || !input.trim()}
                 activeOpacity={0.8}
                 style={{ opacity: loading || !input.trim() ? 0.4 : 1 }}
-                accessibilityLabel="Envoyer"
+                 accessibilityLabel={en ? 'Send' : 'Envoyer'}
               >
                 <LinearGradient
                   colors={['#3C1A3C', '#5D2D5D']}
@@ -472,7 +478,7 @@ export function NuptiaSheet() {
                 { fontFamily: SANS, color: colors.mutedForeground },
               ]}
             >
-              Nuptia peut faire des erreurs. Vérifiez les informations importantes.
+               {en ? 'Nuptia can make mistakes. Check important information.' : 'Nuptia peut faire des erreurs. Vérifiez les informations importantes.'}
             </Text>
           </KeyboardAvoidingView>
         </View>
