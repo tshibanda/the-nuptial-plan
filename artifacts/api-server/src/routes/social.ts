@@ -112,7 +112,9 @@ function providerOauthUrl(platform: Platform, userId: string, client: OAuthClien
 
   if (platform === "instagram") {
     const { appId } = metaCredentials("instagram");
-    const oauthUrl = new URL("https://www.instagram.com/oauth/authorize");
+    // Instagram Login authorization endpoint. The api.instagram.com host is
+    // required; www.instagram.com rejects the same app id as "Invalid platform app".
+    const oauthUrl = new URL("https://api.instagram.com/oauth/authorize");
     oauthUrl.searchParams.set("client_id", appId);
     oauthUrl.searchParams.set("redirect_uri", callbackUri);
     oauthUrl.searchParams.set("scope", "instagram_business_basic,instagram_business_manage_insights,instagram_business_content_publish");
