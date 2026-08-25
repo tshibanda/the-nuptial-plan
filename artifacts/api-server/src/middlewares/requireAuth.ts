@@ -1,5 +1,6 @@
 import { clerkClient, getAuth } from '@clerk/express';
 import type { Request, Response, NextFunction } from 'express';
+import { attachEnglishDemoData } from '../lib/attachEnglishDemoData';
 
 /**
  * Express middleware that requires a valid Clerk session.
@@ -22,6 +23,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   try {
     const user = await clerkClient.users.getUser(userId);
     (req as any).userEmail = user.primaryEmailAddress?.emailAddress ?? null;
+    await attachEnglishDemoData(userId, (req as any).userEmail);
   } catch {
     // Authentication remains valid even if the profile lookup is temporarily
     // unavailable; email-based grants simply won't apply for this request.
