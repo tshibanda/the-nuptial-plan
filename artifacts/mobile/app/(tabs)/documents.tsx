@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, FlatList, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +22,12 @@ type WeddingDocument = {
   contentType: string | null;
   size: number | null;
   createdAt: string;
+};
+
+type DocumentSection = {
+  key: string;
+  title: string;
+  docs: WeddingDocument[];
 };
 
 const apiBase = () => {
@@ -94,6 +100,7 @@ export default function DocumentsScreen() {
   const [documents, setDocuments] = useState<WeddingDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const loadGeneration = useRef(0);
 
   const request = useCallback(async (path: string, init?: RequestInit) => {
     const token = await getToken();
@@ -105,38 +112,52 @@ export default function DocumentsScreen() {
   }, [getToken, tr.network]);
 
   const loadDocuments = useCallback(async () => {
-    if (!weddingId || !isPremium) return;
+    const generation = ++loadGeneration.current;
+    if (!weddingId || !isPremium) {
+      setDocuments([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const response = await request(`/api/weddings/${weddingId}/documents`);
-      setDocuments(await response.json() as WeddingDocument[]);
+      const nextDocuments = await response.json() as WeddingDocument[];
+      if (generation === loadGeneration.current) setDocuments(nextDocuments);
     } catch {
-      Alert.alert(tr.docs, tr.loadError);
+      if (generation === loadGeneration.current) Alert.alert(tr.docs, tr.loadError);
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) setLoading(false);
     }
   }, [isPremium, request, weddingId, tr.docs, tr.loadError]);
 
   useEffect(() => { void loadDocuments(); }, [loadDocuments]);
 
-  const grouped = useMemo(() => {
-    const sections: Array<{ title: string; docs: WeddingDocument[] }> = [
-      { title: tr.general, docs: documents.filter((doc) => doc.entityType === 'wedding') },
-    ];
-    vendors.forEach((vendor) => {
-      const docs = documents.filter((doc) => doc.entityType === 'vendor' && doc.entityId === vendor.id);
-      if (docs.length) sections.push({ title: `${tr.vendor} — ${vendor.name}`, docs });
-    });
-    const vendorOrphans = documents.filter((doc) => doc.entityType === 'vendor' && !vendors.some((vendor) => vendor.id === doc.entityId));
-    if (vendorOrphans.length) sections.push({ title: tr.vendors, docs: vendorOrphans });
-    contracts.forEach((contract) => {
-      const docs = documents.filter((doc) => doc.entityType === 'contract' && doc.entityId === contract.id);
-      if (docs.length) sections.push({ title: `${tr.contract} — ${contract.vendorName}`, docs });
-    });
-    const contractOrphans = documents.filter((doc) => doc.entityType === 'contract' && !contracts.some((contract) => contract.id === doc.entityId));
-    if (contractOrphans.length) sections.push({ title: tr.contracts, docs: contractOrphans });
-    return sections;
-  }, [contracts, documents, vendors, tr]);
+  const grouped = useMemo<DocumentSection[]>(() => {
+    const vendorNames = new Map(vendors.map((vendor) => [vendor.id, vendor.name]));
+    const contractNames = new Map(contracts.map((contract) => [contract.id, contract.vendorName]));
+    const sections = new Map<string, DocumentSection>();
+
+    for (const doc of documents) {
+      const key = `${doc.entityType}:${doc.entityId ?? 'none'}`;
+      const existing = sections.get(key);
+      if (existing) {
+        existing.docs.push(doc);
+        continue;
+      }
+
+      const title = doc.entityType === 'wedding'
+        ? tr.general
+        : doc.entityType === 'vendor'
+          ? (vendorNames.get(doc.entityId ?? -1) ? `${tr.vendor} — ${vendorNames.get(doc.entityId ?? -1)}` : tr.vendors)
+          : doc.entityType === 'contract'
+            ? (contractNames.get(doc.entityId ?? -1) ? `${tr.contract} — ${contractNames.get(doc.entityId ?? -1)}` : tr.contracts)
+            : tr.general;
+
+      sections.set(key, { key, title, docs: [doc] });
+    }
+
+    return Array.from(sections.values());
+  }, [contracts, documents, tr, vendors]);
 
   const upload = async () => {
     if (!weddingId || uploading) return;
@@ -182,7 +203,7 @@ export default function DocumentsScreen() {
   return (
     <FlatList
       data={grouped}
-      keyExtractor={(section) => section.title}
+      keyExtractor={(section) => section.key}
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={styles.list}
       // iOS otherwise adjusts the list offset automatically when the tab
