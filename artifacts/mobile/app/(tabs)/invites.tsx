@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FlatList, View, Text, StyleSheet, Modal, ScrollView,
   ActivityIndicator, Platform, TouchableOpacity, Alert, TextInput,
@@ -12,8 +12,8 @@ import * as Haptics from 'expo-haptics';
 import { Feather } from '@expo/vector-icons';
 import type { Guest } from '@workspace/api-client-react';
 import {
-  useListGuests, useGetGuestStats,
-  useImportGuests, useCreateGuest, useUpdateGuest, getListGuestsQueryKey, getGetGuestStatsQueryKey,
+  useListGuests,
+  useImportGuests, useCreateGuest, useUpdateGuest, getListGuestsQueryKey,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
@@ -155,15 +155,36 @@ export default function InvitesScreen() {
   const [importSkipped, setImportSkipped] = useState(0);
   const [importing, setImporting] = useState(false);
 
+  const hasWedding = typeof weddingId === 'number' && weddingId > 0;
   const wId = weddingId ?? 0;
-  const { data: guests, isLoading, refetch, isRefetching } = useListGuests(wId, { query: { queryKey: getListGuestsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
-  const { data: stats } = useGetGuestStats(wId, { query: { queryKey: getGetGuestStatsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: guests, isLoading, refetch, isRefetching } = useListGuests(wId, {
+    query: {
+      queryKey: getListGuestsQueryKey(wId),
+      enabled: hasWedding,
+      staleTime: MOBILE_TAB_STALE_TIME,
+      gcTime: 30 * 60 * 1000,
+    },
+  });
   const importGuestsMutation = useImportGuests();
   const createGuestMutation = useCreateGuest();
   const updateGuestMutation = useUpdateGuest();
 
-  const filtered = (guests ?? []).filter((g) => filter === 'all' || g.rsvpStatus === filter);
-  const tableGroups = Array.from(
+  const stats = useMemo(() => {
+    const result = { total: 0, confirmed: 0, pending: 0, declined: 0 };
+    for (const guest of guests ?? []) {
+      result.total += 1;
+      if (guest.rsvpStatus === 'confirmed') result.confirmed += 1;
+      else if (guest.rsvpStatus === 'pending') result.pending += 1;
+      else if (guest.rsvpStatus === 'declined') result.declined += 1;
+    }
+    return result;
+  }, [guests]);
+
+  const filtered = useMemo(
+    () => (guests ?? []).filter((g) => filter === 'all' || g.rsvpStatus === filter),
+    [guests, filter],
+  );
+  const tableGroups = useMemo(() => Array.from(
     (guests ?? []).reduce((groups, guest) => {
       const key = guest.tableNumber?.trim() || tr.noTable;
       const current = groups.get(key) ?? [];
@@ -171,7 +192,7 @@ export default function InvitesScreen() {
       groups.set(key, current);
       return groups;
     }, new Map<string, Guest[]>()).entries(),
-  ).sort(([a], [b]) => a === tr.noTable ? 1 : b === tr.noTable ? -1 : a.localeCompare(b, locale, { numeric: true }));
+  ).sort(([a], [b]) => a === tr.noTable ? 1 : b === tr.noTable ? -1 : a.localeCompare(b, locale, { numeric: true })), [guests, tr.noTable, locale]);
 
   const handleGuestPress = (guest: Guest) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -218,7 +239,6 @@ export default function InvitesScreen() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(wId) });
-          queryClient.invalidateQueries({ queryKey: getGetGuestStatsQueryKey(wId) });
           setNewGuest({ name: '', email: '', tableNumber: '', dietaryRequirements: '', notes: '', rsvpStatus: 'pending' });
           setAddVisible(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -271,7 +291,6 @@ export default function InvitesScreen() {
       {
         onSuccess: (result) => {
           queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(wId) });
-          queryClient.invalidateQueries({ queryKey: getGetGuestStatsQueryKey(wId) });
           setImportModalVisible(false);
           setImportRows([]);
           setImporting(false);
@@ -297,6 +316,11 @@ export default function InvitesScreen() {
         keyExtractor={(item) => String(item.id)}
         style={{ flex: 1, backgroundColor: colors.background }}
         contentContainerStyle={{ paddingBottom: 160, flexGrow: 1 }}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === 'android'}
         refreshing={isRefetching}
         onRefresh={refetch}
         showsVerticalScrollIndicator={false}
