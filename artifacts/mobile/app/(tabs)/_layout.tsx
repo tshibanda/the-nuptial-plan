@@ -585,6 +585,10 @@ export default function TabLayout() {
   const colors = useColors();
   const { isSignedIn, getToken } = useAuth();
   const pathname = usePathname();
+  const pathnameParts = pathname.split('/').filter(Boolean);
+  const activeTab = pathnameParts[pathnameParts.length - 1] === '(tabs)'
+    ? 'index'
+    : pathnameParts[pathnameParts.length - 1] ?? 'index';
 
   useEffect(() => {
     setAuthTokenGetter(() => getToken());
@@ -601,7 +605,7 @@ export default function TabLayout() {
     >
       <ClassicTabLayout />
       {!pathname.includes('/parametres') && <NuptiaSheet />}
-      {!pathname.includes('/parametres') && <GlobalTourHelp />}
+      {!pathname.includes('/parametres') && <GlobalTourHelp routeName={activeTab} />}
     </SafeAreaView>
   );
 }

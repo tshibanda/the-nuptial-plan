@@ -284,43 +284,251 @@ export function TourHelpFab({ onPress, bottom = 96 }: HelpFabProps) {
   );
 }
 
-const GLOBAL_HELP_STEPS = [
-  {
-    icon: 'grid',
-    title: 'Votre espace de planification',
-    description: 'Retrouvez vos mariages, invités, prestataires, budget et documents depuis la navigation principale.',
-  },
-  {
-    icon: 'help-circle',
-    title: 'Besoin d’aide ?',
-    description: 'Le bouton « ? » reste disponible en bas de l’écran, quelle que soit la page consultée.',
-  },
-  {
-    icon: 'heart',
-    title: 'Nuptia',
-    description: 'Utilisez l’assistante Nuptia pour poser vos questions sur l’organisation de votre mariage.',
-  },
-];
+const DEFAULT_HELP_STEPS: Record<'fr' | 'en', TourStep[]> = {
+  fr: [
+    {
+      icon: 'grid',
+      title: 'Votre espace de planification',
+      description: 'Retrouvez vos mariages, invités, prestataires, budget et documents depuis la navigation principale.',
+    },
+    {
+      icon: 'help-circle',
+      title: 'Besoin d’aide ?',
+      description: 'Le bouton « ? » reste disponible en bas de l’écran, quelle que soit la page consultée.',
+    },
+    {
+      icon: 'heart',
+      title: 'Nuptia',
+      description: 'Utilisez l’assistante Nuptia pour poser vos questions sur l’organisation de votre mariage.',
+    },
+  ],
+  en: [
+    {
+      icon: 'grid',
+      title: 'Your planning space',
+      description: 'Find your weddings, guests, vendors, budget and documents from the main navigation.',
+    },
+    {
+      icon: 'help-circle',
+      title: 'Need help?',
+      description: 'The “?” button remains available at the bottom of every screen.',
+    },
+    {
+      icon: 'heart',
+      title: 'Nuptia',
+      description: 'Use the Nuptia assistant to ask questions about organizing your wedding.',
+    },
+  ],
+};
 
-const GLOBAL_HELP_STEPS_EN: TourStep[] = [
-  {
-    icon: 'grid',
-    title: 'Your planning space',
-    description: 'Find your weddings, guests, vendors, budget and documents from the main navigation.',
+const TAB_HELP_STEPS: Record<string, Record<'fr' | 'en', TourStep[]>> = {
+  index: {
+    fr: [
+      { icon: 'home', title: "Bienvenue sur l'Aperçu", description: "Cette page résume l'essentiel de votre mariage : compte à rebours, invités confirmés, prestataires et budget engagé." },
+      { icon: 'grid', title: 'Métriques clés', description: "Les cartes colorées vous donnent un coup d'œil instantané sur vos chiffres. Tirez vers le bas pour actualiser." },
+      { icon: 'calendar', title: 'Événements à venir', description: "Retrouvez ici vos prochains rendez-vous et jalons. Appuyez sur un événement pour accéder à l'agenda complet." },
+    ],
+    en: [
+      { icon: 'home', title: 'Welcome to Overview', description: 'This page summarizes your wedding essentials: countdown, confirmed guests, vendors, and committed budget.' },
+      { icon: 'grid', title: 'Key metrics', description: 'The colorful cards provide an instant view of your figures. Pull down to refresh.' },
+      { icon: 'calendar', title: 'Upcoming events', description: 'Find your next appointments and milestones here. Tap an event to open the full calendar.' },
+    ],
   },
-  {
-    icon: 'help-circle',
-    title: 'Need help?',
-    description: 'The “?” button remains available at the bottom of every screen.',
+  mariages: {
+    fr: [
+      { icon: 'heart', title: 'Vos mariages', description: 'Retrouvez ici tous les mariages que vous gérez et leurs informations principales.' },
+      { icon: 'check-circle', title: 'Mariage actif', description: "Appuyez sur une carte pour sélectionner le mariage affiché dans toute l'application." },
+      { icon: 'calendar', title: 'Compte à rebours', description: 'Le compte à rebours vous rappelle le nombre de jours avant chaque cérémonie.' },
+    ],
+    en: [
+      { icon: 'heart', title: 'Your weddings', description: 'Find all the weddings you manage and their key information here.' },
+      { icon: 'check-circle', title: 'Active wedding', description: 'Tap a card to select the wedding shown throughout the app.' },
+      { icon: 'calendar', title: 'Countdown', description: 'The countdown reminds you how many days remain before each ceremony.' },
+    ],
   },
-  {
-    icon: 'heart',
-    title: 'Nuptia',
-    description: 'Use the Nuptia assistant to ask questions about organizing your wedding.',
+  evenements: {
+    fr: [
+      { icon: 'calendar', title: 'Votre agenda', description: 'Gérez tous vos événements et rendez-vous de préparation du mariage en un seul endroit.' },
+      { icon: 'grid', title: 'Deux vues au choix', description: "Basculez entre la vue Liste et la vue Calendrier grâce aux boutons en haut de l'écran." },
+      { icon: 'plus-circle', title: 'Ajouter un événement', description: 'Appuyez sur le bouton + pour créer un nouvel événement ou rendez-vous.' },
+    ],
+    en: [
+      { icon: 'calendar', title: 'Your calendar', description: 'Manage all your wedding-preparation events and appointments in one place.' },
+      { icon: 'grid', title: 'Two views to choose from', description: 'Switch between List and Calendar views with the buttons at the top of the screen.' },
+      { icon: 'plus-circle', title: 'Add an event', description: 'Tap the + button to create a new event or appointment.' },
+    ],
   },
-];
+  prestataires: {
+    fr: [
+      { icon: 'briefcase', title: 'Votre équipe', description: 'Retrouvez ici les prestataires qui contribuent à votre mariage.' },
+      { icon: 'search', title: 'Rechercher un prestataire', description: 'Utilisez la recherche pour retrouver rapidement un prestataire par son nom ou sa catégorie.' },
+      { icon: 'plus-circle', title: 'Ajouter un prestataire', description: 'Appuyez sur Ajouter pour créer une fiche ou importer un contact existant.' },
+    ],
+    en: [
+      { icon: 'briefcase', title: 'Your team', description: 'Find the vendors contributing to your wedding here.' },
+      { icon: 'search', title: 'Find a vendor', description: 'Use search to quickly find a vendor by name or category.' },
+      { icon: 'plus-circle', title: 'Add a vendor', description: 'Tap Add to create a vendor card or import an existing contact.' },
+    ],
+  },
+  invites: {
+    fr: [
+      { icon: 'users', title: 'Vos invités', description: 'Consultez et gérez la liste des invités de votre mariage.' },
+      { icon: 'filter', title: 'Filtres RSVP', description: 'Appuyez sur un filtre pour afficher les invités confirmés, en attente ou déclinés.' },
+      { icon: 'upload', title: 'Importer depuis Excel', description: 'Utilisez l’icône Importer pour ajouter un fichier .xlsx ou .csv depuis votre téléphone.' },
+    ],
+    en: [
+      { icon: 'users', title: 'Your guests', description: 'View and manage the guest list for your wedding.' },
+      { icon: 'filter', title: 'RSVP filters', description: 'Tap a filter to show confirmed, pending, or declined guests.' },
+      { icon: 'upload', title: 'Import from Excel', description: 'Use the Import icon to add an .xlsx or .csv file from your phone.' },
+    ],
+  },
+  budget: {
+    fr: [
+      { icon: 'pie-chart', title: 'Votre budget', description: 'Suivez les dépenses prévues et engagées pour garder le mariage sous contrôle.' },
+      { icon: 'bar-chart-2', title: 'Répartition', description: 'Consultez la répartition par catégorie et appuyez sur une catégorie pour voir ses détails.' },
+      { icon: 'plus-circle', title: 'Gérer les catégories', description: 'Ajoutez ou modifiez une catégorie pour adapter le budget à votre mariage.' },
+    ],
+    en: [
+      { icon: 'pie-chart', title: 'Your budget', description: 'Track planned and committed spending to keep the wedding on budget.' },
+      { icon: 'bar-chart-2', title: 'Breakdown', description: 'Review the breakdown by category and tap a category to see its details.' },
+      { icon: 'plus-circle', title: 'Manage categories', description: 'Add or edit a category to fit the budget to your wedding.' },
+    ],
+  },
+  paiements: {
+    fr: [
+      { icon: 'credit-card', title: 'Vos paiements', description: 'Centralisez les paiements et acomptes liés à vos prestataires.' },
+      { icon: 'filter', title: 'Suivre les statuts', description: 'Repérez rapidement les paiements programmés, réglés ou en retard.' },
+      { icon: 'plus-circle', title: 'Ajouter un paiement', description: 'Ajoutez un paiement pour conserver une vision fiable de vos dépenses.' },
+    ],
+    en: [
+      { icon: 'credit-card', title: 'Your payments', description: 'Keep vendor payments and deposits together in one place.' },
+      { icon: 'filter', title: 'Track statuses', description: 'Quickly spot scheduled, paid, or overdue payments.' },
+      { icon: 'plus-circle', title: 'Add a payment', description: 'Add a payment to keep your spending overview accurate.' },
+    ],
+  },
+  contrats: {
+    fr: [
+      { icon: 'file-text', title: 'Vos contrats', description: 'Retrouvez ici tous vos contrats prestataires et les montants associés.' },
+      { icon: 'search', title: 'Recherche rapide', description: 'Utilisez la barre de recherche pour trouver un contrat par nom de prestataire.' },
+      { icon: 'check-circle', title: 'Statut du contrat', description: 'Chaque contrat affiche son statut et le montant total engagé.' },
+    ],
+    en: [
+      { icon: 'file-text', title: 'Your contracts', description: 'Find all your vendor contracts and their associated amounts here.' },
+      { icon: 'search', title: 'Quick search', description: 'Use the search bar to find a contract by vendor name.' },
+      { icon: 'check-circle', title: 'Contract status', description: 'Every contract shows its status and full committed amount.' },
+    ],
+  },
+  documents: {
+    fr: [
+      { icon: 'folder', title: 'Vos documents', description: 'Retrouvez les fichiers associés à votre mariage, vos prestataires et vos contrats.' },
+      { icon: 'search', title: 'Accès rapide', description: 'Parcourez les sections ou recherchez un document pour le retrouver facilement.' },
+      { icon: 'download', title: 'Ouvrir un fichier', description: 'Appuyez sur un document pour le consulter ou le télécharger.' },
+    ],
+    en: [
+      { icon: 'folder', title: 'Your documents', description: 'Find the files associated with your wedding, vendors, and contracts.' },
+      { icon: 'search', title: 'Quick access', description: 'Browse the sections or search for a document to find it quickly.' },
+      { icon: 'download', title: 'Open a file', description: 'Tap a document to view or download it.' },
+    ],
+  },
+  moodboards: {
+    fr: [
+      { icon: 'image', title: 'Vos moodboards', description: 'Rassemblez vos inspirations visuelles pour définir l’ambiance de chaque mariage.' },
+      { icon: 'plus-circle', title: 'Ajouter une inspiration', description: 'Ajoutez des images et organisez vos idées pour les retrouver facilement.' },
+    ],
+    en: [
+      { icon: 'image', title: 'Your moodboards', description: 'Gather visual inspiration to define the mood of each wedding.' },
+      { icon: 'plus-circle', title: 'Add inspiration', description: 'Add images and organize your ideas so they are easy to find.' },
+    ],
+  },
+  business: {
+    fr: [
+      { icon: 'briefcase', title: 'Votre espace Business', description: 'Suivez vos contacts professionnels, vos opportunités et vos rendez-vous.' },
+      { icon: 'calendar', title: 'Organiser vos échanges', description: 'Centralisez les informations utiles pour développer votre activité de wedding planner.' },
+    ],
+    en: [
+      { icon: 'briefcase', title: 'Your Business space', description: 'Keep track of professional contacts, opportunities, and appointments.' },
+      { icon: 'calendar', title: 'Organize your conversations', description: 'Keep the information you need to grow your wedding-planning business in one place.' },
+    ],
+  },
+  'carnet-adresse': {
+    fr: [
+      { icon: 'book-open', title: 'Carnet d’adresses', description: 'Conservez vos contacts professionnels et réutilisez-les dans vos mariages.' },
+      { icon: 'plus-circle', title: 'Ajouter un contact', description: 'Créez une fiche contact pour garder les coordonnées et notes importantes à portée de main.' },
+    ],
+    en: [
+      { icon: 'book-open', title: 'Address book', description: 'Keep your professional contacts and reuse them across your weddings.' },
+      { icon: 'plus-circle', title: 'Add a contact', description: 'Create a contact card to keep important details and notes close at hand.' },
+    ],
+  },
+  retroplanning: {
+    fr: [
+      { icon: 'clock', title: 'Votre rétroplanning', description: 'Planifiez les étapes clés à réaliser avant le jour du mariage.' },
+      { icon: 'check-circle', title: 'Suivre l’avancement', description: 'Cochez les jalons terminés pour garder une vision claire des prochaines actions.' },
+    ],
+    en: [
+      { icon: 'clock', title: 'Your timeline', description: 'Plan the key steps to complete before the wedding day.' },
+      { icon: 'check-circle', title: 'Track progress', description: 'Mark milestones as complete to keep a clear view of what comes next.' },
+    ],
+  },
+  'jour-j': {
+    fr: [
+      { icon: 'sun', title: 'Le Jour-J', description: 'Retrouvez les informations et le déroulé essentiels le jour de la cérémonie.' },
+      { icon: 'check-circle', title: 'Rester dans le rythme', description: 'Consultez les étapes au fil de la journée et cochez ce qui est terminé.' },
+    ],
+    en: [
+      { icon: 'sun', title: 'Wedding day', description: 'Find the essential information and schedule on the day of the ceremony.' },
+      { icon: 'check-circle', title: 'Stay on track', description: 'Follow the day step by step and mark completed items as you go.' },
+    ],
+  },
+  'mes-reseaux': {
+    fr: [
+      { icon: 'share-2', title: 'Mes réseaux', description: 'Suivez les performances de vos réseaux sociaux depuis votre espace de planification.' },
+      { icon: 'bar-chart-2', title: 'Voir les statistiques', description: 'Comparez les indicateurs de vos comptes connectés pour mieux piloter votre visibilité.' },
+    ],
+    en: [
+      { icon: 'share-2', title: 'My networks', description: 'Track your social-media performance from your planning space.' },
+      { icon: 'bar-chart-2', title: 'View statistics', description: 'Compare metrics from connected accounts to better manage your visibility.' },
+    ],
+  },
+  'mes-reservations': {
+    fr: [
+      { icon: 'clipboard', title: 'Mes réservations', description: 'Retrouvez vos réservations et les informations utiles associées à vos prestations.' },
+      { icon: 'check-circle', title: 'Suivre les réservations', description: 'Consultez les statuts pour savoir ce qui est confirmé ou reste à finaliser.' },
+    ],
+    en: [
+      { icon: 'clipboard', title: 'My bookings', description: 'Find your bookings and the useful information associated with your services.' },
+      { icon: 'check-circle', title: 'Track bookings', description: 'Check statuses to see what is confirmed and what still needs attention.' },
+    ],
+  },
+  'mes-rendez-vous': {
+    fr: [
+      { icon: 'clock', title: 'Mes rendez-vous', description: 'Visualisez vos prochains rendez-vous avec les couples et les prestataires.' },
+      { icon: 'calendar', title: 'Préparer vos échanges', description: 'Consultez rapidement la date, l’heure et les informations de chaque rendez-vous.' },
+    ],
+    en: [
+      { icon: 'clock', title: 'My appointments', description: 'View your upcoming appointments with couples and vendors.' },
+      { icon: 'calendar', title: 'Prepare your meetings', description: 'Quickly check the date, time, and details for every appointment.' },
+    ],
+  },
+  profil: {
+    fr: [
+      { icon: 'user', title: 'Votre profil', description: 'Cet écran regroupe vos informations, le mariage actif et les raccourcis principaux.' },
+      { icon: 'heart', title: 'Mariage actif', description: 'Appuyez sur la carte du mariage pour consulter ou changer le mariage sélectionné.' },
+      { icon: 'settings', title: 'Paramètres & aide', description: 'Gérez vos préférences et accédez au support depuis les raccourcis de l’application.' },
+    ],
+    en: [
+      { icon: 'user', title: 'Your profile', description: 'This screen brings together your information, active wedding, and key shortcuts.' },
+      { icon: 'heart', title: 'Active wedding', description: 'Tap the wedding card to view or change the selected wedding.' },
+      { icon: 'settings', title: 'Settings & help', description: 'Manage your preferences and access support from the app shortcuts.' },
+    ],
+  },
+  parametres: {
+    fr: [{ icon: 'settings', title: 'Paramètres', description: 'Gérez vos préférences, vos notifications, votre langue et votre accès au support.' }],
+    en: [{ icon: 'settings', title: 'Settings', description: 'Manage your preferences, notifications, language, and access to support.' }],
+  },
+};
 
-export function GlobalTourHelp({ hidden = false }: { hidden?: boolean }) {
+export function GlobalTourHelp({ hidden = false, routeName = 'index' }: { hidden?: boolean; routeName?: string }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { tourVisible, openTour, closeTour } = useTour('tour:global-help');
@@ -354,7 +562,11 @@ export function GlobalTourHelp({ hidden = false }: { hidden?: boolean }) {
       >
         <Text style={[fab.label, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>?</Text>
       </TouchableOpacity>
-       <TourSheet visible={tourVisible} onClose={closeTour} steps={language === 'en' ? GLOBAL_HELP_STEPS_EN : GLOBAL_HELP_STEPS} />
+       <TourSheet
+         visible={tourVisible}
+         onClose={closeTour}
+         steps={(TAB_HELP_STEPS[routeName] ?? DEFAULT_HELP_STEPS)[language === 'en' ? 'en' : 'fr']}
+       />
     </>
   );
 }
