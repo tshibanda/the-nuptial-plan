@@ -196,7 +196,17 @@ async function downloadFile(url, outputPath) {
     const response = await fetch(url, { signal: controller.signal });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      const contentType = response.headers.get('content-type') || 'unknown';
+      const responseBody = await response.text();
+      const maxErrorBodyLength = 20_000;
+      const truncatedBody =
+        responseBody.length > maxErrorBodyLength
+          ? `${responseBody.slice(0, maxErrorBodyLength)}\n...[truncated]`
+          : responseBody;
+
+      throw new Error(
+        `HTTP ${response.status} ${response.statusText} (${contentType})\n${truncatedBody}`,
+      );
     }
 
     const file = fs.createWriteStream(outputPath);
