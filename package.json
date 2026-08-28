@@ -4,13 +4,21 @@
   "license": "MIT",
   "scripts": {
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
-    "eas-build-pre-install": "npm install -g pnpm@10.26.1 && printf 'node-linker=hoisted\\ndangerously-allow-all-builds=true\\nstrict-dep-builds=false\\n' >> .npmrc",
+    "eas-build-pre-install": "npm install -g pnpm@10.26.1",
     "test:currency": "pnpm --filter @workspace/api-server run test:currency && pnpm --filter @workspace/nuptial-plan run test:currency && pnpm --filter @workspace/mobile run test:currency",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
   "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@clerk/shared",
+      "browser-tabs-lock",
+      "core-js",
+      "esbuild"
+    ]
+  },
   "dependencies": {
     "@replit/connectors-sdk": "^0.4.1",
     "@replit/revenuecat-sdk": "^5.0.0",
