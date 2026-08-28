@@ -15,3 +15,4 @@
 - [Production schema publishing](production-schema-publishing.md) — Social-schema DDL must run through the Publish flow, never during API startup.
 - [Account deletion and store billing](account-deletion-store-billing.md) — Stripe subscriptions can be cancelled by the server; Apple/Google subscriptions require user action in their store.
 - [Product localization](product-localization.md) — French/English UI follows a persistent manual preference, otherwise detects French by language or francophone region.
+- [Expo static publication builds](expo-static-publication-builds.md) — Keep dual-platform Metro bundles unminified so multi-artifact publishing completes within its build window.

@@ -150,7 +150,7 @@ async function startMetro(expoPublicDomain, expoPublicReplId) {
 
   metroProcess = spawn(
     'pnpm',
-    ['exec', 'expo', 'start', '--no-dev', '--minify', '--localhost'],
+    ['exec', 'expo', 'start', '--no-dev', '--localhost'],
     {
       stdio: ['ignore', 'pipe', 'pipe'],
       detached: false,
@@ -235,7 +235,11 @@ async function downloadBundle(platform, timestamp) {
   url.searchParams.set('dev', 'false');
   url.searchParams.set('hot', 'false');
   url.searchParams.set('lazy', 'false');
-  url.searchParams.set('minify', 'true');
+  // Native Expo Go loads these static bundles over the network, so reliability
+  // during publication matters more than a small minification saving. Skipping
+  // Metro's second optimisation pass keeps the dual-platform build within the
+  // publishing time budget.
+  url.searchParams.set('minify', 'false');
 
   const output = path.join(
     'static-build',
@@ -335,7 +339,7 @@ function extractAssets(timestamp) {
 
   const assetsMap = new Map();
   const assetPattern =
-    /httpServerLocation:"([^"]+)"[^}]*hash:"([^"]+)"[^}]*name:"([^"]+)"[^}]*type:"([^"]+)"/g;
+    /"?httpServerLocation"?\s*:\s*"([^"]+)"[^}]*"?hash"?\s*:\s*"([^"]+)"[^}]*"?name"?\s*:\s*"([^"]+)"[^}]*"?type"?\s*:\s*"([^"]+)"/g;
 
   const extractFromBundle = (bundle, platform) => {
     for (const match of bundle.matchAll(assetPattern)) {
@@ -455,8 +459,8 @@ function updateBundleUrls(timestamp, baseUrl) {
     let bundle = fs.readFileSync(bundlePath, 'utf-8');
 
     bundle = bundle.replace(
-      /httpServerLocation:"(\/[^"]+)"/g,
-      (_match, capturedPath) => {
+      /("?httpServerLocation"?\s*:\s*)"(\/[^"]+)"/g,
+      (_match, propertyPrefix, capturedPath) => {
         const tempUrl = new URL(`http://localhost:8081${capturedPath}`);
         const unstablePath = tempUrl.searchParams.get('unstable_path');
 
@@ -467,7 +471,7 @@ function updateBundleUrls(timestamp, baseUrl) {
         }
 
         const decodedPath = decodeURIComponent(unstablePath);
-        return `httpServerLocation:"${baseUrl}${basePath}/${timestamp}/_expo/static/js/${decodedPath}"`;
+        return `${propertyPrefix}"${baseUrl}${basePath}/${timestamp}/_expo/static/js/${decodedPath}"`;
       },
     );
 
