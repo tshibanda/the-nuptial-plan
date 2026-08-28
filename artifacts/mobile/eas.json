@@ -8,37 +8,26 @@
       "developmentClient": true,
       "distribution": "internal",
       "node": "22.13.0",
-      "android": {
-        "image": "latest",
-        "buildType": "apk"
-      }
+      "env": { "NPM_CONFIG_NODE_LINKER": "hoisted" },
+      "android": { "image": "latest", "buildType": "apk" }
     },
     "preview": {
       "distribution": "internal",
       "node": "22.13.0",
-      "android": {
-        "image": "latest",
-        "buildType": "apk"
-      }
+      "env": { "NPM_CONFIG_NODE_LINKER": "hoisted" },
+      "android": { "image": "latest", "buildType": "apk" }
     },
     "production": {
       "autoIncrement": true,
       "node": "22.13.0",
-      "android": {
-        "image": "latest",
-        "buildType": "app-bundle"
-      },
-      "ios": {
-        "resourceClass": "m-medium"
-      }
+      "env": { "NPM_CONFIG_NODE_LINKER": "hoisted" },
+      "android": { "image": "latest", "buildType": "app-bundle" },
+      "ios": { "resourceClass": "m-medium" }
     }
   },
   "submit": {
     "production": {
-      "android": {
-        "track": "internal",
-        "releaseStatus": "draft"
-      }
+      "android": { "track": "internal", "releaseStatus": "draft" }
     }
   }
 }
