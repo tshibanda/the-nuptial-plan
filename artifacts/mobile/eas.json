@@ -13,7 +13,10 @@
         "NPM_CONFIG_NODE_LINKER": "hoisted",
         "COREPACK_INTEGRITY_KEYS": "0"
       },
-      "android": { "buildType": "apk" }
+      "android": {
+        "image": "latest",
+        "buildType": "apk"
+      }
     },
     "preview": {
       "distribution": "internal",
@@ -23,7 +26,10 @@
         "NPM_CONFIG_NODE_LINKER": "hoisted",
         "COREPACK_INTEGRITY_KEYS": "0"
       },
-      "android": { "buildType": "apk" }
+      "android": {
+        "image": "latest",
+        "buildType": "apk"
+      }
     },
     "production": {
       "autoIncrement": true,
@@ -33,13 +39,21 @@
         "NPM_CONFIG_NODE_LINKER": "hoisted",
         "COREPACK_INTEGRITY_KEYS": "0"
       },
-      "android": { "buildType": "app-bundle" },
-      "ios": { "resourceClass": "m-medium" }
+      "android": {
+        "image": "latest",
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      }
     }
   },
   "submit": {
     "production": {
-      "android": { "track": "internal", "releaseStatus": "draft" }
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
     }
   }
 }
