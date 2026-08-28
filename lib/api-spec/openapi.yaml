@@ -613,6 +613,37 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Notification"
+  /notifications/push-token:
+    post:
+      operationId: registerPushToken
+      tags: [notifications]
+      summary: Register a mobile push-notification token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushTokenRegistration"
+      responses:
+        "200":
+          description: Registered push token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PushTokenRegistrationResult"
+    delete:
+      operationId: unregisterPushToken
+      tags: [notifications]
+      summary: Unregister a mobile push-notification token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushTokenUnregistration"
+      responses:
+        "204":
+          description: Push token removed
   /notifications/{id}/read:
     patch:
       operationId: markNotificationRead
@@ -1497,6 +1528,27 @@ components:
         read: { type: boolean }
         dedupeKey: { type: string }
         createdAt: { type: string }
+
+    PushTokenRegistration:
+      type: object
+      required: [token, platform]
+      properties:
+        token: { type: string }
+        platform:
+          type: string
+          enum: [ios, android]
+
+    PushTokenRegistrationResult:
+      type: object
+      required: [registered]
+      properties:
+        registered: { type: boolean }
+
+    PushTokenUnregistration:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
 
     GuestInput:
       type: object

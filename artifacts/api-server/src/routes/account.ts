@@ -16,6 +16,7 @@ import {
   milestonesTable,
   notificationsTable,
   paymentsTable,
+  pushDevicesTable,
   socialAccountsTable,
   subscriptionsTable,
   vendorsTable,
@@ -91,6 +92,7 @@ router.delete("/account", async (req, res) => {
 
       await tx.delete(editorialPostsTable).where(eq(editorialPostsTable.ownerId, ownerId));
       await tx.delete(socialAccountsTable).where(eq(socialAccountsTable.ownerId, ownerId));
+      await tx.delete(pushDevicesTable).where(eq(pushDevicesTable.ownerId, ownerId));
       await tx.delete(addressBookEntriesTable).where(eq(addressBookEntriesTable.ownerId, ownerId));
       await tx.delete(subscriptionsTable).where(eq(subscriptionsTable.ownerId, ownerId));
     });

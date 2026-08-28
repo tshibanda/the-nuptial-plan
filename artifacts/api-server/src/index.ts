@@ -1,11 +1,12 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { db, calendarEventsTable, notificationsTable, socialAccountsTable } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import { db, calendarEventsTable, notificationsTable, paymentsTable, socialAccountsTable } from "@workspace/db";
+import { and, eq, lt } from "drizzle-orm";
 import { runMigrations } from "stripe-replit-sync";
 import { getStripeSync } from "./stripeClient";
 import { seedAppleReview } from "./lib/seedAppleReview";
 import { refreshSocialAccountStats } from "./routes/social";
+import { sendPushNotificationToWedding } from "./lib/pushNotifications";
 
 const rawPort = process.env["PORT"];
 
@@ -46,27 +47,78 @@ app.listen(port, (err) => {
   logger.info({ port }, "Server listening");
 });
 
-async function createTaskDueNotifications() {
+function isoDateAfter(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+async function createNotificationAndSend({
+  weddingId,
+  kind,
+  title,
+  body,
+  route,
+  dedupeKey,
+}: {
+  weddingId: number;
+  kind: string;
+  title: string;
+  body: string;
+  route: string;
+  dedupeKey: string;
+}) {
+  const [existing] = await db.select({ id: notificationsTable.id }).from(notificationsTable)
+    .where(eq(notificationsTable.dedupeKey, dedupeKey)).limit(1);
+  if (existing) return;
+
+  await db.insert(notificationsTable).values({ weddingId, kind, title, body, route, dedupeKey });
+  await sendPushNotificationToWedding(weddingId, { title, body, route, type: kind });
+}
+
+async function createScheduledNotifications() {
   const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  const target = tomorrow.toISOString().slice(0, 10);
+  const target = isoDateAfter(1);
   const events = await db.select().from(calendarEventsTable)
     .where(and(eq(calendarEventsTable.eventDate, target), eq(calendarEventsTable.completed, false)));
   for (const event of events) {
     const dedupeKey = `task-due-24h-${event.id}-${target}`;
-    const [existing] = await db.select({ id: notificationsTable.id }).from(notificationsTable)
-      .where(eq(notificationsTable.dedupeKey, dedupeKey)).limit(1);
-    if (!existing) {
-      await db.insert(notificationsTable).values({
-        weddingId: event.weddingId,
-        kind: "task_due_24h",
-        title: "Échéance dans 24 h",
-        body: `La tâche « ${event.title} » arrive à échéance demain.`,
-        route: "/calendrier",
-        dedupeKey,
-      });
-    }
+    await createNotificationAndSend({
+      weddingId: event.weddingId,
+      kind: "event_due_24h",
+      title: "Événement dans 24 h",
+      body: `« ${event.title} » est prévu demain.`,
+      route: "/(tabs)/evenements",
+      dedupeKey,
+    });
+  }
+
+  const paymentTarget = isoDateAfter(2);
+  const dueSoon = await db.select().from(paymentsTable)
+    .where(and(eq(paymentsTable.dueDate, paymentTarget), eq(paymentsTable.status, "pending")));
+  for (const payment of dueSoon) {
+    await createNotificationAndSend({
+      weddingId: payment.weddingId,
+      kind: "payment_due_48h",
+      title: "Paiement à venir",
+      body: `${payment.vendorName} · échéance le ${payment.dueDate}.`,
+      route: "/(tabs)/paiements",
+      dedupeKey: `payment-due-48h-${payment.id}-${paymentTarget}`,
+    });
+  }
+
+  const todayKey = today.toISOString().slice(0, 10);
+  const overduePayments = await db.select().from(paymentsTable)
+    .where(and(lt(paymentsTable.dueDate, todayKey), eq(paymentsTable.status, "pending")));
+  for (const payment of overduePayments) {
+    await createNotificationAndSend({
+      weddingId: payment.weddingId,
+      kind: "payment_overdue",
+      title: "Paiement en retard",
+      body: `${payment.vendorName} · échéance le ${payment.dueDate}.`,
+      route: "/(tabs)/paiements",
+      dedupeKey: `payment-overdue-${payment.id}-${todayKey}`,
+    });
   }
 }
 
@@ -110,9 +162,9 @@ async function refreshConnectedSocialStats() {
   }
 }
 
-void createTaskDueNotifications().catch((error) => logger.error({ error }, "Unable to create task notifications"));
+void createScheduledNotifications().catch((error) => logger.error({ error }, "Unable to create scheduled notifications"));
 setInterval(() => {
-  void createTaskDueNotifications().catch((error) => logger.error({ error }, "Unable to create task notifications"));
+  void createScheduledNotifications().catch((error) => logger.error({ error }, "Unable to create scheduled notifications"));
 }, 60 * 60 * 1000);
 
 // Run once after startup and then on a predictable six-hour cadence. The

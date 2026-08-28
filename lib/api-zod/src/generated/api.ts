@@ -612,6 +612,29 @@ export const ListNotificationsResponse = zod.array(ListNotificationsResponseItem
 
 
 /**
+ * @summary Register a mobile push-notification token
+ */
+export const RegisterPushTokenBody = zod.object({
+  "token": zod.string(),
+  "platform": zod.enum(['ios', 'android'])
+})
+
+export const RegisterPushTokenResponse = zod.object({
+  "registered": zod.boolean()
+})
+
+
+/**
+ * @summary Unregister a mobile push-notification token
+ */
+export const UnregisterPushTokenBody = zod.object({
+  "token": zod.string()
+})
+
+export const UnregisterPushTokenResponse = zod.void()
+
+
+/**
  * @summary Mark a notification as read
  */
 export const MarkNotificationReadParams = zod.object({

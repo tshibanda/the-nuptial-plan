@@ -15,7 +15,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { SANS, SANS_MEDIUM, SANS_SEMIBOLD, SERIF } from '@/constants/fonts';
-import { setAuthTokenGetter } from '@workspace/api-client-react';
 import { NuptiaSheet } from '@/components/NuptiaSheet';
 import { GlobalTourHelp } from '@/components/TourSheet';
 import { PremiumBadge } from '@/components/PremiumBadge';
@@ -583,16 +582,12 @@ function ClassicTabLayout() {
 // ── Root layout ────────────────────────────────────────────────────────────────
 export default function TabLayout() {
   const colors = useColors();
-  const { isSignedIn, getToken } = useAuth();
+  const { isSignedIn } = useAuth();
   const pathname = usePathname();
   const pathnameParts = pathname.split('/').filter(Boolean);
   const activeTab = pathnameParts[pathnameParts.length - 1] === '(tabs)'
     ? 'index'
     : pathnameParts[pathnameParts.length - 1] ?? 'index';
-
-  useEffect(() => {
-    setAuthTokenGetter(() => getToken());
-  }, [getToken]);
 
   if (!isSignedIn) {
     return <Redirect href="/(auth)/sign-in" />;

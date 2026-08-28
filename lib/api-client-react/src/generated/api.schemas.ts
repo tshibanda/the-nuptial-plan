@@ -298,6 +298,27 @@ export interface Notification {
   createdAt: string;
 }
 
+export type PushTokenRegistrationPlatform = typeof PushTokenRegistrationPlatform[keyof typeof PushTokenRegistrationPlatform];
+
+
+export const PushTokenRegistrationPlatform = {
+  ios: 'ios',
+  android: 'android',
+} as const;
+
+export interface PushTokenRegistration {
+  token: string;
+  platform: PushTokenRegistrationPlatform;
+}
+
+export interface PushTokenRegistrationResult {
+  registered: boolean;
+}
+
+export interface PushTokenUnregistration {
+  token: string;
+}
+
 export type GuestInputRsvpStatus = typeof GuestInputRsvpStatus[keyof typeof GuestInputRsvpStatus];
 
 

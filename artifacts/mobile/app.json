@@ -41,6 +41,12 @@
         }
       ],
       "expo-font",
+       [
+         "expo-notifications",
+         {
+           "enableBackgroundRemoteNotifications": true
+         }
+       ],
       "expo-web-browser",
       [
         "expo-image-picker",

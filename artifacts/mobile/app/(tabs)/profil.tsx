@@ -19,6 +19,7 @@ import { ProfileEditSheet } from '@/components/ProfileEditSheet';
 import { PaywallModal } from '@/components/PaywallModal';
 import { getLocalizedPackagePrice, isNativeStorePricingAvailable, useSubscription } from '@/lib/subscription';
 import { getApiUrl } from '@/lib/apiUrl';
+import { unregisterCurrentExpoPushToken } from '@/hooks/useExpoPushTokenRegistration';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
 import { useLocalization } from '@/context/LocalizationContext';
 
@@ -160,7 +161,9 @@ export default function ProfilScreen() {
         {
            text: copy.signOut,
           style: 'destructive',
-          onPress: () => signOut(),
+          onPress: () => {
+            void unregisterCurrentExpoPushToken().finally(() => signOut());
+          },
         },
       ],
     );

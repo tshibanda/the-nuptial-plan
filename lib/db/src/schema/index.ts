@@ -11,6 +11,7 @@ export * from "./conversations";
 export * from "./messages";
 export * from "./address-book";
 export * from "./notifications";
+export * from "./push-devices";
 export * from "./subscriptions";
 export * from "./milestones";
 export * from "./social-accounts";

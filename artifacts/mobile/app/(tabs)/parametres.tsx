@@ -314,7 +314,7 @@ export default function ParametresScreen() {
           <RowItem
             icon="alert-circle"
             label={t('settings.reportBug')}
-            value="Envoyer un rapport"
+            value={t('settings.reportBugAction')}
             iconBg={colors.roseBg}
             iconColor={colors.roseDark}
             colors={colors}

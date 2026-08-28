@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, activityTable, guestsTable, weddingsTable, notificationsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import crypto from "node:crypto";
+import { sendPushNotificationToWedding } from "../lib/pushNotifications";
 
 const router: IRouter = Router();
 
@@ -29,6 +30,12 @@ router.post("/:token/respond", async (req, res): Promise<void> => {
   await db.insert(notificationsTable).values({
     weddingId: guest.weddingId, kind: "rsvp", title: "Nouvelle réponse RSVP",
     body: `${guest.name} ${label}.`, route: "/invites", dedupeKey: `rsvp-${guest.id}-${Date.now()}`,
+  });
+  void sendPushNotificationToWedding(guest.weddingId, {
+    title: "Nouvelle réponse RSVP",
+    body: `${guest.name} ${label}.`,
+    route: "/(tabs)/invites",
+    type: "rsvp",
   });
   res.json({ guest: { id: updated!.id, name: updated!.name, rsvpStatus: updated!.rsvpStatus } });
 });

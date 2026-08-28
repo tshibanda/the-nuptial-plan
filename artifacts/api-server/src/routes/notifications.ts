@@ -1,9 +1,54 @@
-import { Router, type IRouter } from "express";
-import { db, notificationsTable } from "@workspace/db";
+import { Router, type IRouter, type Request } from "express";
+import { db, notificationsTable, pushDevicesTable } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
 import { weddingsTable } from "@workspace/db";
+import { RegisterPushTokenBody, UnregisterPushTokenBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+function owner(req: Request): string {
+  return (req as Request & { userId?: string }).userId ?? "";
+}
+
+function isExpoPushToken(token: string): boolean {
+  return /^(Exponent|Expo)PushToken\[[A-Za-z0-9_-]+\]$/.test(token);
+}
+
+router.post("/push-token", async (req, res): Promise<void> => {
+  const body = RegisterPushTokenBody.safeParse(req.body);
+  if (!body.success || !isExpoPushToken(body.data.token)) {
+    res.status(400).json({ error: "Invalid push token" });
+    return;
+  }
+
+  const ownerId = owner(req);
+  await db.insert(pushDevicesTable).values({
+    ownerId,
+    expoPushToken: body.data.token,
+    platform: body.data.platform,
+  }).onConflictDoUpdate({
+    target: pushDevicesTable.expoPushToken,
+    set: {
+      ownerId,
+      platform: body.data.platform,
+      updatedAt: new Date(),
+    },
+  });
+  res.json({ registered: true });
+});
+
+router.delete("/push-token", async (req, res): Promise<void> => {
+  const body = UnregisterPushTokenBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: "Invalid push token" });
+    return;
+  }
+  await db.delete(pushDevicesTable).where(and(
+    eq(pushDevicesTable.ownerId, owner(req)),
+    eq(pushDevicesTable.expoPushToken, body.data.token),
+  ));
+  res.status(204).send();
+});
 
 router.get("/", async (req, res): Promise<void> => {
   const weddingId = Number(req.query.weddingId);

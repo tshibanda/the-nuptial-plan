@@ -2,7 +2,9 @@ import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useLastNotificationResponse } from 'expo-notifications';
+import { useAuth } from '@clerk/expo';
 import { useNotificationSetup } from '@/hooks/useNotificationSetup';
+import { useExpoPushTokenRegistration } from '@/hooks/useExpoPushTokenRegistration';
 import { usePaymentNotifications } from '@/hooks/usePaymentNotifications';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { useActiveWedding } from '@/hooks/useActiveWedding';
@@ -18,12 +20,14 @@ import { useActiveWedding } from '@/hooks/useActiveWedding';
  */
 export function NotificationManager() {
   const router = useRouter();
+  const { isSignedIn } = useAuth();
 
   const { activeWedding, weddingId } = useActiveWedding();
   const currency = activeWedding?.currency ?? 'EUR';
 
   // Permissions + Android channel setup (runs once on mount)
-  useNotificationSetup();
+  const notificationPermissionGranted = useNotificationSetup(Boolean(isSignedIn));
+  useExpoPushTokenRegistration(Boolean(isSignedIn) && notificationPermissionGranted);
 
   // Schedule / cancel payment & event alerts whenever the data changes
   usePaymentNotifications(weddingId, currency);
@@ -35,8 +39,11 @@ export function NotificationManager() {
     if (!lastResponse) return;
     const data = lastResponse.notification.request.content.data as {
       type?: string;
+      route?: string;
     };
-    if (data?.type === 'payment') {
+    if (data?.route) {
+      router.push(data.route as never);
+    } else if (data?.type === 'payment') {
       // Payments live in the Prestataires (vendors) tab
       router.push('/(tabs)/prestataires');
     } else if (data?.type === 'event') {

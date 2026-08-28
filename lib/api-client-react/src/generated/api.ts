@@ -55,6 +55,9 @@ import type {
   PublicRsvp,
   PublicRsvpResponse,
   PublicRsvpResponseResult,
+  PushTokenRegistration,
+  PushTokenRegistrationResult,
+  PushTokenUnregistration,
   RsvpLink,
   Vendor,
   VendorInput,
@@ -739,7 +742,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listVendors>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listVendors>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListVendorsQueryResult = NonNullable<Awaited<ReturnType<typeof listVendors>>>
@@ -892,7 +895,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0 && id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVendor>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVendor>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type GetVendorQueryResult = NonNullable<Awaited<ReturnType<typeof getVendor>>>
@@ -1481,7 +1484,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listGuests>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listGuests>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListGuestsQueryResult = NonNullable<Awaited<ReturnType<typeof listGuests>>>
@@ -1850,7 +1853,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGuestStats>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGuestStats>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type GetGuestStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getGuestStats>>>
@@ -2184,6 +2187,148 @@ export function useListNotifications<TData = Awaited<ReturnType<typeof listNotif
 
 
 
+export const getRegisterPushTokenUrl = () => {
+
+
+
+
+  return `/api/notifications/push-token`
+}
+
+/**
+ * @summary Register a mobile push-notification token
+ */
+export const registerPushToken = async (pushTokenRegistration: PushTokenRegistration, options?: Parameters<typeof customFetch>[1]): Promise<PushTokenRegistrationResult> => {
+
+  return customFetch<PushTokenRegistrationResult>(getRegisterPushTokenUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(pushTokenRegistration)
+  }
+);}
+
+
+
+
+
+export const getRegisterPushTokenMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerPushToken>>, TError,{data: BodyType<PushTokenRegistration>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerPushToken>>, TError,{data: BodyType<PushTokenRegistration>}, TContext> => {
+
+const mutationKey = ['registerPushToken'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerPushToken>>, {data: BodyType<PushTokenRegistration>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerPushToken(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterPushTokenMutationResult = NonNullable<Awaited<ReturnType<typeof registerPushToken>>>
+    export type RegisterPushTokenMutationBody = BodyType<PushTokenRegistration>
+    export type RegisterPushTokenMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Register a mobile push-notification token
+ */
+export const useRegisterPushToken = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerPushToken>>, TError,{data: BodyType<PushTokenRegistration>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof registerPushToken>>,
+        TError,
+        {data: BodyType<PushTokenRegistration>},
+        TContext
+      > => {
+      return useMutation(getRegisterPushTokenMutationOptions(options));
+    }
+
+export const getUnregisterPushTokenUrl = () => {
+
+
+
+
+  return `/api/notifications/push-token`
+}
+
+/**
+ * @summary Unregister a mobile push-notification token
+ */
+export const unregisterPushToken = async (pushTokenUnregistration: PushTokenUnregistration, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getUnregisterPushTokenUrl(),
+  {
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(pushTokenUnregistration)
+  }
+);}
+
+
+
+
+
+export const getUnregisterPushTokenMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unregisterPushToken>>, TError,{data: BodyType<PushTokenUnregistration>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unregisterPushToken>>, TError,{data: BodyType<PushTokenUnregistration>}, TContext> => {
+
+const mutationKey = ['unregisterPushToken'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unregisterPushToken>>, {data: BodyType<PushTokenUnregistration>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  unregisterPushToken(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnregisterPushTokenMutationResult = NonNullable<Awaited<ReturnType<typeof unregisterPushToken>>>
+    export type UnregisterPushTokenMutationBody = BodyType<PushTokenUnregistration>
+    export type UnregisterPushTokenMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Unregister a mobile push-notification token
+ */
+export const useUnregisterPushToken = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unregisterPushToken>>, TError,{data: BodyType<PushTokenUnregistration>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof unregisterPushToken>>,
+        TError,
+        {data: BodyType<PushTokenUnregistration>},
+        TContext
+      > => {
+      return useMutation(getUnregisterPushTokenMutationOptions(options));
+    }
+
 export const getMarkNotificationReadUrl = (id: number,) => {
 
 
@@ -2303,7 +2448,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBudgetCategories>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBudgetCategories>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListBudgetCategoriesQueryResult = NonNullable<Awaited<ReturnType<typeof listBudgetCategories>>>
@@ -2599,7 +2744,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBudgetSummary>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBudgetSummary>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type GetBudgetSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getBudgetSummary>>>
@@ -2676,7 +2821,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listEvents>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listEvents>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListEventsQueryResult = NonNullable<Awaited<ReturnType<typeof listEvents>>>
@@ -2972,7 +3117,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listContracts>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listContracts>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListContractsQueryResult = NonNullable<Awaited<ReturnType<typeof listContracts>>>
@@ -3268,7 +3413,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined && weddingId !== 0, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPayments>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, enabled: weddingId !== null && weddingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPayments>>, TError, TData> & { queryKey: QueryKey }
 }
 
 export type ListPaymentsQueryResult = NonNullable<Awaited<ReturnType<typeof listPayments>>>
