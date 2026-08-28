@@ -10,7 +10,8 @@
       "corepack": true,
       "node": "20.18.1",
       "env": {
-        "NPM_CONFIG_NODE_LINKER": "hoisted"
+        "NPM_CONFIG_NODE_LINKER": "hoisted",
+        "COREPACK_INTEGRITY_KEYS": "0"
       },
       "android": { "buildType": "apk" }
     },
@@ -19,7 +20,8 @@
       "corepack": true,
       "node": "20.18.1",
       "env": {
-        "NPM_CONFIG_NODE_LINKER": "hoisted"
+        "NPM_CONFIG_NODE_LINKER": "hoisted",
+        "COREPACK_INTEGRITY_KEYS": "0"
       },
       "android": { "buildType": "apk" }
     },
@@ -28,7 +30,8 @@
       "corepack": true,
       "node": "20.18.1",
       "env": {
-        "NPM_CONFIG_NODE_LINKER": "hoisted"
+        "NPM_CONFIG_NODE_LINKER": "hoisted",
+        "COREPACK_INTEGRITY_KEYS": "0"
       },
       "android": { "buildType": "app-bundle" },
       "ios": { "resourceClass": "m-medium" }
