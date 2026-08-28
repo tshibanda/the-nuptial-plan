@@ -1,10 +1,10 @@
 const path = require('path');
 
-function inlineExpoRouterRoots({ types: t }) {
+function inlineExpoRouterEnvironment({ types: t }) {
   const appRoot = path.join(__dirname, 'app');
 
   return {
-    name: 'inline-expo-router-roots',
+    name: 'inline-expo-router-environment',
     visitor: {
       MemberExpression(memberPath, state) {
         const node = memberPath.node;
@@ -19,6 +19,11 @@ function inlineExpoRouterRoots({ types: t }) {
 
         if (node.property.name === 'EXPO_ROUTER_ABS_APP_ROOT') {
           memberPath.replaceWith(t.stringLiteral(appRoot));
+          return;
+        }
+
+        if (node.property.name === 'EXPO_ROUTER_IMPORT_MODE') {
+          memberPath.replaceWith(t.stringLiteral('sync'));
           return;
         }
 
@@ -45,6 +50,6 @@ module.exports = function (api) {
   api.cache(true);
   return {
     presets: [['babel-preset-expo', { unstable_transformImportMeta: true }]],
-    plugins: [inlineExpoRouterRoots],
+    plugins: [inlineExpoRouterEnvironment],
   };
 };
