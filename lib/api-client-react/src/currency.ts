@@ -25,6 +25,21 @@ export function getPreferredCurrency(metadata: unknown): SupportedCurrency {
   return isSupportedCurrency(value) ? value : DEFAULT_CURRENCY;
 }
 
+/** Resolve the currency used when a new wedding form is opened. */
+export function getNewWeddingCurrency(metadata: unknown): SupportedCurrency {
+  return getPreferredCurrency(metadata);
+}
+
+/** Keep existing Clerk metadata while persisting the planner's currency choice. */
+export function withPreferredCurrency(metadata: unknown, currency: SupportedCurrency): Record<string, unknown> {
+  const existingMetadata =
+    metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+      ? metadata as Record<string, unknown>
+      : {};
+
+  return { ...existingMetadata, preferredCurrency: currency };
+}
+
 export function currencySymbol(currency: string): string {
   return CURRENCIES.find((item) => item.code === currency)?.symbol ?? currency;
 }

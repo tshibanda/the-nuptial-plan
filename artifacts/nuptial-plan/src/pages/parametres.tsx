@@ -40,6 +40,7 @@ import {
   CURRENCIES,
   DEFAULT_CURRENCY,
   getPreferredCurrency,
+  withPreferredCurrency,
   SUPPORTED_CURRENCY_CODES,
 } from '@workspace/api-client-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -318,7 +319,7 @@ export default function Parametres() {
     setPreferredCurrencySaving(true);
     try {
       await user.update({
-        unsafeMetadata: { ...user.unsafeMetadata, preferredCurrency: currency },
+        unsafeMetadata: withPreferredCurrency(user.unsafeMetadata, currency),
       });
       await user.reload();
       toast({ title: tr('Devise d’affichage enregistrée', 'Display currency saved') });

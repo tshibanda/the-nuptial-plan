@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth, useClerk, useUser } from '@clerk/expo';
-import { CURRENCIES, getGetWeddingSummaryQueryKey, getPreferredCurrency, useGetWeddingSummary, type SupportedCurrency } from '@workspace/api-client-react';
+import { CURRENCIES, getGetWeddingSummaryQueryKey, getPreferredCurrency, useGetWeddingSummary, withPreferredCurrency, type SupportedCurrency } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 import { useActiveWedding } from '@/hooks/useActiveWedding';
 import { useTour } from '@/hooks/useTour';
@@ -169,7 +169,7 @@ export default function ProfilScreen() {
             setProfileCurrencySaving(true);
             try {
               await user.update({
-                unsafeMetadata: { ...user.unsafeMetadata, preferredCurrency: item.code },
+                unsafeMetadata: withPreferredCurrency(user.unsafeMetadata, item.code),
               });
               await user.reload();
             } catch {

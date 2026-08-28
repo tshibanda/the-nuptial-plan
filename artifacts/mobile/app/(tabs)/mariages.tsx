@@ -15,6 +15,7 @@ import {
   useCreateWedding,
   getListWeddingsQueryKey,
   CURRENCIES,
+  getNewWeddingCurrency,
   type SupportedCurrency,
 } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
@@ -78,7 +79,7 @@ export default function MariagesScreen() {
   const [partner2, setPartner2] = useState('');
   const [weddingDate, setWeddingDate] = useState('');
   const [venue, setVenue] = useState('');
-  const [currency, setCurrency] = useState<SupportedCurrency>(preferredCurrency);
+  const [currency, setCurrency] = useState<SupportedCurrency>(getNewWeddingCurrency({ preferredCurrency }));
   const [totalBudget, setTotalBudget] = useState('');
   const [guestCount, setGuestCount] = useState('');
 
@@ -87,7 +88,7 @@ export default function MariagesScreen() {
     setPartner2('');
     setWeddingDate('');
     setVenue('');
-    setCurrency(preferredCurrency);
+    setCurrency(getNewWeddingCurrency({ preferredCurrency }));
     setTotalBudget('');
     setGuestCount('');
   };

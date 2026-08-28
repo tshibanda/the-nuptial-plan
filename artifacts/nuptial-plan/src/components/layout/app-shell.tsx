@@ -42,7 +42,7 @@ import {
   useMarkNotificationRead,
   getListNotificationsQueryKey,
   CURRENCIES,
-  getPreferredCurrency,
+  getNewWeddingCurrency,
   SUPPORTED_CURRENCY_CODES,
 } from '@workspace/api-client-react';
 import { useActiveWedding } from '@/lib/wedding-context';
@@ -120,11 +120,11 @@ function CreateWeddingDialog({
   const createWedding = useCreateWedding();
   const form = useForm<NewWeddingData>({
     resolver: zodResolver(newWeddingSchema),
-    defaultValues: { partner1: '', partner2: '', currency: getPreferredCurrency(user?.unsafeMetadata), weddingDate: '', venue: '', totalBudget: 0, guestCount: 0, notes: '' },
+    defaultValues: { partner1: '', partner2: '', currency: getNewWeddingCurrency(user?.unsafeMetadata), weddingDate: '', venue: '', totalBudget: 0, guestCount: 0, notes: '' },
   });
 
   useEffect(() => {
-    if (open) form.setValue('currency', getPreferredCurrency(user?.unsafeMetadata));
+    if (open) form.setValue('currency', getNewWeddingCurrency(user?.unsafeMetadata));
   }, [open, user?.unsafeMetadata, form]);
 
   const onSubmit = (data: NewWeddingData) => {
@@ -135,7 +135,7 @@ function CreateWeddingDialog({
         onSuccess: (wedding) => {
           queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
           toast({ title: copy('Mariage créé', 'Wedding created'), description: wedding.names });
-          form.reset({ partner1: '', partner2: '', currency: getPreferredCurrency(user?.unsafeMetadata), weddingDate: '', venue: '', totalBudget: 0, guestCount: 0, notes: '' });
+          form.reset({ partner1: '', partner2: '', currency: getNewWeddingCurrency(user?.unsafeMetadata), weddingDate: '', venue: '', totalBudget: 0, guestCount: 0, notes: '' });
           onCreated(wedding.id);
           onClose();
         },
