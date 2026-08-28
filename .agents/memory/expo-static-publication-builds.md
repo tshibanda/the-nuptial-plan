@@ -9,6 +9,6 @@ Generate the iOS and Android static Expo Go bundles without Metro minification, 
 
 Run cold publication-build validation without the Expo development workflow active. Two Metro instances can exhaust the workspace's file-watcher allowance, causing `ENOSPC` and a misleading HTTP 500 while downloading a bundle.
 
-Manually constructed Expo Router bundle URLs must include `transform.routerRoot=app`. The Babel config must also inline Expo Router's relative and absolute app roots because a clean publication may not propagate the custom transform caller; `/tmp` Metro caches can hide this locally.
+Manually constructed Expo Router bundle URLs must include `transform.routerRoot=app`. The Babel config must also inline Expo Router's relative and absolute app roots plus the native production import mode (`sync`), because a clean publication may not propagate the custom transform caller; `/tmp` Metro caches can hide this locally.
 
-**How to apply:** When changing the mobile static build pipeline, stop the Expo development workflow, clear project and `/tmp` Metro caches, preserve both the router-root query and Babel root inlining, validate both platforms and nonzero assets, and keep minification off unless the full build fits its limit.
+**How to apply:** When changing the mobile static build pipeline, stop the Expo development workflow, clear project and `/tmp` Metro caches, preserve the router-root query and all Babel router-environment inlining, validate both platforms and nonzero assets, and keep minification off unless the full build fits its limit.
