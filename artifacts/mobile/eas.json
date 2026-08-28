@@ -8,10 +8,6 @@
       "developmentClient": true,
       "distribution": "internal",
       "node": "22.13.0",
-      "env": {
-        "NPM_CONFIG_NODE_LINKER": "hoisted",
-        "NPM_CONFIG_DANGEROUSLY_ALLOW_ALL_BUILDS": "true"
-      },
       "android": {
         "image": "latest",
         "buildType": "apk"
@@ -20,10 +16,6 @@
     "preview": {
       "distribution": "internal",
       "node": "22.13.0",
-      "env": {
-        "NPM_CONFIG_NODE_LINKER": "hoisted",
-        "NPM_CONFIG_DANGEROUSLY_ALLOW_ALL_BUILDS": "true"
-      },
       "android": {
         "image": "latest",
         "buildType": "apk"
@@ -32,10 +24,6 @@
     "production": {
       "autoIncrement": true,
       "node": "22.13.0",
-      "env": {
-        "NPM_CONFIG_NODE_LINKER": "hoisted",
-        "NPM_CONFIG_DANGEROUSLY_ALLOW_ALL_BUILDS": "true"
-      },
       "android": {
         "image": "latest",
         "buildType": "app-bundle"
