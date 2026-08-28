@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "The Nuptial Plan",
-    "slug": "the-nuptial-plan",
+    "slug": "mobile",
     "owner": "eldamdu78s-team",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,38 +20,17 @@
       "buildNumber": "37"
     },
     "android": {
-      "package": "app.thenuptialplan.com",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#241024"
-      }
+      "package": "app.thenuptialplan.com"
     },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
-      [
-        "expo-router",
-        {
-          "origin": "https://replit.com/"
-        }
-      ],
+      ["expo-router", { "origin": "https://replit.com/" }],
       "@clerk/expo",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "deploymentTarget": "17.0"
-          }
-        }
-      ],
+      ["expo-build-properties", { "ios": { "deploymentTarget": "17.0" } }],
       "expo-font",
-      [
-        "expo-notifications",
-        {
-          "enableBackgroundRemoteNotifications": true
-        }
-      ],
+      ["expo-notifications", { "enableBackgroundRemoteNotifications": true }],
       "expo-web-browser",
       [
         "expo-image-picker",
