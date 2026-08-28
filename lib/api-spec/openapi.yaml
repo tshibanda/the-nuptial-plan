@@ -1199,6 +1199,7 @@ components:
           description: "Prénom du second marié"
         currency:
           type: string
+          enum: [EUR, GBP, USD, CHF]
           description: "ISO 4217 currency code, e.g. EUR, GBP, USD"
         weddingDate:
           type: string
@@ -1227,6 +1228,7 @@ components:
           type: string
         currency:
           type: string
+          enum: [EUR, GBP, USD, CHF]
         weddingDate:
           type: string
         venue:
@@ -1249,6 +1251,7 @@ components:
           type: string
         currency:
           type: string
+          enum: [EUR, GBP, USD, CHF]
         weddingDate:
           type: string
         venue:

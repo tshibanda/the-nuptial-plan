@@ -164,6 +164,7 @@ export default function Dashboard() {
       </div>
     );
   }
+  const currency = wedding.currency;
 
   const upcomingEvents = events
     .filter((e) => !e.completed)
@@ -265,7 +266,7 @@ export default function Dashboard() {
         />
         <MetricCard
           color="gold" icon={Wallet} label={tr('Budget restant', 'Budget remaining')}
-          value={summary ? formatCurrency(summary.budgetTotal - summary.budgetSpent) : '—'}
+          value={summary ? formatCurrency(summary.budgetTotal - summary.budgetSpent, currency) : '—'}
           note={tr(`${formatNumber(budgetPct)}% engagé`, `${formatNumber(budgetPct)}% committed`)}
         />
         <MetricCard
@@ -347,7 +348,7 @@ export default function Dashboard() {
                        {language === 'fr' ? (vendorStatusLabel[vendor.status] ?? vendor.status) : ({ confirmed: 'Confirmed', awaiting_contract: 'Contract pending', deposit_paid: 'Deposit paid', cancelled: 'Cancelled' }[vendor.status] ?? vendor.status)}
                     </span>
                     <span className="w-[72px] text-right font-serif text-[18px] text-muted-foreground">
-                       {formatCurrency(vendor.totalAmountCents)}
+                       {formatCurrency(vendor.totalAmountCents, currency)}
                     </span>
                   </div>
                 );
@@ -369,9 +370,9 @@ export default function Dashboard() {
                 <div>
                   <p className="eyebrow mb-1 text-foreground/35">Engagé</p>
                   <p className="font-serif text-[30px] leading-none text-foreground">
-                    {summary ? formatCurrency(summary.budgetSpent) : '—'}
+                    {summary ? formatCurrency(summary.budgetSpent, currency) : '—'}
                     <span className="ml-1 font-sans text-[11px] text-muted-foreground">
-                      / {summary ? formatCurrency(summary.budgetTotal) : '—'}
+                      / {summary ? formatCurrency(summary.budgetTotal, currency) : '—'}
                     </span>
                   </p>
                 </div>
@@ -387,7 +388,7 @@ export default function Dashboard() {
               </div>
               {summary && (
                 <p className="mt-3 text-[10px] text-muted-foreground">
-                  {formatCurrency(summary.budgetTotal - summary.budgetSpent)} {tr('restant à engager', 'remaining to allocate')}
+                  {formatCurrency(summary.budgetTotal - summary.budgetSpent, currency)} {tr('restant à engager', 'remaining to allocate')}
                 </p>
               )}
             </div>

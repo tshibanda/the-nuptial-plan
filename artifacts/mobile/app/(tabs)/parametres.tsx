@@ -10,6 +10,9 @@ import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useDeleteWedding,
+  useUpdateWedding,
+  CURRENCIES,
+  getPreferredCurrency,
   getListWeddingsQueryKey,
 } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
@@ -19,7 +22,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow, accentShadow } from '@/utils/shadow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocalizedPackagePrice, isNativeStorePricingAvailable, useSubscription } from '@/lib/subscription';
-import { useAuth, useClerk } from '@clerk/expo';
+import { useAuth, useClerk, useUser } from '@clerk/expo';
 import { getApiUrl } from '@/lib/apiUrl';
 import { useLocalization } from '@/context/LocalizationContext';
 
@@ -86,6 +89,7 @@ export default function ParametresScreen() {
   const router = useRouter();
   const { getToken } = useAuth();
   const { signOut } = useClerk();
+  const { user } = useUser();
   const topPad = Platform.OS === 'web' ? 67 : 0;
 
   const { selectedWeddingId, selectWedding } = useWedding();
@@ -93,10 +97,12 @@ export default function ParametresScreen() {
 
   const { weddings, activeWedding } = useActiveWedding();
   const deleteWedding = useDeleteWedding();
+  const updateWedding = useUpdateWedding();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const subscription = useSubscription();
   const { language, locale, setLanguage, t } = useLocalization();
+  const preferredCurrency = getPreferredCurrency(user?.unsafeMetadata);
   const interpolate = (key: 'settings.deleteWeddingMessage' | 'settings.weddingDeletedMessage', name: string) =>
     t(key).replace('{name}', name);
 
@@ -107,6 +113,36 @@ export default function ParametresScreen() {
       [
         { text: `🇫🇷 ${t('settings.french')}`, onPress: () => { void setLanguage('fr'); } },
         { text: `🇺🇸 ${t('settings.english')}`, onPress: () => { void setLanguage('en'); } },
+        { text: t('common.cancel'), style: 'cancel' },
+      ],
+    );
+  };
+
+  const chooseWeddingCurrency = () => {
+    if (!activeWedding) return;
+    Alert.alert(
+      language === 'fr' ? 'Devise du mariage' : 'Wedding currency',
+      language === 'fr'
+        ? 'Les montants existants ne sont pas convertis.'
+        : 'Existing amounts are not converted.',
+      [
+        ...CURRENCIES.map((item) => ({
+          text: `${item.code === activeWedding.currency ? '✓ ' : ''}${item.label[language]}`,
+          onPress: () => {
+            if (item.code === activeWedding.currency) return;
+            updateWedding.mutate(
+              { id: activeWedding.id, data: { currency: item.code } },
+              {
+                onSuccess: () => {
+                  queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
+                },
+                onError: () => {
+                  Alert.alert(t('common.error'), language === 'fr' ? 'Impossible de mettre à jour la devise du mariage.' : 'Unable to update the wedding currency.');
+                },
+              },
+            );
+          },
+        })),
         { text: t('common.cancel'), style: 'cancel' },
       ],
     );
@@ -270,8 +306,29 @@ export default function ParametresScreen() {
                   </View>
                 ))}
               </View>
+               <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
+                 <RowItem
+                   icon="dollar-sign"
+                   label={language === 'fr' ? 'Devise du mariage' : 'Wedding currency'}
+                   value={updateWedding.isPending
+                     ? (language === 'fr' ? 'Enregistrement…' : 'Saving…')
+                     : CURRENCIES.find((item) => item.code === (activeWedding.currency ?? preferredCurrency))?.label[language]}
+                   iconBg={colors.goldLight}
+                   iconColor={colors.goldDim}
+                   colors={colors}
+                   onPress={chooseWeddingCurrency}
+                   rightElement={updateWedding.isPending ? <Text style={{ color: colors.mutedForeground }}>…</Text> : undefined}
+                 />
+               </View>
             </View>
           </>
+        )}
+        {!activeWedding && (
+          <Text style={[ps.noWeddingHint, { fontFamily: SANS, color: colors.mutedForeground }]}>
+            {language === 'fr'
+              ? 'Sélectionnez ou créez un dossier de mariage pour définir sa devise.'
+              : 'Select or create a wedding file to set its currency.'}
+          </Text>
         )}
 
         {/* ── Préférences application ─────────────────────────────────────── */}
@@ -412,6 +469,7 @@ const ps = StyleSheet.create({
   weddingStatRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   weddingStatText: { fontSize: 12, flex: 1 },
   dangerHint: { fontSize: 11, lineHeight: 15, marginTop: 8, paddingHorizontal: 4, opacity: 0.7 },
+  noWeddingHint: { fontSize: 12, lineHeight: 17, marginTop: 24, paddingHorizontal: 4 },
   subscriptionOption: { minHeight: 52, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center' },
   subscriptionPlan: { fontSize: 12 },
   subscriptionPrice: { fontSize: 11, marginTop: 2 },

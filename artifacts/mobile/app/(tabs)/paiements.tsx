@@ -18,7 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import { useListPayments, useCreatePayment, getListPaymentsQueryKey } from '@workspace/api-client-react';
+import { currencySymbol, useListPayments, useCreatePayment, getListPaymentsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Payment } from '@workspace/api-client-react';
 import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
@@ -35,6 +35,7 @@ import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { useSubscription } from '@/lib/subscription';
 import { useLocalization } from '@/context/LocalizationContext';
+import { usePreferredCurrency } from '@/hooks/usePreferredCurrency';
 
 // ── Tour steps ────────────────────────────────────────────────────────────────
 const TOUR_STEPS = [
@@ -237,6 +238,7 @@ export default function PaiementsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { activeWedding, weddingId } = useActiveWedding();
+  const preferredCurrency = usePreferredCurrency();
   const topPad = Platform.OS === 'web' ? 67 : 0;
 
   const { tourVisible, openTour, closeTour } = useTour('tour:paiements');
@@ -247,7 +249,7 @@ export default function PaiementsScreen() {
   const [isExporting, setIsExporting] = useState(false);
 
   const wId = weddingId ?? 0;
-  const currency = activeWedding?.currency ?? 'EUR';
+  const currency = activeWedding?.currency ?? preferredCurrency;
 
   const { data: payments, isLoading, refetch, isRefetching } = useListPayments(wId, { query: { queryKey: getListPaymentsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
   const createPayment = useCreatePayment();
@@ -413,7 +415,7 @@ export default function PaiementsScreen() {
           {([
              ['vendorName', tr.fields[0]],
              ['description', tr.fields[1]],
-             ['amount', tr.fields[2]],
+             ['amount', `${language === 'fr' ? 'Montant' : 'Amount'} (${currencySymbol(currency)}) *`],
              ['dueDate', tr.fields[3]],
           ] as const).map(([key, placeholder]) => (
             <TextInput

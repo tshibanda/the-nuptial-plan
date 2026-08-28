@@ -15,10 +15,10 @@ interface Props {
   onClose: () => void;
   weddingId: number;
   vendorId: number | null;
-  currency?: string;
+  currency: string;
 }
 
-export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, currency = 'EUR' }: Props) {
+export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, currency }: Props) {
   const colors = useColors();
   const { language, locale } = useLocalization();
   const en = language === 'en';
@@ -92,7 +92,7 @@ export function VendorDetailSheet({ visible, onClose, weddingId, vendorId, curre
           {editing && (
             <View style={ss.editForm}>
               {([
-                 ['name', en ? 'Vendor name *' : 'Nom du prestataire *'], ['category', en ? 'Category *' : 'Catégorie *'], ['contactName', en ? 'Contact name' : 'Nom du contact'], ['contactEmail', 'E-mail'], ['amount', en ? 'Total amount' : 'Montant total'], ['deposit', en ? 'Deposit' : 'Acompte'],
+                 ['name', en ? 'Vendor name *' : 'Nom du prestataire *'], ['category', en ? 'Category *' : 'Catégorie *'], ['contactName', en ? 'Contact name' : 'Nom du contact'], ['contactEmail', 'E-mail'], ['amount', `${en ? 'Total amount' : 'Montant total'} (${currency})`], ['deposit', `${en ? 'Deposit' : 'Acompte'} (${currency})`],
               ] as const).map(([key, placeholder]) => (
                 <TextInput key={key} value={draft[key]} onChangeText={(value) => setDraft((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' || key === 'deposit' ? 'decimal-pad' : key === 'contactEmail' ? 'email-address' : 'default'} style={[ss.editInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
               ))}

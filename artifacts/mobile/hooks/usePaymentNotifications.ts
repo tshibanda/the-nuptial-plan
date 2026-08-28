@@ -79,7 +79,7 @@ async function schedulePaymentAlert(payment: Payment, currency: string, locale: 
  * - Overdue payments (fires ~5 s after the app opens)
  * - Payments due within the next 48 hours (fires 48 h before the due date)
  */
-export function usePaymentNotifications(weddingId: number | null, currency = 'EUR'): void {
+export function usePaymentNotifications(weddingId: number | null, currency: string): void {
   // Pass 0 when weddingId is null — the query is disabled and returns no data.
   const { data: payments } = useListPayments(weddingId ?? 0, {
     query: { queryKey: getListPaymentsQueryKey(weddingId ?? 0), enabled: weddingId !== null },

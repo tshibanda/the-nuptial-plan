@@ -5,12 +5,13 @@
  * The Nuptial Plan – Wedding planner API
  * OpenAPI spec version: 0.1.0
  */
+import type { WeddingUpdateCurrency } from './weddingUpdateCurrency';
 
 export interface WeddingUpdate {
   names?: string;
   partner1?: string;
   partner2?: string;
-  currency?: string;
+  currency?: WeddingUpdateCurrency;
   weddingDate?: string;
   venue?: string;
   totalBudget?: number;

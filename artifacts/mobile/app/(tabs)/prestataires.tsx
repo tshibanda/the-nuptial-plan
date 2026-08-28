@@ -13,6 +13,7 @@ import {
   useListAddressBookEntries,
   useAddAddressBookEntryToWedding,
   getListVendorsQueryKey,
+  currencySymbol,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
@@ -30,6 +31,7 @@ import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { useSubscription } from '@/lib/subscription';
 import { useLocalization } from '@/context/LocalizationContext';
+import { usePreferredCurrency } from '@/hooks/usePreferredCurrency';
 
 const TOUR_STEPS = [
   {
@@ -79,6 +81,8 @@ export default function PrestatairesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { activeWedding, weddingId } = useActiveWedding();
+  const preferredCurrency = usePreferredCurrency();
+  const currency = activeWedding?.currency ?? preferredCurrency;
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:prestataires');
   const [search, setSearch] = useState('');
@@ -240,7 +244,7 @@ export default function PrestatairesScreen() {
                   </View>
                 ) : <View />}
                 <Text style={[ss.amount, { fontFamily: SERIF, color: colors.plumDark }]}>
-                  {formatCents(item.totalAmountCents, activeWedding?.currency)}
+                  {formatCents(item.totalAmountCents, currency, language)}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -253,7 +257,7 @@ export default function PrestatairesScreen() {
         onClose={() => setSelectedVendorId(null)}
         weddingId={wId}
         vendorId={selectedVendorId}
-        currency={activeWedding?.currency}
+        currency={currency}
       />
       <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow={tr.eyebrow} title={tr.addTitle}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>
@@ -299,7 +303,7 @@ export default function PrestatairesScreen() {
           )}
           <Text style={[ss.orLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{tr.or}</Text>
           {([
-             ['name', tr.fields[0]], ['category', tr.fields[1]], ['contactName', tr.fields[2]], ['contactEmail', tr.fields[3]], ['amount', tr.fields[4]],
+             ['name', tr.fields[0]], ['category', tr.fields[1]], ['contactName', tr.fields[2]], ['contactEmail', tr.fields[3]], ['amount', `${language === 'fr' ? 'Montant du devis' : 'Quote amount'} (${currencySymbol(currency)})`],
           ] as const).map(([key, placeholder]) => <TextInput key={key} value={form[key]} onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' ? 'decimal-pad' : key === 'contactEmail' ? 'email-address' : 'default'} autoCapitalize={key === 'contactEmail' ? 'none' : 'sentences'} style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />)}
           <TouchableOpacity disabled={createVendor.isPending} onPress={saveVendor} style={[ss.saveBtn, { backgroundColor: colors.plum }]}><Text style={[ss.saveText, { fontFamily: SANS_SEMIBOLD }]}>{createVendor.isPending ? tr.saving : tr.save}</Text></TouchableOpacity>
         </ScrollView>

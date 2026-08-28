@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth, useClerk, useUser } from '@clerk/expo';
-import { getGetWeddingSummaryQueryKey, useGetWeddingSummary } from '@workspace/api-client-react';
+import { CURRENCIES, getGetWeddingSummaryQueryKey, getPreferredCurrency, useGetWeddingSummary, type SupportedCurrency } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 import { useActiveWedding } from '@/hooks/useActiveWedding';
 import { useTour } from '@/hooks/useTour';
@@ -96,6 +96,8 @@ export default function ProfilScreen() {
   const { signOut } = useClerk();
   const { getToken } = useAuth();
   const { user } = useUser();
+  const [profileCurrencySaving, setProfileCurrencySaving] = useState(false);
+  const preferredCurrency = getPreferredCurrency(user?.unsafeMetadata);
   const canUseSocials = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() === SOCIALS_ACCESS_EMAIL;
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:profil');
@@ -152,6 +154,35 @@ export default function ProfilScreen() {
   const avatarUrl = user?.imageUrl ?? null;
 
   const [editVisible, setEditVisible] = useState(false);
+
+  const chooseProfileCurrency = () => {
+    Alert.alert(
+      language === 'fr' ? 'Devise d’affichage' : 'Display currency',
+      language === 'fr'
+        ? 'Cette devise est utilisée hors d’un dossier de mariage et comme valeur par défaut pour les nouveaux mariages.'
+        : 'This currency is used outside a wedding file and as the default for new weddings.',
+      [
+        ...CURRENCIES.map((item) => ({
+          text: `${item.code === preferredCurrency ? '✓ ' : ''}${item.label[language]}`,
+          onPress: async () => {
+            if (!user || item.code === preferredCurrency) return;
+            setProfileCurrencySaving(true);
+            try {
+              await user.update({
+                unsafeMetadata: { ...user.unsafeMetadata, preferredCurrency: item.code },
+              });
+              await user.reload();
+            } catch {
+              Alert.alert(language === 'fr' ? 'Erreur' : 'Error', language === 'fr' ? 'Impossible de mettre à jour la devise.' : 'Unable to update the currency.');
+            } finally {
+              setProfileCurrencySaving(false);
+            }
+          },
+        })),
+        { text: t('common.cancel'), style: 'cancel' as const },
+      ],
+    );
+  };
 
   const handleSignOut = () => {
     Alert.alert(
@@ -327,6 +358,14 @@ export default function ProfilScreen() {
           <RowItem
              icon="settings" label={language === 'fr' ? 'Paramètres' : 'Settings'} colors={colors}
             onPress={() => router.push('/(tabs)/parametres')}
+          />
+          <RowItem
+            icon="dollar-sign"
+            label={language === 'fr' ? 'Devise d’affichage' : 'Display currency'}
+            value={profileCurrencySaving ? (language === 'fr' ? 'Enregistrement…' : 'Saving…') : CURRENCIES.find((item) => item.code === preferredCurrency)?.label[language]}
+            colors={colors}
+            disabled={profileCurrencySaving}
+            onPress={chooseProfileCurrency}
           />
           <RowItem
              icon="bell" label={language === 'fr' ? 'Notifications' : 'Notifications'} colors={colors}

@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useListContracts, useCreateContract, getListContractsQueryKey } from '@workspace/api-client-react';
+import { currencySymbol, useListContracts, useCreateContract, getListContractsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
 import { useColors } from '@/hooks/useColors';
@@ -23,6 +23,7 @@ import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
 import { useLocalization } from '@/context/LocalizationContext';
+import { usePreferredCurrency } from '@/hooks/usePreferredCurrency';
 
 const TOUR_STEPS = [
   {
@@ -83,6 +84,8 @@ export default function ContratsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { activeWedding, weddingId } = useActiveWedding();
+  const preferredCurrency = usePreferredCurrency();
+  const currency = activeWedding?.currency ?? preferredCurrency;
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:contrats');
   const { paywallVisible, closePaywall, requirePremium, isPremium } = usePremiumGate();
@@ -207,7 +210,7 @@ export default function ContratsScreen() {
                   <View style={ss.footerItem}>
                     <Feather name="credit-card" size={12} color={colors.goldDim} />
                     <Text style={[ss.footerText, { fontFamily: SANS_MEDIUM, color: colors.mutedForeground }]}>
-                      {formatCents(item.totalAmountCents, activeWedding?.currency ?? 'EUR')}
+                      {formatCents(item.totalAmountCents, currency, language)}
                     </Text>
                   </View>
                   <Feather name="chevron-right" size={14} color={colors.border} />
@@ -226,7 +229,7 @@ export default function ContratsScreen() {
       <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow={tr.documents} title={tr.addTitle}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>
           {([
-            ['vendorName', tr.fields[0]], ['amount', tr.fields[1]], ['deposit', tr.fields[2]], ['signedDate', tr.fields[3]],
+            ['vendorName', tr.fields[0]], ['amount', `${language === 'fr' ? 'Montant total' : 'Total amount'} (${currencySymbol(currency)})`], ['deposit', `${language === 'fr' ? 'Acompte versé' : 'Deposit paid'} (${currencySymbol(currency)})`], ['signedDate', tr.fields[3]],
           ] as const).map(([key, placeholder]) => (
             <TextInput key={key} value={form[key]} onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' || key === 'deposit' ? 'decimal-pad' : 'default'} style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
           ))}

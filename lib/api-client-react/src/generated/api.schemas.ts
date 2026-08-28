@@ -9,6 +9,19 @@ export interface HealthStatus {
   status: string;
 }
 
+/**
+ * ISO 4217 currency code, e.g. EUR, GBP, USD
+ */
+export type WeddingCurrency = typeof WeddingCurrency[keyof typeof WeddingCurrency];
+
+
+export const WeddingCurrency = {
+  EUR: 'EUR',
+  GBP: 'GBP',
+  USD: 'USD',
+  CHF: 'CHF',
+} as const;
+
 export interface Wedding {
   id: number;
   /** e.g. Sophie & James Hartwell */
@@ -18,7 +31,7 @@ export interface Wedding {
   /** Prénom du second marié */
   partner2?: string;
   /** ISO 4217 currency code, e.g. EUR, GBP, USD */
-  currency: string;
+  currency: WeddingCurrency;
   /** ISO date string (YYYY-MM-DD) */
   weddingDate: string;
   venue: string;
@@ -30,11 +43,21 @@ export interface Wedding {
   createdAt: string;
 }
 
+export type WeddingInputCurrency = typeof WeddingInputCurrency[keyof typeof WeddingInputCurrency];
+
+
+export const WeddingInputCurrency = {
+  EUR: 'EUR',
+  GBP: 'GBP',
+  USD: 'USD',
+  CHF: 'CHF',
+} as const;
+
 export interface WeddingInput {
   names: string;
   partner1?: string;
   partner2?: string;
-  currency: string;
+  currency: WeddingInputCurrency;
   weddingDate: string;
   venue: string;
   totalBudget: number;
@@ -42,11 +65,21 @@ export interface WeddingInput {
   notes?: string;
 }
 
+export type WeddingUpdateCurrency = typeof WeddingUpdateCurrency[keyof typeof WeddingUpdateCurrency];
+
+
+export const WeddingUpdateCurrency = {
+  EUR: 'EUR',
+  GBP: 'GBP',
+  USD: 'USD',
+  CHF: 'CHF',
+} as const;
+
 export interface WeddingUpdate {
   names?: string;
   partner1?: string;
   partner2?: string;
-  currency?: string;
+  currency?: WeddingUpdateCurrency;
   weddingDate?: string;
   venue?: string;
   totalBudget?: number;

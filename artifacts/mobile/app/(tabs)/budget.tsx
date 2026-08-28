@@ -39,6 +39,7 @@ import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
 import { PaywallModal } from '@/components/PaywallModal';
+import { usePreferredCurrency } from '@/hooks/usePreferredCurrency';
 
 // ── Tour steps ────────────────────────────────────────────────────────────────
 const TOUR_STEPS = [
@@ -635,7 +636,8 @@ export default function BudgetScreen() {
   // useActiveWedding keeps the persisted selection available while the wedding
   // list is loading, so the budget request can start without waiting for it.
   const { activeWedding, weddingId: wId } = useActiveWedding();
-  const currency = activeWedding?.currency ?? 'EUR';
+  const preferredCurrency = usePreferredCurrency();
+  const currency = activeWedding?.currency ?? preferredCurrency;
 
   const {
     data: budgetSummary,

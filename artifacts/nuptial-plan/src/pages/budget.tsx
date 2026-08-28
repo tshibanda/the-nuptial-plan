@@ -68,7 +68,7 @@ const CHART_COLORS = [
 ];
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
-function DonutTooltip({ active, payload }: any) {
+function DonutTooltip({ active, payload, currency }: { active?: boolean; payload?: any[]; currency: string }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
@@ -78,7 +78,7 @@ function DonutTooltip({ active, payload }: any) {
     >
       <p className="text-[11px] font-semibold text-foreground">{d.name}</p>
       <p className="mt-0.5 text-[10px] text-[#8c8b86]">
-        {formatCurrency(d.allocatedCents)}
+        {formatCurrency(d.allocatedCents, currency)}
       </p>
     </div>
   );
@@ -91,9 +91,10 @@ interface DonutChartProps {
   onSelect: (id: number | null) => void;
   totalSpent: number;
   totalAllocated: number;
+  currency: string;
 }
 
-function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocated, language }: DonutChartProps & { language: 'fr' | 'en' }) {
+function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocated, currency, language }: DonutChartProps & { language: 'fr' | 'en' }) {
   const total = categories.reduce((s, c) => s + c.allocatedCents, 0);
   if (total === 0 || categories.length === 0) return null;
 
@@ -110,7 +111,7 @@ function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocat
     ? selectedCat.name.length > 12 ? selectedCat.name.slice(0, 11) + '…' : selectedCat.name
     : `${pct}%`;
   const centreLine2 = selectedCat
-    ? formatCurrency(selectedCat.spentCents)
+    ? formatCurrency(selectedCat.spentCents, currency)
     : language === 'fr' ? 'dépensé' : 'spent';
 
   const handleClick = (entry: any) => {
@@ -146,7 +147,7 @@ function DonutChart({ categories, selectedId, onSelect, totalSpent, totalAllocat
                   />
                 ))}
               </Pie>
-              <Tooltip content={<DonutTooltip />} />
+              <Tooltip content={<DonutTooltip currency={currency} />} />
             </PieChart>
           </ResponsiveContainer>
 
@@ -206,6 +207,7 @@ export default function Budget() {
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
+  const currency = activeWedding?.currency ?? 'EUR';
   const currencySymbol = ({ EUR: '€', GBP: '£', USD: '$', CHF: 'CHF' } as Record<string, string>)[activeWedding?.currency ?? 'EUR'] ?? activeWedding?.currency ?? '€';
   const { data: categories = [], isLoading } = useListBudgetCategories(activeWeddingId!);
   const { data: summary } = useGetBudgetSummary(activeWeddingId!);
@@ -423,9 +425,9 @@ export default function Budget() {
             <div>
               <p className="text-[10px] uppercase tracking-[0.16em] text-[#8c8b86]">{tr('Engagé', 'Committed')}</p>
               <p className="mt-1 font-serif text-[30px] text-foreground">
-                {formatCurrency(summary.totalSpent)}{' '}
+                {formatCurrency(summary.totalSpent, currency)}{' '}
                 <span className="font-sans text-[11px] text-[#8c8b86]">
-                  / {formatCurrency(summary.totalAllocated)}
+                  / {formatCurrency(summary.totalAllocated, currency)}
                 </span>
               </p>
             </div>
@@ -445,6 +447,7 @@ export default function Budget() {
           onSelect={setSelectedCategoryId}
           totalSpent={summary?.totalSpent ?? 0}
           totalAllocated={summary?.totalAllocated ?? 0}
+          currency={currency}
           language={language}
         />
       )}
@@ -511,8 +514,8 @@ export default function Budget() {
                       <p className="text-[12px] font-semibold text-[#3d4d55]">{category.name}</p>
                     </div>
                     <p className="mt-1 text-[10px] text-[#858b89]">
-                      {formatCurrency(category.spentCents)} /{' '}
-                      {formatCurrency(category.allocatedCents)}
+                      {formatCurrency(category.spentCents, currency)} /{' '}
+                      {formatCurrency(category.allocatedCents, currency)}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">

@@ -70,6 +70,7 @@ export default function Prestataires() {
   const { activeWeddingId } = useActiveWedding();
   const { data: weddings = [] } = useListWeddings();
   const activeWedding = weddings.find((w) => w.id === activeWeddingId);
+  const currency = activeWedding?.currency ?? 'EUR';
   const currencySymbol = ({ EUR: '€', GBP: '£', USD: '$', CHF: 'CHF' } as Record<string, string>)[activeWedding?.currency ?? 'EUR'] ?? activeWedding?.currency ?? '€';
   const { data: vendors = [], isLoading } = useListVendors(activeWeddingId!);
   const { data: addressBookEntries = [] } = useListAddressBookEntries();
@@ -485,7 +486,7 @@ export default function Prestataires() {
                   {language === 'fr' ? (vendorStatusMap[vendor.status] || vendor.status) : ({ confirmed: 'Confirmed', awaiting_contract: 'Contract pending', deposit_paid: 'Deposit paid', cancelled: 'Cancelled' }[vendor.status] || vendor.status)}
                 </span>
                 <span className="w-[72px] text-right font-serif text-[18px] text-muted-foreground">
-                  {formatCurrency(vendor.totalAmountCents)}
+                  {formatCurrency(vendor.totalAmountCents, currency)}
                 </span>
                 <button className="text-[#a5a19a]" onClick={() => handleEdit(vendor)} data-testid={`button-edit-vendor-${vendor.id}`}>
                   <CircleEllipsis size={17} />
@@ -502,7 +503,7 @@ export default function Prestataires() {
             {vendors.length} {tr(vendors.length > 1 ? 'prestataires' : 'prestataire', vendors.length > 1 ? 'vendors' : 'vendor')}
           </p>
           <p className="font-serif text-[22px] text-foreground">
-            {tr('Total :', 'Total:')} {formatCurrency(vendors.reduce((sum, v) => sum + v.totalAmountCents, 0))}
+            {tr('Total :', 'Total:')} {formatCurrency(vendors.reduce((sum, v) => sum + v.totalAmountCents, 0), currency)}
           </p>
         </div>
       )}

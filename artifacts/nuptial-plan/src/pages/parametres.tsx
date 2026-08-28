@@ -37,6 +37,10 @@ import {
   useListWeddings,
   getListWeddingsQueryKey,
   getGetWeddingQueryKey,
+  CURRENCIES,
+  DEFAULT_CURRENCY,
+  getPreferredCurrency,
+  SUPPORTED_CURRENCY_CODES,
 } from '@workspace/api-client-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -76,17 +80,10 @@ const TOUR_PAGES = [
   { key: 'business',     label: 'Business',      route: '/business',      icon: BriefcaseBusiness },
 ] as const;
 
-const CURRENCIES = [
-  { code: 'EUR', label: 'Euro (€)', symbol: '€' },
-  { code: 'GBP', label: 'Livre sterling (£)', symbol: '£' },
-  { code: 'USD', label: 'Dollar américain ($)', symbol: '$' },
-  { code: 'CHF', label: 'Franc suisse (CHF)', symbol: 'CHF' },
-];
-
 const weddingSchema = z.object({
   partner1: z.string().min(1, 'Requis'),
   partner2: z.string().min(1, 'Requis'),
-  currency: z.string().min(1),
+  currency: z.enum(SUPPORTED_CURRENCY_CODES),
   weddingDate: z.string().min(1, 'Requis'),
   venue: z.string().min(1, 'Requis'),
   totalBudget: z.number().min(0),
@@ -265,6 +262,8 @@ export default function Parametres() {
   const [profileFirstName, setProfileFirstName] = useState('');
   const [profileLastName, setProfileLastName] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
+  const [preferredCurrency, setPreferredCurrency] = useState(DEFAULT_CURRENCY);
+  const [preferredCurrencySaving, setPreferredCurrencySaving] = useState(false);
   const [accountDeleteOpen, setAccountDeleteOpen] = useState(false);
   const [accountDeleting, setAccountDeleting] = useState(false);
 
@@ -308,6 +307,29 @@ export default function Parametres() {
     }
   };
 
+  useEffect(() => {
+    setPreferredCurrency(getPreferredCurrency(user?.unsafeMetadata));
+  }, [user?.unsafeMetadata]);
+
+  const savePreferredCurrency = async (currency: typeof preferredCurrency) => {
+    if (!user || currency === preferredCurrency) return;
+    const previousCurrency = preferredCurrency;
+    setPreferredCurrency(currency);
+    setPreferredCurrencySaving(true);
+    try {
+      await user.update({
+        unsafeMetadata: { ...user.unsafeMetadata, preferredCurrency: currency },
+      });
+      await user.reload();
+      toast({ title: tr('Devise d’affichage enregistrée', 'Display currency saved') });
+    } catch {
+      setPreferredCurrency(previousCurrency);
+      toast({ title: tr('Erreur', 'Error'), description: tr('Impossible de mettre à jour la devise.', 'Unable to update the currency.'), variant: 'destructive' });
+    } finally {
+      setPreferredCurrencySaving(false);
+    }
+  };
+
   const replayTour = (tourKey: string, route: string) => {
     localStorage.removeItem(STORAGE_PREFIX + tourKey);
     if (tourKey === 'parametres') {
@@ -331,7 +353,7 @@ export default function Parametres() {
     defaultValues: {
       partner1: '',
       partner2: '',
-      currency: 'EUR',
+      currency: preferredCurrency,
       weddingDate: '',
       venue: '',
       totalBudget: 0,
@@ -346,7 +368,7 @@ export default function Parametres() {
     form.reset({
       partner1: wedding.partner1 ?? '',
       partner2: wedding.partner2 ?? '',
-      currency: wedding.currency ?? 'EUR',
+      currency: wedding.currency ?? preferredCurrency,
       weddingDate: wedding.weddingDate ?? '',
       venue: wedding.venue ?? '',
       totalBudget: (wedding.totalBudget ?? 0) / 100,
@@ -611,6 +633,9 @@ export default function Parametres() {
 
           {/* ── Budget ── */}
           <SettingsSection icon={Wallet} eyebrow="Finances" title="Budget & devise">
+              <p className="mb-4 text-[11px] text-muted-foreground">
+                {tr('Changer la devise ne convertit pas les montants déjà saisis.', 'Changing the currency does not convert existing amounts.')}
+              </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <FormField
                 control={form.control}
@@ -626,7 +651,7 @@ export default function Parametres() {
                         className="w-full rounded-md border border-border bg-card px-3 py-2 text-[12px] text-foreground focus:outline-none focus:border-ring"
                       >
                         {CURRENCIES.map((c) => (
-                          <option key={c.code} value={c.code}>{c.label}</option>
+                          <option key={c.code} value={c.code}>{c.label[language]}</option>
                         ))}
                       </select>
                     </FormControl>
@@ -712,6 +737,7 @@ export default function Parametres() {
               const imageUrl = user?.imageUrl ?? null;
 
               return (
+                <>
                 <div className="flex items-center gap-4">
                   {imageUrl ? (
                     <img
@@ -732,7 +758,7 @@ export default function Parametres() {
                       {initials}
                     </span>
                   )}
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="text-[14px] font-semibold text-foreground">{fullName}</p>
                       <button
@@ -752,6 +778,26 @@ export default function Parametres() {
                     </p>
                   </div>
                 </div>
+                <div className="mt-5 border-t border-border/50 pt-4">
+                  <label htmlFor="profile-currency" className="text-[11px] font-semibold text-foreground">
+                    {tr('Devise d’affichage', 'Display currency')}
+                  </label>
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    {tr('Utilisée hors d’un mariage et comme devise par défaut des nouveaux dossiers.', 'Used outside a wedding file and as the default currency for new wedding files.')}
+                  </p>
+                  <select
+                    id="profile-currency"
+                    value={preferredCurrency}
+                    disabled={preferredCurrencySaving}
+                    onChange={(event) => void savePreferredCurrency(event.target.value as typeof preferredCurrency)}
+                    className="mt-3 w-full rounded-md border border-border bg-card px-3 py-2 text-[12px] text-foreground focus:border-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {CURRENCIES.map((currency) => (
+                      <option key={currency.code} value={currency.code}>{currency.label[language]}</option>
+                    ))}
+                  </select>
+                </div>
+                </>
               );
             })()}
           </SettingsSection>

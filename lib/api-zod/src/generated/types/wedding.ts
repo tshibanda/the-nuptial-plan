@@ -5,6 +5,7 @@
  * The Nuptial Plan – Wedding planner API
  * OpenAPI spec version: 0.1.0
  */
+import type { WeddingCurrency } from './weddingCurrency';
 
 export interface Wedding {
   id: number;
@@ -15,7 +16,7 @@ export interface Wedding {
   /** Prénom du second marié */
   partner2?: string;
   /** ISO 4217 currency code, e.g. EUR, GBP, USD */
-  currency: string;
+  currency: WeddingCurrency;
   /** ISO date string (YYYY-MM-DD) */
   weddingDate: string;
   venue: string;

@@ -8,6 +8,7 @@ import { useExpoPushTokenRegistration } from '@/hooks/useExpoPushTokenRegistrati
 import { usePaymentNotifications } from '@/hooks/usePaymentNotifications';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { useActiveWedding } from '@/hooks/useActiveWedding';
+import { usePreferredCurrency } from '@/hooks/usePreferredCurrency';
 
 /**
  * Invisible manager component that:
@@ -23,7 +24,8 @@ export function NotificationManager() {
   const { isSignedIn } = useAuth();
 
   const { activeWedding, weddingId } = useActiveWedding();
-  const currency = activeWedding?.currency ?? 'EUR';
+  const preferredCurrency = usePreferredCurrency();
+  const currency = activeWedding?.currency ?? preferredCurrency;
 
   // Permissions + Android channel setup (runs once on mount)
   const notificationPermissionGranted = useNotificationSetup(Boolean(isSignedIn));

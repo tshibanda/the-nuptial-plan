@@ -14,6 +14,8 @@ import {
   useDeleteWedding,
   useCreateWedding,
   getListWeddingsQueryKey,
+  CURRENCIES,
+  type SupportedCurrency,
 } from '@workspace/api-client-react';
 import { useWedding } from '@/context/WeddingContext';
 import { useLocalization } from '@/context/LocalizationContext';
@@ -25,6 +27,7 @@ import { daysUntil, initials } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { TourSheet } from '@/components/TourSheet';
+import { usePreferredCurrency } from '@/hooks/usePreferredCurrency';
 
 const TOUR_STEPS = [
   {
@@ -55,18 +58,12 @@ const TOUR_STEPS_EN = [
   { icon: 'refresh-cw', title: 'Refresh the list', description: 'Pull down to sync the list with the latest changes made in the web app.' },
 ];
 
-const CURRENCIES = [
-  { code: 'EUR', label: 'Euro (€)' },
-  { code: 'GBP', label: 'Livre (£)' },
-  { code: 'USD', label: 'Dollar ($)' },
-  { code: 'CHF', label: 'Franc suisse' },
-] as const;
-
 export default function MariagesScreen() {
   const colors = useColors();
   const { language, locale, t } = useLocalization();
   const insets = useSafeAreaInsets();
   const { selectedWeddingId, selectWedding } = useWedding();
+  const preferredCurrency = usePreferredCurrency();
   const topPad = Platform.OS === 'web' ? 67 : 0;
   const { tourVisible, openTour, closeTour } = useTour('tour:mariages');
 
@@ -81,7 +78,7 @@ export default function MariagesScreen() {
   const [partner2, setPartner2] = useState('');
   const [weddingDate, setWeddingDate] = useState('');
   const [venue, setVenue] = useState('');
-  const [currency, setCurrency] = useState('EUR');
+  const [currency, setCurrency] = useState<SupportedCurrency>(preferredCurrency);
   const [totalBudget, setTotalBudget] = useState('');
   const [guestCount, setGuestCount] = useState('');
 
@@ -90,9 +87,14 @@ export default function MariagesScreen() {
     setPartner2('');
     setWeddingDate('');
     setVenue('');
-    setCurrency('EUR');
+    setCurrency(preferredCurrency);
     setTotalBudget('');
     setGuestCount('');
+  };
+
+  const openCreateForm = () => {
+    resetCreateForm();
+    setCreateOpen(true);
   };
 
   const handleCreate = () => {
@@ -214,7 +216,7 @@ export default function MariagesScreen() {
             <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>THE NUPTIAL PLAN</Text>
             <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>{language === 'fr' ? 'Vos mariages' : 'Your weddings'}</Text>
             <TouchableOpacity
-              onPress={() => setCreateOpen(true)}
+              onPress={openCreateForm}
               activeOpacity={0.8}
               style={ss.createButton}
             >
@@ -233,7 +235,7 @@ export default function MariagesScreen() {
             subtitle={language === 'fr' ? 'Vous pouvez créer votre premier dossier directement ici, dans l’onglet « Vos mariages ».' : 'Create your first file directly here in the “Your weddings” tab.'}
           />
           <TouchableOpacity
-            onPress={() => setCreateOpen(true)}
+            onPress={openCreateForm}
             activeOpacity={0.8}
             style={[ss.emptyCreateButton, { backgroundColor: colors.plum }]}
           >

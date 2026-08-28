@@ -41,6 +41,9 @@ import {
   useListNotifications,
   useMarkNotificationRead,
   getListNotificationsQueryKey,
+  CURRENCIES,
+  getPreferredCurrency,
+  SUPPORTED_CURRENCY_CODES,
 } from '@workspace/api-client-react';
 import { useActiveWedding } from '@/lib/wedding-context';
 import { formatDateShort, calculateDaysUntil } from '@/lib/format';
@@ -88,17 +91,10 @@ const navItems = [
   { label: ['Paramètres', 'Settings'], icon: Settings, path: '/parametres' },
 ];
 
-const CURRENCIES = [
-  { code: 'EUR', label: 'Euro (€)', symbol: '€' },
-  { code: 'GBP', label: 'Livre sterling (£)', symbol: '£' },
-  { code: 'USD', label: 'Dollar américain ($)', symbol: '$' },
-  { code: 'CHF', label: 'Franc suisse (CHF)', symbol: 'CHF' },
-];
-
 const newWeddingSchema = z.object({
   partner1: z.string().min(1, 'Entrez le prénom du premier marié'),
   partner2: z.string().min(1, 'Entrez le prénom du second marié'),
-  currency: z.string().min(1),
+  currency: z.enum(SUPPORTED_CURRENCY_CODES),
   weddingDate: z.string().min(1, 'La date est requise'),
   venue: z.string().min(1, 'Le lieu est requis'),
   totalBudget: z.number().min(0),
@@ -117,14 +113,19 @@ function CreateWeddingDialog({
   onCreated: (id: number) => void;
 }) {
   const { toast } = useToast();
+  const { user } = useUser();
   const { language } = useLanguage();
   const copy = (fr: string, english: string) => language === 'en' ? english : fr;
   const queryClient = useQueryClient();
   const createWedding = useCreateWedding();
   const form = useForm<NewWeddingData>({
     resolver: zodResolver(newWeddingSchema),
-    defaultValues: { partner1: '', partner2: '', currency: 'EUR', weddingDate: '', venue: '', totalBudget: 0, guestCount: 0, notes: '' },
+    defaultValues: { partner1: '', partner2: '', currency: getPreferredCurrency(user?.unsafeMetadata), weddingDate: '', venue: '', totalBudget: 0, guestCount: 0, notes: '' },
   });
+
+  useEffect(() => {
+    if (open) form.setValue('currency', getPreferredCurrency(user?.unsafeMetadata));
+  }, [open, user?.unsafeMetadata, form]);
 
   const onSubmit = (data: NewWeddingData) => {
     const names = `${data.partner1.trim()} & ${data.partner2.trim()}`;
@@ -134,7 +135,7 @@ function CreateWeddingDialog({
         onSuccess: (wedding) => {
           queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
           toast({ title: copy('Mariage créé', 'Wedding created'), description: wedding.names });
-          form.reset();
+          form.reset({ partner1: '', partner2: '', currency: getPreferredCurrency(user?.unsafeMetadata), weddingDate: '', venue: '', totalBudget: 0, guestCount: 0, notes: '' });
           onCreated(wedding.id);
           onClose();
         },
@@ -196,8 +197,8 @@ function CreateWeddingDialog({
                       className="w-full border border-border bg-card px-3 py-2 text-[12px] text-foreground focus:outline-none focus:border-ring rounded-md"
                       data-testid="select-wedding-currency"
                     >
-                      {CURRENCIES.map((c) => (
-                        <option key={c.code} value={c.code}>{c.label}</option>
+                        {CURRENCIES.map((c) => (
+                          <option key={c.code} value={c.code}>{c.label[language]}</option>
                       ))}
                     </select>
                   </FormControl>
