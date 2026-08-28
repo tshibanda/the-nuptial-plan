@@ -245,6 +245,10 @@ async function downloadBundle(platform, timestamp) {
   url.searchParams.set('dev', 'false');
   url.searchParams.set('hot', 'false');
   url.searchParams.set('lazy', 'false');
+  // Expo Router's Babel transform needs the route directory in every clean
+  // bundle request. Development caches can hide this missing parameter, while
+  // publication starts from a clean Metro cache and fails in _ctx.*.js.
+  url.searchParams.set('transform.routerRoot', 'app');
   // Native Expo Go loads these static bundles over the network, so reliability
   // during publication matters more than a small minification saving. Skipping
   // Metro's second optimisation pass keeps the dual-platform build within the
