@@ -1,7 +1,7 @@
 {
   "cli": {
     "version": ">= 16.0.0",
-    "appVersionSource": "local"
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -21,6 +21,9 @@
     "production": {
       "distribution": "store",
       "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
       "env": {
         "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_sOHUPxTDljGvuIOreRYpqqzNPgF",
         "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_xXzKsZyFzpGjleJczYcbrRsRRDI"
