@@ -9,7 +9,8 @@
       "distribution": "internal",
       "node": "22.13.0",
       "env": {
-        "NPM_CONFIG_NODE_LINKER": "hoisted"
+        "NPM_CONFIG_NODE_LINKER": "hoisted",
+        "NPM_CONFIG_DANGEROUSLY_ALLOW_ALL_BUILDS": "true"
       },
       "android": {
         "image": "latest",
@@ -20,7 +21,8 @@
       "distribution": "internal",
       "node": "22.13.0",
       "env": {
-        "NPM_CONFIG_NODE_LINKER": "hoisted"
+        "NPM_CONFIG_NODE_LINKER": "hoisted",
+        "NPM_CONFIG_DANGEROUSLY_ALLOW_ALL_BUILDS": "true"
       },
       "android": {
         "image": "latest",
@@ -31,7 +33,8 @@
       "autoIncrement": true,
       "node": "22.13.0",
       "env": {
-        "NPM_CONFIG_NODE_LINKER": "hoisted"
+        "NPM_CONFIG_NODE_LINKER": "hoisted",
+        "NPM_CONFIG_DANGEROUSLY_ALLOW_ALL_BUILDS": "true"
       },
       "android": {
         "image": "latest",
