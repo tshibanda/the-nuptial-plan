@@ -648,6 +648,8 @@ export default function BudgetScreen() {
     query: {
       queryKey: getGetBudgetSummaryQueryKey(wId ?? 0),
       enabled: wId !== null,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
     },
   });
 

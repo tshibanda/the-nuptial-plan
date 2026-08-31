@@ -160,7 +160,7 @@ export default function InvitesScreen() {
   const { data: guests, isLoading, refetch, isRefetching } = useListGuests(wId, {
     query: {
       queryKey: getListGuestsQueryKey(wId),
-      enabled: hasWedding,
+      enabled: hasWedding && isPremium,
       staleTime: MOBILE_TAB_STALE_TIME,
       gcTime: 30 * 60 * 1000,
     },
