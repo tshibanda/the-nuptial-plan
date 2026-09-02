@@ -7,7 +7,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Clerk's Apple provider icon uses the supplied Apple mark, recolored white
+/* Clerk's Apple provider icon uses the supplied Apple mark, recolored black
  * for the social button. The provider-specific appearance class keeps Google
  * and the other sign-in methods unchanged. */
 .appleSocialIcon {
@@ -15,7 +15,7 @@
   height: 1.25rem;
   display: block;
   flex: 0 0 auto;
-  background-color: #ffffff;
+  background-color: #000000;
   -webkit-mask: url('/apple-logo-white.svg') center / contain no-repeat;
   mask: url('/apple-logo-white.svg') center / contain no-repeat;
 }
