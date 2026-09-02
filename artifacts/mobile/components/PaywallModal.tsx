@@ -116,7 +116,7 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
                     <Text style={[pw.summaryDetail, { fontFamily: SANS, color: colors.mutedForeground }]}>
                        {annual ? (en ? 'Annual subscription · 12 months' : 'Abonnement annuel · 12 mois') : (en ? 'Monthly subscription · 1 month' : 'Abonnement mensuel · 1 mois')}
                     </Text>
-                     <Text style={[pw.summaryPrice, { fontFamily: SERIF, color: colors.plum }]}>{getLocalizedPackagePrice(pkg) ?? (en ? 'Price set by your store' : 'Prix selon votre boutique')}</Text>
+                     <Text style={[pw.summaryPrice, { fontFamily: SERIF, color: annual ? colors.plumLight : colors.plum }]}>{getLocalizedPackagePrice(pkg) ?? (en ? 'Price set by your store' : 'Prix selon votre boutique')}</Text>
                      {annual && annualMonthlyPrice(pkg, locale, language) && <Text style={[pw.summaryDetail, { fontFamily: SANS, color: colors.mutedForeground }]}>{annualMonthlyPrice(pkg, locale, language)}</Text>}
                   </View>
                    <Text style={[pw.chooseText, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>{en ? 'Choose' : 'Choisir'}</Text>
@@ -155,7 +155,7 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
           {/* ── Trial badge ──────────────────────────────────────────────── */}
           <View style={[pw.trialBadge, { backgroundColor: colors.sageBg, borderColor: colors.sage + '44' }]}>
             <Feather name="gift" size={14} color={colors.sageDark} />
-            <Text style={[pw.trialText, { fontFamily: SANS_SEMIBOLD, color: colors.sageDark }]}>
+            <Text style={[pw.trialText, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>
                {en ? 'One-month free trial included' : 'Essai gratuit d’un mois inclus'}
             </Text>
           </View>
@@ -196,7 +196,7 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
                         <Text style={[pw.packageName, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>
                            {isAnnual ? (en ? 'Annual' : 'Annuel') : (en ? 'Monthly' : 'Mensuel')}
                         </Text>
-                        <Text style={[pw.packagePrice, { fontFamily: SERIF, color: isAnnual ? colors.plum : colors.foreground }]}>
+                        <Text style={[pw.packagePrice, { fontFamily: SERIF, color: isAnnual ? colors.plumLight : colors.foreground }]}>
                            {getLocalizedPackagePrice(pkg) ?? (en ? 'Price set by your store' : 'Prix selon votre boutique')}
                         </Text>
                         {isAnnual && (

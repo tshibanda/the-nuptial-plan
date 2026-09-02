@@ -213,7 +213,18 @@ export default function ProfilScreen() {
   const showWebOnly = (feature: string) =>
      Alert.alert(feature, copy.webOnly + feature.toLowerCase() + copy.webOnlyEnd, [{ text: 'OK' }]);
 
+  const openSubscriptionManagement = () => {
+    const url = Platform.OS === 'android'
+      ? `https://play.google.com/store/account/subscriptions?sku=${subscription.productIdentifier ?? 'tnp_premium_monthly'}&package=app.thenuptialplan.com`
+      : 'itms-apps://apps.apple.com/account/subscriptions';
+    void Linking.openURL(url);
+  };
+
   const openSubscription = () => {
+    if (subscription.isActive) {
+      openSubscriptionManagement();
+      return;
+    }
     setPaywallVisible(true);
   };
 
@@ -396,7 +407,7 @@ export default function ProfilScreen() {
               </View>
               <Feather name="chevron-right" size={14} color={colors.goldDim} />
             </TouchableOpacity>
-            {subscription.offerings?.current?.availablePackages?.map((pkg: any) => (
+            {!subscription.isActive && subscription.offerings?.current?.availablePackages?.map((pkg: any) => (
               <TouchableOpacity key={pkg.identifier} disabled={subscription.loading} onPress={() => void subscription.purchase(pkg)}
                 style={{ minHeight: 52, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', borderColor: colors.border, backgroundColor: colors.background }}>
                 <View style={{ flex: 1 }}>
@@ -406,17 +417,12 @@ export default function ProfilScreen() {
                 <Feather name="chevron-right" size={14} color={colors.goldDim} />
               </TouchableOpacity>
             ))}
-             {!subscription.available && <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>{copy.purchaseUnavailable}</Text>}
-             {!isNativeStorePricingAvailable && subscription.available && <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>{copy.nativePrice}</Text>}
+             {!subscription.isActive && !subscription.available && <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>{copy.purchaseUnavailable}</Text>}
+             {!subscription.isActive && !isNativeStorePricingAvailable && subscription.available && <Text style={[{ fontSize: 11, lineHeight: 16 }, { fontFamily: SANS, color: colors.mutedForeground }]}>{copy.nativePrice}</Text>}
             {subscription.isActive && (
-              <TouchableOpacity onPress={() => {
-                const url = Platform.OS === 'android'
-                  ? `https://play.google.com/store/account/subscriptions?sku=${subscription.productIdentifier ?? 'tnp_premium_monthly'}&package=app.thenuptialplan.com`
-                  : 'itms-apps://apps.apple.com/account/subscriptions';
-                void Linking.openURL(url);
-              }} style={{ minHeight: 44, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7, backgroundColor: colors.plum + '14', borderColor: colors.plum + '30' }}>
-                <Feather name="external-link" size={13} color={colors.plum} />
-                 <Text style={[{ fontSize: 11 }, { fontFamily: SANS_SEMIBOLD, color: colors.plum }]}>{copy.manage}</Text>
+              <TouchableOpacity onPress={openSubscriptionManagement} style={{ minHeight: 50, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7, backgroundColor: colors.plumLight + '28', borderColor: colors.plumLight }}>
+                <Feather name="external-link" size={14} color={colors.plumLight} />
+                 <Text style={[{ fontSize: 12 }, { fontFamily: SANS_SEMIBOLD, color: colors.plumLight }]}>{copy.manage}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity onPress={() => void subscription.restore()} disabled={subscription.loading} style={{ alignItems: 'center', paddingVertical: 4 }}>
