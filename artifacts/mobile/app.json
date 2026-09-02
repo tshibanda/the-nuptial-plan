@@ -3,7 +3,7 @@
     "name": "The Nuptial Plan",
     "slug": "mobile",
     "owner": "eldamdu78s-team",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.thenuptialplan.com",
-      "buildNumber": "37"
+      "buildNumber": "38"
     },
     "android": {
       "package": "app.thenuptialplan.com"
