@@ -44,12 +44,52 @@ const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const IOS_APP_STORE_URL = 'https://apps.apple.com/app/id6799479925';
+const ANDROID_APP_STORE_URL = 'https://play.google.com/store/apps/details?id=app.thenuptialplan.com';
 
 // Clerk passes full paths; wouter's setLocation prepends base — strip to avoid doubling.
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)
     ? path.slice(basePath.length) || '/'
     : path;
+}
+
+function MobileStoreRedirectGate({ children }: { children: React.ReactNode }) {
+  const { t } = useLanguage();
+  const [isChecking, setIsChecking] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
+
+  useEffect(() => {
+    const userAgent = window.navigator.userAgent;
+    const isIOS = /iPhone|iPad|iPod/i.test(userAgent)
+      || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+    const isAndroid = /Android/i.test(userAgent);
+    const currentPath = stripBase(window.location.pathname);
+    const isPublicContent = currentPath === '/privacy'
+      || currentPath === '/policy'
+      || currentPath.startsWith('/rsvp/');
+
+    if ((!isIOS && !isAndroid) || isPublicContent) {
+      setIsChecking(false);
+      return;
+    }
+
+    setRedirecting(true);
+    window.location.replace(isIOS ? IOS_APP_STORE_URL : ANDROID_APP_STORE_URL);
+  }, []);
+
+  if (isChecking || redirecting) {
+    return (
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-6 text-center">
+        <img src="/tnp-gold-logo.png" alt="The Nuptial Plan" className="mb-5 h-20 w-20 object-contain" />
+        <h1 className="font-serif text-2xl text-[#3C1A3C]">The Nuptial Plan</h1>
+        <p className="mt-3 max-w-xs text-sm leading-6 text-[#716471]">
+          {t('landing.download')}
+        </p>
+      </div>
+    );
+  }
+
+  return children;
 }
 
 if (!clerkPubKey) {
@@ -371,7 +411,9 @@ export default function App() {
   return (
     <WouterRouter base={basePath}>
       <LanguageProvider>
-        <ClerkProviderWithRoutes />
+        <MobileStoreRedirectGate>
+          <ClerkProviderWithRoutes />
+        </MobileStoreRedirectGate>
       </LanguageProvider>
     </WouterRouter>
   );
