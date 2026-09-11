@@ -12,6 +12,7 @@ import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { useLocalization } from '@/context/LocalizationContext';
+import { PromoCodeSection } from '@/components/PromoCodeSection';
 
 function premiumFeatures(language: 'fr' | 'en') {
   const labels = language === 'fr'
@@ -57,6 +58,8 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
       <View style={[pw.root, { backgroundColor: colors.background }]}>
         <ScrollView
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
           contentContainerStyle={[
             pw.scroll,
             { paddingTop: Platform.OS === 'ios' ? insets.top + 12 : 20, paddingBottom: insets.bottom + 32 },
@@ -127,6 +130,7 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
               <TouchableOpacity onPress={() => void subscription.restore()} disabled={subscription.loading} style={pw.restoreBtn}>
                 <Text style={[pw.restoreText, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>{en ? 'Restore purchases' : 'Restaurer les achats'}</Text>
               </TouchableOpacity>
+              <PromoCodeSection onRedeemed={onClose} />
               <View style={pw.legalLinks}>
                 <Text onPress={() => openLegalDocument('/legal/privacy')} style={[pw.legalLink, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>{en ? 'Privacy policy' : 'Politique de confidentialité'}</Text>
                 <Text style={[pw.legalSeparator, { color: colors.mutedForeground }]}>·</Text>
