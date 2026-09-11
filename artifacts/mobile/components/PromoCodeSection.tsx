@@ -111,7 +111,7 @@ export function PromoCodeSection({ onRedeemed }: PromoCodeSectionProps) {
         style={s.trigger}
         accessibilityRole="button"
       >
-        <Text style={[s.triggerText, { fontFamily: SANS_MEDIUM, color: colors.plum }]}>
+        <Text style={[s.triggerText, { fontFamily: SANS_MEDIUM, color: '#FBF5FB' }]}>
           {en ? 'I have a promo code' : 'J’ai un code promo'}
         </Text>
       </TouchableOpacity>
