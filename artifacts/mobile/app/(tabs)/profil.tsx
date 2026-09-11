@@ -407,8 +407,8 @@ export default function ProfilScreen() {
               </View>
               <Feather name="chevron-right" size={14} color={colors.goldDim} />
             </TouchableOpacity>
-            {!subscription.isActive && subscription.offerings?.current?.availablePackages?.map((pkg: any) => (
-              <TouchableOpacity key={pkg.identifier} disabled={subscription.loading} onPress={() => void subscription.purchase(pkg)}
+             {!subscription.isActive && subscription.offerings?.current?.availablePackages?.map((pkg: any) => (
+               <TouchableOpacity key={pkg.identifier} disabled={subscription.loading} onPress={() => setPaywallVisible(true)}
                 style={{ minHeight: 52, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', borderColor: colors.border, backgroundColor: colors.background }}>
                 <View style={{ flex: 1 }}>
                    <Text style={[{ fontSize: 12 }, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{pkg.packageType === 'ANNUAL' ? copy.annual : copy.monthly}</Text>
