@@ -71,6 +71,15 @@ function metaCredentials(platform: "facebook" | "instagram"): { appId: string; a
   return { appId, appSecret };
 }
 
+function tiktokCredentials(): { clientKey: string; clientSecret: string } {
+  const clientKey = process.env.TIKTOK_CLIENT_KEY?.trim();
+  const clientSecret = process.env.TIKTOK_CLIENT_SECRET?.trim();
+  if (!clientKey || !clientSecret) {
+    throw new Error("TikTok credentials not configured");
+  }
+  return { clientKey, clientSecret };
+}
+
 /** Sign a state token so callbacks cannot be forged. */
 function signState(payload: string): string {
   const secret = process.env.SESSION_SECRET;
@@ -134,7 +143,7 @@ function providerOauthUrl(platform: Platform, userId: string, client: OAuthClien
     return oauthUrl.toString();
   }
 
-  const clientKey = process.env.TIKTOK_CLIENT_KEY;
+  const clientKey = process.env.TIKTOK_CLIENT_KEY?.trim();
   if (!clientKey) throw new Error("TikTok credentials not configured. Please set TIKTOK_CLIENT_KEY.");
   const oauthUrl = new URL("https://www.tiktok.com/v2/auth/authorize/");
   oauthUrl.searchParams.set("client_key", clientKey);
@@ -562,9 +571,7 @@ export async function oauthCallbackHandler(req: Request, res: Response): Promise
       }
 
     } else if (platform === "tiktok") {
-      const clientKey = process.env.TIKTOK_CLIENT_KEY;
-      const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
-      if (!clientKey || !clientSecret) throw new Error("TikTok credentials not configured");
+      const { clientKey, clientSecret } = tiktokCredentials();
 
       const tokenRes = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
         method: "POST",
@@ -754,8 +761,8 @@ export async function refreshSocialAccountStats(account: SocialAccount): Promise
     } else if (platform === "instagram" && account.pageId) {
       statsCache = await fetchInstagramStats(account.accessToken, account.pageId);
     } else if (platform === "tiktok") {
-      const clientKey = process.env.TIKTOK_CLIENT_KEY;
-      const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
+      const clientKey = process.env.TIKTOK_CLIENT_KEY?.trim();
+      const clientSecret = process.env.TIKTOK_CLIENT_SECRET?.trim();
       if (clientKey && clientSecret && account.refreshToken) {
         try {
           const refreshRes = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
