@@ -55,6 +55,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n';
+import { trackEvent } from '@/lib/analytics';
 
 // ── Excel parsing ──────────────────────────────────────────────────────────────
 type RsvpStatus = 'confirmed' | 'pending' | 'declined';
@@ -178,6 +179,9 @@ export default function Invites() {
     if (editingGuest) {
       updateGuest.mutate({ weddingId: activeWeddingId, id: editingGuest, data }, {
         onSuccess: () => {
+          trackEvent(editingGuest ? 'guest_updated' : 'guest_added', {
+            rsvp_status: data.rsvpStatus,
+          });
           queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(activeWeddingId) });
           queryClient.invalidateQueries({ queryKey: getGetGuestStatsQueryKey(activeWeddingId) });
           toast({ title: tr('Invité mis à jour', 'Guest updated') });
@@ -246,6 +250,10 @@ export default function Invites() {
       { weddingId: activeWeddingId, data: { guests: importGuests_ } },
       {
         onSuccess: (result) => {
+          trackEvent('guests_imported', {
+            created: result.created,
+            skipped: result.skipped,
+          });
           queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(activeWeddingId) });
           queryClient.invalidateQueries({ queryKey: getGetGuestStatsQueryKey(activeWeddingId) });
           toast({ title: `${result.created} invité${result.created > 1 ? 's' : ''} importé${result.created > 1 ? 's' : ''}${result.skipped > 0 ? ` (${result.skipped} ignoré${result.skipped > 1 ? 's' : ''})` : ''}` });

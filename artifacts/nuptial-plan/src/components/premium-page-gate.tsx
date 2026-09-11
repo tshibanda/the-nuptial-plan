@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Award, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n';
+import { trackEvent } from '@/lib/analytics';
 
 type SubscriptionStatus = { subscription: { status: string; trialEndsAt: string | null } | null };
 type PlansResponse = { data: Array<{ lookupKey: string; plan: 'monthly' | 'annual'; amount: number | null; currency?: string }> };
@@ -32,8 +33,12 @@ export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
   const [busy, setBusy] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const checkout = async (lookupKey: string) => {
+  const checkout = async (lookupKey: string, plan: 'monthly' | 'annual') => {
     setBusy(lookupKey);
+    trackEvent('subscription_checkout_started', {
+      plan,
+      location: 'premium_gate',
+    });
     try {
       const response = await fetch('/api/subscription/checkout', {
         method: 'POST',
@@ -76,7 +81,7 @@ export function PremiumPageGate({ featureLabel }: { featureLabel: string }) {
               <Button
                 key={plan.lookupKey}
                 disabled={isLoading || busy !== null}
-                onClick={() => void checkout(plan.lookupKey)}
+                onClick={() => void checkout(plan.lookupKey, plan.plan)}
                 className="h-auto justify-start border-[#C8A96E] bg-[#E2B93B] px-4 py-3 text-left text-white hover:bg-[#F0CC55] hover:text-white"
               >
                 <Award size={15} />

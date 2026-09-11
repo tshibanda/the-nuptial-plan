@@ -74,6 +74,7 @@ import { usePremiumStatus } from '@/components/premium-page-gate';
 import { canAccessSocials } from '@/lib/social-access';
 import { LanguageSelector } from '@/components/language-selector';
 import { useLanguage } from '@/lib/i18n';
+import { trackEvent } from '@/lib/analytics';
 
 const navItems = [
   { label: ['Aperçu', 'Overview'], icon: Home, path: '/' },
@@ -133,6 +134,11 @@ function CreateWeddingDialog({
       { data: { names, partner1: data.partner1.trim(), partner2: data.partner2.trim(), currency: data.currency, weddingDate: data.weddingDate, venue: data.venue, totalBudget: Math.round(data.totalBudget * 100), guestCount: data.guestCount, notes: data.notes } },
       {
         onSuccess: (wedding) => {
+          trackEvent('wedding_created', {
+            currency: data.currency,
+            guest_count: data.guestCount,
+            has_budget: data.totalBudget > 0,
+          });
           queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
           toast({ title: copy('Mariage créé', 'Wedding created'), description: wedding.names });
           form.reset({ partner1: '', partner2: '', currency: getNewWeddingCurrency(user?.unsafeMetadata), weddingDate: '', venue: '', totalBudget: 0, guestCount: 0, notes: '' });

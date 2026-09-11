@@ -45,6 +45,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n';
+import { trackEvent } from '@/lib/analytics';
 
 const paymentSchema = (language: 'en' | 'fr') => z.object({
   vendorId: z.number().optional(),
@@ -99,6 +100,9 @@ export default function Paiements() {
         { weddingId: activeWeddingId, id: editingPayment, data },
         {
           onSuccess: () => {
+            trackEvent(editingPayment ? 'payment_updated' : 'payment_added', {
+              status: data.status,
+            });
             queryClient.invalidateQueries({ queryKey: getListPaymentsQueryKey(activeWeddingId) });
             toast({ title: tr('Paiement mis à jour', 'Payment updated') });
             setOpen(false);

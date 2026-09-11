@@ -49,6 +49,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n';
+import { trackEvent } from '@/lib/analytics';
 
 const vendorSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -107,6 +108,9 @@ export default function Prestataires() {
         { weddingId: activeWeddingId, id: editingVendor, data },
         {
           onSuccess: () => {
+            trackEvent(editingVendor ? 'vendor_updated' : 'vendor_added', {
+              status: data.status,
+            });
             queryClient.invalidateQueries({ queryKey: getListVendorsQueryKey(activeWeddingId) });
             toast({ title: tr('Prestataire mis à jour', 'Vendor updated') });
             setOpen(false);

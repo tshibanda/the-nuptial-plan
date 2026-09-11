@@ -64,6 +64,7 @@ import {
 } from '@/components/ui/dialog';
 import { LanguageSelector } from '@/components/language-selector';
 import { useLanguage } from '@/lib/i18n';
+import { trackEvent } from '@/lib/analytics';
 
 /* ── Constants ── */
 const TOUR_PAGES = [
@@ -154,8 +155,12 @@ function SubscriptionSection() {
   const [busy, setBusy] = useState<string | null>(null);
   const [portalBusy, setPortalBusy] = useState(false);
 
-  const checkout = async (lookupKey: string) => {
+  const checkout = async (lookupKey: string, plan: 'monthly' | 'annual') => {
     setBusy(lookupKey);
+    trackEvent('subscription_checkout_started', {
+      plan,
+      location: 'subscription_settings',
+    });
     try {
       const response = await fetch('/api/subscription/checkout', {
         method: 'POST',
@@ -177,6 +182,7 @@ function SubscriptionSection() {
       const response = await fetch('/api/subscription/portal', { method: 'POST', credentials: 'include' });
       const data = await response.json() as { url?: string; error?: string };
       if (!response.ok || !data.url) throw new Error(data.error ?? 'Portail de gestion indisponible');
+      trackEvent('subscription_portal_opened', { location: 'subscription_settings' });
       window.location.assign(data.url);
     } catch (error) {
       toast({
@@ -218,7 +224,7 @@ function SubscriptionSection() {
                 variant={plan.plan === 'annual' ? 'default' : 'outline'}
                 className="h-auto justify-between rounded-xl px-4 py-4 text-left"
                 disabled={plansLoading || busy !== null}
-                onClick={() => void checkout(plan.lookupKey)}
+                onClick={() => void checkout(plan.lookupKey, plan.plan)}
               >
                 <span>
                   <span className="block font-medium">{plan.plan === 'annual' ? 'Abonnement annuel' : 'Abonnement mensuel'}</span>

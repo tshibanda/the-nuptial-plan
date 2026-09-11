@@ -37,6 +37,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n';
+import { trackEvent } from '@/lib/analytics';
 import {
   PieChart,
   Pie,
@@ -240,6 +241,9 @@ export default function Budget() {
         { weddingId: activeWeddingId, id: editingCategory, data },
         {
           onSuccess: () => {
+            trackEvent(editingCategory ? 'budget_category_updated' : 'budget_category_added', {
+              has_allocation: data.allocatedCents > 0,
+            });
             queryClient.invalidateQueries({ queryKey: getListBudgetCategoriesQueryKey(activeWeddingId) });
             queryClient.invalidateQueries({ queryKey: getGetBudgetSummaryQueryKey(activeWeddingId) });
             toast({ title: tr('Catégorie mise à jour', 'Category updated') });
