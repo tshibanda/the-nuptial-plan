@@ -99,6 +99,12 @@ export default function SignInScreen() {
     }
   };
 
+  const handleBackToLogin = async () => {
+    setCode('');
+    await signIn.reset();
+    router.replace('/(auth)/sign-in');
+  };
+
   /* ── Verification code view ── */
   if (signIn.status === 'needs_client_trust') {
     return (
@@ -127,6 +133,9 @@ export default function SignInScreen() {
           </TouchableOpacity>
           <TouchableOpacity onPress={() => signIn.mfa.sendEmailCode()} style={{ marginTop: 12 }}>
             <Text style={[ss.linkText, { fontFamily: SANS }]}>{t('auth.resendCode')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => void handleBackToLogin()} style={ss.backBtn} activeOpacity={0.8}>
+            <Text style={[ss.backBtnText, { fontFamily: SANS_MEDIUM }]}>{t('auth.backToLogin')}</Text>
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -295,7 +304,7 @@ const ss = StyleSheet.create({
   errorText: { fontSize: 11, color: '#e07878', marginTop: -10, marginBottom: 10 },
   primaryBtn: {
     backgroundColor: GOLD, borderRadius: 6, height: 52,
-    alignItems: 'center', justifyContent: 'center', marginTop: 4,
+    alignItems: 'center', justifyContent: 'center', marginTop: 4, paddingHorizontal: 24,
   },
   btnDisabled: { opacity: 0.45 },
   primaryBtnText: { fontSize: 14, color: NAVY },
@@ -309,4 +318,9 @@ const ss = StyleSheet.create({
   verifyTitle: { fontSize: 26, color: IVORY, marginBottom: 8 },
   verifySubtitle: { fontSize: 13, color: MUTED, marginBottom: 24, textAlign: 'center' },
   linkText: { fontSize: 13, color: GOLD },
+  backBtn: {
+    borderWidth: StyleSheet.hairlineWidth, borderColor: BORDER, borderRadius: 6,
+    paddingHorizontal: 16, paddingVertical: 10, marginTop: 20,
+  },
+  backBtnText: { fontSize: 13, color: IVORY },
 });
