@@ -484,7 +484,7 @@ const ss = StyleSheet.create({
   closeButton: { padding: 7, borderRadius: 20 },
   modalDescription: { fontSize: 13, lineHeight: 19, marginTop: 8, marginBottom: 20 },
   fieldLabel: { fontSize: 11, marginBottom: 6, marginTop: 12 },
-  input: { minHeight: 44, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 12, fontSize: 14 },
+  input: { minHeight: 44, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 12, fontSize: 14, letterSpacing: 0 },
   currencyRow: { flexDirection: 'row', gap: 8 },
   currencyButton: { flex: 1, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderRadius: 9, paddingVertical: 11 },
   currencyText: { fontSize: 11 },
