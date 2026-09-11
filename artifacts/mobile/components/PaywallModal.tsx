@@ -20,6 +20,28 @@ function premiumFeatures(language: 'fr' | 'en') {
     : ['Unlimited vendor contracts', 'Advanced budget analytics', 'Unlimited wedding files', 'Attachments & documents', 'Unlimited moodboards & inspiration', 'Priority access to new features'];
   return ['file-text', 'trending-up', 'layers', 'cloud', 'star', 'zap'].map((icon, index) => ({ icon, label: labels[index]! }));
 }
+
+function annualSavingsPercent(annualPackage: any, monthlyPackage: any): number | null {
+  const annualPrice = annualPackage?.product?.price;
+  const monthlyPrice = monthlyPackage?.product?.price;
+  const annualCurrency = annualPackage?.product?.currencyCode ?? annualPackage?.product?.currency;
+  const monthlyCurrency = monthlyPackage?.product?.currencyCode ?? monthlyPackage?.product?.currency;
+
+  if (
+    typeof annualPrice !== 'number'
+    || typeof monthlyPrice !== 'number'
+    || annualPrice <= 0
+    || monthlyPrice <= 0
+    || !annualCurrency
+    || annualCurrency !== monthlyCurrency
+  ) {
+    return null;
+  }
+
+  const monthlyEquivalent = monthlyPrice * 12;
+  const savingsPercent = Math.round(((monthlyEquivalent - annualPrice) / monthlyEquivalent) * 100);
+  return savingsPercent > 0 ? savingsPercent : null;
+}
 interface PaywallModalProps {
   visible: boolean;
   onClose: () => void;
@@ -40,6 +62,8 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
   };
 
   const packages: any[] = subscription.offerings?.current?.availablePackages ?? [];
+  const monthlyPackage = packages.find((pkg: any) => pkg.packageType === 'MONTHLY')
+    ?? packages.find((pkg: any) => pkg.packageType !== 'ANNUAL');
 
   return (
     <Modal
@@ -139,6 +163,7 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
                 })
                 .map((pkg: any) => {
                   const isAnnual = pkg.packageType === 'ANNUAL';
+                  const savingsPercent = isAnnual ? annualSavingsPercent(pkg, monthlyPackage) : null;
                   return (
                     <TouchableOpacity
                       key={pkg.identifier}
@@ -167,7 +192,9 @@ export function PaywallModal({ visible, onClose, featureLabel }: PaywallModalPro
                         </Text>
                         {isAnnual && (
                           <Text style={[pw.packageNote, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                             {en ? 'Save compared with monthly' : 'Économisez par rapport au mensuel'}
+                             {savingsPercent !== null
+                               ? (en ? `-${savingsPercent}% per month` : `-${savingsPercent}% par mois`)
+                               : (en ? 'Save compared with monthly' : 'Économisez par rapport au mensuel')}
                           </Text>
                         )}
                       </View>
