@@ -1,10 +1,12 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Platform } from "react-native";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Linking, Platform } from "react-native";
 import Constants from "expo-constants";
-import Purchases from "react-native-purchases";
+import Purchases, { type CustomerInfo } from "react-native-purchases";
 import { useUser, useAuth } from "@clerk/expo";
 
 export const REVENUECAT_ENTITLEMENT_IDENTIFIER = "TNP Premium";
+/** Apple ID numérique de The Nuptial Plan (App Store Connect → Informations sur l'app). */
+const APP_STORE_ID = "6799479925";
 const PREMIUM_EMAIL_ALLOWLIST = new Set([
   "e.tshibanda78@gmail.com",
   "thenuptialplan2@yopmail.com",
@@ -20,6 +22,18 @@ type SubscriptionContextValue = {
   loading: boolean;
   purchase: (pkg: any) => Promise<void>;
   restore: () => Promise<void>;
+  /** True when Apple offer codes can be redeemed (native iOS build, RevenueCat configured). */
+  canRedeemOfferCodes: boolean;
+  /** Opens the App Store redemption screen with the offer code prefilled. */
+  redeemOfferCode: (code: string) => Promise<void>;
+  /** Opens Apple's native offer code sheet on top of the app. */
+  presentRedeemSheet: () => Promise<void>;
+  /**
+   * Re-reads the customer from RevenueCat (bypassing the SDK cache), updates
+   * local state and triggers a server sync. Resolves to true when the Premium
+   * entitlement is active.
+   */
+  refresh: () => Promise<boolean>;
 };
 
 const SubscriptionContext = createContext<SubscriptionContextValue>({
@@ -31,6 +45,10 @@ const SubscriptionContext = createContext<SubscriptionContextValue>({
   loading: false,
   purchase: async () => undefined,
   restore: async () => undefined,
+  canRedeemOfferCodes: false,
+  redeemOfferCode: async () => undefined,
+  presentRedeemSheet: async () => undefined,
+  refresh: async () => false,
 });
 
 // Expo Go cannot load the native App Store / Google Play billing modules.
@@ -47,6 +65,11 @@ export const isNativeStorePricingAvailable = Platform.OS !== "web" && !isExpoGo;
 export function getLocalizedPackagePrice(pkg: any): string | null {
   if (!isNativeStorePricingAvailable) return null;
   return typeof pkg?.product?.priceString === "string" ? pkg.product.priceString : null;
+}
+
+/** Removes spaces and stray characters a user may paste around an offer code. */
+export function sanitizeOfferCode(raw: string): string {
+  return raw.replace(/[^a-zA-Z0-9]/g, "");
 }
 
 function getApiKey() {
@@ -81,6 +104,10 @@ function hasPremiumEmailAccess(email: string | null | undefined): boolean {
   return Boolean(email && PREMIUM_EMAIL_ALLOWLIST.has(email.trim().toLowerCase()));
 }
 
+function hasPremiumEntitlement(info: any): boolean {
+  return Boolean(info?.entitlements?.active?.[REVENUECAT_ENTITLEMENT_IDENTIFIER]);
+}
+
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const { getToken } = useAuth();
@@ -88,6 +115,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const [customerInfo, setCustomerInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const available = Boolean(getApiKey()) && Platform.OS !== "web";
+  const canRedeemOfferCodes = available && Platform.OS === "ios" && !isExpoGo;
+  const wasEntitled = useRef(false);
 
   /**
    * Trigger a server-side entitlement sync.
@@ -130,6 +159,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       .then(([nextOfferings, nextInfo]) => {
         setOfferings(nextOfferings);
         setCustomerInfo(nextInfo);
+        wasEntitled.current = hasPremiumEntitlement(nextInfo);
         // Always verify with the server, including when there is no active
         // entitlement, so an expired or restored account cannot retain stale
         // Premium access in the shared database.
@@ -138,11 +168,63 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       .catch(() => undefined);
   }, [available, user?.id, syncToServer]);
 
+  /**
+   * Transactions that do not go through purchasePackage (offer code
+   * redemption, renewals, purchases approved later) reach the app through
+   * this listener. When Premium becomes active, the server is synced so
+   * requirePremium lets the user through straight away.
+   */
+  useEffect(() => {
+    if (!available) return;
+    const listener = (info: CustomerInfo) => {
+      setCustomerInfo(info);
+      const entitled = hasPremiumEntitlement(info);
+      if (entitled && !wasEntitled.current) void syncToServer();
+      wasEntitled.current = entitled;
+    };
+    try {
+      Purchases.addCustomerInfoUpdateListener(listener);
+    } catch {
+      return;
+    }
+    return () => {
+      Purchases.removeCustomerInfoUpdateListener(listener);
+    };
+  }, [available, user?.id, syncToServer]);
+
+  const refresh = useCallback(async (): Promise<boolean> => {
+    if (!available) return false;
+    await Purchases.invalidateCustomerInfoCache();
+    const info = await Purchases.getCustomerInfo();
+    setCustomerInfo(info);
+    wasEntitled.current = hasPremiumEntitlement(info);
+    await syncToServer();
+    return wasEntitled.current;
+  }, [available, syncToServer]);
+
+  const redeemOfferCode = useCallback(async (code: string): Promise<void> => {
+    const clean = sanitizeOfferCode(code);
+    if (!clean) throw new Error("EMPTY_OFFER_CODE");
+    // The redemption must be tied to the Clerk user, which is the RevenueCat
+    // app_user_id used by the server sync and the webhook.
+    if (!user?.id) throw new Error("NOT_SIGNED_IN");
+    await Linking.openURL(
+      `https://apps.apple.com/redeem?ctx=offercodes&id=${APP_STORE_ID}&code=${encodeURIComponent(clean)}`,
+    );
+  }, [user?.id]);
+
+  const presentRedeemSheet = useCallback(async (): Promise<void> => {
+    if (!user?.id) throw new Error("NOT_SIGNED_IN");
+    await Purchases.presentCodeRedemptionSheet();
+  }, [user?.id]);
+
+  const email = user?.primaryEmailAddress?.emailAddress;
+
   const value = useMemo<SubscriptionContextValue>(() => {
     const entitlement = customerInfo?.entitlements?.active?.[REVENUECAT_ENTITLEMENT_IDENTIFIER];
     return {
       available,
-      isActive: Boolean(entitlement) || hasPremiumEmailAccess(user?.primaryEmailAddress?.emailAddress),
+      isActive: Boolean(entitlement) || hasPremiumEmailAccess(email),
       isTrialing: entitlement?.periodType === "TRIAL",
       productIdentifier: entitlement?.productIdentifier ?? null,
       offerings,
@@ -169,8 +251,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
           setLoading(false);
         }
       },
+      canRedeemOfferCodes,
+      redeemOfferCode,
+      presentRedeemSheet,
+      refresh,
     };
-  }, [available, customerInfo, loading, offerings, syncToServer]);
+  }, [available, canRedeemOfferCodes, customerInfo, email, loading, offerings, presentRedeemSheet, redeemOfferCode, refresh, syncToServer]);
 
   return <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>;
 }
