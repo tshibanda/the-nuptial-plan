@@ -10,19 +10,36 @@
 import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export function useTour(storageKey: string) {
+interface UseTourOptions {
+  autoStart?: boolean;
+  delayMs?: number;
+}
+
+export function useTour(
+  storageKey: string,
+  { autoStart = false, delayMs = 600 }: UseTourOptions = {},
+) {
   const [tourVisible, setTourVisible] = useState(false);
 
-  // Check on mount whether this tour has already been seen
   useEffect(() => {
-    AsyncStorage.getItem(storageKey).then((val) => {
-      if (!val) {
-        // Not yet seen — show on a short delay so the screen can render first
-        const t = setTimeout(() => setTourVisible(true), 600);
-        return () => clearTimeout(t);
-      }
-    });
-  }, [storageKey]);
+    let mounted = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    if (autoStart) {
+      void AsyncStorage.getItem(storageKey)
+        .then((val) => {
+          if (mounted && !val) {
+            timer = setTimeout(() => setTourVisible(true), delayMs);
+          }
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      mounted = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [autoStart, delayMs, storageKey]);
 
   const openTour = useCallback(() => {
     setTourVisible(true);

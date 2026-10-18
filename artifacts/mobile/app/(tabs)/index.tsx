@@ -27,30 +27,48 @@ import { TourSheet } from '@/components/TourSheet';
 const TOUR_STEPS = [
   {
     icon: 'home',
-    title: "Bienvenue sur l'Aperçu",
-    description: "Cette page résume l'essentiel de votre mariage : compte à rebours, invités confirmés, prestataires et budget engagé.",
+    title: 'Bienvenue dans votre espace',
+    description: 'Votre dossier contient des exemples fictifs pour découvrir l’application. Vous pouvez les modifier ou supprimer le dossier quand vous le souhaitez.',
   },
   {
-    icon: 'grid',
-    title: 'Métriques clés',
-    description: "Les quatre cartes colorées vous donnent un coup d'œil instantané sur vos chiffres. Tirez vers le bas pour actualiser.",
+    icon: 'heart',
+    title: 'Vos mariages',
+    description: 'Créez un dossier pour chaque couple, puis choisissez le mariage actif. Les autres onglets affichent les informations de ce dossier.',
   },
   {
     icon: 'calendar',
-    title: 'Événements à venir',
-    description: "Retrouvez ici vos prochains rendez-vous et jalons. Appuyez sur un événement pour accéder à l'agenda complet.",
+    title: 'Agenda et étapes',
+    description: 'L’Agenda regroupe rendez-vous et événements. Le Rétro-planning suit les échéances avant le mariage ; Jour-J rassemble le déroulé de la cérémonie.',
   },
   {
-    icon: 'briefcase',
-    title: 'Votre équipe',
-    description: 'Les premiers prestataires apparaissent en bas de page. Appuyez sur une fiche pour accéder aux détails.',
+    icon: 'users',
+    title: 'Invités et prestataires',
+    description: 'Suivez les réponses RSVP, les tables et les coordonnées de votre équipe. Les Contrats et Documents gardent les pièces importantes à portée de main.',
+  },
+  {
+    icon: 'pie-chart',
+    title: 'Budget et paiements',
+    description: 'Répartissez votre enveloppe par poste, notez les dépenses et retrouvez les acomptes ainsi que les prochaines échéances dans Paiements.',
+  },
+  {
+    icon: 'grid',
+    title: 'Retrouvez tous les onglets',
+    description: 'Les cinq icônes en bas sont vos raccourcis. Appuyez sur « Plus » pour parcourir tous les espaces : leur description apparaît dans le menu.',
+  },
+  {
+    icon: 'sliders',
+    title: 'Adaptez la navigation',
+    description: 'Dans « Plus », choisissez les cinq onglets que vous voulez garder en bas. Votre sélection reste enregistrée sur cet appareil.',
   },
 ];
 const TOUR_STEPS_EN = [
-  { icon: 'home', title: 'Welcome to Overview', description: 'This page summarizes your wedding essentials: countdown, confirmed guests, vendors, and committed budget.' },
-  { icon: 'grid', title: 'Key metrics', description: 'The four colorful cards provide an instant view of your figures. Pull down to refresh.' },
-  { icon: 'calendar', title: 'Upcoming events', description: 'Find your next appointments and milestones here. Tap an event to open the full calendar.' },
-  { icon: 'briefcase', title: 'Your team', description: 'Your first vendors appear at the bottom of the page. Tap a card to access its details.' },
+  { icon: 'home', title: 'Welcome to your planning space', description: 'Your file includes fictional sample information to help you explore the app. Edit it or delete the file whenever you like.' },
+  { icon: 'heart', title: 'Your weddings', description: 'Create a file for each couple, then choose the active wedding. The other tabs show information for that file.' },
+  { icon: 'calendar', title: 'Calendar and milestones', description: 'Calendar brings appointments and events together. Timeline tracks the steps before the wedding; Wedding Day contains the ceremony schedule.' },
+  { icon: 'users', title: 'Guests and vendors', description: 'Track RSVPs, tables, and vendor contacts. Contracts and Documents keep important files close at hand.' },
+  { icon: 'pie-chart', title: 'Budget and payments', description: 'Set category budgets, record spending, and find deposits and upcoming due dates in Payments.' },
+  { icon: 'grid', title: 'Find every tab', description: 'The five icons at the bottom are your shortcuts. Tap “More” to browse every section and read what each one does.' },
+  { icon: 'sliders', title: 'Make navigation yours', description: 'In “More”, choose the five tabs you want to keep at the bottom. Your selection is saved on this device.' },
 ];
 
 // ── Botanical decoration blobs ────────────────────────────────────────────────
@@ -136,8 +154,11 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { selectedWeddingId, selectWedding } = useWedding();
   const topPad = Platform.OS === 'web' ? 67 : 0;
-  const { tourVisible, openTour, closeTour } = useTour('tour:accueil');
   const { user } = useUser();
+  const { tourVisible, closeTour } = useTour(
+    `tour:onboarding:${user?.id ?? 'anonymous'}`,
+    { autoStart: Boolean(user?.id) },
+  );
   const hour = new Date().getHours();
   const greetingWord = language === 'fr'
     ? (hour < 12 ? 'Bon matin' : hour < 18 ? 'Bonjour' : 'Bonsoir')

@@ -4,6 +4,7 @@ import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Redirect, Router as WouterRouter } from 'wouter';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { getListWeddingsQueryKey, useSeedOnboardingDemo } from '@workspace/api-client-react';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { WeddingProvider } from '@/lib/wedding-context';
@@ -43,6 +44,7 @@ const clerkPubKey = publishableKeyFromHost(
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+const SIGNUP_ONBOARDING_PENDING_KEY = 'nuptial-plan.signup-onboarding-pending';
 const IOS_APP_STORE_URL = 'https://apps.apple.com/app/id6799479925';
 const ANDROID_APP_STORE_URL = 'https://play.google.com/store/apps/details?id=app.thenuptialplan.com';
 
@@ -188,16 +190,128 @@ function SignInPage() {
 }
 
 function SignUpPage() {
+  const { isLoaded, isSignedIn } = useUser();
+
+  useEffect(() => {
+    if (!isLoaded || isSignedIn) return;
+    try {
+      window.sessionStorage.setItem(SIGNUP_ONBOARDING_PENDING_KEY, '1');
+    } catch {
+      // Signup should still work if browser storage is unavailable.
+    }
+  }, [isLoaded, isSignedIn]);
+
   return (
     <div className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-[#F8F3EE] px-4 py-12">
       <SignUp
         routing="path"
         path={`${basePath}/sign-up`}
         signInUrl={`${basePath}/sign-in`}
-        forceRedirectUrl={`${basePath}/`}
+        forceRedirectUrl={`${basePath}/signup-complete`}
       />
       <LegalFooter className="absolute bottom-6 left-4 right-4" />
     </div>
+  );
+}
+
+function SignupCompletePage() {
+  const { isLoaded, isSignedIn } = useUser();
+  const { language, t } = useLanguage();
+  const queryClient = useQueryClient();
+  const { mutateAsync: seedOnboardingDemo } = useSeedOnboardingDemo();
+  const [, setLocation] = useLocation();
+  const startedRef = useRef(false);
+  const [attempt, setAttempt] = useState(0);
+  const [seedFailed, setSeedFailed] = useState(false);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    let pending = false;
+    try {
+      pending = window.sessionStorage.getItem(SIGNUP_ONBOARDING_PENDING_KEY) === '1';
+    } catch {
+      // Without the signup marker, don't seed an existing account by mistake.
+    }
+
+    if (!pending) {
+      setLocation('/');
+      return;
+    }
+    if (!isSignedIn) {
+      setLocation('/sign-in');
+      return;
+    }
+    if (startedRef.current) return;
+    startedRef.current = true;
+
+    void (async () => {
+      try {
+        await seedOnboardingDemo({ data: { language } });
+        await queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
+        try {
+          window.sessionStorage.removeItem(SIGNUP_ONBOARDING_PENDING_KEY);
+        } catch {
+          // The API seed is complete; stale browser storage is harmless.
+        }
+        setLocation('/');
+      } catch (error) {
+        console.error('Unable to create the onboarding sample wedding', error);
+        setSeedFailed(true);
+      }
+    })();
+  }, [attempt, isLoaded, isSignedIn, language, queryClient, seedOnboardingDemo, setLocation]);
+
+  const retry = () => {
+    startedRef.current = false;
+    setSeedFailed(false);
+    setAttempt((value) => value + 1);
+  };
+
+  return (
+    <main className="flex min-h-[100dvh] items-center justify-center bg-[#F8F3EE] px-5 py-12 text-center">
+      <section className="w-full max-w-md rounded-2xl border border-[#D7CDD7] bg-[#FDF9FD] p-8 shadow-sm">
+        <img
+          src={`${basePath}/tnp-gold-logo.png`}
+          alt="The Nuptial Plan"
+          className="mx-auto mb-5 h-16 w-16 object-contain"
+        />
+        {seedFailed ? (
+          <>
+            <h1 className="font-serif text-3xl text-[#3C1A3C]">{t('onboarding.demoFailedTitle')}</h1>
+            <p className="mt-3 text-sm leading-6 text-[#716471]" role="alert">
+              {t('onboarding.demoFailedBody')}
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={retry}
+                className="rounded-lg bg-[#5D2D5D] px-5 py-3 text-sm font-medium text-white hover:bg-[#3C1A3C]"
+              >
+                {t('onboarding.retry')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocation('/')}
+                className="rounded-lg border border-[#D7CDD7] px-5 py-3 text-sm font-medium text-[#3C1A3C] hover:bg-[#F8F3EE]"
+              >
+                {t('onboarding.continue')}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div
+              className="mx-auto mb-5 h-8 w-8 animate-spin rounded-full border-2 border-[#D7CDD7] border-t-[#5D2D5D]"
+              role="status"
+              aria-label={t('onboarding.preparingTitle')}
+            />
+            <h1 className="font-serif text-3xl text-[#3C1A3C]">{t('onboarding.preparingTitle')}</h1>
+            <p className="mt-3 text-sm leading-6 text-[#716471]">{t('onboarding.preparingBody')}</p>
+          </>
+        )}
+      </section>
+    </main>
   );
 }
 
@@ -354,6 +468,7 @@ function AppRouter() {
       {/* REQUIRED — exactly /*? — matches bare URL and Clerk's OAuth sub-paths */}
       <Route path="/sign-in/*?" component={SignInPage} />
       <Route path="/sign-up/*?" component={SignUpPage} />
+      <Route path="/signup-complete" component={SignupCompletePage} />
 
       {/* Everything else: show app if signed-in, landing if at root, sign-in redirect otherwise */}
       <Route>

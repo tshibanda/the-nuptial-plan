@@ -82,6 +82,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/Wedding"
 
+  /weddings/demo-seed:
+    post:
+      operationId: seedOnboardingDemo
+      tags: [weddings]
+      summary: Create a private sample wedding after sign-up
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingDemoSeedInput"
+      responses:
+        "200":
+          description: Existing wedding or sample wedding created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [created, weddingId]
+                properties:
+                  created:
+                    type: boolean
+                  weddingId:
+                    type: ["number", "null"]
+
   /weddings/{id}:
     get:
       operationId: getWedding
@@ -1239,6 +1264,14 @@ components:
           type: number
         notes:
           type: string
+
+    OnboardingDemoSeedInput:
+      type: object
+      required: [language]
+      properties:
+        language:
+          type: string
+          enum: [fr, en]
 
     WeddingUpdate:
       type: object

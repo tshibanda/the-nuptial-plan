@@ -66,6 +66,19 @@ export const CreateWeddingResponse = zod.object({
 
 
 /**
+ * @summary Create a private sample wedding after sign-up
+ */
+export const SeedOnboardingDemoBody = zod.object({
+  "language": zod.enum(['fr', 'en'])
+})
+
+export const SeedOnboardingDemoResponse = zod.object({
+  "created": zod.boolean(),
+  "weddingId": zod.number().nullable()
+})
+
+
+/**
  * @summary Get a wedding by ID
  */
 export const GetWeddingParams = zod.object({

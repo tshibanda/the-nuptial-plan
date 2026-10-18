@@ -22,26 +22,26 @@ import logoImage from '@/assets/images/tnp-gold-logo.png';
 import { useLocalization, type TranslationKey } from '@/context/LocalizationContext';
 
 // ── Tab metadata ───────────────────────────────────────────────────────────────
-const TAB_META: Record<string, { sf: string; feather: string; labelKey: TranslationKey }> = {
-  index:        { sf: 'house', feather: 'home', labelKey: 'tabs.dashboard' },
-  mariages:     { sf: 'heart', feather: 'heart', labelKey: 'tabs.weddings' },
-  evenements:   { sf: 'calendar', feather: 'calendar', labelKey: 'tabs.calendar' },
-  prestataires: { sf: 'building.2', feather: 'briefcase', labelKey: 'tabs.vendors' },
-  invites:      { sf: 'person.2', feather: 'users', labelKey: 'tabs.guests' },
-  budget:       { sf: 'chart.pie', feather: 'pie-chart', labelKey: 'tabs.budget' },
-  paiements:    { sf: 'creditcard', feather: 'credit-card', labelKey: 'tabs.payments' },
-  contrats:     { sf: 'doc.text', feather: 'file-text', labelKey: 'tabs.contracts' },
-  documents:    { sf: 'folder', feather: 'folder', labelKey: 'tabs.documents' },
-  parametres:   { sf: 'gearshape', feather: 'settings', labelKey: 'tabs.settings' },
-  profil:       { sf: 'person.crop.circle', feather: 'user', labelKey: 'tabs.profile' },
-  moodboards:   { sf: 'square.grid.2x2', feather: 'image', labelKey: 'tabs.moodboards' },
-  business:     { sf: 'briefcase', feather: 'briefcase', labelKey: 'tabs.business' },
-  'carnet-adresse': { sf: 'person.2', feather: 'book-open', labelKey: 'tabs.contacts' },
-  'mes-reseaux': { sf: 'network', feather: 'share-2', labelKey: 'tabs.networks' },
-  'mes-reservations': { sf: 'checkmark.circle', feather: 'clipboard', labelKey: 'tabs.reservations' },
-  'mes-rendez-vous': { sf: 'calendar.badge.clock', feather: 'clock', labelKey: 'tabs.appointments' },
-  retroplanning: { sf: 'calendar.badge.clock', feather: 'clock', labelKey: 'tabs.timeline' },
-  'jour-j': { sf: 'sun.max', feather: 'sun', labelKey: 'tabs.weddingDay' },
+const TAB_META: Record<string, { sf: string; feather: string; labelKey: TranslationKey; descriptionKey: TranslationKey }> = {
+  index:        { sf: 'house', feather: 'home', labelKey: 'tabs.dashboard', descriptionKey: 'tabs.description.dashboard' },
+  mariages:     { sf: 'heart', feather: 'heart', labelKey: 'tabs.weddings', descriptionKey: 'tabs.description.weddings' },
+  evenements:   { sf: 'calendar', feather: 'calendar', labelKey: 'tabs.calendar', descriptionKey: 'tabs.description.calendar' },
+  prestataires: { sf: 'building.2', feather: 'briefcase', labelKey: 'tabs.vendors', descriptionKey: 'tabs.description.vendors' },
+  invites:      { sf: 'person.2', feather: 'users', labelKey: 'tabs.guests', descriptionKey: 'tabs.description.guests' },
+  budget:       { sf: 'chart.pie', feather: 'pie-chart', labelKey: 'tabs.budget', descriptionKey: 'tabs.description.budget' },
+  paiements:    { sf: 'creditcard', feather: 'credit-card', labelKey: 'tabs.payments', descriptionKey: 'tabs.description.payments' },
+  contrats:     { sf: 'doc.text', feather: 'file-text', labelKey: 'tabs.contracts', descriptionKey: 'tabs.description.contracts' },
+  documents:    { sf: 'folder', feather: 'folder', labelKey: 'tabs.documents', descriptionKey: 'tabs.description.documents' },
+  parametres:   { sf: 'gearshape', feather: 'settings', labelKey: 'tabs.settings', descriptionKey: 'tabs.description.settings' },
+  profil:       { sf: 'person.crop.circle', feather: 'user', labelKey: 'tabs.profile', descriptionKey: 'tabs.description.profile' },
+  moodboards:   { sf: 'square.grid.2x2', feather: 'image', labelKey: 'tabs.moodboards', descriptionKey: 'tabs.description.moodboards' },
+  business:     { sf: 'briefcase', feather: 'briefcase', labelKey: 'tabs.business', descriptionKey: 'tabs.description.business' },
+  'carnet-adresse': { sf: 'person.2', feather: 'book-open', labelKey: 'tabs.contacts', descriptionKey: 'tabs.description.contacts' },
+  'mes-reseaux': { sf: 'network', feather: 'share-2', labelKey: 'tabs.networks', descriptionKey: 'tabs.description.networks' },
+  'mes-reservations': { sf: 'checkmark.circle', feather: 'clipboard', labelKey: 'tabs.reservations', descriptionKey: 'tabs.description.reservations' },
+  'mes-rendez-vous': { sf: 'calendar.badge.clock', feather: 'clock', labelKey: 'tabs.appointments', descriptionKey: 'tabs.description.appointments' },
+  retroplanning: { sf: 'calendar.badge.clock', feather: 'clock', labelKey: 'tabs.timeline', descriptionKey: 'tabs.description.timeline' },
+  'jour-j': { sf: 'sun.max', feather: 'sun', labelKey: 'tabs.weddingDay', descriptionKey: 'tabs.description.weddingDay' },
 };
 
 // Five primary tabs visible in the bar. The selection is persisted locally.
@@ -344,6 +344,7 @@ function BurgerSheet({
             <Image source={logoImage} style={bs.logoImage} resizeMode="contain" />
             <Text style={[bs.headerEye, { fontFamily: SANS_MEDIUM }]}>{t('navigation.navigation')}</Text>
             <Text style={[bs.headerTitle, { fontFamily: SERIF }]}>The Nuptial Plan</Text>
+            <Text style={[bs.headerHint, { fontFamily: SANS }]}>{t('navigation.menuIntro')}</Text>
           </LinearGradient>
           <TouchableOpacity onPress={onClose} style={bs.closeBtn} activeOpacity={0.7}>
             <Feather name="x" size={18} color={colors.mutedForeground} />
@@ -408,6 +409,10 @@ function BurgerSheet({
                     key={tabName}
                     onPress={() => togglePrimaryTab(tabName)}
                     activeOpacity={0.75}
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={t(TAB_META[tabName]!.labelKey)}
+                    accessibilityHint={t(TAB_META[tabName]!.descriptionKey)}
+                    accessibilityState={{ checked: selected }}
                     style={[bs.selectionRow, { borderBottomColor: colors.border }]}
                   >
                     <View style={[bs.selectionIcon, { backgroundColor: selected ? colors.plum + '18' : colors.background }]}>
@@ -418,9 +423,14 @@ function BurgerSheet({
                         color={selected ? colors.plum : colors.mutedForeground}
                       />
                     </View>
-                    <Text style={[bs.selectionLabel, { color: colors.foreground, fontFamily: selected ? SANS_SEMIBOLD : SANS }]}>
-                       {t(TAB_META[tabName]!.labelKey)}
-                    </Text>
+                    <View style={bs.selectionText}>
+                      <Text style={[bs.selectionLabel, { color: colors.foreground, fontFamily: selected ? SANS_SEMIBOLD : SANS }]}>
+                        {t(TAB_META[tabName]!.labelKey)}
+                      </Text>
+                      <Text style={[bs.selectionDescription, { color: colors.mutedForeground, fontFamily: SANS }]} numberOfLines={2}>
+                        {t(TAB_META[tabName]!.descriptionKey)}
+                      </Text>
+                    </View>
                     {PREMIUM_TABS.has(tabName) && <PremiumBadge variant="icon" />}
                     <View style={[bs.checkbox, { borderColor: selected ? colors.plum : colors.border, backgroundColor: selected ? colors.plum : 'transparent' }]}>
                       {selected ? <Feather name="check" size={12} color="#fff" /> : null}
@@ -450,6 +460,9 @@ function BurgerSheet({
                 onPress={() => { if (!socialsLocked) onNavigate(tabName); }}
                 activeOpacity={0.75}
                 disabled={socialsLocked}
+                accessibilityRole="button"
+                accessibilityLabel={t(meta.labelKey)}
+                accessibilityHint={t(meta.descriptionKey)}
                 style={[
                   bs.gridItem,
                   {
@@ -485,19 +498,24 @@ function BurgerSheet({
                   />
                 </View>
 
-                <Text
-                  style={[
-                    bs.gridLabel,
-                    {
-                      fontFamily: isActive ? SANS_SEMIBOLD : SANS_MEDIUM,
-                      color: isActive ? colors.plum : colors.foreground,
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                   {t(meta.labelKey)}
+                <View style={bs.gridTitleRow}>
+                  <Text
+                    style={[
+                      bs.gridLabel,
+                      {
+                        fontFamily: isActive ? SANS_SEMIBOLD : SANS_MEDIUM,
+                        color: isActive ? colors.plum : colors.foreground,
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {t(meta.labelKey)}
+                  </Text>
+                  {PREMIUM_TABS.has(tabName) && <PremiumBadge variant="icon" />}
+                </View>
+                <Text style={[bs.gridDescription, { color: colors.mutedForeground, fontFamily: SANS }]} numberOfLines={2}>
+                  {t(meta.descriptionKey)}
                 </Text>
-                {PREMIUM_TABS.has(tabName) && <PremiumBadge variant="icon" />}
 
                 {/* "Principal" badge for primary tabs */}
                 {isPrimary && (
@@ -524,12 +542,15 @@ const bs = StyleSheet.create({
   logoImage: { width: 34, height: 34, marginBottom: 4 },
   headerEye: { fontSize: 8, letterSpacing: 2, color: 'rgba(200,170,112,0.80)', marginBottom: 4 },
   headerTitle: { fontSize: 22, color: '#FBF5FB', lineHeight: 22 },
+  headerHint: { fontSize: 10, lineHeight: 14, color: 'rgba(251,245,251,0.78)', marginTop: 6, maxWidth: 260 },
   closeBtn: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.06)', marginTop: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  gridItem: { width: '47%', borderRadius: 14, padding: 14, gap: 8, borderWidth: 1, overflow: 'hidden' },
+  gridItem: { width: '47%', borderRadius: 14, padding: 12, gap: 7, borderWidth: 1, overflow: 'hidden' },
   activeBar: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, borderRadius: 2 },
   iconWrap: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  gridLabel: { fontSize: 13 },
+  gridTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  gridLabel: { flex: 1, fontSize: 13 },
+  gridDescription: { minHeight: 26, fontSize: 9, lineHeight: 13 },
   primaryBadge: { fontSize: 9, letterSpacing: 0.3 },
   customizeButton: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 12 },
   customizeIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
@@ -544,9 +565,11 @@ const bs = StyleSheet.create({
   selectionHint: { fontSize: 10, lineHeight: 14, marginTop: 10, marginBottom: 5 },
   selectionScroll: { maxHeight: 420, flexShrink: 1 },
   selectionList: { marginTop: 2, paddingBottom: 2 },
-  selectionRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: StyleSheet.hairlineWidth },
+  selectionRow: { minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   selectionIcon: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  selectionLabel: { flex: 1, fontSize: 11 },
+  selectionText: { flex: 1, gap: 2 },
+  selectionLabel: { fontSize: 11 },
+  selectionDescription: { fontSize: 9, lineHeight: 12 },
   checkbox: { width: 21, height: 21, borderRadius: 6, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
 });
 

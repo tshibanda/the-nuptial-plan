@@ -65,6 +65,18 @@ export interface WeddingInput {
   notes?: string;
 }
 
+export type OnboardingDemoSeedInputLanguage = typeof OnboardingDemoSeedInputLanguage[keyof typeof OnboardingDemoSeedInputLanguage];
+
+
+export const OnboardingDemoSeedInputLanguage = {
+  fr: 'fr',
+  en: 'en',
+} as const;
+
+export interface OnboardingDemoSeedInput {
+  language: OnboardingDemoSeedInputLanguage;
+}
+
 export type WeddingUpdateCurrency = typeof WeddingUpdateCurrency[keyof typeof WeddingUpdateCurrency];
 
 
@@ -689,6 +701,12 @@ export interface OpenaiConversationWithMessages {
 export interface OpenaiError {
   error: string;
 }
+
+export type SeedOnboardingDemo200 = {
+  created: boolean;
+  /** @nullable */
+  weddingId: number | null;
+};
 
 export type ListNotificationsParams = {
 weddingId: number;

@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { clerkClient } from "@clerk/express";
 import { db } from "@workspace/db";
 import {
   weddingsTable,
@@ -11,11 +12,52 @@ import {
 } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { CreateWeddingBody, UpdateWeddingBody } from "@workspace/api-zod";
+import { seedOnboardingDemo, type DemoLanguage } from "../lib/seedOnboardingDemo";
 
 const router: IRouter = Router();
 
 const p = (req: { params: Record<string, string> }, key: string) => Number(req.params[key]);
 const owner = (req: unknown) => (req as { userId?: string }).userId;
+
+// Provision one private, editable sample wedding for a freshly registered user.
+router.post("/demo-seed", async (req, res): Promise<void> => {
+  const ownerId = owner(req);
+  const language = req.body?.language;
+  if (!ownerId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (language !== "fr" && language !== "en") {
+    res.status(400).json({ error: "language must be fr or en" });
+    return;
+  }
+
+  try {
+    const user = await clerkClient.users.getUser(ownerId);
+    const privateMetadata = user.privateMetadata as Record<string, unknown>;
+    if (privateMetadata.tnpOnboardingDemoSeededAt) {
+      const [existingWedding] = await db.select({ id: weddingsTable.id })
+        .from(weddingsTable)
+        .where(eq(weddingsTable.ownerId, ownerId))
+        .orderBy(weddingsTable.id)
+        .limit(1);
+      res.json({ created: false, weddingId: existingWedding?.id ?? null });
+      return;
+    }
+
+    const result = await seedOnboardingDemo(ownerId, language as DemoLanguage);
+    await clerkClient.users.updateUserMetadata(ownerId, {
+      privateMetadata: {
+        ...privateMetadata,
+        tnpOnboardingDemoSeededAt: new Date().toISOString(),
+      },
+    });
+    res.json(result);
+  } catch (error) {
+    req.log.error({ error, ownerId }, "Failed to prepare onboarding demo wedding");
+    res.status(500).json({ error: "Could not prepare the sample wedding" });
+  }
+});
 
 // List all weddings
 router.get("/", async (req, res): Promise<void> => {

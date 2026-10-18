@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Image,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert,
   KeyboardAvoidingView, ScrollView, Platform, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, Link } from 'expo-router';
 import { useSignUp, useSSO } from '@clerk/expo';
+import { useQueryClient } from '@tanstack/react-query';
+import { getListWeddingsQueryKey, useSeedOnboardingDemo } from '@workspace/api-client-react';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { Feather } from '@expo/vector-icons';
@@ -14,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
 import { useLocalization } from '@/context/LocalizationContext';
+import { useWedding } from '@/context/WeddingContext';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -31,7 +34,10 @@ export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
   const { signUp, errors, fetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
-  const { t } = useLocalization();
+  const { t, language } = useLocalization();
+  const { mutateAsync: seedOnboardingDemo } = useSeedOnboardingDemo();
+  const queryClient = useQueryClient();
+  const { selectWedding } = useWedding();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,6 +51,36 @@ export default function SignUpScreen() {
     signUp.unverifiedFields.includes('email_address') &&
     signUp.missingFields.length === 0;
 
+  const prepareDemoWorkspace = useCallback(async () => {
+    const result = await seedOnboardingDemo({ data: { language } });
+    if (result.weddingId !== null) selectWedding(result.weddingId);
+    await queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
+  }, [language, queryClient, seedOnboardingDemo, selectWedding]);
+
+  const showDemoSetupError = useCallback(() => {
+    const retrySetup = () => {
+      void prepareDemoWorkspace().catch(() => {
+        Alert.alert(
+          t('onboarding.setupFailedTitle'),
+          t('onboarding.setupFailedBody'),
+          [
+            { text: t('onboarding.continue'), style: 'cancel' },
+            { text: t('onboarding.retry'), onPress: retrySetup },
+          ],
+        );
+      });
+    };
+
+    Alert.alert(
+      t('onboarding.setupFailedTitle'),
+      t('onboarding.setupFailedBody'),
+      [
+        { text: t('onboarding.continue'), style: 'cancel' },
+        { text: t('onboarding.retry'), onPress: retrySetup },
+      ],
+    );
+  }, [prepareDemoWorkspace, t]);
+
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     void WebBrowser.warmUpAsync();
@@ -55,14 +91,22 @@ export default function SignUpScreen() {
   const handleOAuth = useCallback(async (strategy: 'oauth_google' | 'oauth_apple') => {
     setOauthLoading(strategy === 'oauth_google' ? 'google' : 'apple');
     try {
-      const { createdSessionId, setActive } = await startSSOFlow({
+      const { createdSessionId, setActive, signUp: oauthSignUp } = await startSSOFlow({
         strategy,
         redirectUrl: AuthSession.makeRedirectUri(),
       });
+      const isNewAccount = Boolean(oauthSignUp?.createdUserId);
       if (createdSessionId && setActive) {
         await setActive({
           session: createdSessionId,
           navigate: async ({ decorateUrl }) => {
+            if (isNewAccount) {
+              try {
+                await prepareDemoWorkspace();
+              } catch {
+                showDemoSetupError();
+              }
+            }
             router.replace(decorateUrl('/') as any);
           },
         });
@@ -72,7 +116,7 @@ export default function SignUpScreen() {
     } finally {
       setOauthLoading(null);
     }
-  }, [startSSOFlow, router]);
+  }, [startSSOFlow, router, prepareDemoWorkspace, showDemoSetupError]);
 
   /* ── Email + Password sign-up ── */
   const handleSignUp = async () => {
@@ -85,7 +129,12 @@ export default function SignUpScreen() {
     await signUp.verifications.verifyEmailCode({ code });
     if (signUp.status === 'complete') {
       await signUp.finalize({
-        navigate: ({ decorateUrl }) => {
+        navigate: async ({ decorateUrl }) => {
+          try {
+            await prepareDemoWorkspace();
+          } catch {
+            showDemoSetupError();
+          }
           router.replace(decorateUrl('/') as any);
         },
       });

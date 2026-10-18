@@ -43,6 +43,7 @@ import type {
   HealthStatus,
   ListNotificationsParams,
   Notification,
+  OnboardingDemoSeedInput,
   OpenaiConversation,
   OpenaiConversationInput,
   OpenaiConversationWithMessages,
@@ -59,6 +60,7 @@ import type {
   PushTokenRegistrationResult,
   PushTokenUnregistration,
   RsvpLink,
+  SeedOnboardingDemo200,
   Vendor,
   VendorInput,
   VendorUpdate,
@@ -318,6 +320,77 @@ export const useCreateWedding = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateWeddingMutationOptions(options));
+    }
+
+export const getSeedOnboardingDemoUrl = () => {
+
+
+
+
+  return `/api/weddings/demo-seed`
+}
+
+/**
+ * @summary Create a private sample wedding after sign-up
+ */
+export const seedOnboardingDemo = async (onboardingDemoSeedInput: OnboardingDemoSeedInput, options?: Parameters<typeof customFetch>[1]): Promise<SeedOnboardingDemo200> => {
+
+  return customFetch<SeedOnboardingDemo200>(getSeedOnboardingDemoUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(onboardingDemoSeedInput)
+  }
+);}
+
+
+
+
+
+export const getSeedOnboardingDemoMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof seedOnboardingDemo>>, TError,{data: BodyType<OnboardingDemoSeedInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof seedOnboardingDemo>>, TError,{data: BodyType<OnboardingDemoSeedInput>}, TContext> => {
+
+const mutationKey = ['seedOnboardingDemo'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof seedOnboardingDemo>>, {data: BodyType<OnboardingDemoSeedInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  seedOnboardingDemo(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SeedOnboardingDemoMutationResult = NonNullable<Awaited<ReturnType<typeof seedOnboardingDemo>>>
+    export type SeedOnboardingDemoMutationBody = BodyType<OnboardingDemoSeedInput>
+    export type SeedOnboardingDemoMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a private sample wedding after sign-up
+ */
+export const useSeedOnboardingDemo = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof seedOnboardingDemo>>, TError,{data: BodyType<OnboardingDemoSeedInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof seedOnboardingDemo>>,
+        TError,
+        {data: BodyType<OnboardingDemoSeedInput>},
+        TContext
+      > => {
+      return useMutation(getSeedOnboardingDemoMutationOptions(options));
     }
 
 export const getGetWeddingUrl = (id: number,) => {
