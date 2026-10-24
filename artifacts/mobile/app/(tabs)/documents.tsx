@@ -15,6 +15,7 @@ import { usePremiumGate } from '@/hooks/usePremiumGate';
 import { useLocalization } from '@/context/LocalizationContext';
 import { getWeddingDocumentsQueryOptions } from '@/hooks/useWeddingDocuments';
 import { QueryErrorState } from '@/components/QueryErrorState';
+import { isPremiumTabDataEnabled } from '@/utils/tab-access';
 
 type WeddingDocument = {
   id: number;
@@ -98,8 +99,9 @@ export default function DocumentsScreen() {
   const { isPremium } = usePremiumGate();
   const { getToken } = useAuth();
   const { weddingId } = useActiveWedding();
-  const { data: vendors = [] } = useListVendors(weddingId ?? 0, { query: { queryKey: getListVendorsQueryKey(weddingId ?? 0), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
-  const { data: contracts = [] } = useListContracts(weddingId ?? 0, { query: { queryKey: getListContractsQueryKey(weddingId ?? 0), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
+  const premiumDataEnabled = isPremiumTabDataEnabled(weddingId, isPremium);
+  const { data: vendors = [] } = useListVendors(weddingId ?? 0, { query: { queryKey: getListVendorsQueryKey(weddingId ?? 0), enabled: premiumDataEnabled, staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: contracts = [] } = useListContracts(weddingId ?? 0, { query: { queryKey: getListContractsQueryKey(weddingId ?? 0), enabled: premiumDataEnabled, staleTime: MOBILE_TAB_STALE_TIME } });
   const [uploading, setUploading] = useState(false);
 
   const request = useCallback(async (path: string, init?: RequestInit) => {
@@ -113,7 +115,7 @@ export default function DocumentsScreen() {
 
   const documentsQuery = useQuery({
     ...getWeddingDocumentsQueryOptions(weddingId ?? 0, getToken),
-    enabled: weddingId !== null && isPremium,
+    enabled: premiumDataEnabled,
   });
   const documents = documentsQuery.data ?? [];
   const loading = documentsQuery.isLoading;

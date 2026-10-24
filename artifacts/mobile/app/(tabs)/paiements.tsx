@@ -2,18 +2,18 @@
  * Paiements — mobile screen
  * Plum gradient hero · summary card · payment list · PDF export · TourSheet
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   ScrollView,
+  SectionList,
   StyleSheet,
   TextInput,
   Alert,
   ActivityIndicator,
   Platform,
   TouchableOpacity,
-  RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -37,6 +37,8 @@ import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { useSubscription } from '@/lib/subscription';
 import { useLocalization } from '@/context/LocalizationContext';
 import { usePreferredCurrency } from '@/hooks/usePreferredCurrency';
+import { organizePayments, type PaymentSection } from '@/utils/payment-list';
+import { isPremiumTabDataEnabled } from '@/utils/tab-access';
 
 // ── Tour steps ────────────────────────────────────────────────────────────────
 const TOUR_STEPS = [
@@ -61,17 +63,6 @@ const TOUR_STEPS_EN = [
   { icon: 'alert-circle', title: 'Priorities', description: 'Overdue payments appear first with a red background. Settle these first.' },
   { icon: 'share', title: 'Export', description: 'Export the list as a PDF to share with your partner or accountant.' },
 ];
-
-// ── Status helpers ────────────────────────────────────────────────────────────
-function statusSortOrder(s: string): number {
-  switch (s) {
-    case 'overdue':   return 0;
-    case 'pending':   return 1;
-    case 'scheduled': return 2;
-    case 'paid':      return 3;
-    default:          return 4;
-  }
-}
 
 // ── Payment row ───────────────────────────────────────────────────────────────
 interface PaymentRowProps {
@@ -252,15 +243,13 @@ export default function PaiementsScreen() {
   const wId = weddingId ?? 0;
   const currency = activeWedding?.currency ?? preferredCurrency;
 
-  const { data: payments, isLoading, isError, refetch, isRefetching } = useListPayments(wId, { query: { queryKey: getListPaymentsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: payments, isLoading, isError, refetch, isRefetching } = useListPayments(wId, { query: { queryKey: getListPaymentsQueryKey(wId), enabled: isPremiumTabDataEnabled(weddingId, isPremium), staleTime: MOBILE_TAB_STALE_TIME } });
   const createPayment = useCreatePayment();
 
-  const sorted: Payment[] = [...(payments ?? [])].sort((a, b) => {
-    const sA = statusSortOrder(a.status);
-    const sB = statusSortOrder(b.status);
-    if (sA !== sB) return sA - sB;
-    return a.dueDate.localeCompare(b.dueDate);
-  });
+  const { sorted, sections } = useMemo(
+    () => organizePayments(payments ?? []),
+    [payments],
+  );
 
   const handleExport = useCallback(async () => {
     if (!payments || isExporting) return;
@@ -286,132 +275,95 @@ export default function PaiementsScreen() {
 
   const fabBottom = Platform.OS === 'web' ? 94 : insets.bottom + 84;
 
-  // Group labels
-  const overduePayments   = sorted.filter(p => p.status === 'overdue');
-  const pendingPayments   = sorted.filter(p => p.status === 'pending' || p.status === 'scheduled');
-  const paidPayments      = sorted.filter(p => p.status === 'paid');
-
   if (!isPremium) return <PremiumPageGate featureLabel={tr.gate} />;
   return (
     <>
-      <ScrollView
+      <SectionList<Payment, PaymentSection>
+        sections={sections}
         style={{ flex: 1, backgroundColor: colors.background }}
         contentContainerStyle={{ paddingBottom: 160, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.plum} />
+        stickySectionHeadersEnabled={false}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === 'android'}
+        refreshing={isRefetching}
+        onRefresh={() => void refetch()}
+        keyExtractor={(payment) => String(payment.id)}
+        renderSectionHeader={({ section }) => {
+          const sectionCopy = section.key === 'overdue'
+            ? { title: tr.overdue, color: colors.destructive, backgroundColor: colors.destructive + '18' }
+            : section.key === 'due'
+              ? { title: tr.due, color: colors.goldDim, backgroundColor: colors.warningBg }
+              : { title: tr.paid, color: colors.sageDark, backgroundColor: colors.sageBg };
+          return (
+            <View style={[ss.sectionRow, { backgroundColor: colors.background }]}>
+              <Text style={[ss.sectionHeader, { fontFamily: SANS_SEMIBOLD, color: sectionCopy.color }]}>
+                {sectionCopy.title}
+              </Text>
+              <View style={[ss.countBadge, { backgroundColor: sectionCopy.backgroundColor }]}>
+                <Text style={[ss.countText, { fontFamily: SANS_SEMIBOLD, color: sectionCopy.color }]}>
+                  {section.data.length}
+                </Text>
+              </View>
+            </View>
+          );
+        }}
+        renderItem={({ item }) => (
+          <PaymentRow payment={item} currency={currency} colors={colors} language={language} />
+        )}
+        ListHeaderComponent={
+          <>
+            <LinearGradient
+              colors={[colors.plumDark, colors.plum, colors.plumLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[ss.hero, { paddingTop: topPad + 20 }]}
+            >
+              <View style={{ position: 'absolute', top: -24, right: -28, width: 110, height: 110, borderRadius: 55, backgroundColor: colors.gold + '1E' }} pointerEvents="none" />
+              <View style={{ position: 'absolute', bottom: -16, left: -16, width: 80, height: 80, borderRadius: 40, backgroundColor: colors.sage + '20' }} pointerEvents="none" />
+              <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
+              <View style={ss.goldBar} />
+              <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>{tr.eye}</Text>
+              <View style={ss.heroTop}>
+                <View style={ss.titleRow}>
+                  <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>{tr.title}</Text>
+                  <PremiumBadge />
+                </View>
+                <View style={ss.heroActions}>
+                  {payments && <TouchableOpacity onPress={handleExport} disabled={isExporting} activeOpacity={0.75} style={ss.heroAction}>
+                    {isExporting ? <ActivityIndicator size="small" color="#C8A96E" /> : <Feather name="share" size={14} color="#C8A96E" />}
+                    <Text style={[ss.exportBtnText, { fontFamily: SANS_SEMIBOLD }]}>{isExporting ? tr.exporting : tr.export}</Text>
+                  </TouchableOpacity>}
+                  <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
+                    <Feather name="plus" size={15} color="#FBF5FB" />
+                    <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>{tr.add}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              {activeWedding && (
+                <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]}>{activeWedding.names}</Text>
+              )}
+            </LinearGradient>
+            {payments && payments.length > 0 && (
+              <View style={ss.content}>
+                <SummaryCard payments={sorted} currency={currency} colors={colors} language={language} />
+              </View>
+            )}
+          </>
         }
-      >
-        {/* ── Hero ─────────────────────────────────────────────────────────── */}
-        <LinearGradient
-          colors={[colors.plumDark, colors.plum, colors.plumLight]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[ss.hero, { paddingTop: topPad + 20 }]}
-        >
-          <View style={{ position: 'absolute', top: -24, right: -28, width: 110, height: 110, borderRadius: 55, backgroundColor: colors.gold + '1E' }} pointerEvents="none" />
-          <View style={{ position: 'absolute', bottom: -16, left: -16, width: 80, height: 80, borderRadius: 40, backgroundColor: colors.sage + '20' }} pointerEvents="none" />
-          <LinearGradient colors={['rgba(255,255,255,0.08)', 'transparent']} style={ss.heroSheen} pointerEvents="none" />
-          <View style={ss.goldBar} />
-
-          <Text style={[ss.eye, { fontFamily: SANS_MEDIUM, color: '#C8A96E' }]}>{tr.eye}</Text>
-          <View style={ss.heroTop}>
-            <View style={ss.titleRow}>
-              <Text style={[ss.title, { fontFamily: SERIF, color: '#FBF5FB' }]}>{tr.title}</Text>
-              <PremiumBadge />
-            </View>
-            <View style={ss.heroActions}>
-              {payments && <TouchableOpacity onPress={handleExport} disabled={isExporting} activeOpacity={0.75} style={ss.heroAction}>
-                {isExporting ? <ActivityIndicator size="small" color="#C8A96E" /> : <Feather name="share" size={14} color="#C8A96E" />}
-                <Text style={[ss.exportBtnText, { fontFamily: SANS_SEMIBOLD }]}>{isExporting ? tr.exporting : tr.export}</Text>
-              </TouchableOpacity>}
-              <TouchableOpacity onPress={() => setAddVisible(true)} style={ss.addHeaderBtn}>
-                <Feather name="plus" size={15} color="#FBF5FB" />
-                <Text style={[ss.addHeaderText, { fontFamily: SANS_SEMIBOLD }]}>{tr.add}</Text>
-              </TouchableOpacity>
-            </View>
+        ListEmptyComponent={
+          <View style={ss.content}>
+            {isLoading
+              ? <View style={ss.loading}><ActivityIndicator color={colors.accent} /></View>
+              : isError && !payments
+                ? <QueryErrorState onRetry={refetch} retrying={isRefetching} />
+              : <EmptyState icon="credit-card" title={tr.emptyTitle} subtitle={tr.emptyBody} />}
           </View>
-          {activeWedding && (
-            <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]}>{activeWedding.names}</Text>
-          )}
-        </LinearGradient>
-
-        {/* ── Content ──────────────────────────────────────────────────────── */}
-        <View style={ss.content}>
-          {isLoading ? (
-            <View style={ss.loading}><ActivityIndicator color={colors.accent} /></View>
-          ) : isError && !payments ? (
-            <QueryErrorState onRetry={refetch} retrying={isRefetching} />
-          ) : !payments || payments.length === 0 ? (
-            <EmptyState
-              icon="credit-card"
-              title={tr.emptyTitle}
-              subtitle={tr.emptyBody}
-            />
-          ) : (
-            <>
-               <SummaryCard payments={sorted} currency={currency} colors={colors} language={language} />
-
-              {/* Overdue */}
-              {overduePayments.length > 0 && (
-                <>
-                  <View style={ss.sectionRow}>
-                    <Text style={[ss.sectionHeader, { fontFamily: SANS_SEMIBOLD, color: colors.destructive }]}>
-                       {tr.overdue}
-                    </Text>
-                    <View style={[ss.countBadge, { backgroundColor: colors.destructive + '18' }]}>
-                      <Text style={[ss.countText, { fontFamily: SANS_SEMIBOLD, color: colors.destructive }]}>
-                        {overduePayments.length}
-                      </Text>
-                    </View>
-                  </View>
-                  {overduePayments.map(p => (
-                     <PaymentRow key={p.id} payment={p} currency={currency} colors={colors} language={language} />
-                  ))}
-                </>
-              )}
-
-              {/* Pending / Scheduled */}
-              {pendingPayments.length > 0 && (
-                <>
-                  <View style={ss.sectionRow}>
-                    <Text style={[ss.sectionHeader, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>
-                       {tr.due}
-                    </Text>
-                    <View style={[ss.countBadge, { backgroundColor: colors.warningBg }]}>
-                      <Text style={[ss.countText, { fontFamily: SANS_SEMIBOLD, color: colors.warning }]}>
-                        {pendingPayments.length}
-                      </Text>
-                    </View>
-                  </View>
-                  {pendingPayments.map(p => (
-                     <PaymentRow key={p.id} payment={p} currency={currency} colors={colors} language={language} />
-                  ))}
-                </>
-              )}
-
-              {/* Paid */}
-              {paidPayments.length > 0 && (
-                <>
-                  <View style={ss.sectionRow}>
-                    <Text style={[ss.sectionHeader, { fontFamily: SANS_SEMIBOLD, color: colors.sageDark }]}>
-                       {tr.paid}
-                    </Text>
-                    <View style={[ss.countBadge, { backgroundColor: colors.sageBg }]}>
-                      <Text style={[ss.countText, { fontFamily: SANS_SEMIBOLD, color: colors.sageDark }]}>
-                        {paidPayments.length}
-                      </Text>
-                    </View>
-                  </View>
-                  {paidPayments.map(p => (
-                     <PaymentRow key={p.id} payment={p} currency={currency} colors={colors} language={language} />
-                  ))}
-                </>
-              )}
-            </>
-          )}
-        </View>
-      </ScrollView>
+        }
+      />
 
       <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow={tr.sheet} title={tr.addTitle}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>

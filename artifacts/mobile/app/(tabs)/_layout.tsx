@@ -36,6 +36,7 @@ import {
 import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
 import { useSubscription } from '@/lib/subscription';
 import { getWeddingDocumentsQueryOptions } from '@/hooks/useWeddingDocuments';
+import { isPremiumTabDataEnabled } from '@/utils/tab-access';
 
 // ── Tab metadata ───────────────────────────────────────────────────────────────
 const TAB_META: Record<string, { sf: string; feather: string; labelKey: TranslationKey; descriptionKey: TranslationKey }> = {
@@ -651,7 +652,7 @@ function TabDataWarmer() {
         }),
       );
 
-      if (isActive) {
+      if (isPremiumTabDataEnabled(weddingId, isActive)) {
         void queryClient.prefetchQuery(
           getListGuestsQueryOptions(weddingId, {
             query: {

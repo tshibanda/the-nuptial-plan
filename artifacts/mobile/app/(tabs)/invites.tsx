@@ -32,6 +32,7 @@ import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { useSubscription } from '@/lib/subscription';
 import { useLocalization } from '@/context/LocalizationContext';
+import { isPremiumTabDataEnabled } from '@/utils/tab-access';
 
 // ── Excel parsing ──────────────────────────────────────────────────────────────
 type RsvpStatus = 'confirmed' | 'pending' | 'declined';
@@ -95,6 +96,9 @@ const TOUR_STEPS = [
 ];
 
 type Filter = 'all' | 'confirmed' | 'pending' | 'declined';
+type GuestListItem =
+  | { kind: 'guest'; key: string; guest: Guest }
+  | { kind: 'table'; key: string; table: string; count: number };
 const AVATAR_COLORS = ['#ebe2d4', '#dce4e5', '#e2dceb', '#dce8df', '#f0e2cb'];
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -155,13 +159,11 @@ export default function InvitesScreen() {
   const [importRows, setImportRows] = useState<ParsedGuest[]>([]);
   const [importSkipped, setImportSkipped] = useState(0);
   const [importing, setImporting] = useState(false);
-
-  const hasWedding = typeof weddingId === 'number' && weddingId > 0;
   const wId = weddingId ?? 0;
   const { data: guests, isLoading, isError, refetch, isRefetching } = useListGuests(wId, {
     query: {
       queryKey: getListGuestsQueryKey(wId),
-      enabled: hasWedding && isPremium,
+      enabled: isPremiumTabDataEnabled(weddingId, isPremium),
       staleTime: MOBILE_TAB_STALE_TIME,
       gcTime: 30 * 60 * 1000,
     },
@@ -194,6 +196,12 @@ export default function InvitesScreen() {
       return groups;
     }, new Map<string, Guest[]>()).entries(),
   ).sort(([a], [b]) => a === tr.noTable ? 1 : b === tr.noTable ? -1 : a.localeCompare(b, locale, { numeric: true })), [guests, tr.noTable, locale]);
+  const listData = useMemo<GuestListItem[]>(() => viewMode === 'guests'
+    ? filtered.map((guest) => ({ kind: 'guest', key: `guest:${guest.id}`, guest }))
+    : tableGroups.flatMap(([table, tableGuests]) => [
+      { kind: 'table' as const, key: `table:${table}`, table, count: tableGuests.length },
+      ...tableGuests.map((guest) => ({ kind: 'guest' as const, key: `table-guest:${guest.id}`, guest })),
+    ]), [filtered, tableGroups, viewMode]);
 
   const handleGuestPress = (guest: Guest) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -313,8 +321,8 @@ export default function InvitesScreen() {
   return (
     <>
       <FlatList
-        data={viewMode === 'guests' ? filtered : []}
-        keyExtractor={(item) => String(item.id)}
+        data={listData}
+        keyExtractor={(item) => item.key}
         style={{ flex: 1, backgroundColor: colors.background }}
         contentContainerStyle={{ paddingBottom: 160, flexGrow: 1 }}
         initialNumToRender={10}
@@ -403,36 +411,6 @@ export default function InvitesScreen() {
                   );
                 })}
               </View>
-              {viewMode === 'tables' && (
-                <View style={ss.tablePlan}>
-                  {tableGroups.length === 0 ? (
-                    <View style={[ss.noTables, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                      <Feather name="grid" size={22} color={colors.goldDim} />
-                       <Text style={[ss.noTablesTitle, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{tr.noGuests}</Text>
-                       <Text style={[ss.noTablesText, { fontFamily: SANS, color: colors.mutedForeground }]}>{tr.noTableBody}</Text>
-                    </View>
-                  ) : tableGroups.map(([table, tableGuests]) => (
-                    <View key={table} style={[ss.tableCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                      <View style={ss.tableHeading}>
-                         <View style={[ss.tableIcon, { backgroundColor: table === tr.noTable ? colors.muted : colors.plum + '18' }]}>
-                           <Feather name={table === tr.noTable ? 'help-circle' : 'grid'} size={16} color={table === tr.noTable ? colors.mutedForeground : colors.plum} />
-                        </View>
-                        <View style={ss.tableHeadingText}>
-                           <Text style={[ss.tableName, { fontFamily: SERIF, color: colors.foreground }]}>{table === tr.noTable ? table : `${tr.table} ${table}`}</Text>
-                           <Text style={[ss.tableCount, { fontFamily: SANS, color: colors.mutedForeground }]}>{tableGuests.length} {tr.guest}{tableGuests.length > 1 ? 's' : ''}</Text>
-                        </View>
-                      </View>
-                      {tableGuests.map((guest) => (
-                        <TouchableOpacity key={guest.id} onPress={() => openTableEditor(guest)} style={[ss.tableGuest, { borderTopColor: colors.border }]} activeOpacity={0.75}>
-                          <Text style={[ss.tableGuestName, { fontFamily: SANS_MEDIUM, color: colors.foreground }]} numberOfLines={1}>{guest.name}</Text>
-                           <StatusBadge label={rsvpLabels[guest.rsvpStatus as keyof typeof rsvpLabels]} tone={rsvpLabel(guest.rsvpStatus, language).tone} />
-                          <Feather name="edit-2" size={13} color={colors.mutedForeground} />
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  ))}
-                </View>
-              )}
             </View>
           </View>
         }
@@ -441,20 +419,50 @@ export default function InvitesScreen() {
             <View style={ss.loading}><ActivityIndicator color={colors.accent} /></View>
           ) : isError && !guests ? (
             <QueryErrorState onRetry={refetch} retrying={isRefetching} />
-          ) : viewMode === 'tables' ? null : (
-            (
-              <View style={ss.emptyWrap}>
-                <EmptyState icon="users" title={tr.noGuests} subtitle={tr.noGuestsBody} />
-              </View>
-            )
+          ) : viewMode === 'tables' ? (
+            <View style={[ss.noTables, { backgroundColor: colors.card, borderColor: colors.border, marginHorizontal: 16, marginTop: 8 }]}>
+              <Feather name="grid" size={22} color={colors.goldDim} />
+              <Text style={[ss.noTablesTitle, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{tr.noGuests}</Text>
+              <Text style={[ss.noTablesText, { fontFamily: SANS, color: colors.mutedForeground }]}>{tr.noTableBody}</Text>
+            </View>
+          ) : (
+            <View style={ss.emptyWrap}>
+              <EmptyState icon="users" title={tr.noGuests} subtitle={tr.noGuestsBody} />
+            </View>
           )
         }
         renderItem={({ item, index }) => {
-          const { tone } = rsvpLabel(item.rsvpStatus, language);
-          const av = item.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
+          if (item.kind === 'table') {
+            const unassigned = item.table === tr.noTable;
+            return (
+              <View style={[ss.tableCard, { backgroundColor: colors.card, borderColor: colors.border, marginHorizontal: 16, marginBottom: 6 }]}>
+                <View style={ss.tableHeading}>
+                  <View style={[ss.tableIcon, { backgroundColor: unassigned ? colors.muted : colors.plum + '18' }]}>
+                    <Feather name={unassigned ? 'help-circle' : 'grid'} size={16} color={unassigned ? colors.mutedForeground : colors.plum} />
+                  </View>
+                  <View style={ss.tableHeadingText}>
+                    <Text style={[ss.tableName, { fontFamily: SERIF, color: colors.foreground }]}>{unassigned ? item.table : `${tr.table} ${item.table}`}</Text>
+                    <Text style={[ss.tableCount, { fontFamily: SANS, color: colors.mutedForeground }]}>{item.count} {tr.guest}{item.count > 1 ? 's' : ''}</Text>
+                  </View>
+                </View>
+              </View>
+            );
+          }
+          const guest = item.guest;
+          if (viewMode === 'tables') {
+            return (
+              <TouchableOpacity onPress={() => openTableEditor(guest)} style={[ss.tableGuest, { borderColor: colors.border, backgroundColor: colors.card, marginHorizontal: 16, marginBottom: 6, borderRadius: 8, borderWidth: StyleSheet.hairlineWidth }]} activeOpacity={0.75}>
+                <Text style={[ss.tableGuestName, { fontFamily: SANS_MEDIUM, color: colors.foreground }]} numberOfLines={1}>{guest.name}</Text>
+                <StatusBadge label={rsvpLabels[guest.rsvpStatus as keyof typeof rsvpLabels]} tone={rsvpLabel(guest.rsvpStatus, language).tone} />
+                <Feather name="edit-2" size={13} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            );
+          }
+          const { tone } = rsvpLabel(guest.rsvpStatus, language);
+          const av = guest.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
           return (
             <TouchableOpacity
-              onPress={() => handleGuestPress(item)}
+              onPress={() => handleGuestPress(guest)}
               activeOpacity={0.75}
               style={[ss.guestRow, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border, marginHorizontal: 16, marginBottom: 8 }]}
             >
@@ -463,13 +471,13 @@ export default function InvitesScreen() {
                 <Text style={[ss.avText, { fontFamily: SERIF, color: colors.plumDark }]}>{av}</Text>
               </View>
               <View style={ss.guestInfo}>
-                <Text style={[ss.guestName, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]} numberOfLines={1}>{item.name}</Text>
+                <Text style={[ss.guestName, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]} numberOfLines={1}>{guest.name}</Text>
                 <Text style={[ss.guestMeta, { fontFamily: SANS, color: colors.mutedForeground }]}>
-                  {[item.tableNumber ? `${tr.table} ${item.tableNumber}` : null, item.dietaryRequirements].filter(Boolean).join(' · ') || '—'}
+                  {[guest.tableNumber ? `${tr.table} ${guest.tableNumber}` : null, guest.dietaryRequirements].filter(Boolean).join(' · ') || '—'}
                 </Text>
               </View>
               <View style={ss.guestRight}>
-                <StatusBadge label={rsvpLabels[item.rsvpStatus as keyof typeof rsvpLabels]} tone={tone} />
+                <StatusBadge label={rsvpLabels[guest.rsvpStatus as keyof typeof rsvpLabels]} tone={tone} />
                 <View style={{ height: 4 }} />
                 <Feather name="chevron-right" size={13} color={colors.goldDim} />
               </View>
@@ -690,7 +698,6 @@ const ss = StyleSheet.create({
   guestName: { fontSize: 13, marginBottom: 2 },
   guestMeta: { fontSize: 10 },
   guestRight: { alignItems: 'center' },
-  tablePlan: { gap: 10, marginBottom: 8 },
   tableCard: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   tableHeading: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
   tableIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
