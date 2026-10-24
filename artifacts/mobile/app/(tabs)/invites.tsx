@@ -368,6 +368,9 @@ export default function InvitesScreen() {
               </View>
             </LinearGradient>
 
+            {isError && guests !== undefined && (
+              <QueryErrorState compact onRetry={refetch} retrying={isRefetching} />
+            )}
             <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
               <View style={[ss.viewTabs, { backgroundColor: colors.muted, borderColor: colors.border }]}>
                 <TouchableOpacity onPress={() => setViewMode('guests')} style={[ss.viewTab, viewMode === 'guests' && { backgroundColor: colors.card, shadowColor: colors.plum, shadowOpacity: 0.12, shadowRadius: 5, elevation: 2 }]}>

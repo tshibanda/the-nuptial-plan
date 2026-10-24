@@ -220,6 +220,9 @@ export default function DocumentsScreen() {
             <Feather name="upload" size={15} color="#3C1A3C" />
             <Text style={[styles.uploadText, { fontFamily: SANS_SEMIBOLD }]}>{uploading ? tr.sending : tr.add}</Text>
           </TouchableOpacity>
+          {documentsQuery.isError && documentsQuery.data !== undefined && (
+            <QueryErrorState compact onRetry={loadDocuments} retrying={documentsQuery.isRefetching} />
+          )}
         </>
       }
       renderItem={({ item }) => (

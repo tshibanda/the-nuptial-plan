@@ -152,6 +152,9 @@ export default function ContratsScreen() {
             </LinearGradient>
 
             {/* Search bar */}
+            {isError && contracts !== undefined && (
+              <QueryErrorState compact onRetry={refetch} retrying={isRefetching} />
+            )}
             <View style={[ss.searchWrap, { backgroundColor: colors.card, borderColor: colors.border }, shadow('sm')]}>
               <Feather name="search" size={16} color={colors.mutedForeground} />
               <TextInput

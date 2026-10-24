@@ -347,6 +347,9 @@ export default function PaiementsScreen() {
                 <Text style={[ss.subtitle, { fontFamily: SANS, color: '#DEC0DE' }]}>{activeWedding.names}</Text>
               )}
             </LinearGradient>
+            {isError && payments !== undefined && (
+              <QueryErrorState compact onRetry={refetch} retrying={isRefetching} />
+            )}
             {payments && payments.length > 0 && (
               <View style={ss.content}>
                 <SummaryCard payments={sorted} currency={currency} colors={colors} language={language} />

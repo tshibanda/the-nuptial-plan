@@ -197,6 +197,9 @@ export default function PrestatairesScreen() {
             </LinearGradient>
 
             {/* Search bar */}
+            {isError && vendors !== undefined && (
+              <QueryErrorState compact onRetry={refetch} retrying={isRefetching} />
+            )}
             <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
               <View style={[ss.searchWrap, shadow('sm'), { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[ss.rim, { borderTopColor: 'rgba(255,255,255,0.85)' }]} />

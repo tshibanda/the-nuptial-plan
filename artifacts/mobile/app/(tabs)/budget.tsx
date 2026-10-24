@@ -769,6 +769,9 @@ export default function BudgetScreen() {
 
         {/* ── Content ──────────────────────────────────────────────────────── */}
         <View style={ss.content}>
+          {isError && budgetSummary !== undefined && (
+            <QueryErrorState compact onRetry={refetch} retrying={isRefetching} />
+          )}
           {isLoading ? (
             <View style={ss.loading}>
               <ActivityIndicator color={colors.accent} />
