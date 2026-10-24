@@ -343,7 +343,7 @@ const ss = StyleSheet.create({
     fontSize: 14, marginBottom: 14,
   },
   passwordRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  eyeBtn: { position: 'absolute', right: 14, height: 48, justifyContent: 'center' },
+  eyeBtn: { position: 'absolute', top: 0, bottom: 0, right: 14, width: 40, alignItems: 'center', justifyContent: 'center' },
   errorText: { fontSize: 11, color: '#e07878', marginTop: -10, marginBottom: 10 },
   primaryBtn: {
     backgroundColor: GOLD, borderRadius: 6, height: 52,
