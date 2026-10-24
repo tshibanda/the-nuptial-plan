@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,6 +14,7 @@ import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
 import { useLocalization } from '@/context/LocalizationContext';
 import { getWeddingDocumentsQueryOptions } from '@/hooks/useWeddingDocuments';
+import { QueryErrorState } from '@/components/QueryErrorState';
 
 type WeddingDocument = {
   id: number;
@@ -120,10 +121,6 @@ export default function DocumentsScreen() {
     () => documentsQuery.refetch(),
     [documentsQuery.refetch],
   );
-
-  useEffect(() => {
-    if (documentsQuery.isError) Alert.alert(tr.docs, tr.loadError);
-  }, [documentsQuery.isError, tr.docs, tr.loadError]);
 
   const grouped = useMemo<DocumentSection[]>(() => {
     const vendorNames = new Map(vendors.map((vendor) => [vendor.id, vendor.name]));
@@ -243,7 +240,12 @@ export default function DocumentsScreen() {
           ))}
         </View>
       )}
-      ListEmptyComponent={<View style={styles.empty}><Feather name="folder" size={30} color={colors.goldDim} /><Text style={[styles.emptyTitle, { color: colors.mutedForeground, fontFamily: SERIF }]}>{tr.emptyTitle}</Text><Text style={[styles.emptyBody, { color: colors.mutedForeground, fontFamily: SANS }]}>{tr.emptyBody}</Text></View>}
+      ListEmptyComponent={
+        loading ? <View style={styles.empty}><ActivityIndicator color={colors.plum} /></View>
+          : documentsQuery.isError && !documentsQuery.data
+            ? <QueryErrorState onRetry={loadDocuments} retrying={documentsQuery.isRefetching} />
+            : <View style={styles.empty}><Feather name="folder" size={30} color={colors.goldDim} /><Text style={[styles.emptyTitle, { color: colors.mutedForeground, fontFamily: SERIF }]}>{tr.emptyTitle}</Text><Text style={[styles.emptyBody, { color: colors.mutedForeground, fontFamily: SANS }]}>{tr.emptyBody}</Text></View>
+      }
     />
   );
 }

@@ -35,6 +35,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
+import { QueryErrorState } from '@/components/QueryErrorState';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
@@ -642,6 +643,7 @@ export default function BudgetScreen() {
   const {
     data: budgetSummary,
     isLoading,
+    isError,
     refetch,
     isRefetching,
   } = useGetBudgetSummary(wId ?? 0, {
@@ -771,6 +773,8 @@ export default function BudgetScreen() {
             <View style={ss.loading}>
               <ActivityIndicator color={colors.accent} />
             </View>
+          ) : isError && !budgetSummary ? (
+            <QueryErrorState onRetry={refetch} retrying={isRefetching} />
           ) : !budgetSummary ? (
             <EmptyState
               icon="pie-chart"

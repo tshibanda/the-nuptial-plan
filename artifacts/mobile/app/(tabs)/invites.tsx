@@ -24,6 +24,7 @@ import { rsvpLabel } from '@/utils/format';
 import { shadow, accentShadow } from '@/utils/shadow';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
+import { QueryErrorState } from '@/components/QueryErrorState';
 import { GuestDetailSheet } from '@/components/GuestDetailSheet';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
@@ -157,7 +158,7 @@ export default function InvitesScreen() {
 
   const hasWedding = typeof weddingId === 'number' && weddingId > 0;
   const wId = weddingId ?? 0;
-  const { data: guests, isLoading, refetch, isRefetching } = useListGuests(wId, {
+  const { data: guests, isLoading, isError, refetch, isRefetching } = useListGuests(wId, {
     query: {
       queryKey: getListGuestsQueryKey(wId),
       enabled: hasWedding && isPremium,
@@ -436,14 +437,16 @@ export default function InvitesScreen() {
           </View>
         }
         ListEmptyComponent={
-          viewMode === 'tables' ? null : (
           isLoading ? (
             <View style={ss.loading}><ActivityIndicator color={colors.accent} /></View>
-          ) : (
-            <View style={ss.emptyWrap}>
-               <EmptyState icon="users" title={tr.noGuests} subtitle={tr.noGuestsBody} />
-            </View>
-          )
+          ) : isError && !guests ? (
+            <QueryErrorState onRetry={refetch} retrying={isRefetching} />
+          ) : viewMode === 'tables' ? null : (
+            (
+              <View style={ss.emptyWrap}>
+                <EmptyState icon="users" title={tr.noGuests} subtitle={tr.noGuestsBody} />
+              </View>
+            )
           )
         }
         renderItem={({ item, index }) => {

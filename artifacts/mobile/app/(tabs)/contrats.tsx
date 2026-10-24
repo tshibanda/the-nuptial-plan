@@ -16,6 +16,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
+import { QueryErrorState } from '@/components/QueryErrorState';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
 import { PaywallModal } from '@/components/PaywallModal';
@@ -97,7 +98,7 @@ export default function ContratsScreen() {
   const createContract = useCreateContract();
 
   const wId = weddingId ?? 0;
-  const { data: contracts, isLoading, refetch, isRefetching } = useListContracts(wId, { query: { queryKey: getListContractsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: contracts, isLoading, isError, refetch, isRefetching } = useListContracts(wId, { query: { queryKey: getListContractsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
 
   const filtered = (contracts ?? []).filter((c) =>
     c.vendorName.toLowerCase().includes(search.toLowerCase()),
@@ -166,7 +167,9 @@ export default function ContratsScreen() {
         }
         ListEmptyComponent={isLoading
           ? <View style={ss.center}><ActivityIndicator color={colors.accent} size="large" /></View>
-          : <View style={ss.emptyWrap}><EmptyState icon="file-text" title={search ? tr.noResults : tr.noContracts} subtitle={search ? tr.editSearch : tr.empty} /></View>}
+          : isError && !contracts
+            ? <QueryErrorState onRetry={refetch} retrying={isRefetching} />
+            : <View style={ss.emptyWrap}><EmptyState icon="file-text" title={search ? tr.noResults : tr.noContracts} subtitle={search ? tr.editSearch : tr.empty} /></View>}
         renderItem={({ item }) => {
           const statusInfo = STATUS_COLORS[item.status] ?? STATUS_COLORS.pending;
           const label = tr.statuses[item.status as keyof typeof tr.statuses] ?? item.status;

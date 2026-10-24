@@ -28,6 +28,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents, formatDateShort, paymentStatusLabel } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
+import { QueryErrorState } from '@/components/QueryErrorState';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
 import { exportPaymentsPDF } from '@/utils/payments-pdf';
@@ -251,7 +252,7 @@ export default function PaiementsScreen() {
   const wId = weddingId ?? 0;
   const currency = activeWedding?.currency ?? preferredCurrency;
 
-  const { data: payments, isLoading, refetch, isRefetching } = useListPayments(wId, { query: { queryKey: getListPaymentsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: payments, isLoading, isError, refetch, isRefetching } = useListPayments(wId, { query: { queryKey: getListPaymentsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
   const createPayment = useCreatePayment();
 
   const sorted: Payment[] = [...(payments ?? [])].sort((a, b) => {
@@ -339,6 +340,8 @@ export default function PaiementsScreen() {
         <View style={ss.content}>
           {isLoading ? (
             <View style={ss.loading}><ActivityIndicator color={colors.accent} /></View>
+          ) : isError && !payments ? (
+            <QueryErrorState onRetry={refetch} retrying={isRefetching} />
           ) : !payments || payments.length === 0 ? (
             <EmptyState
               icon="credit-card"

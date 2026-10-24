@@ -25,6 +25,7 @@ import { formatCents, vendorStatusLabel } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
+import { QueryErrorState } from '@/components/QueryErrorState';
 import { VendorDetailSheet } from '@/components/VendorDetailSheet';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
@@ -94,9 +95,15 @@ export default function PrestatairesScreen() {
   const queryClient = useQueryClient();
 
   const wId = weddingId ?? 0;
-  const { data: vendors, isLoading, refetch, isRefetching } = useListVendors(wId, { query: { queryKey: getListVendorsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
+  const { data: vendors, isLoading, isError, refetch, isRefetching } = useListVendors(wId, { query: { queryKey: getListVendorsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
   const createVendor = useCreateVendor();
-  const { data: addressBookEntries = [], isLoading: addressBookLoading } = useListAddressBookEntries({
+  const {
+    data: addressBookEntries = [],
+    isLoading: addressBookLoading,
+    isError: addressBookError,
+    refetch: refetchAddressBook,
+    isRefetching: isAddressBookRefetching,
+  } = useListAddressBookEntries({
     query: {
       queryKey: getListAddressBookEntriesQueryKey(),
       enabled: isPremium,
@@ -213,6 +220,8 @@ export default function PrestatairesScreen() {
         ListEmptyComponent={
           isLoading ? (
             <View style={ss.loading}><ActivityIndicator color={colors.accent} /></View>
+          ) : isError && !vendors ? (
+            <QueryErrorState onRetry={refetch} retrying={isRefetching} />
           ) : (
             <View style={ss.emptyWrap}>
               <EmptyState icon="briefcase" title={tr.emptyTitle} subtitle={tr.emptyBody} />
@@ -285,6 +294,8 @@ export default function PrestatairesScreen() {
             <View style={[ss.addressBookList, { borderColor: colors.border, backgroundColor: colors.card }]}>
               {addressBookLoading ? (
                 <ActivityIndicator color={colors.plum} style={ss.addressBookLoading} />
+              ) : addressBookError && addressBookEntries.length === 0 ? (
+                <QueryErrorState onRetry={refetchAddressBook} retrying={isAddressBookRefetching} />
               ) : addressBookEntries.length === 0 ? (
                 <Text style={[ss.addressBookEmpty, { color: colors.mutedForeground, fontFamily: SANS }]}>{tr.bookEmpty}</Text>
               ) : (
