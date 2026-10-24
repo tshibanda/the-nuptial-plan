@@ -16,7 +16,14 @@ export default function CarnetAdresseScreen() {
   const { language, t } = useLocalization();
   const copy = language === 'fr' ? { feature: 'votre carnet d’adresses', errorBody: 'Impossible d’enregistrer ce contact.', eyebrow: 'VOTRE RÉSEAU DE CONFIANCE', title: 'Mon carnet d’adresses', close: 'Fermer', add: 'Ajouter', closeForm: 'Fermer le formulaire', addContact: 'Ajouter un contact', body: 'Vos prestataires favoris, prêts à être ajoutés à n’importe quel mariage.', search: 'Rechercher un prestataire…', name: 'Nom du prestataire *', category: 'Catégorie *', contact: 'Nom du contact', email: 'Email', phone: 'Téléphone', website: 'Site internet', notes: 'Notes', save: 'Ajouter au carnet', deleteTitle: 'Supprimer ce contact ?', loading: 'Chargement…', noResults: 'Aucun contact trouvé.', empty: 'Votre carnet est encore vide.' } : { feature: 'your address book', errorBody: 'Unable to save this contact.', eyebrow: 'YOUR TRUSTED NETWORK', title: 'My address book', close: 'Close', add: 'Add', closeForm: 'Close form', addContact: 'Add a contact', body: 'Your favorite vendors, ready to be added to any wedding.', search: 'Search for a vendor…', name: 'Vendor name *', category: 'Category *', contact: 'Contact name', email: 'Email', phone: 'Phone', website: 'Website', notes: 'Notes', save: 'Add to address book', deleteTitle: 'Delete this contact?', loading: 'Loading…', noResults: 'No contacts found.', empty: 'Your address book is empty.' };
   const { isActive: isPremium } = useSubscription();
-  const { data: entries = [], isLoading } = useListAddressBookEntries(); const create = useCreateAddressBookEntry(); const remove = useDeleteAddressBookEntry();
+  const { data: entries = [], isLoading } = useListAddressBookEntries({
+    query: {
+      queryKey: getListAddressBookEntriesQueryKey(),
+      enabled: isPremium,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+    },
+  }); const create = useCreateAddressBookEntry(); const remove = useDeleteAddressBookEntry();
   const [search, setSearch] = useState(''); const [adding, setAdding] = useState(false); const [form, setForm] = useState({ name: '', category: '', contactName: '', contactEmail: '', contactPhone: '', website: '', notes: '' });
   const filtered = useMemo(() => { const q = search.trim().toLocaleLowerCase(); return q ? entries.filter((e) => [e.name, e.category, e.contactName, e.contactEmail].filter(Boolean).join(' ').toLocaleLowerCase().includes(q)) : entries; }, [entries, search]);
   const submit = () => { if (!form.name.trim() || !form.category.trim()) return; create.mutate({ data: form }, { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListAddressBookEntriesQueryKey() }); setForm({ name: '', category: '', contactName: '', contactEmail: '', contactPhone: '', website: '', notes: '' }); setAdding(false); }, onError: () => Alert.alert(t('common.error'), copy.errorBody) }); };

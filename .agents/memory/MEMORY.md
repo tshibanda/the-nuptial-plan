@@ -7,8 +7,11 @@
 - [Planner data isolation](planner-data-isolation.md) — Every wedding and private conversation is scoped to the authenticated Clerk owner; legacy unowned records stay hidden.
 - [Expo Launch iOS CocoaPods](expo-launch-ios-cocoapods.md) — Clerk Expo updates can be required when RN 0.81 SPM integration fails during Podfile post-install.
 - [RevenueCat store configuration](revenuecat-store-configuration.md) — Check nested package product IDs before attaching iOS/Android products idempotently.
-- [Mobile budget performance](mobile-budget-performance.md) — Start the budget query from the persisted wedding ID and never fetch with wedding ID 0.
+- [Mobile tab performance](mobile-budget-performance.md) — Start from the persisted wedding ID, avoid ID 0, and warm shared query caches for remote-data tabs after first interaction.
 - [Mobile guest loading](mobile-guest-loading.md) — Reuse the guest list for RSVP counts; do not issue a duplicate statistics request when opening Invités.
+- [Mobile offline navigation](mobile-offline-navigation.md) — Connectivity changes must not block cached tabs with a modal; recheck network status after resume.
+- [Signup demo wedding](onboarding-demo-data.md) — All signup surfaces use one authenticated, owner-scoped seed; a private Clerk marker prevents restoring a deleted sample.
+- [Expo React Compiler compatibility](expo-react-compiler.md) — Keep Expo’s experimental React Compiler disabled unless current native and web route checks pass.
 - [Mobile document list stability](mobile-document-list-stability.md) — Keep document-section identities independent of labels that resolve asynchronously.
 - [Social OAuth security](social-oauth-security.md) — Social credentials require signed cross-client callbacks, server-side encryption, and publish-time schema migration.
 - [Instagram direct login](instagram-direct-login.md) — Instagram uses its own OAuth/token lifecycle and must not depend on Facebook Pages.

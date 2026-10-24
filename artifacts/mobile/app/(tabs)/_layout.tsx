@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Platform, StyleSheet, useColorScheme,
+  AppState, InteractionManager, Platform, StyleSheet, useColorScheme,
   View, Text, Image, Pressable, Modal, TouchableOpacity, ScrollView,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -20,6 +20,22 @@ import { GlobalTourHelp } from '@/components/TourSheet';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import logoImage from '@/assets/images/tnp-gold-logo.png';
 import { useLocalization, type TranslationKey } from '@/context/LocalizationContext';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getGetBudgetSummaryQueryOptions,
+  getGetBudgetSummaryQueryKey,
+  getListGuestsQueryOptions,
+  getListGuestsQueryKey,
+  getListPaymentsQueryOptions,
+  getListPaymentsQueryKey,
+  getListContractsQueryOptions,
+  getListContractsQueryKey,
+  getListAddressBookEntriesQueryOptions,
+  getListAddressBookEntriesQueryKey,
+} from '@workspace/api-client-react';
+import { MOBILE_TAB_STALE_TIME, useActiveWedding } from '@/hooks/useActiveWedding';
+import { useSubscription } from '@/lib/subscription';
+import { getWeddingDocumentsQueryOptions } from '@/hooks/useWeddingDocuments';
 
 // ── Tab metadata ───────────────────────────────────────────────────────────────
 const TAB_META: Record<string, { sf: string; feather: string; labelKey: TranslationKey; descriptionKey: TranslationKey }> = {
@@ -91,6 +107,14 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
   const [primaryTabs, setPrimaryTabs] = useState(DEFAULT_PRIMARY);
   const { t, language } = useLocalization();
 
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      // Release the native modal window before the app is suspended.
+      if (nextState === 'background') setBurgerOpen(false);
+    });
+    return () => subscription.remove();
+  }, []);
+
   const BAR_H = 64;
   const bottomPad = insets?.bottom ?? 0;
   const bgColor = isDark ? colors.card : '#FDFAF7';
@@ -143,13 +167,13 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
       <View style={[bar.container, { height: BAR_H + bottomPad }]}>
         {/* Background */}
         {isIOS ? (
-          <BlurView intensity={100} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          <BlurView pointerEvents="none" intensity={100} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         ) : (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: bgColor }]} />
+          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: bgColor }]} />
         )}
 
         {/* Gold top rim */}
-        <View style={bar.goldRim} />
+        <View pointerEvents="none" style={bar.goldRim} />
 
         {/* Tab buttons */}
         <View style={[bar.row, { height: BAR_H }]}>
@@ -230,18 +254,18 @@ function FixedTabBar({ state, navigation, insets }: TabBarProps) {
       </View>
 
       {/* ── Burger full-menu sheet ── */}
-      <BurgerSheet
+      {burgerOpen && <BurgerSheet
         visible={burgerOpen}
         onClose={() => setBurgerOpen(false)}
         currentRoute={currentRoute}
-        onNavigate={(name) => { setBurgerOpen(false); setTimeout(() => navigateTo(name), 50); }}
+        onNavigate={(name) => { setBurgerOpen(false); navigateTo(name); }}
         primaryTabs={primaryTabs}
         onPrimaryTabsChange={updatePrimaryTabs}
         colors={colors}
         isDark={isDark}
         canUseSocials={canUseSocials}
         language={language}
-      />
+      />}
     </>
   );
 }
@@ -250,7 +274,7 @@ const bar = StyleSheet.create({
   container: { position: 'absolute', bottom: 0, left: 0, right: 0 },
   goldRim: { position: 'absolute', top: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth * 2, backgroundColor: 'rgba(200,170,112,0.45)', zIndex: 2 },
   row: { flexDirection: 'row', alignItems: 'center' },
-  tabBtn: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  tabBtn: { flex: 1, height: '100%', alignItems: 'center', justifyContent: 'center' },
   tabInner: { alignItems: 'center', gap: 3, paddingTop: 6 },
   activeDot: { position: 'absolute', top: -1, width: 28, height: 3, borderRadius: 2 },
   label: { fontSize: 9, letterSpacing: 0.2, marginTop: 1 },
@@ -602,6 +626,80 @@ function ClassicTabLayout() {
   );
 }
 
+/**
+ * Warm the first-visit data for the two most-used, data-heavy tabs after the
+ * dashboard has rendered. React Query deduplicates these requests if a planner
+ * opens either tab before the prefetch finishes.
+ */
+function TabDataWarmer() {
+  const queryClient = useQueryClient();
+  const { weddingId } = useActiveWedding();
+  const { isActive } = useSubscription();
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    if (!weddingId || weddingId <= 0) return;
+
+    const task = InteractionManager.runAfterInteractions(() => {
+      void queryClient.prefetchQuery(
+        getGetBudgetSummaryQueryOptions(weddingId, {
+          query: {
+            queryKey: getGetBudgetSummaryQueryKey(weddingId),
+            staleTime: MOBILE_TAB_STALE_TIME,
+            gcTime: 30 * 60 * 1000,
+          },
+        }),
+      );
+
+      if (isActive) {
+        void queryClient.prefetchQuery(
+          getListGuestsQueryOptions(weddingId, {
+            query: {
+              queryKey: getListGuestsQueryKey(weddingId),
+              staleTime: MOBILE_TAB_STALE_TIME,
+              gcTime: 30 * 60 * 1000,
+            },
+          }),
+        );
+        void queryClient.prefetchQuery(
+          getListPaymentsQueryOptions(weddingId, {
+            query: {
+              queryKey: getListPaymentsQueryKey(weddingId),
+              staleTime: MOBILE_TAB_STALE_TIME,
+              gcTime: 30 * 60 * 1000,
+            },
+          }),
+        );
+        void queryClient.prefetchQuery(
+          getListContractsQueryOptions(weddingId, {
+            query: {
+              queryKey: getListContractsQueryKey(weddingId),
+              staleTime: MOBILE_TAB_STALE_TIME,
+              gcTime: 30 * 60 * 1000,
+            },
+          }),
+        );
+        void queryClient.prefetchQuery(
+          getListAddressBookEntriesQueryOptions({
+            query: {
+              queryKey: getListAddressBookEntriesQueryKey(),
+              staleTime: MOBILE_TAB_STALE_TIME,
+              gcTime: 30 * 60 * 1000,
+            },
+          }),
+        );
+        void queryClient.prefetchQuery(
+          getWeddingDocumentsQueryOptions(weddingId, getToken),
+        );
+      }
+    });
+
+    return () => task.cancel();
+  }, [getToken, isActive, queryClient, weddingId]);
+
+  return null;
+}
+
 // ── Root layout ────────────────────────────────────────────────────────────────
 export default function TabLayout() {
   const colors = useColors();
@@ -621,6 +719,7 @@ export default function TabLayout() {
       edges={['top']}
       style={{ flex: 1, backgroundColor: colors.plumDark }}
     >
+      <TabDataWarmer />
       <ClassicTabLayout />
       {!pathname.includes('/parametres') && <NuptiaSheet />}
       {!pathname.includes('/parametres') && <GlobalTourHelp routeName={activeTab} />}

@@ -11,6 +11,7 @@ import {
   useListVendors,
   useCreateVendor,
   useListAddressBookEntries,
+  getListAddressBookEntriesQueryKey,
   useAddAddressBookEntryToWedding,
   getListVendorsQueryKey,
   currencySymbol,
@@ -95,7 +96,14 @@ export default function PrestatairesScreen() {
   const wId = weddingId ?? 0;
   const { data: vendors, isLoading, refetch, isRefetching } = useListVendors(wId, { query: { queryKey: getListVendorsQueryKey(wId), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
   const createVendor = useCreateVendor();
-  const { data: addressBookEntries = [], isLoading: addressBookLoading } = useListAddressBookEntries();
+  const { data: addressBookEntries = [], isLoading: addressBookLoading } = useListAddressBookEntries({
+    query: {
+      queryKey: getListAddressBookEntriesQueryKey(),
+      enabled: isPremium,
+      staleTime: MOBILE_TAB_STALE_TIME,
+      gcTime: 30 * 60 * 1000,
+    },
+  });
   const addAddressBookEntry = useAddAddressBookEntryToWedding();
 
   const filtered = (vendors ?? []).filter(

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -12,6 +13,7 @@ import { PremiumBadge } from '@/components/PremiumBadge';
 import { PremiumPageGate } from '@/components/PremiumPageGate';
 import { usePremiumGate } from '@/hooks/usePremiumGate';
 import { useLocalization } from '@/context/LocalizationContext';
+import { getWeddingDocumentsQueryOptions } from '@/hooks/useWeddingDocuments';
 
 type WeddingDocument = {
   id: number;
@@ -97,10 +99,7 @@ export default function DocumentsScreen() {
   const { weddingId } = useActiveWedding();
   const { data: vendors = [] } = useListVendors(weddingId ?? 0, { query: { queryKey: getListVendorsQueryKey(weddingId ?? 0), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
   const { data: contracts = [] } = useListContracts(weddingId ?? 0, { query: { queryKey: getListContractsQueryKey(weddingId ?? 0), enabled: weddingId !== null, staleTime: MOBILE_TAB_STALE_TIME } });
-  const [documents, setDocuments] = useState<WeddingDocument[]>([]);
-  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const loadGeneration = useRef(0);
 
   const request = useCallback(async (path: string, init?: RequestInit) => {
     const token = await getToken();
@@ -111,26 +110,20 @@ export default function DocumentsScreen() {
     return response;
   }, [getToken, tr.network]);
 
-  const loadDocuments = useCallback(async () => {
-    const generation = ++loadGeneration.current;
-    if (!weddingId || !isPremium) {
-      setDocuments([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const response = await request(`/api/weddings/${weddingId}/documents`);
-      const nextDocuments = await response.json() as WeddingDocument[];
-      if (generation === loadGeneration.current) setDocuments(nextDocuments);
-    } catch {
-      if (generation === loadGeneration.current) Alert.alert(tr.docs, tr.loadError);
-    } finally {
-      if (generation === loadGeneration.current) setLoading(false);
-    }
-  }, [isPremium, request, weddingId, tr.docs, tr.loadError]);
+  const documentsQuery = useQuery({
+    ...getWeddingDocumentsQueryOptions(weddingId ?? 0, getToken),
+    enabled: weddingId !== null && isPremium,
+  });
+  const documents = documentsQuery.data ?? [];
+  const loading = documentsQuery.isLoading;
+  const loadDocuments = useCallback(
+    () => documentsQuery.refetch(),
+    [documentsQuery.refetch],
+  );
 
-  useEffect(() => { void loadDocuments(); }, [loadDocuments]);
+  useEffect(() => {
+    if (documentsQuery.isError) Alert.alert(tr.docs, tr.loadError);
+  }, [documentsQuery.isError, tr.docs, tr.loadError]);
 
   const grouped = useMemo<DocumentSection[]>(() => {
     const vendorNames = new Map(vendors.map((vendor) => [vendor.id, vendor.name]));

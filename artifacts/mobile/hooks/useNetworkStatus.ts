@@ -1,4 +1,6 @@
-import { useNetInfo } from '@react-native-community/netinfo';
+import { useEffect } from 'react';
+import { AppState } from 'react-native';
+import { refresh, useNetInfo } from '@react-native-community/netinfo';
 
 /**
  * Returns the current network connectivity status.
@@ -7,6 +9,16 @@ import { useNetInfo } from '@react-native-community/netinfo';
  */
 export function useNetworkStatus() {
   const { isConnected } = useNetInfo();
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        // Native connectivity events may be missed while the app is suspended.
+        void refresh().catch((error) => console.warn('Network status refresh failed', error));
+      }
+    });
+    return () => subscription.remove();
+  }, []);
 
   return {
     /** true while connected or status not yet known */
