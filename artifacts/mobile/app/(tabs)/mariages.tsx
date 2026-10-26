@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   FlatList, View, Text, StyleSheet, TouchableOpacity,
   ActivityIndicator, Platform, Alert, Modal, TextInput,
@@ -31,6 +31,7 @@ import { shadow, accentShadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
 import { TourSheet } from '@/components/TourSheet';
 import { usePreferredCurrency } from '@/hooks/usePreferredCurrency';
+import { createWeddingDeletionLifecycle, type WeddingDeletionContext } from '@/utils/wedding-deletion';
 
 const TOUR_STEPS = [
   {
@@ -74,7 +75,32 @@ export default function MariagesScreen() {
   const { data: weddings, isLoading, refetch, isRefetching } = useListWeddings({
     query: { queryKey: getListWeddingsQueryKey(), staleTime: MOBILE_TAB_STALE_TIME },
   });
-  const deleteWedding = useDeleteWedding();
+  const selectionRef = useRef(selectedWeddingId);
+  selectionRef.current = selectedWeddingId;
+  const deletionRequested = useRef(false);
+  const updateSelection = (id: number) => {
+    selectionRef.current = id;
+    selectWedding(id);
+  };
+  const deletionLifecycle = createWeddingDeletionLifecycle({
+    queryClient,
+    queryKey: getListWeddingsQueryKey(),
+    getSelection: () => selectionRef.current,
+    selectWedding: updateSelection,
+    showError: () => Alert.alert(t('common.error'), language === 'fr'
+      ? 'La suppression a échoué. Le mariage a été rétabli. Vérifiez votre connexion et réessayez.'
+      : 'Deletion failed. The wedding has been restored. Check your connection and try again.'),
+  });
+  const deleteWedding = useDeleteWedding<Error, WeddingDeletionContext>({
+    mutation: {
+      ...deletionLifecycle,
+      retry: false,
+      onSettled: () => {
+        deletionRequested.current = false;
+        deletionLifecycle.onSettled();
+      },
+    },
+  });
   const createWedding = useCreateWedding();
   const [createOpen, setCreateOpen] = useState(false);
   const [partner1, setPartner1] = useState('');
@@ -166,36 +192,34 @@ export default function MariagesScreen() {
 
   const handleSelect = (id: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    selectWedding(id);
+    updateSelection(id);
   };
 
-  const handleLongPress = (id: number, names: string) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  const handleDelete = (id: number, names: string) => {
+    if (deletionRequested.current) return;
+    const title = language === 'fr' ? 'Supprimer ce dossier' : 'Delete this file';
+    const message = language === 'fr'
+      ? `Toutes les données de "${names}" seront définitivement supprimées (invités, prestataires, budget, paiements…). Cette action est irréversible.`
+      : `All data for "${names}" will be permanently deleted (guests, vendors, budget, payments…). This action cannot be undone.`;
+    const confirmDeletion = () => {
+      if (deletionRequested.current) return;
+      deletionRequested.current = true;
+      deleteWedding.mutate({ id });
+    };
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${title}\n\n${message}`)) confirmDeletion();
+      return;
+    }
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     Alert.alert(
-      language === 'fr' ? 'Supprimer ce dossier' : 'Delete this file',
-      language === 'fr' ? `Toutes les données de "${names}" seront définitivement supprimées (invités, prestataires, budget, paiements…). Cette action est irréversible.` : `All data for "${names}" will be permanently deleted (guests, vendors, budget, payments…). This action cannot be undone.`,
+      title,
+      message,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.delete'),
           style: 'destructive',
-          onPress: () => {
-            deleteWedding.mutate(
-              { id },
-              {
-                onSuccess: () => {
-                  queryClient.invalidateQueries({ queryKey: getListWeddingsQueryKey() });
-                  if (selectedWeddingId === id) {
-                    const remaining = (weddings ?? []).filter((w) => w.id !== id);
-                    selectWedding(remaining[0]?.id ?? 0);
-                  }
-                },
-                onError: () => {
-                  Alert.alert(t('common.error'), language === 'fr' ? 'Impossible de supprimer ce dossier. Réessayez.' : 'Unable to delete this file. Please try again.');
-                },
-              },
-            );
-          },
+          onPress: confirmDeletion,
         },
       ],
     );
@@ -245,6 +269,14 @@ export default function MariagesScreen() {
               <Text style={[ss.createButtonText, { fontFamily: SANS_SEMIBOLD }]}>{language === 'fr' ? 'Nouveau mariage' : 'New wedding'}</Text>
             </TouchableOpacity>
           </LinearGradient>
+          {deleteWedding.isPending && (
+            <View style={ss.deletionStatus} accessibilityLiveRegion="polite">
+              <ActivityIndicator size="small" color={colors.accent} />
+              <Text style={{ fontFamily: SANS, color: colors.mutedForeground }}>
+                {language === 'fr' ? 'Suppression en cours…' : 'Deleting…'}
+              </Text>
+            </View>
+          )}
           <View style={{ height: 16 }} />
         </View>
       }
@@ -274,8 +306,6 @@ export default function MariagesScreen() {
         return (
           <TouchableOpacity
             onPress={() => handleSelect(item.id)}
-            onLongPress={() => handleLongPress(item.id, item.names)}
-            delayLongPress={550}
             activeOpacity={0.85}
             style={[ss.wcard, { marginHorizontal: 16, marginBottom: 14 }, cardShadow]}
           >
@@ -324,6 +354,20 @@ export default function MariagesScreen() {
                     <Feather name="check" size={11} color="#3C1A3C" />
                   </LinearGradient>
                 )}
+                <TouchableOpacity
+                  onPress={(event) => {
+                    event.stopPropagation();
+                    handleDelete(item.id, item.names);
+                  }}
+                  disabled={deleteWedding.isPending}
+                  accessibilityRole="button"
+                  accessibilityLabel={language === 'fr' ? `Supprimer le mariage ${item.names}` : `Delete wedding ${item.names}`}
+                  accessibilityState={{ disabled: deleteWedding.isPending }}
+                  activeOpacity={0.5}
+                  style={[ss.deleteButton, { opacity: deleteWedding.isPending ? 0.4 : 1 }]}
+                >
+                  <Feather name="trash-2" size={19} color={isActive ? colors.gold : colors.destructive} />
+                </TouchableOpacity>
               </View>
 
               <View style={[ss.wcardFooter, { borderTopColor: isActive ? 'rgba(255,255,255,0.12)' : colors.border }]}>
@@ -478,6 +522,8 @@ export default function MariagesScreen() {
 const ss = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   heroHeader: { paddingHorizontal: 20, paddingBottom: 22, overflow: 'hidden' },
+  deleteButton: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  deletionStatus: { marginHorizontal: 16, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
   heroSheen: { ...StyleSheet.absoluteFillObject, height: 80 },
   goldBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5, backgroundColor: 'rgba(200,170,112,0.35)' },
   eye: { fontSize: 9, letterSpacing: 2, marginBottom: 4 },

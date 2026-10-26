@@ -460,7 +460,7 @@ const ss = StyleSheet.create({
 
   sectionRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    marginTop: 20, marginBottom: 10, marginLeft: 2,
+    marginTop: 20, marginBottom: 10, marginHorizontal: 16,
   },
   sectionHeader: { fontSize: 9, letterSpacing: 2 },
   countBadge: { borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2 },
@@ -479,7 +479,7 @@ const ss = StyleSheet.create({
   barFill: { height: 7, borderRadius: 4 },
   pctLabel: { fontSize: 10, textAlign: 'center', marginTop: 6 },
 
-  card: { borderRadius: 12, overflow: 'hidden', marginBottom: 10 },
+  card: { borderRadius: 12, overflow: 'hidden', marginHorizontal: 16, marginBottom: 10 },
   rim: { position: 'absolute', left: 0, right: 0, top: 0, height: 1, borderTopWidth: 1 },
   cardInner: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   av: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
