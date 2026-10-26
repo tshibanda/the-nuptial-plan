@@ -2,11 +2,13 @@ import { useState } from 'react';
 import {
   FlatList, View, Text, StyleSheet, TouchableOpacity,
   ActivityIndicator, Platform, Alert, Modal, TextInput,
-  KeyboardAvoidingView, ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
+import { DateField } from '@/components/DateField';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
+import { parsePickerDate } from '@/utils/datePicker';
 import * as Haptics from 'expo-haptics';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -82,6 +84,8 @@ export default function MariagesScreen() {
   const [currency, setCurrency] = useState<SupportedCurrency>(getNewWeddingCurrency({ preferredCurrency }));
   const [totalBudget, setTotalBudget] = useState('');
   const [guestCount, setGuestCount] = useState('');
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
+  const [submitError, setSubmitError] = useState('');
 
   const resetCreateForm = () => {
     setPartner1('');
@@ -91,6 +95,8 @@ export default function MariagesScreen() {
     setCurrency(getNewWeddingCurrency({ preferredCurrency }));
     setTotalBudget('');
     setGuestCount('');
+    setInvalidFields([]);
+    setSubmitError('');
   };
 
   const openCreateForm = () => {
@@ -105,17 +111,29 @@ export default function MariagesScreen() {
     const date = weddingDate.trim();
     const budget = Number(totalBudget.replace(',', '.') || 0);
     const guests = Number(guestCount || 0);
-    const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date)
-      && !Number.isNaN(new Date(`${date}T12:00:00`).getTime());
-
-    if (!first || !second || !place || !validDate) {
-      Alert.alert(language === 'fr' ? 'Informations manquantes' : 'Missing information', language === 'fr' ? 'Renseignez les deux prénoms, la date au format AAAA-MM-JJ et le lieu du mariage.' : 'Enter both first names, the date in YYYY-MM-DD format, and the wedding venue.');
+    const missing = [
+      !first && 'partner1',
+      !second && 'partner2',
+      (date.length !== 10 || !parsePickerDate(date)) && 'weddingDate',
+      !place && 'venue',
+    ].filter((field): field is string => !!field);
+    setInvalidFields(missing);
+    if (missing.length > 0) {
+      setSubmitError(language === 'fr'
+        ? 'Complétez les champs indiqués et sélectionnez une date avant de créer le mariage.'
+        : 'Complete the highlighted fields and select a date before creating the wedding.');
       return;
     }
-    if (!Number.isFinite(budget) || budget < 0 || !Number.isFinite(guests) || guests < 0 || !Number.isInteger(guests)) {
-      Alert.alert(language === 'fr' ? 'Valeurs invalides' : 'Invalid values', language === 'fr' ? 'Le budget et le nombre d’invités doivent être des nombres positifs.' : 'Budget and guest count must be positive numbers.');
+    const invalidNumbers = [
+      (!Number.isFinite(budget) || budget < 0) && 'totalBudget',
+      (!Number.isFinite(guests) || guests < 0 || !Number.isInteger(guests)) && 'guestCount',
+    ].filter((field): field is string => !!field);
+    if (invalidNumbers.length > 0) {
+      setInvalidFields(invalidNumbers);
+      setSubmitError(language === 'fr' ? 'Le budget et le nombre d’invités doivent être des nombres positifs.' : 'Budget and guest count must be positive numbers.');
       return;
     }
+    setSubmitError('');
 
     createWedding.mutate(
       {
@@ -139,7 +157,9 @@ export default function MariagesScreen() {
           resetCreateForm();
           Alert.alert(language === 'fr' ? 'Mariage créé' : 'Wedding created', language === 'fr' ? `${wedding.names} est maintenant votre mariage actif.` : `${wedding.names} is now your active wedding.`);
         },
-        onError: () => Alert.alert(t('common.error'), language === 'fr' ? 'Impossible de créer le mariage. Réessayez dans quelques instants.' : 'Unable to create the wedding. Please try again shortly.'),
+        onError: (error) => setSubmitError((error as { status?: number }).status === 401
+          ? (language === 'fr' ? 'Votre session a expiré. Reconnectez-vous avant de réessayer.' : 'Your session has expired. Sign in again before retrying.')
+          : (language === 'fr' ? 'Impossible de créer le mariage. Vérifiez votre connexion et réessayez.' : 'Unable to create the wedding. Check your connection and try again.')),
       },
     );
   };
@@ -334,15 +354,13 @@ export default function MariagesScreen() {
       presentationStyle="pageSheet"
       onRequestClose={() => setCreateOpen(false)}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      <KeyboardAwareScrollViewCompat
         style={[ss.modalRoot, { backgroundColor: colors.background }]}
+        contentContainerStyle={[ss.modalContent, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 28 }]}
+        keyboardShouldPersistTaps="always"
+        showsVerticalScrollIndicator={false}
+        bottomOffset={24}
       >
-        <ScrollView
-          contentContainerStyle={[ss.modalContent, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 28 }]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
           <View style={ss.modalHeader}>
             <View>
                <Text style={[ss.modalEyebrow, { fontFamily: SANS_SEMIBOLD, color: colors.goldDim }]}>{language === 'fr' ? 'NOUVEAU DOSSIER' : 'NEW FILE'}</Text>
@@ -360,38 +378,31 @@ export default function MariagesScreen() {
           <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Prénom du premier marié' : 'First partner’s first name'}</Text>
           <TextInput
             value={partner1}
-            onChangeText={setPartner1}
+            onChangeText={(value) => { setPartner1(value); setSubmitError(''); setInvalidFields((fields) => fields.filter((field) => field !== 'partner1')); }}
             placeholder="Sophie"
             placeholderTextColor={colors.mutedForeground}
-            style={[ss.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
+            style={[ss.input, { color: colors.foreground, borderColor: invalidFields.includes('partner1') ? colors.rose : colors.border, backgroundColor: colors.card }]}
           />
 
           <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Prénom du second marié' : 'Second partner’s first name'}</Text>
           <TextInput
             value={partner2}
-            onChangeText={setPartner2}
+            onChangeText={(value) => { setPartner2(value); setSubmitError(''); setInvalidFields((fields) => fields.filter((field) => field !== 'partner2')); }}
             placeholder="James"
             placeholderTextColor={colors.mutedForeground}
-            style={[ss.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
+            style={[ss.input, { color: colors.foreground, borderColor: invalidFields.includes('partner2') ? colors.rose : colors.border, backgroundColor: colors.card }]}
           />
 
           <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Date du mariage' : 'Wedding date'}</Text>
-          <TextInput
-            value={weddingDate}
-            onChangeText={setWeddingDate}
-            placeholder={language === 'fr' ? 'AAAA-MM-JJ' : 'YYYY-MM-DD'}
-            placeholderTextColor={colors.mutedForeground}
-            keyboardType="numbers-and-punctuation"
-            style={[ss.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
-          />
+          <DateField value={weddingDate} onChange={(value) => { setWeddingDate(value); setSubmitError(''); setInvalidFields((fields) => fields.filter((field) => field !== 'weddingDate')); }} label={language === 'fr' ? 'Date du mariage' : 'Wedding date'} invalid={invalidFields.includes('weddingDate')} />
 
           <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Lieu' : 'Venue'}</Text>
           <TextInput
             value={venue}
-            onChangeText={setVenue}
+            onChangeText={(value) => { setVenue(value); setSubmitError(''); setInvalidFields((fields) => fields.filter((field) => field !== 'venue')); }}
             placeholder={language === 'fr' ? 'Lieu de réception' : 'Reception venue'}
             placeholderTextColor={colors.mutedForeground}
-            style={[ss.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
+            style={[ss.input, { color: colors.foreground, borderColor: invalidFields.includes('venue') ? colors.rose : colors.border, backgroundColor: colors.card }]}
           />
 
           <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Devise' : 'Currency'}</Text>
@@ -420,26 +431,27 @@ export default function MariagesScreen() {
               <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Budget total' : 'Total budget'}</Text>
               <TextInput
                 value={totalBudget}
-                onChangeText={setTotalBudget}
+                onChangeText={(value) => { setTotalBudget(value); setSubmitError(''); setInvalidFields((fields) => fields.filter((field) => field !== 'totalBudget')); }}
                 placeholder="0"
                 placeholderTextColor={colors.mutedForeground}
                 keyboardType="decimal-pad"
-                style={[ss.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
+                style={[ss.input, { color: colors.foreground, borderColor: invalidFields.includes('totalBudget') ? colors.rose : colors.border, backgroundColor: colors.card }]}
               />
             </View>
             <View style={ss.column}>
               <Text style={[ss.fieldLabel, { fontFamily: SANS_SEMIBOLD, color: colors.foreground }]}>{language === 'fr' ? 'Nombre d’invités' : 'Guest count'}</Text>
               <TextInput
                 value={guestCount}
-                onChangeText={setGuestCount}
+                onChangeText={(value) => { setGuestCount(value); setSubmitError(''); setInvalidFields((fields) => fields.filter((field) => field !== 'guestCount')); }}
                 placeholder="0"
                 placeholderTextColor={colors.mutedForeground}
                 keyboardType="number-pad"
-                style={[ss.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
+                style={[ss.input, { color: colors.foreground, borderColor: invalidFields.includes('guestCount') ? colors.rose : colors.border, backgroundColor: colors.card }]}
               />
             </View>
           </View>
 
+          {submitError ? <Text accessibilityLiveRegion="polite" style={[ss.submitError, { color: colors.rose, fontFamily: SANS }]}>{submitError}</Text> : null}
           <TouchableOpacity
             onPress={handleCreate}
             disabled={createWedding.isPending}
@@ -455,8 +467,7 @@ export default function MariagesScreen() {
               </>
             )}
           </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollViewCompat>
     </Modal>
 
     <TourSheet visible={tourVisible} onClose={closeTour} steps={language === 'fr' ? TOUR_STEPS : TOUR_STEPS_EN} />
@@ -491,6 +502,7 @@ const ss = StyleSheet.create({
   twoColumns: { flexDirection: 'row', gap: 10 },
   column: { flex: 1 },
   submitButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, marginTop: 26 },
+  submitError: { fontSize: 12, lineHeight: 18, marginTop: 20 },
   submitButtonText: { fontSize: 13, color: '#FBF5FB' },
   wcard: { borderRadius: 12, overflow: 'hidden' },
   wcardInner: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 16, overflow: 'hidden' },

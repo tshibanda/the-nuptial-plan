@@ -10,6 +10,7 @@
 - [Mobile tab performance](mobile-budget-performance.md) — Restore the selected wedding immediately, avoid ID 0, and warm shared query caches for remote-data tabs after first interaction.
 - [Mobile guest loading](mobile-guest-loading.md) — Reuse the guest list for RSVP counts; do not issue a duplicate statistics request when opening Invités.
 - [Mobile offline navigation](mobile-offline-navigation.md) — Connectivity changes must not block cached tabs with a modal; recheck network status after resume.
+- [Mobile form dates](mobile-form-dates.md) — Every date entered in a mobile form should be chosen from a date selector, not typed manually.
 - [Signup demo wedding](onboarding-demo-data.md) — All signup surfaces use one authenticated, owner-scoped seed; a private Clerk marker prevents restoring a deleted sample.
 - [Expo React Compiler compatibility](expo-react-compiler.md) — Keep Expo’s experimental React Compiler disabled unless current native and web route checks pass.
 - [Mobile document list stability](mobile-document-list-stability.md) — Keep document-section identities independent of labels that resolve asynchronously.

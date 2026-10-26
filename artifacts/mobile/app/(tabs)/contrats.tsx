@@ -16,6 +16,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
+import { DateField } from '@/components/DateField';
 import { QueryErrorState } from '@/components/QueryErrorState';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
@@ -71,7 +72,7 @@ export default function ContratsScreen() {
     gate: 'vos contrats', feature: 'Contrats prestataires', eye: 'THE NUPTIAL PLAN', documents: 'DOCUMENTS', addTitle: 'Ajouter un contrat',
     status: 'STATUT', notes: 'Notes', required: 'Prestataire requis', requiredBody: 'Saisissez le nom du prestataire.',
     error: 'Erreur', errorBody: 'Impossible d’ajouter ce contrat.', saving: 'Enregistrement…', save: 'Enregistrer le contrat',
-    fields: ['Nom du prestataire *', 'Montant total (€)', 'Acompte versé (€)', 'Date de signature (AAAA-MM-JJ)'],
+    fields: ['Nom du prestataire *', 'Montant total (€)', 'Acompte versé (€)'],
     statuses: { signed: 'Signé', pending: 'En attente', partial: 'Partiel', cancelled: 'Annulé' },
   } : {
     title: 'Contracts', add: 'Add', search: 'Search for a vendor…', noResults: 'No results', noContracts: 'No contracts',
@@ -79,7 +80,7 @@ export default function ContratsScreen() {
     gate: 'your contracts', feature: 'Vendor contracts', eye: 'THE NUPTIAL PLAN', documents: 'DOCUMENTS', addTitle: 'Add a contract',
     status: 'STATUS', notes: 'Notes', required: 'Vendor required', requiredBody: 'Enter the vendor name.',
     error: 'Error', errorBody: 'Unable to add this contract.', saving: 'Saving…', save: 'Save contract',
-    fields: ['Vendor name *', 'Total amount (€)', 'Deposit paid (€)', 'Signature date (YYYY-MM-DD)'],
+    fields: ['Vendor name *', 'Total amount (€)', 'Deposit paid (€)'],
     statuses: { signed: 'Signed', pending: 'Pending', partial: 'Partial', cancelled: 'Cancelled' },
   };
   const colors = useColors();
@@ -235,10 +236,11 @@ export default function ContratsScreen() {
       <BottomSheet visible={addVisible} onClose={() => setAddVisible(false)} eyebrow={tr.documents} title={tr.addTitle}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ss.form} showsVerticalScrollIndicator={false}>
           {([
-            ['vendorName', tr.fields[0]], ['amount', `${language === 'fr' ? 'Montant total' : 'Total amount'} (${currencySymbol(currency)})`], ['deposit', `${language === 'fr' ? 'Acompte versé' : 'Deposit paid'} (${currencySymbol(currency)})`], ['signedDate', tr.fields[3]],
+            ['vendorName', tr.fields[0]], ['amount', `${language === 'fr' ? 'Montant total' : 'Total amount'} (${currencySymbol(currency)})`], ['deposit', `${language === 'fr' ? 'Acompte versé' : 'Deposit paid'} (${currencySymbol(currency)})`],
           ] as const).map(([key, placeholder]) => (
             <TextInput key={key} value={form[key]} onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))} placeholder={placeholder} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' || key === 'deposit' ? 'decimal-pad' : 'default'} style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />
           ))}
+          <DateField value={form.signedDate} onChange={(signedDate) => setForm((current) => ({ ...current, signedDate }))} label={language === 'fr' ? 'Date de signature (facultatif)' : 'Signature date (optional)'} clearable />
           <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{tr.status}</Text>
           <View style={ss.statusRow}>{(['pending', 'signed', 'partial', 'cancelled'] as const).map((item) => <TouchableOpacity key={item} onPress={() => setStatus(item)} style={[ss.statusChoice, { backgroundColor: status === item ? colors.plum : colors.muted, borderColor: status === item ? colors.plum : colors.border }]}><Text style={[ss.statusText, { color: status === item ? '#FBF5FB' : colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{tr.statuses[item]}</Text></TouchableOpacity>)}</View>
           <TextInput value={form.notes} onChangeText={(value) => setForm((current) => ({ ...current, notes: value }))} placeholder={tr.notes} placeholderTextColor={colors.mutedForeground} multiline style={[ss.formInput, ss.formNotes, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]} />

@@ -28,6 +28,7 @@ import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { formatCents, formatDateShort, paymentStatusLabel } from '@/utils/format';
 import { shadow } from '@/utils/shadow';
 import { EmptyState } from '@/components/EmptyState';
+import { DateField } from '@/components/DateField';
 import { QueryErrorState } from '@/components/QueryErrorState';
 import { TourSheet } from '@/components/TourSheet';
 import { BottomSheet } from '@/components/BottomSheet';
@@ -217,14 +218,14 @@ export default function PaiementsScreen() {
     overdue: 'EN RETARD', due: 'À RÉGLER', paid: 'RÉGLÉS', sheet: 'FINANCES', addTitle: 'Ajouter un paiement', status: 'STATUT',
     notes: 'Notes', required: 'Informations manquantes', requiredBody: 'Renseignez le prestataire, le libellé, le montant et la date d’échéance.',
     error: 'Erreur', errorBody: 'Impossible d’ajouter ce paiement.', saving: 'Enregistrement…', save: 'Enregistrer le paiement',
-    fields: ['Nom du prestataire *', 'Libellé du paiement *', 'Montant (€) *', 'Date d’échéance (AAAA-MM-JJ) *'],
+    fields: ['Nom du prestataire *', 'Libellé du paiement *', 'Montant (€) *'],
   } : {
     gate: 'payment tracking', eye: 'FINANCES', title: 'Payments', exporting: 'Exporting…', export: 'Export', add: 'Add',
     emptyTitle: 'No payments', emptyBody: 'Tap Add to record a new payment.',
     overdue: 'OVERDUE', due: 'DUE', paid: 'PAID', sheet: 'FINANCES', addTitle: 'Add a payment', status: 'STATUS',
     notes: 'Notes', required: 'Missing information', requiredBody: 'Enter the vendor, description, amount, and due date.',
     error: 'Error', errorBody: 'Unable to add this payment.', saving: 'Saving…', save: 'Save payment',
-    fields: ['Vendor name *', 'Payment description *', 'Amount (€) *', 'Due date (YYYY-MM-DD) *'],
+    fields: ['Vendor name *', 'Payment description *', 'Amount (€) *'],
   };
   const { isActive: isPremium } = useSubscription();
   const colors = useColors();
@@ -374,7 +375,6 @@ export default function PaiementsScreen() {
              ['vendorName', tr.fields[0]],
              ['description', tr.fields[1]],
              ['amount', `${language === 'fr' ? 'Montant' : 'Amount'} (${currencySymbol(currency)}) *`],
-             ['dueDate', tr.fields[3]],
           ] as const).map(([key, placeholder]) => (
             <TextInput
               key={key}
@@ -386,6 +386,7 @@ export default function PaiementsScreen() {
               style={[ss.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
             />
           ))}
+          <DateField value={form.dueDate} onChange={(dueDate) => setForm((current) => ({ ...current, dueDate }))} label={language === 'fr' ? 'Date d’échéance *' : 'Due date *'} />
           <Text style={[ss.formLabel, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>{tr.status}</Text>
           <View style={ss.statusRow}>
             {(['pending', 'scheduled', 'paid', 'overdue'] as const).map((item) => (

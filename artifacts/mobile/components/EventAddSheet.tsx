@@ -10,6 +10,8 @@ import { useColors } from '@/hooks/useColors';
 import { SERIF, SANS, SANS_MEDIUM, SANS_SEMIBOLD } from '@/constants/fonts';
 import { shadow } from '@/utils/shadow';
 import { BottomSheet } from '@/components/BottomSheet';
+import { DateField } from '@/components/DateField';
+import { parsePickerDate } from '@/utils/datePicker';
 import { useLocalization } from '@/context/LocalizationContext';
 
 interface Props {
@@ -32,15 +34,6 @@ const TONE_LABELS: Record<Tone, string> = {
   sage: 'Sauge',
 };
 
-function parseLocalDate(day: string, month: string, year: string): string | null {
-  const d = parseInt(day, 10);
-  const m = parseInt(month, 10);
-  const y = parseInt(year, 10);
-  if (isNaN(d) || isNaN(m) || isNaN(y)) return null;
-  if (d < 1 || d > 31 || m < 1 || m > 12 || y < 2000 || y > 2100) return null;
-  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-}
-
 function parseTime(raw: string): string | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
@@ -52,16 +45,6 @@ function parseTime(raw: string): string | null {
   return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
 }
 
-/** Split an ISO date string YYYY-MM-DD into day/month/year parts */
-function splitIsoDate(isoDate: string): { day: string; month: string; year: string } {
-  const [y, m, d] = isoDate.split('-');
-  return {
-    day: d ? String(parseInt(d, 10)) : '',
-    month: m ? String(parseInt(m, 10)) : '',
-    year: y ?? '',
-  };
-}
-
 export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialEvent, initialDate }: Props) {
   const colors = useColors();
   const { language } = useLocalization();
@@ -69,16 +52,12 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
   const isEditMode = !!initialEvent;
 
   const [title, setTitle] = useState('');
-  const [day, setDay] = useState('');
-  const [month, setMonth] = useState('');
-  const [year, setYear] = useState('');
+  const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [detail, setDetail] = useState('');
   const [tone, setTone] = useState<Tone | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const monthRef = useRef<TextInput>(null);
-  const yearRef = useRef<TextInput>(null);
   const timeRef = useRef<TextInput>(null);
   const detailRef = useRef<TextInput>(null);
 
@@ -86,10 +65,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
   useEffect(() => {
     if (visible && initialEvent) {
       setTitle(initialEvent.title);
-      const parts = splitIsoDate(initialEvent.eventDate);
-      setDay(parts.day);
-      setMonth(parts.month);
-      setYear(parts.year);
+      setDate(initialEvent.eventDate.slice(0, 10));
       setTime(initialEvent.eventTime ?? '');
       setDetail(initialEvent.detail ?? '');
       setTone((initialEvent.tone as Tone) ?? null);
@@ -97,16 +73,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
     } else if (visible && !initialEvent) {
       // Reset for create mode, optionally pre-fill date from calendar tap
       setTitle('');
-      if (initialDate) {
-        const parts = splitIsoDate(initialDate);
-        setDay(parts.day);
-        setMonth(parts.month);
-        setYear(parts.year);
-      } else {
-        setDay('');
-        setMonth('');
-        setYear('');
-      }
+      setDate(initialDate?.slice(0, 10) ?? '');
       setTime('');
       setDetail('');
       setTone(null);
@@ -136,9 +103,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
 
   const handleClose = () => {
     setTitle('');
-    setDay('');
-    setMonth('');
-    setYear('');
+    setDate('');
     setTime('');
     setDetail('');
     setTone(null);
@@ -149,8 +114,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
   const handleSubmit = () => {
     const errs: Record<string, string> = {};
     if (!title.trim()) errs.title = en ? 'Title is required' : 'Le titre est requis';
-    const isoDate = parseLocalDate(day, month, year);
-    if (!isoDate) errs.date = en ? 'Invalid date (DD/MM/YYYY)' : 'Date invalide (JJ/MM/AAAA)';
+    if (date.length !== 10 || !parsePickerDate(date)) errs.date = en ? 'Select a date' : 'Sélectionnez une date';
     const parsedTime = time.trim() ? parseTime(time) : null;
     if (time.trim() && !parsedTime) errs.time = en ? 'Invalid time (HH:MM)' : 'Heure invalide (HH:MM)';
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
@@ -158,7 +122,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
 
     const payload = {
       title: title.trim(),
-      eventDate: isoDate!,
+      eventDate: date,
       ...(parsedTime ? { eventTime: parsedTime } : { eventTime: undefined }),
       ...(detail.trim() ? { detail: detail.trim() } : { detail: undefined }),
       ...(tone ? { tone } : {}),
@@ -196,8 +160,7 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
               placeholderTextColor={colors.mutedForeground}
               value={title}
               onChangeText={(t) => { setTitle(t); if (errors.title) setErrors((e) => ({ ...e, title: '' })); }}
-              returnKeyType="next"
-              onSubmitEditing={() => monthRef.current?.focus()}
+              returnKeyType="done"
               autoCapitalize="sentences"
             />
           </View>
@@ -209,72 +172,12 @@ export function EventAddSheet({ visible, onClose, weddingId, onCreated, initialE
           <Text style={[ss.label, { fontFamily: SANS_SEMIBOLD, color: colors.mutedForeground }]}>
              {en ? 'DATE' : 'DATE'} <Text style={{ color: colors.rose }}>*</Text>
           </Text>
-          <View style={ss.dateRow}>
-            {/* Day */}
-            <View style={[ss.dateInputWrap, shadow('xs'), { borderColor: errors.date ? colors.rose : colors.border, backgroundColor: colors.background, flex: 1 }]}>
-              <TextInput
-                style={[ss.dateInput, { fontFamily: SANS, color: colors.foreground }]}
-                placeholder="JJ"
-                placeholderTextColor={colors.mutedForeground}
-                value={day}
-                onChangeText={(v) => {
-                  const clean = v.replace(/\D/g, '').slice(0, 2);
-                  setDay(clean);
-                  if (errors.date) setErrors((e) => ({ ...e, date: '' }));
-                  if (clean.length === 2) monthRef.current?.focus();
-                }}
-                keyboardType="number-pad"
-                maxLength={2}
-                returnKeyType="next"
-                onSubmitEditing={() => monthRef.current?.focus()}
-                textAlign="center"
-              />
-            </View>
-            <Text style={[ss.dateSep, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>/</Text>
-            {/* Month */}
-            <View style={[ss.dateInputWrap, shadow('xs'), { borderColor: errors.date ? colors.rose : colors.border, backgroundColor: colors.background, flex: 1 }]}>
-              <TextInput
-                ref={monthRef}
-                style={[ss.dateInput, { fontFamily: SANS, color: colors.foreground }]}
-                placeholder="MM"
-                placeholderTextColor={colors.mutedForeground}
-                value={month}
-                onChangeText={(v) => {
-                  const clean = v.replace(/\D/g, '').slice(0, 2);
-                  setMonth(clean);
-                  if (errors.date) setErrors((e) => ({ ...e, date: '' }));
-                  if (clean.length === 2) yearRef.current?.focus();
-                }}
-                keyboardType="number-pad"
-                maxLength={2}
-                returnKeyType="next"
-                onSubmitEditing={() => yearRef.current?.focus()}
-                textAlign="center"
-              />
-            </View>
-            <Text style={[ss.dateSep, { color: colors.mutedForeground, fontFamily: SANS_MEDIUM }]}>/</Text>
-            {/* Year */}
-            <View style={[ss.dateInputWrap, shadow('xs'), { borderColor: errors.date ? colors.rose : colors.border, backgroundColor: colors.background, flex: 2 }]}>
-              <TextInput
-                ref={yearRef}
-                style={[ss.dateInput, { fontFamily: SANS, color: colors.foreground }]}
-                 placeholder={en ? 'YYYY' : 'AAAA'}
-                placeholderTextColor={colors.mutedForeground}
-                value={year}
-                onChangeText={(v) => {
-                  const clean = v.replace(/\D/g, '').slice(0, 4);
-                  setYear(clean);
-                  if (errors.date) setErrors((e) => ({ ...e, date: '' }));
-                  if (clean.length === 4) timeRef.current?.focus();
-                }}
-                keyboardType="number-pad"
-                maxLength={4}
-                returnKeyType="next"
-                onSubmitEditing={() => timeRef.current?.focus()}
-                textAlign="center"
-              />
-            </View>
-          </View>
+          <DateField
+            value={date}
+            onChange={(next) => { setDate(next); if (errors.date) setErrors((current) => ({ ...current, date: '' })); }}
+            label={en ? 'Event date' : 'Date de l’événement'}
+            invalid={!!errors.date}
+          />
           {errors.date ? <Text style={[ss.error, { color: colors.rose, fontFamily: SANS }]}>{errors.date}</Text> : null}
         </View>
 
@@ -390,15 +293,6 @@ const ss = StyleSheet.create({
   },
   inputIcon: { flexShrink: 0 },
   input: { flex: 1, fontSize: 14, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}) },
-  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dateInputWrap: {
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    height: 46,
-    justifyContent: 'center',
-  },
-  dateInput: { fontSize: 14, paddingHorizontal: 8, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}) },
-  dateSep: { fontSize: 18, marginBottom: 2 },
   textAreaWrap: {
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,

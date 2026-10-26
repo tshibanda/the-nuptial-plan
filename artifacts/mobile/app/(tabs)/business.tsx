@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { DateField } from '@/components/DateField';
+import { pickerDateValue } from '@/utils/datePicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -64,7 +66,10 @@ export default function BusinessScreen() {
       }
     });
   }, [user?.id]);
-  const [entry, setEntry] = useState({ month: new Date().toISOString().slice(0, 7), type: 'income' as Entry['type'], label: '', amount: '' });
+  const [entry, setEntry] = useState(() => {
+    const now = new Date();
+    return { month: pickerDateValue(now.getFullYear(), now.getMonth(), now.getDate()).slice(0, 7), type: 'income' as Entry['type'], label: '', amount: '' };
+  });
   const persist = (next: BusinessData) => {
     setData(next);
     if (Platform.OS === 'web') localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -102,7 +107,7 @@ export default function BusinessScreen() {
 
          <Section title={copy.cash} subtitle={copy.cashBody} colors={colors} action={<Button label={copy.add} onPress={addEntry} colors={colors} />}>
           <View style={styles.formGrid}>
-             <TextInput style={inputStyle} value={entry.month} onChangeText={(month) => setEntry({ ...entry, month })} placeholder={copy.month} placeholderTextColor={colors.mutedForeground} />
+             <DateField style={{ width: '100%' }} value={entry.month} onChange={(month) => setEntry({ ...entry, month })} label={language === 'fr' ? 'Mois de trésorerie' : 'Cash flow month'} monthOnly />
              <TextInput style={inputStyle} value={entry.label} onChangeText={(label) => setEntry({ ...entry, label })} placeholder={copy.label} placeholderTextColor={colors.mutedForeground} />
             <TouchableOpacity style={[styles.select, { borderColor: colors.border, backgroundColor: colors.card }]} onPress={() => setEntry({ ...entry, type: entry.type === 'income' ? 'expense' : 'income' })}>
                <Text style={[styles.small, { color: colors.foreground, fontFamily: SANS_MEDIUM }]}>{entry.type === 'income' ? copy.income : copy.expense}</Text>
